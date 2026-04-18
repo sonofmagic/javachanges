@@ -1,14 +1,14 @@
 {
-  "releaseVersion": "1.1.0",
-  "nextSnapshotVersion": "1.1.0-SNAPSHOT",
-  "releaseLevel": "minor",
-  "generatedAt": "2026-04-18T17:33:47.623Z",
+  "releaseVersion": "1.1.1",
+  "nextSnapshotVersion": "1.1.1-SNAPSHOT",
+  "releaseLevel": "patch",
+  "generatedAt": "2026-04-18T18:08:35.260Z",
   "changesets": [
     {
-      "file": "20260419-automate-javachanges-self-release-publishing-via-github-actions.md",
-      "release": "minor",
+      "file": "20260419-fix-maven-central-release-pom-version.md",
+      "release": "patch",
       "type": "other",
-      "summary": "automate javachanges self-release publishing via GitHub Actions",
+      "summary": "fix Maven Central publishing for CI-friendly revision versions",
       "modules": ["javachanges"]
     }
   ]
