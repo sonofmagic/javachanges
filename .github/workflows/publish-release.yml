@@ -80,6 +80,7 @@ jobs:
       - name: Create local tag and release notes
         env:
           RELEASE_VERSION: ${{ steps.release_version.outputs.value }}
+          RELEASE_NOTES_FILE: ${{ runner.temp }}/release-notes.md
         run: |
           tag="v${RELEASE_VERSION}"
           if git rev-parse "$tag" >/dev/null 2>&1; then
@@ -87,7 +88,7 @@ jobs:
           else
             git tag -a "$tag" -m "Release $tag"
           fi
-          mvn -B -DskipTests compile exec:java -Dexec.args="release-notes --directory $GITHUB_WORKSPACE --tag $tag --output target/release-notes.md"
+          mvn -B -DskipTests compile exec:java -Dexec.args="release-notes --directory $GITHUB_WORKSPACE --tag $tag --output ${RELEASE_NOTES_FILE}"
 
       - name: Publish to Maven Central
         env:
@@ -114,8 +115,15 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_VERSION: ${{ steps.release_version.outputs.value }}
+          RELEASE_NOTES_FILE: ${{ runner.temp }}/release-notes.md
         run: |
           tag="v${RELEASE_VERSION}"
-          gh release create "$tag" \
-            --title "$tag" \
-            --notes-file target/release-notes.md
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release edit "$tag" \
+              --title "$tag" \
+              --notes-file "$RELEASE_NOTES_FILE"
+          else
+            gh release create "$tag" \
+              --title "$tag" \
+              --notes-file "$RELEASE_NOTES_FILE"
+          fi
