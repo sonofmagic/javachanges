@@ -1,5 +1,7 @@
 # javachanges
 
+[English](./README.md) | [简体中文](./README.zh-CN.md)
+
 `javachanges` is a small Java CLI that brings a Changesets-like release planning workflow to Maven monorepos and single-module Maven repositories.
 
 It is designed for repositories that want:
@@ -49,6 +51,75 @@ mvn -q -DskipTests compile exec:java -Dexec.args="add --directory /path/to/your/
 mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/your/repo"
 ```
 
+## Changeset Format
+
+The shortest recommended changeset only needs `release` and `summary`:
+
+```md
+---
+release: minor
+summary: add GitHub Actions release automation
+---
+
+- Add CI, release-plan PR creation, and publish workflows.
+```
+
+Defaults:
+
+- `type` defaults to `other`
+- `modules` defaults to `all`
+- if `summary` is omitted, `javachanges` falls back to the first non-empty body line
+
+That means this shorter form also works:
+
+```md
+---
+release: patch
+---
+
+Fix Windows path handling in release-notes generation.
+```
+
+Use the full format only when you need to override the defaults:
+
+```md
+---
+release: minor
+type: ci
+modules: javachanges
+summary: automate javachanges self-release publishing via GitHub Actions
+---
+```
+
+Field reference:
+
+- `release`
+  Required. Controls the semver bump for the aggregated release plan.
+  Allowed values: `patch`, `minor`, `major`.
+  Typical guidance:
+  `patch` for backwards-compatible fixes, docs, chores, CI, or small improvements.
+  `minor` for backwards-compatible features.
+  `major` for breaking changes.
+- `summary`
+  Optional but strongly recommended.
+  Used in `status` output, release PR content, changelog sections, and generated release notes.
+  Keep it short, imperative, and user-facing.
+  If omitted, `javachanges` falls back to the first non-empty body line.
+- `type`
+  Optional. Defaults to `other`.
+  Used to group changelog entries and release-plan sections.
+  Allowed values: `feat`, `fix`, `docs`, `build`, `ci`, `test`, `refactor`, `perf`, `chore`, `other`.
+  Use it when you care about changelog grouping; otherwise you can skip it.
+- `modules`
+  Optional. Defaults to `all`.
+  For Maven monorepos, this can be a comma-separated list of artifactIds such as `core, api`.
+  For single-module repositories, you usually do not need to write it.
+  Use it only when you want the release plan to record which Maven modules are affected.
+- body
+  Optional free-form Markdown below the frontmatter.
+  The first non-empty line may be reused as the fallback summary.
+  In changelog rendering, the first body line may appear after the summary to give extra context.
+
 ## Repository Layout
 
 - `src/main/java`: the CLI source code
@@ -83,11 +154,17 @@ GitLab-specific helpers:
 ## Docs
 
 - [Overview](docs/index.md)
+- [Overview (zh-CN)](docs/index.zh-CN.md)
 - [Getting Started](docs/getting-started.md)
+- [Getting Started (zh-CN)](docs/getting-started.zh-CN.md)
+- [Development Guide](docs/development-guide.md)
 - [Development Guide (zh-CN)](docs/development-guide.zh-CN.md)
+- [GitHub Actions Release Flow](docs/github-actions-release.md)
 - [GitHub Actions Release Flow (zh-CN)](docs/github-actions-release.zh-CN.md)
+- [Publish To Maven Central](docs/publish-to-maven-central.md)
 - [Publish To Maven Central (zh-CN)](docs/publish-to-maven-central.zh-CN.md)
 - [Use Cases](docs/use-cases.md)
+- [Use Cases (zh-CN)](docs/use-cases.zh-CN.md)
 
 ## License
 

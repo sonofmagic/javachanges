@@ -1,5 +1,7 @@
 # Use Cases
 
+[English](./use-cases.md) | [简体中文](./use-cases.zh-CN.md)
+
 ## Maven library monorepo
 
 Use `javachanges` to manage version bumps across multiple artifacts while keeping a single reviewed release plan.

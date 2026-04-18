@@ -1,0 +1,157 @@
+# javachanges GitHub Actions Release Flow
+
+[English](./github-actions-release.md) | [简体中文](./github-actions-release.zh-CN.md)
+
+## 1. Overview
+
+This repository now includes a GitHub Actions release pipeline built on `javachanges` itself.
+
+The intended flow is:
+
+1. feature branches merge into `main`
+2. `main` contains one or more `.changesets/*.md` files
+3. GitHub Actions generates or updates a release PR
+4. the release PR is merged
+5. GitHub Actions tags the release, publishes to Maven Central, and creates a GitHub Release
+
+## 2. Workflows
+
+The repository contains three workflows:
+
+| File | Purpose |
+| --- | --- |
+| `.github/workflows/ci.yml` | Regular CI for Java 8 build and publish-profile verification |
+| `.github/workflows/release-plan.yml` | Scans pending changesets on `main` and generates a release PR |
+| `.github/workflows/publish-release.yml` | Publishes after the release PR is merged |
+
+## 3. Release PR workflow
+
+The core command in `release-plan.yml` is:
+
+```bash
+mvn -B -DskipTests compile exec:java -Dexec.args="plan --directory $GITHUB_WORKSPACE --apply true"
+```
+
+It:
+
+| Action | Meaning |
+| --- | --- |
+| Reads `.changesets/*.md` | Collects pending release intent |
+| Computes release versions | Produces `releaseVersion` and `nextSnapshotVersion` |
+| Applies the plan | Updates `<revision>`, `CHANGELOG.md`, and `.changesets/release-plan.json` |
+| Deletes consumed changesets | Prevents duplicate releases |
+
+The workflow then commits those changes to:
+
+```bash
+changeset-release/main
+```
+
+and creates or updates a pull request.
+
+## 4. Publish workflow
+
+`publish-release.yml` only runs when all of these are true:
+
+| Condition | Meaning |
+| --- | --- |
+| the PR was merged | not just closed |
+| the base branch is `main` | only the mainline is released |
+| the head branch is `changeset-release/main` | only release PRs trigger publishing |
+
+It then:
+
+1. checks out the merged release commit
+2. reads `releaseVersion` from `.changesets/release-plan.json`
+3. creates a local tag `vX.Y.Z`
+4. generates `target/release-notes.md`
+5. publishes to Maven Central with the `central-publish` profile
+6. pushes the git tag
+7. creates a GitHub Release
+
+## 5. Required repository secrets
+
+Configure these in `Settings > Secrets and variables > Actions`:
+
+| Secret | Purpose |
+| --- | --- |
+| `MAVEN_CENTRAL_USERNAME` | Sonatype Central Portal token username |
+| `MAVEN_CENTRAL_PASSWORD` | Sonatype Central Portal token password |
+| `MAVEN_GPG_PRIVATE_KEY` | ASCII-armored GPG private key |
+| `MAVEN_GPG_PASSPHRASE` | GPG private key passphrase |
+
+## 6. Recommended usage
+
+Typical development flow:
+
+1. create a branch
+2. change code
+3. add a changeset
+4. open a PR
+5. merge into `main`
+
+Example:
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="add --directory $PWD --summary 'add GitHub Actions release automation' --release minor"
+```
+
+> Tip: for single-module repositories, `modules` defaults to `all`, so you usually do not need to write it.
+
+## 7. Versioning model
+
+To support “merge release PR first, publish the real release afterwards,” this repository now uses:
+
+```xml
+<version>${revision}</version>
+```
+
+and maintains development state with:
+
+```xml
+<revision>1.0.0-SNAPSHOT</revision>
+```
+
+That means:
+
+| Stage | Version |
+| --- | --- |
+| Published version | Read from `.changesets/release-plan.json`, for example `1.0.0` |
+| Main branch version | Already advanced to the next snapshot, for example `1.0.1-SNAPSHOT` |
+
+The publish workflow uses:
+
+```bash
+-Drevision=<releaseVersion>
+```
+
+so it publishes the real release version instead of the current snapshot revision on `main`.
+
+## 8. Manual triggers
+
+If you need to rerun the release-plan generation manually:
+
+| Workflow | Supports `workflow_dispatch` |
+| --- | --- |
+| `Release Plan` | Yes |
+| `Publish Release` | No, it only runs on merged release PRs |
+
+## 9. Local validation
+
+Before relying on the automation, you can validate locally:
+
+```bash
+mvn -B verify
+mvn -B -Pcentral-publish -Dgpg.skip=true verify
+mvn -B -DskipTests compile exec:java -Dexec.args="status --directory $PWD"
+```
+
+## 10. Summary
+
+The standard release path for this repository is now:
+
+| Stage | Entry point |
+| --- | --- |
+| Regular validation | `CI` workflow |
+| Release PR generation | `Release Plan` workflow |
+| Real publishing | `Publish Release` workflow |

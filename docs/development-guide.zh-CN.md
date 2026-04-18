@@ -1,5 +1,7 @@
 # javachanges 开发使用指南
 
+[English](./development-guide.md) | [简体中文](./development-guide.zh-CN.md)
+
 ## 1. 概述
 
 `javachanges` 是一个面向 Maven Monorepo 和单模块 Maven 仓库的 Java CLI 工具。
@@ -192,7 +194,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/yo
 ### 6.2 添加 changeset
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="add --directory /path/to/your/repo --summary 'add release notes command' --release minor --type feat --modules core"
+mvn -q -DskipTests compile exec:java -Dexec.args="add --directory /path/to/your/repo --summary 'add release notes command' --release minor"
 ```
 
 ### 6.3 生成发布计划

@@ -715,11 +715,11 @@ final class ChangesetPrompter {
             body = trimToNull(System.getenv("CHANGESET_BODY"));
         }
 
-        if (summary != null && release != null && type != null && modules != null) {
+        if (summary != null && release != null) {
             return new ChangesetInput(
                 ReleaseLevel.parse(release),
-                normalizeType(type),
-                parseModules(repoRoot, modules),
+                normalizeType(type == null ? "other" : type),
+                parseModules(repoRoot, modules == null ? "all" : modules),
                 summary,
                 body == null ? "" : body
             );
@@ -730,10 +730,8 @@ final class ChangesetPrompter {
 
         summary = summary != null ? summary : prompt(console, scanner, out, "Summary");
         release = release != null ? release : prompt(console, scanner, out, "Release level (patch/minor/major)");
-        type = type != null ? type : prompt(console, scanner, out,
-            "Change type (feat/fix/docs/build/ci/test/refactor/perf/chore/other)");
-        modules = modules != null ? modules : prompt(console, scanner, out,
-            "Modules (comma separated artifactIds, or all)");
+        type = type == null ? "other" : type;
+        modules = modules == null ? "all" : modules;
 
         if (body == null) {
             out.println("Body (optional, finish with a single `.` line):");

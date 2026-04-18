@@ -1,5 +1,7 @@
 # javachanges GitHub Actions 发布流程使用指南
 
+[English](./github-actions-release.md) | [简体中文](./github-actions-release.zh-CN.md)
+
 ## 1. 概述
 
 这个仓库现在已经接入了一套基于 `javachanges` 自身命令的 GitHub Actions 发布流程。
@@ -91,10 +93,10 @@ changeset-release/main
 添加 changeset 的示例：
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="add --directory $PWD --summary 'add GitHub Actions release automation' --release minor --type ci --modules javachanges"
+mvn -q -DskipTests compile exec:java -Dexec.args="add --directory $PWD --summary 'add GitHub Actions release automation' --release minor"
 ```
 
-> **注意**：当前仓库虽然是单模块，但 `javachanges` 已支持将根 `artifactId` 识别为一个可发布模块，这里应使用 `javachanges`。
+> **提示**：当前仓库是单模块时，`modules` 默认就是 `all`，通常不需要手写。
 
 ## 7. 版本模式说明
 
@@ -155,4 +157,3 @@ mvn -B -DskipTests compile exec:java -Dexec.args="status --directory $PWD"
 | 日常校验 | `CI` workflow |
 | 生成 release PR | `Release Plan` workflow |
 | 正式发布 | `Publish Release` workflow |
-

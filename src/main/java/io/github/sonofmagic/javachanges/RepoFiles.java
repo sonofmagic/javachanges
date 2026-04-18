@@ -63,8 +63,6 @@ final class RepoFiles {
         List<String> lines = new ArrayList<String>();
         lines.add("---");
         lines.add("release: " + input.release.id);
-        lines.add("type: " + input.type);
-        lines.add("modules: " + joinModules(input.modules));
         lines.add("summary: " + input.summary);
         lines.add("---");
         lines.add("");
@@ -135,7 +133,7 @@ final class RepoFiles {
 
     private static Changeset parseChangeset(Path repoRoot, Path path) throws IOException {
         List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
-        if (lines.size() < 5 || !"---".equals(lines.get(0))) {
+        if (lines.size() < 3 || !"---".equals(lines.get(0))) {
             throw new IllegalStateException("Invalid changeset frontmatter: " + path);
         }
         Map<String, String> frontmatter = new LinkedHashMap<String, String>();
@@ -156,13 +154,17 @@ final class RepoFiles {
         }
 
         String releaseValue = required(frontmatter, "release", path);
-        String typeValue = required(frontmatter, "type", path);
-        String modulesValue = required(frontmatter, "modules", path);
-        String summaryValue = required(frontmatter, "summary", path);
+        String typeValue = optional(frontmatter, "type", "other");
+        String modulesValue = optional(frontmatter, "modules", "all");
 
         List<String> bodyLines = new ArrayList<String>();
         for (; index < lines.size(); index++) {
             bodyLines.add(lines.get(index));
+        }
+        String body = trimTrailingBlankLines(bodyLines);
+        String summaryValue = trimToNull(frontmatter.get("summary"));
+        if (summaryValue == null) {
+            summaryValue = fallbackSummary(path, body);
         }
 
         return new Changeset(
@@ -172,7 +174,7 @@ final class RepoFiles {
             normalizeType(typeValue),
             parseModules(repoRoot, modulesValue),
             summaryValue,
-            trimTrailingBlankLines(bodyLines)
+            body
         );
     }
 
@@ -235,5 +237,19 @@ final class RepoFiles {
             throw new IllegalStateException("Missing `" + key + "` in " + path);
         }
         return value.trim();
+    }
+
+    private static String optional(Map<String, String> frontmatter, String key, String defaultValue) {
+        String value = trimToNull(frontmatter.get(key));
+        return value == null ? defaultValue : value;
+    }
+
+    private static String fallbackSummary(Path path, String body) {
+        String fromBody = firstBodyLine(body);
+        if (!fromBody.isEmpty()) {
+            return fromBody;
+        }
+        String fileName = path.getFileName().toString().replaceFirst("\\.md$", "");
+        return fileName.replaceFirst("^\\d{8}-", "").replace('-', ' ').trim();
     }
 }

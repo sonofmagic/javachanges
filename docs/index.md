@@ -1,5 +1,7 @@
 # javachanges
 
+[English](./index.md) | [简体中文](./index.zh-CN.md)
+
 `javachanges` is a release-planning CLI for Maven monorepos and single-module Maven repositories.
 
 The workflow is intentionally simple:

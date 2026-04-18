@@ -1,5 +1,7 @@
 # javachanges 发布到 Maven Central 使用指南
 
+[English](./publish-to-maven-central.md) | [简体中文](./publish-to-maven-central.zh-CN.md)
+
 ## 1. 概述
 
 这个仓库已经补齐了 Maven Central 发布所需的核心 Maven 配置：
