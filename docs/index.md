@@ -26,3 +26,13 @@ The tool stays file-centric. It does not require a database or a hosted service.
 - either `<modules>` in the root pom, or a single root artifact
 - a root `revision` property used for versioning
 - a `.changesets/` directory to store release notes-in-progress
+
+## Guides
+
+- [Getting Started](./getting-started.md)
+- [Development Guide](./development-guide.md)
+- [GitHub Actions Release Flow](./github-actions-release.md)
+- [GitHub Actions Usage Guide](./github-actions-guide.md)
+- [GitLab CI/CD Usage Guide](./gitlab-ci-guide.md)
+- [Publish To Maven Central](./publish-to-maven-central.md)
+- [Use Cases](./use-cases.md)

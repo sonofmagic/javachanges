@@ -14,9 +14,13 @@ Use `javachanges` to keep a file-based release workflow even when the repository
 
 Use `write-settings`, `render-vars`, `doctor-platform`, and `audit-vars` to standardize CI variables and Maven credentials across repositories.
 
+For GitHub-based pipelines, see [GitHub Actions Usage Guide](./github-actions-guide.md).
+
 ## GitLab release MR flow
 
 Use `gitlab-release-plan` and `gitlab-tag-from-plan` when you want release branches, merge requests, and tags to be generated from pending changesets.
+
+For a full GitLab pipeline example, see [GitLab CI/CD Usage Guide](./gitlab-ci-guide.md).
 
 ## Safer publish dry-runs
 

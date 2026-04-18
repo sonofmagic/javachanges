@@ -1,0 +1,346 @@
+# javachanges GitLab CI/CD Usage Guide
+
+[English](./gitlab-ci-guide.md) | [简体中文](./gitlab-ci-guide.zh-CN.md)
+
+## 1. Overview
+
+This guide explains how to use `javachanges` in GitLab CI/CD for:
+
+1. regular validation
+2. GitLab CI/CD variable management
+3. release merge request generation
+4. release tag creation from the generated release plan
+5. Maven publishing in tag pipelines
+6. Maven dependency caching
+
+`javachanges` has two GitLab-specific commands:
+
+| Command | Purpose |
+| --- | --- |
+| `gitlab-release-plan` | Create or update a release branch and release merge request |
+| `gitlab-tag-from-plan` | Create and push the final release tag after the release plan lands |
+
+## 2. What `javachanges` Can Do In GitLab CI/CD
+
+Recommended command mapping:
+
+| Goal | Command |
+| --- | --- |
+| Check pending release state | `status` |
+| Apply a release plan locally or in CI | `plan --apply true` |
+| Generate Maven settings from env vars | `write-settings` |
+| Preview GitLab variables from a local env file | `render-vars --platform gitlab` |
+| Check platform readiness | `doctor-local`, `doctor-platform` |
+| Sync GitLab variables through `glab` | `sync-vars --platform gitlab` |
+| Audit GitLab variables through `glab variable export` | `audit-vars --platform gitlab` |
+| Create or update a GitLab release MR | `gitlab-release-plan --execute true` |
+| Create and push a release tag after a release plan merge | `gitlab-tag-from-plan --execute true` |
+| Validate a publish | `preflight` |
+| Run the real Maven deploy command | `publish --execute true` |
+
+## 3. Variable Model
+
+### 3.1 Shared Maven repository variables
+
+`javachanges` understands these values from [`env/release.env.example`](/Users/yangqiming/Documents/GitHub/javachanges/env/release.env.example):
+
+| Variable | Required | Meaning |
+| --- | --- | --- |
+| `MAVEN_RELEASE_REPOSITORY_URL` | Yes | Release repository URL |
+| `MAVEN_SNAPSHOT_REPOSITORY_URL` | Yes | Snapshot repository URL |
+| `MAVEN_RELEASE_REPOSITORY_ID` | Yes | Release repository id |
+| `MAVEN_SNAPSHOT_REPOSITORY_ID` | Yes | Snapshot repository id |
+| `MAVEN_REPOSITORY_USERNAME` | Yes, unless explicit split credentials are used | Shared username |
+| `MAVEN_REPOSITORY_PASSWORD` | Yes, unless explicit split credentials are used | Shared password |
+| `MAVEN_RELEASE_REPOSITORY_USERNAME` | Optional | Explicit release username |
+| `MAVEN_RELEASE_REPOSITORY_PASSWORD` | Optional | Explicit release password |
+| `MAVEN_SNAPSHOT_REPOSITORY_USERNAME` | Optional | Explicit snapshot username |
+| `MAVEN_SNAPSHOT_REPOSITORY_PASSWORD` | Optional | Explicit snapshot password |
+| `GITLAB_RELEASE_TOKEN` | Optional | Extra token for GitLab release creation flows outside CI job token fallback |
+
+When syncing to GitLab with `sync-vars`, secret values are written as masked and protected variables.
+
+### 3.2 Extra variables for GitLab release branch and MR automation
+
+`gitlab-release-plan` also depends on these runtime values:
+
+| Variable | Source |
+| --- | --- |
+| `CI_PROJECT_ID` | GitLab built-in CI variable or `--project-id` |
+| `CI_DEFAULT_BRANCH` | GitLab built-in CI variable |
+| `CI_SERVER_HOST` | GitLab built-in CI variable |
+| `CI_SERVER_URL` | GitLab built-in CI variable |
+| `CI_PROJECT_PATH` | GitLab built-in CI variable |
+| `GITLAB_RELEASE_BOT_USERNAME` | Project variable you provide |
+| `GITLAB_RELEASE_BOT_TOKEN` | Project variable you provide |
+
+`gitlab-tag-from-plan` additionally needs:
+
+| Option or variable | Meaning |
+| --- | --- |
+| `--before-sha` or `CI_COMMIT_BEFORE_SHA` | Previous commit SHA |
+| `--current-sha` or `CI_COMMIT_SHA` | Current commit SHA |
+
+## 4. Local Preparation
+
+### 4.1 Build the CLI
+
+```bash
+mvn -q test
+```
+
+### 4.2 Initialize a local env file
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="init-env --target env/release.env.local"
+```
+
+### 4.3 Preview GitLab variables
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="render-vars --env-file env/release.env.local --platform gitlab"
+```
+
+### 4.4 Check local readiness
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --env-file env/release.env.local --gitlab-repo group/project"
+```
+
+### 4.5 Sync GitLab variables with `glab`
+
+Dry-run:
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="sync-vars --env-file env/release.env.local --platform gitlab --repo group/project"
+```
+
+Apply:
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="sync-vars --env-file env/release.env.local --platform gitlab --repo group/project --execute true"
+```
+
+Audit:
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="audit-vars --env-file env/release.env.local --platform gitlab --gitlab-repo group/project"
+```
+
+## 5. Recommended GitLab CI/CD Pipeline Topology
+
+Recommended stages:
+
+1. `verify`
+2. `release-plan`
+3. `tag`
+4. `publish`
+
+## 6. Example `.gitlab-ci.yml`
+
+```yaml
+stages:
+  - verify
+  - release-plan
+  - tag
+  - publish
+
+default:
+  image: maven:3.9.9-eclipse-temurin-8
+  cache:
+    key:
+      files:
+        - pom.xml
+    paths:
+      - .m2/repository
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+
+verify:
+  stage: verify
+  script:
+    - mvn -B verify
+    - mvn -B -DskipTests compile exec:java -Dexec.args="status --directory $CI_PROJECT_DIR"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+release_plan_mr:
+  stage: release-plan
+  script:
+    - mvn -B -DskipTests compile
+    - mvn -B -DskipTests compile exec:java -Dexec.args="gitlab-release-plan --directory $CI_PROJECT_DIR --execute true"
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+release_tag:
+  stage: tag
+  script:
+    - mvn -B -DskipTests compile
+    - >
+      mvn -B -DskipTests compile exec:java
+      -Dexec.args="gitlab-tag-from-plan --directory $CI_PROJECT_DIR --before-sha $CI_COMMIT_BEFORE_SHA --current-sha $CI_COMMIT_SHA --execute true"
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+publish_release:
+  stage: publish
+  script:
+    - mvn -B -DskipTests compile
+    - >
+      mvn -B -DskipTests compile exec:java
+      -Dexec.args="publish --directory $CI_PROJECT_DIR --tag $CI_COMMIT_TAG --execute true"
+  rules:
+    - if: $CI_COMMIT_TAG
+```
+
+How the example works:
+
+| Job | Purpose |
+| --- | --- |
+| `verify` | Validates the repository and prints release state |
+| `release_plan_mr` | Creates or updates the release branch and merge request |
+| `release_tag` | Creates the final tag after the release plan manifest has changed on the default branch |
+| `publish_release` | Publishes from the final Git tag |
+
+## 7. How The GitLab-specific Commands Behave
+
+### 7.1 `gitlab-release-plan`
+
+Default behavior:
+
+| Input | Default |
+| --- | --- |
+| `--project-id` | `CI_PROJECT_ID` |
+| `--target-branch` | `CI_DEFAULT_BRANCH`, or `main` if absent |
+| `--release-branch` | `changeset-release/<target-branch>` |
+
+Important behavior:
+
+| Condition | Result |
+| --- | --- |
+| No pending changesets | Skips the release MR |
+| `--execute true` missing | Dry-run only |
+| Release plan produces no staged file changes | Skips MR update |
+| Open release MR already exists | Updates it instead of creating a new one |
+
+### 7.2 `gitlab-tag-from-plan`
+
+Important behavior:
+
+| Condition | Result |
+| --- | --- |
+| `beforeSha` missing or all zeros | Skips tagging |
+| `.changesets/release-plan.json` did not change between commits | Skips tagging |
+| Tag already exists remotely | Skips tagging |
+| `--execute true` missing | Dry-run only |
+
+## 8. Generic Maven Publish In GitLab CI/CD
+
+The generic `publish` helper uses:
+
+1. `preflight` logic to verify revision, tag, and credentials
+2. `write-settings` logic to generate `.m2/settings.xml`
+3. repository variables such as `MAVEN_RELEASE_REPOSITORY_URL`
+4. credentials from your GitLab CI/CD variables
+
+Typical tag-pipeline split:
+
+```yaml
+publish_preflight:
+  stage: publish
+  script:
+    - mvn -B -DskipTests compile
+    - >
+      mvn -B -DskipTests compile exec:java
+      -Dexec.args="preflight --directory $CI_PROJECT_DIR --tag $CI_COMMIT_TAG"
+  rules:
+    - if: $CI_COMMIT_TAG
+
+publish_execute:
+  stage: publish
+  script:
+    - mvn -B -DskipTests compile
+    - >
+      mvn -B -DskipTests compile exec:java
+      -Dexec.args="publish --directory $CI_PROJECT_DIR --tag $CI_COMMIT_TAG --execute true"
+  rules:
+    - if: $CI_COMMIT_TAG
+```
+
+## 9. Maven Cache Behavior In GitLab CI/CD
+
+Recommended cache:
+
+```yaml
+cache:
+  key:
+    files:
+      - pom.xml
+  paths:
+    - .m2/repository
+```
+
+Recommended runtime option:
+
+```yaml
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+```
+
+What this improves:
+
+| Cached well | Not solved by GitLab cache alone |
+| --- | --- |
+| Maven dependencies | Git clone/fetch cost |
+| Maven plugins | JDK image pull time |
+| Repeat pipelines with the same `pom.xml` | GitLab API calls for release MR creation |
+| Reuse across jobs on shared cache backends | Remote repository publishing latency |
+
+Important behavior:
+
+| Situation | Result |
+| --- | --- |
+| New cache key | First pipeline still downloads |
+| `pom.xml` changes | Cache key may change |
+| Different runners without shared cache | Cache reuse may be weak |
+| Shared/distributed GitLab cache configured | Cross-runner reuse improves |
+
+## 10. Common Mistakes
+
+| Problem | Cause | Fix |
+| --- | --- | --- |
+| Release MR job fails to push | `GITLAB_RELEASE_BOT_TOKEN` or `GITLAB_RELEASE_BOT_USERNAME` missing | add the bot credentials as project variables |
+| Release tag job never tags | `release-plan.json` did not change or `CI_COMMIT_BEFORE_SHA` is unusable | inspect the branch pipeline and the generated release plan |
+| `sync-vars` does nothing | env file still contains placeholders | replace `replace-me` values first |
+| `audit-vars` fails with `MISMATCH` | local env and remote project variables diverged | resync or deliberately update one side |
+| Publish job fails on missing Maven credentials | project variables were not configured | sync the variables with `glab`, then rerun |
+
+## 11. Recommended Documentation Split
+
+Use these docs together:
+
+| Need | Document |
+| --- | --- |
+| Generic release commands and local preparation | [Development Guide](./development-guide.md) |
+| GitHub-based self-release flow in this repository | [GitHub Actions Release Flow](./github-actions-release.md) |
+| Maven Central-specific publishing | [Publish To Maven Central](./publish-to-maven-central.md) |
+
+## 12. Summary
+
+The practical GitLab CI/CD path is:
+
+1. validate with `status`
+2. create or update a release MR with `gitlab-release-plan`
+3. create the final tag with `gitlab-tag-from-plan`
+4. sync and audit GitLab variables with `sync-vars` and `audit-vars`
+5. publish from tags with `preflight` and `publish`
+
+## 13. References
+
+- GitLab CI/CD YAML syntax: https://docs.gitlab.com/ci/yaml/
+- GitLab CI/CD caching: https://docs.gitlab.com/ci/caching/
+- `glab auth login`: https://docs.gitlab.com/cli/auth/login/
+- `glab variable set`: https://docs.gitlab.com/cli/variable/set/
+- `glab variable export`: https://docs.gitlab.com/cli/variable/export/

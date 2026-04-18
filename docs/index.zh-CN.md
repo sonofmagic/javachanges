@@ -26,3 +26,13 @@
 - 根 `pom.xml` 中要么有 `<modules>`，要么是单模块根 artifact
 - 用于版本管理的根 `revision` 属性
 - 用来存放进行中发布记录的 `.changesets/` 目录
+
+## 指南
+
+- [Getting Started](./getting-started.md)
+- [Development Guide](./development-guide.md)
+- [GitHub Actions Release Flow](./github-actions-release.md)
+- [GitHub Actions Usage Guide](./github-actions-guide.md)
+- [GitLab CI/CD Usage Guide](./gitlab-ci-guide.md)
+- [Publish To Maven Central](./publish-to-maven-central.md)
+- [Use Cases](./use-cases.md)

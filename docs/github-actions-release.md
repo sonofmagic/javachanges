@@ -6,6 +6,8 @@
 
 This repository now includes a GitHub Actions release pipeline built on `javachanges` itself.
 
+This page is repository-specific. For broader GitHub Actions integration patterns, see [GitHub Actions Usage Guide](./github-actions-guide.md).
+
 The intended flow is:
 
 1. feature branches merge into `main`
@@ -165,3 +167,5 @@ The standard release path for this repository is now:
 | Regular validation | `CI` workflow |
 | Release PR generation | `Release Plan` workflow |
 | Real publishing | `Publish Release` workflow |
+
+For reusable workflow patterns outside this repository, continue with [GitHub Actions Usage Guide](./github-actions-guide.md).

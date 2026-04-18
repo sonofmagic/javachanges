@@ -6,6 +6,8 @@
 
 这个仓库现在已经接入了一套基于 `javachanges` 自身命令的 GitHub Actions 发布流程。
 
+这份文档是当前仓库自举发布流程的专用说明。如果你想看更通用的 GitHub Actions 接入方式，请继续看 [GitHub Actions Usage Guide](./github-actions-guide.md)。
+
 目标流程如下：
 
 1. 功能分支合并到 `main`
@@ -167,3 +169,5 @@ mvn -B -DskipTests compile exec:java -Dexec.args="status --directory $PWD"
 | 日常校验 | `CI` workflow |
 | 生成 release PR | `Release Plan` workflow |
 | 正式发布 | `Publish Release` workflow |
+
+如果你需要可复用到其它仓库的 GitHub Actions 模板和命令拆分，请继续看 [GitHub Actions Usage Guide](./github-actions-guide.md)。

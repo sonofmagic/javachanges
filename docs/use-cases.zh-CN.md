@@ -14,9 +14,13 @@
 
 使用 `write-settings`、`render-vars`、`doctor-platform` 和 `audit-vars`，在多个仓库之间统一 CI 变量和 Maven 凭据配置。
 
+如果你使用的是 GitHub Actions，可以继续看 [GitHub Actions Usage Guide](./github-actions-guide.md)。
+
 ## GitLab release MR 流程
 
 当你希望根据 pending changesets 自动生成 release branch、merge request 和 tag 时，可以使用 `gitlab-release-plan` 和 `gitlab-tag-from-plan`。
+
+如果你需要完整的 GitLab CI/CD pipeline 示例，可以继续看 [GitLab CI/CD Usage Guide](./gitlab-ci-guide.md)。
 
 ## 更安全的发布 dry-run
 
