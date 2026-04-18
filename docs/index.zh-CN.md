@@ -7,8 +7,8 @@ hero:
   text: 面向 Maven 仓库的发布规划
   tagline: 用文件记录 changesets，自动生成 changelog，并接入 CI/CD 友好的 Maven 发布流程。
   image:
-    src: /mark.svg
-    alt: javachanges
+    src: /logo-horizontal.svg
+    alt: javachanges logo
   actions:
     - theme: brand
       text: 快速开始

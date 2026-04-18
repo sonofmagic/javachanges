@@ -392,6 +392,20 @@ final class ReleaseUtils {
         return "Other";
     }
 
+    static String releaseLevelHeading(ReleaseLevel level) {
+        if (level == ReleaseLevel.MAJOR) {
+            return "Major Changes";
+        }
+        if (level == ReleaseLevel.MINOR) {
+            return "Minor Changes";
+        }
+        return "Patch Changes";
+    }
+
+    static String renderVisibleType(String type) {
+        return "other".equals(type) ? "" : type;
+    }
+
     static String firstBodyLine(String body) {
         String[] lines = body.split("\\r?\\n");
         for (String line : lines) {

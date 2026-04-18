@@ -47,9 +47,9 @@ summary: fix release-notes rendering
 
 Defaults:
 
-- `type` defaults to `other`
 - `modules` defaults to `all`
 - `summary` falls back to the first non-empty body line if omitted
+- changelog sections are grouped by `release`: `major`, `minor`, `patch`
 
 ## 4. Inspect the plan
 

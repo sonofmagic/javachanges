@@ -62,6 +62,16 @@ body {
   pointer-events: none;
 }
 
+.VPHomeHero .image-container {
+  width: min(100%, 420px);
+}
+
+.VPHomeHero .image-src {
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+}
+
 .VPFeature {
   border: 1px solid rgba(84, 79, 73, 0.12);
   background: linear-gradient(180deg, rgba(255, 250, 242, 0.88), rgba(255, 250, 242, 0.62));

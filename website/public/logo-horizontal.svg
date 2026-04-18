@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 200" role="img" aria-labelledby="title desc">
+  <title id="title">javachanges logo</title>
+  <desc id="desc">A warm editorial wordmark and geometric release-planning symbol for javachanges.</desc>
+  <defs>
+    <linearGradient id="markGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d08e34" />
+      <stop offset="55%" stop-color="#b54a1d" />
+      <stop offset="100%" stop-color="#7d2f12" />
+    </linearGradient>
+    <linearGradient id="textGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1f1d19" />
+      <stop offset="100%" stop-color="#4d2a16" />
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(8 12)">
+    <rect x="0" y="0" width="178" height="178" rx="42" fill="#fff7ea" />
+    <path d="M32 54h82c12 0 22 10 22 22s-10 22-22 22H76c-7 0-12 5-12 12s5 12 12 12h70v22H74c-21 0-38-17-38-38s17-38 38-38h38c7 0 12-5 12-12s-5-12-12-12H32Z" fill="url(#markGradient)" />
+    <circle cx="133" cy="59" r="13" fill="#1f1d19" />
+    <path d="M42 127h44v17H42Zm54 0h40v17H96Z" fill="#1f1d19" opacity=".18" />
+  </g>
+
+  <g fill="url(#textGradient)">
+    <text x="224" y="102" font-size="66" font-weight="700" letter-spacing="-1.8" font-family="Iowan Old Style, Palatino Linotype, Book Antiqua, Baskerville, Georgia, serif">javachanges</text>
+  </g>
+  <g fill="#6d6358">
+    <text x="228" y="138" font-size="20" letter-spacing="3.2" font-family="IBM Plex Mono, SFMono-Regular, Menlo, Consolas, monospace">MAVEN RELEASE PLANNING</text>
+  </g>
+</svg>

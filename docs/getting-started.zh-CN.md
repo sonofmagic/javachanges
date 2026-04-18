@@ -47,9 +47,9 @@ summary: fix release-notes rendering
 
 默认值：
 
-- `type` 默认 `other`
 - `modules` 默认 `all`
 - 如果省略 `summary`，会回退到正文第一条非空行
+- changelog 会按 `release` 分成 `major`、`minor`、`patch`
 
 ## 4. 查看计划
 

@@ -68,9 +68,9 @@ summary: add GitHub Actions release automation
 
 默认值：
 
-- `type` 默认是 `other`
 - `modules` 默认是 `all`
 - 如果省略 `summary`，`javachanges` 会回退到正文第一条非空行
+- changelog 会按 `release` 分成 `major`、`minor`、`patch`
 
 因此下面这种更短的写法也能工作：
 
@@ -108,10 +108,11 @@ summary: automate javachanges self-release publishing via GitHub Actions
   建议保持简洁、面向用户、使用动词开头。
   如果不填，会自动回退到正文第一条非空行。
 - `type`
-  可选，默认 `other`。
-  用于 changelog 和 release plan 的分组。
+  可选。
+  当你希望额外标记 `ci`、`docs`、`fix` 这类信息时，可以填写它。
   可选值：`feat`、`fix`、`docs`、`build`、`ci`、`test`、`refactor`、`perf`、`chore`、`other`。
-  只有当你在意 changelog 分组时才需要显式写它。
+  changelog 的主分组按 `release` 走，不按 `type` 走。
+  如果你不需要这层附加标签，可以直接省略。
 - `modules`
   可选，默认 `all`。
   对于 Maven monorepo，可以写成逗号分隔的 artifactId，例如 `core, api`。

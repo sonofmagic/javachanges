@@ -488,22 +488,22 @@ final class ReleasePlan {
         builder.append("## ").append(releaseVersion).append(" - ")
             .append(LocalDate.now().toString()).append("\n\n");
 
-        Map<String, List<Changeset>> grouped = new LinkedHashMap<String, List<Changeset>>();
-        for (String type : CHANGELOG_TYPE_ORDER) {
-            grouped.put(type, new ArrayList<Changeset>());
-        }
+        Map<ReleaseLevel, List<Changeset>> grouped = new LinkedHashMap<ReleaseLevel, List<Changeset>>();
+        grouped.put(ReleaseLevel.MAJOR, new ArrayList<Changeset>());
+        grouped.put(ReleaseLevel.MINOR, new ArrayList<Changeset>());
+        grouped.put(ReleaseLevel.PATCH, new ArrayList<Changeset>());
         for (Changeset changeset : changesets) {
-            grouped.get(changeset.type).add(changeset);
+            grouped.get(changeset.release).add(changeset);
         }
 
         boolean wroteSection = false;
-        for (String type : CHANGELOG_TYPE_ORDER) {
-            List<Changeset> typedChangesets = grouped.get(type);
-            if (typedChangesets == null || typedChangesets.isEmpty()) {
+        for (ReleaseLevel level : Arrays.asList(ReleaseLevel.MAJOR, ReleaseLevel.MINOR, ReleaseLevel.PATCH)) {
+            List<Changeset> levelChangesets = grouped.get(level);
+            if (levelChangesets == null || levelChangesets.isEmpty()) {
                 continue;
             }
-            builder.append("### ").append(changeTypeHeading(type)).append("\n\n");
-            for (Changeset changeset : typedChangesets) {
+            builder.append("### ").append(releaseLevelHeading(level)).append("\n\n");
+            for (Changeset changeset : levelChangesets) {
                 builder.append("- ").append(changeset.summary);
                 builder.append(" (modules: ").append(joinModules(changeset.modules)).append(")");
                 if (!changeset.body.isEmpty()) {
@@ -534,8 +534,10 @@ final class ReleasePlan {
         lines.add("## Included Changesets");
         lines.add("");
         for (Changeset changeset : changesets) {
-            lines.add("- `" + changeset.release.id + "` `" + changeset.type + "` " + changeset.summary
-                + " (`" + joinModules(changeset.modules) + "`)");
+            String visibleType = renderVisibleType(changeset.type);
+            lines.add("- `" + changeset.release.id + "` "
+                + (visibleType.isEmpty() ? "" : "`" + visibleType + "` ")
+                + changeset.summary + " (`" + joinModules(changeset.modules) + "`)");
         }
         lines.add("");
         lines.add("This PR was generated automatically from `.changesets/*.md` files.");

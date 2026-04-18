@@ -68,9 +68,9 @@ summary: add GitHub Actions release automation
 
 Defaults:
 
-- `type` defaults to `other`
 - `modules` defaults to `all`
 - if `summary` is omitted, `javachanges` falls back to the first non-empty body line
+- changelog sections are grouped by `release`: `major`, `minor`, `patch`
 
 That means this shorter form also works:
 
@@ -108,10 +108,11 @@ Field reference:
   Keep it short, imperative, and user-facing.
   If omitted, `javachanges` falls back to the first non-empty body line.
 - `type`
-  Optional. Defaults to `other`.
-  Used to group changelog entries and release-plan sections.
+  Optional.
+  Used as extra classification metadata when you want to distinguish entries such as `ci`, `docs`, or `fix`.
   Allowed values: `feat`, `fix`, `docs`, `build`, `ci`, `test`, `refactor`, `perf`, `chore`, `other`.
-  Use it when you care about changelog grouping; otherwise you can skip it.
+  Changelog headings are primarily grouped by `release`, not by `type`.
+  If you do not care about this extra label, you can skip it.
 - `modules`
   Optional. Defaults to `all`.
   For Maven monorepos, this can be a comma-separated list of artifactIds such as `core, api`.

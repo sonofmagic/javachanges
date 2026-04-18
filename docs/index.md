@@ -7,8 +7,8 @@ hero:
   text: Release planning for Maven repositories
   tagline: File-based changesets, generated changelogs, and CI-friendly publishing for Maven monorepos and single-module repos.
   image:
-    src: /mark.svg
-    alt: javachanges
+    src: /logo-horizontal.svg
+    alt: javachanges logo
   actions:
     - theme: brand
       text: Get Started
