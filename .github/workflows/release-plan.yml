@@ -65,11 +65,16 @@ jobs:
 
           pr_number="$(gh pr list --base main --head "$branch" --json number --jq '.[0].number')"
           if [ -z "$pr_number" ]; then
-            gh pr create \
+            if ! gh pr create \
               --base main \
               --head "$branch" \
               --title "$title" \
-              --body-file .changesets/release-plan.md
+              --body-file .changesets/release-plan.md; then
+              echo "Release branch pushed, but GitHub Actions could not create the PR automatically."
+              echo "Enable repository settings that allow GitHub Actions to create pull requests, then rerun this workflow."
+              echo "Or create the PR manually:"
+              echo "https://github.com/${GITHUB_REPOSITORY}/compare/main...${branch}?expand=1"
+            fi
           else
             gh pr edit "$pr_number" \
               --title "$title" \
