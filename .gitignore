@@ -4,3 +4,7 @@ target/
 *.iml
 .DS_Store
 *.log
+node_modules/
+website/dist/
+website/.vitepress/cache/
+website/.vitepress/dist/

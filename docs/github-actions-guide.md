@@ -1,6 +1,6 @@
 # javachanges GitHub Actions Usage Guide
 
-[English](./github-actions-guide.md) | [简体中文](./github-actions-guide.zh-CN.md)
+[English](/github-actions-guide) | [简体中文](/zh-CN/github-actions-guide)
 
 ## 1. Overview
 
@@ -65,7 +65,7 @@ mvn -q test
 mvn -q -DskipTests compile exec:java -Dexec.args="init-env --target env/release.env.local"
 ```
 
-Template fields in [`env/release.env.example`](/Users/yangqiming/Documents/GitHub/javachanges/env/release.env.example):
+Template fields in `env/release.env.example`:
 
 | Variable | Meaning |
 | --- | --- |

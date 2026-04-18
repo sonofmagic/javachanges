@@ -1,6 +1,33 @@
+---
+layout: home
+title: javachanges
+titleTemplate: false
+hero:
+  name: javachanges
+  text: Release planning for Maven repositories
+  tagline: File-based changesets, generated changelogs, and CI-friendly publishing for Maven monorepos and single-module repos.
+  image:
+    src: /mark.svg
+    alt: javachanges
+  actions:
+    - theme: brand
+      text: Get Started
+      link: /getting-started
+    - theme: alt
+      text: GitHub
+      link: https://github.com/sonofmagic/javachanges
+features:
+  - title: File-based release intent
+    details: Keep release intent in versioned `.changesets/*.md` files instead of ad-hoc spreadsheets or chat messages.
+  - title: Maven-aware workflows
+    details: Plan versions from a root `revision`, generate changelogs, and work cleanly with monorepos and single-module repositories.
+  - title: Automation-ready
+    details: Integrate with GitHub Actions, GitLab CI/CD, Maven Central publishing, and environment-variable sync flows.
+---
+
 # javachanges
 
-[English](./index.md) | [简体中文](./index.zh-CN.md)
+[English](/) | [简体中文](/zh-CN/)
 
 `javachanges` is a release-planning CLI for Maven monorepos and single-module Maven repositories.
 

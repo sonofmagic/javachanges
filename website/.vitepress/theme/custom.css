@@ -1,0 +1,92 @@
+:root {
+  --vp-c-brand-1: #b54a1d;
+  --vp-c-brand-2: #cf6435;
+  --vp-c-brand-3: #9b3f18;
+  --vp-c-brand-soft: rgba(181, 74, 29, 0.16);
+  --vp-c-bg: #f5f1e8;
+  --vp-c-bg-soft: #fffaf2;
+  --vp-c-bg-alt: #efe8da;
+  --vp-c-divider: #d7cfc1;
+  --vp-c-text-1: #1f1d19;
+  --vp-c-text-2: #544f49;
+  --vp-font-family-base: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Baskerville, Georgia, serif;
+  --vp-font-family-mono: "IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(135deg, #b54a1d 0%, #7d2f12 50%, #d08e34 100%);
+  --vp-home-hero-image-background-image: radial-gradient(circle at 30% 30%, rgba(208, 142, 52, 0.35), transparent 45%), linear-gradient(135deg, rgba(181, 74, 29, 0.24), rgba(125, 47, 18, 0.12));
+  --vp-home-hero-image-filter: drop-shadow(0 24px 48px rgba(75, 43, 18, 0.18));
+}
+
+.dark {
+  --vp-c-bg: #201915;
+  --vp-c-bg-soft: #2a211c;
+  --vp-c-bg-alt: #17110f;
+  --vp-c-divider: #46342b;
+  --vp-c-text-1: #f4eadf;
+  --vp-c-text-2: #cfbeb2;
+  --vp-c-brand-1: #e98954;
+  --vp-c-brand-2: #f0a16e;
+  --vp-c-brand-3: #c56f3d;
+  --vp-c-brand-soft: rgba(233, 137, 84, 0.22);
+}
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(255, 248, 232, 0.85), transparent 24%),
+    linear-gradient(180deg, var(--vp-c-bg-alt) 0%, var(--vp-c-bg) 100%);
+}
+
+.VPNavBar {
+  background: rgba(245, 241, 232, 0.82);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(84, 79, 73, 0.08);
+}
+
+.dark .VPNavBar {
+  background: rgba(23, 17, 15, 0.82);
+  border-bottom-color: rgba(244, 234, 223, 0.08);
+}
+
+.VPHomeHero .container {
+  position: relative;
+}
+
+.VPHomeHero .container::after {
+  content: '';
+  position: absolute;
+  inset: 12% -4% auto auto;
+  width: 280px;
+  height: 280px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(208, 142, 52, 0.22), transparent 70%);
+  pointer-events: none;
+}
+
+.VPFeature {
+  border: 1px solid rgba(84, 79, 73, 0.12);
+  background: linear-gradient(180deg, rgba(255, 250, 242, 0.88), rgba(255, 250, 242, 0.62));
+  box-shadow: 0 20px 40px rgba(75, 43, 18, 0.06);
+}
+
+.dark .VPFeature {
+  border-color: rgba(244, 234, 223, 0.08);
+  background: linear-gradient(180deg, rgba(42, 33, 28, 0.94), rgba(42, 33, 28, 0.72));
+  box-shadow: none;
+}
+
+.vp-doc a {
+  text-underline-offset: 0.18em;
+}
+
+.vp-doc table {
+  display: table;
+  width: 100%;
+}
+
+.vp-doc tr:nth-child(2n) {
+  background: rgba(255, 250, 242, 0.42);
+}
+
+.dark .vp-doc tr:nth-child(2n) {
+  background: rgba(255, 255, 255, 0.03);
+}

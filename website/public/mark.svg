@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">javachanges</title>
+  <desc id="desc">A warm-toned geometric mark for javachanges.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d08e34" />
+      <stop offset="55%" stop-color="#b54a1d" />
+      <stop offset="100%" stop-color="#7d2f12" />
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="#fff7ea" />
+  <path d="M24 36h80v12H24zm0 22h52v12H24zm0 22h80v12H24z" fill="url(#bg)" />
+  <circle cx="92" cy="64" r="12" fill="#1f1d19" />
+</svg>

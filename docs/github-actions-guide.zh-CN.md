@@ -1,6 +1,6 @@
 # javachanges GitHub Actions 使用指南
 
-[English](./github-actions-guide.md) | [简体中文](./github-actions-guide.zh-CN.md)
+[English](/github-actions-guide) | [简体中文](/zh-CN/github-actions-guide)
 
 ## 1. 概述
 
@@ -65,7 +65,7 @@ mvn -q test
 mvn -q -DskipTests compile exec:java -Dexec.args="init-env --target env/release.env.local"
 ```
 
-[`env/release.env.example`](/Users/yangqiming/Documents/GitHub/javachanges/env/release.env.example) 中的模板字段如下：
+`env/release.env.example` 中的模板字段如下：
 
 | 变量 | 含义 |
 | --- | --- |

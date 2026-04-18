@@ -4,6 +4,8 @@
 
 `javachanges` 是一个轻量的 Java CLI，为 Maven Monorepo 和单模块 Maven 仓库提供类似 Changesets 的发布规划工作流。
 
+文档站点：`https://javachanges.icebreaker.top`
+
 它适合这些仓库：
 
 - 需要用 `.changesets/*.md` 文件记录发布意图

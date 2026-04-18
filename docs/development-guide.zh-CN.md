@@ -1,6 +1,6 @@
 # javachanges 开发使用指南
 
-[English](./development-guide.md) | [简体中文](./development-guide.zh-CN.md)
+[English](/development-guide) | [简体中文](/zh-CN/development-guide)
 
 ## 1. 概述
 
@@ -179,7 +179,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/yo
 
 当前 CLI 入口类是：
 
-- [src/main/java/io/github/sonofmagic/javachanges/JavaChangesCli.java](../src/main/java/io/github/sonofmagic/javachanges/JavaChangesCli.java)
+- [src/main/java/io/github/sonofmagic/javachanges/JavaChangesCli.java](https://github.com/sonofmagic/javachanges/blob/main/src/main/java/io/github/sonofmagic/javachanges/JavaChangesCli.java)
 
 如果你使用 IntelliJ IDEA 或 VS Code，也可以直接以这个类作为运行入口进行调试。
 
@@ -318,5 +318,5 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/yo
 | Maven 运行文档 | https://maven.apache.org/run.html |
 | Amazon Corretto 8 下载 | https://docs.aws.amazon.com/corretto/latest/corretto-8-ug/downloads-list.html |
 | Amazon Corretto 8 macOS 安装 | https://docs.aws.amazon.com/corretto/latest/corretto-8-ug/macos-install.html |
-| 项目说明 | [README.md](../README.md) |
+| 项目说明 | [README.md](https://github.com/sonofmagic/javachanges/blob/main/README.md) |
 | 快速开始 | [docs/getting-started.md](./getting-started.md) |

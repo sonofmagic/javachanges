@@ -1,6 +1,6 @@
 # Getting Started
 
-[English](./getting-started.md) | [简体中文](./getting-started.zh-CN.md)
+[English](/getting-started) | [简体中文](/zh-CN/getting-started)
 
 ## 1. Build the CLI
 

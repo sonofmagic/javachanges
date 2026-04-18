@@ -1,6 +1,6 @@
 # javachanges GitLab CI/CD 使用指南
 
-[English](./gitlab-ci-guide.md) | [简体中文](./gitlab-ci-guide.zh-CN.md)
+[English](/gitlab-ci-guide) | [简体中文](/zh-CN/gitlab-ci-guide)
 
 ## 1. 概述
 
@@ -42,7 +42,7 @@
 
 ### 3.1 通用 Maven 仓库变量
 
-`javachanges` 会读取 [`env/release.env.example`](/Users/yangqiming/Documents/GitHub/javachanges/env/release.env.example) 里的这些变量：
+`javachanges` 会读取 `env/release.env.example` 里的这些变量：
 
 | 变量 | 必填 | 含义 |
 | --- | --- | --- |

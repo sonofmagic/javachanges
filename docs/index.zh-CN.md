@@ -1,6 +1,33 @@
+---
+layout: home
+title: javachanges
+titleTemplate: false
+hero:
+  name: javachanges
+  text: 面向 Maven 仓库的发布规划
+  tagline: 用文件记录 changesets，自动生成 changelog，并接入 CI/CD 友好的 Maven 发布流程。
+  image:
+    src: /mark.svg
+    alt: javachanges
+  actions:
+    - theme: brand
+      text: 快速开始
+      link: /zh-CN/getting-started
+    - theme: alt
+      text: GitHub
+      link: https://github.com/sonofmagic/javachanges
+features:
+  - title: 文件驱动的发布意图
+    details: 用可版本控制的 `.changesets/*.md` 文件记录发布内容，而不是散落在表格、聊天或脚本里。
+  - title: 面向 Maven 的工作流
+    details: 围绕根 `revision` 规划版本、生成 changelog，并兼容 monorepo 与单模块仓库。
+  - title: 易于自动化
+    details: 可接入 GitHub Actions、GitLab CI/CD、Maven Central 发布和变量同步流程。
+---
+
 # javachanges
 
-[English](./index.md) | [简体中文](./index.zh-CN.md)
+[English](/) | [简体中文](/zh-CN/)
 
 `javachanges` 是一个面向 Maven Monorepo 和单模块 Maven 仓库的发布规划 CLI。
 

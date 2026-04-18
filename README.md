@@ -4,6 +4,8 @@
 
 `javachanges` is a small Java CLI that brings a Changesets-like release planning workflow to Maven monorepos and single-module Maven repositories.
 
+Documentation site: `https://javachanges.icebreaker.top`
+
 It is designed for repositories that want:
 
 - file-based release intents in `.changesets/*.md`

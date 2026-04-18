@@ -1,0 +1,17 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "javachanges-docs",
+  "compatibility_date": "2026-04-19",
+  "workers_dev": false,
+  "assets": {
+    "directory": "./website/dist",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+  "routes": [
+    {
+      "pattern": "javachanges.icebreaker.top",
+      "custom_domain": true
+    }
+  ]
+}

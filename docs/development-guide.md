@@ -1,6 +1,6 @@
 # javachanges Development Guide
 
-[English](./development-guide.md) | [简体中文](./development-guide.zh-CN.md)
+[English](/development-guide) | [简体中文](/zh-CN/development-guide)
 
 ## 1. Overview
 
@@ -171,7 +171,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/yo
 
 The current CLI entry class is:
 
-- [src/main/java/io/github/sonofmagic/javachanges/JavaChangesCli.java](../src/main/java/io/github/sonofmagic/javachanges/JavaChangesCli.java)
+- [src/main/java/io/github/sonofmagic/javachanges/JavaChangesCli.java](https://github.com/sonofmagic/javachanges/blob/main/src/main/java/io/github/sonofmagic/javachanges/JavaChangesCli.java)
 
 You can also run or debug this class directly in IntelliJ IDEA or VS Code.
 
@@ -308,5 +308,5 @@ Shortest path:
 | Maven run docs | https://maven.apache.org/run.html |
 | Amazon Corretto 8 downloads | https://docs.aws.amazon.com/corretto/latest/corretto-8-ug/downloads-list.html |
 | Amazon Corretto 8 macOS install | https://docs.aws.amazon.com/corretto/latest/corretto-8-ug/macos-install.html |
-| Project overview | [README.md](../README.md) |
+| Project overview | [README.md](https://github.com/sonofmagic/javachanges/blob/main/README.md) |
 | Getting started | [getting-started.md](./getting-started.md) |

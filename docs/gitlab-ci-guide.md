@@ -1,6 +1,6 @@
 # javachanges GitLab CI/CD Usage Guide
 
-[English](./gitlab-ci-guide.md) | [简体中文](./gitlab-ci-guide.zh-CN.md)
+[English](/gitlab-ci-guide) | [简体中文](/zh-CN/gitlab-ci-guide)
 
 ## 1. Overview
 
@@ -42,7 +42,7 @@ Recommended command mapping:
 
 ### 3.1 Shared Maven repository variables
 
-`javachanges` understands these values from [`env/release.env.example`](/Users/yangqiming/Documents/GitHub/javachanges/env/release.env.example):
+`javachanges` understands these values from `env/release.env.example`:
 
 | Variable | Required | Meaning |
 | --- | --- | --- |
