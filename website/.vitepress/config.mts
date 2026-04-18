@@ -1,9 +1,11 @@
 import { readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { defineConfig } from 'vitepress'
+import { fileURLToPath } from 'node:url'
+import { defineConfigWithTheme } from 'vitepress'
+import type { DefaultTheme } from 'vitepress'
 
 const repoUrl = 'https://github.com/sonofmagic/javachanges'
-const docsDir = resolve(__dirname, '../../docs')
+const docsDir = resolve(fileURLToPath(new URL('../../docs', import.meta.url)))
 const docsFiles = readdirSync(docsDir).filter((file) => file.endsWith('.md'))
 
 const zhRewrites = Object.fromEntries(
@@ -12,7 +14,7 @@ const zhRewrites = Object.fromEntries(
     .map((file) => [file, `zh-CN/${file.replace('.zh-CN.md', '.md')}`]),
 )
 
-const guideItems = [
+const guideItems: DefaultTheme.SidebarItem[] = [
   { text: 'Overview', link: '/' },
   { text: 'Getting Started', link: '/getting-started' },
   { text: 'Development Guide', link: '/development-guide' },
@@ -21,9 +23,9 @@ const guideItems = [
   { text: 'GitLab CI/CD Usage Guide', link: '/gitlab-ci-guide' },
   { text: 'Publish To Maven Central', link: '/publish-to-maven-central' },
   { text: 'Use Cases', link: '/use-cases' },
-] as const
+]
 
-const zhGuideItems = [
+const zhGuideItems: DefaultTheme.SidebarItem[] = [
   { text: '概览', link: '/zh-CN/' },
   { text: '快速开始', link: '/zh-CN/getting-started' },
   { text: '开发指南', link: '/zh-CN/development-guide' },
@@ -32,9 +34,71 @@ const zhGuideItems = [
   { text: 'GitLab CI/CD 使用指南', link: '/zh-CN/gitlab-ci-guide' },
   { text: '发布到 Maven Central', link: '/zh-CN/publish-to-maven-central' },
   { text: '使用场景', link: '/zh-CN/use-cases' },
-] as const
+]
 
-export default defineConfig({
+const rootThemeConfig: DefaultTheme.Config = {
+  logo: '/mark.svg',
+  siteTitle: 'javachanges',
+  search: {
+    provider: 'local',
+  },
+  nav: [
+    { text: 'Docs', link: '/getting-started' },
+    { text: 'GitHub', link: repoUrl },
+  ],
+  sidebar: [
+    {
+      text: 'Guides',
+      items: guideItems,
+    },
+  ],
+  socialLinks: [
+    { icon: 'github', link: repoUrl },
+  ],
+  editLink: {
+    pattern: `${repoUrl}/edit/main/docs/:path`,
+    text: 'Edit this page on GitHub',
+  },
+  outlineTitle: 'On this page',
+  lastUpdatedText: 'Last updated',
+  docFooter: {
+    prev: 'Previous page',
+    next: 'Next page',
+  },
+  footer: {
+    message: 'Released under the Apache-2.0 License.',
+    copyright: 'Copyright © 2026 sonofmagic',
+  },
+}
+
+const zhThemeConfig: DefaultTheme.Config = {
+  nav: [
+    { text: '文档', link: '/zh-CN/getting-started' },
+    { text: 'GitHub', link: repoUrl },
+  ],
+  sidebar: [
+    {
+      text: '指南',
+      items: zhGuideItems,
+    },
+  ],
+  editLink: {
+    pattern: `${repoUrl}/edit/main/docs/:path`,
+    text: '在 GitHub 上编辑此页',
+  },
+  outlineTitle: '本页内容',
+  lastUpdatedText: '最近更新',
+  docFooter: {
+    prev: '上一页',
+    next: '下一页',
+  },
+  footer: {
+    message: '基于 Apache-2.0 License 发布。',
+    copyright: 'Copyright © 2026 sonofmagic',
+  },
+}
+
+export default defineConfigWithTheme<DefaultTheme.Config>({
   srcDir: '../docs',
   srcExclude: ['README.md'],
   outDir: '../website/dist',
@@ -63,68 +127,8 @@ export default defineConfig({
       lang: 'zh-CN',
       title: 'javachanges',
       description: '面向 Maven 仓库的 Changesets 风格发布规划工具。',
+      themeConfig: zhThemeConfig,
     },
   },
-  themeConfig: {
-    logo: '/mark.svg',
-    siteTitle: 'javachanges',
-    search: {
-      provider: 'local',
-    },
-    nav: [
-      { text: 'Docs', link: '/getting-started' },
-      { text: 'GitHub', link: repoUrl },
-    ],
-    sidebar: [
-      {
-        text: 'Guides',
-        items: guideItems,
-      },
-    ],
-    socialLinks: [
-      { icon: 'github', link: repoUrl },
-    ],
-    editLink: {
-      pattern: `${repoUrl}/edit/main/docs/:path`,
-      text: 'Edit this page on GitHub',
-    },
-    outlineTitle: 'On this page',
-    lastUpdatedText: 'Last updated',
-    docFooter: {
-      prev: 'Previous page',
-      next: 'Next page',
-    },
-    footer: {
-      message: 'Released under the Apache-2.0 License.',
-      copyright: 'Copyright © 2026 sonofmagic',
-    },
-    locales: {
-      'zh-CN': {
-        nav: [
-          { text: '文档', link: '/zh-CN/getting-started' },
-          { text: 'GitHub', link: repoUrl },
-        ],
-        sidebar: [
-          {
-            text: '指南',
-            items: zhGuideItems,
-          },
-        ],
-        editLink: {
-          pattern: `${repoUrl}/edit/main/docs/:path`,
-          text: '在 GitHub 上编辑此页',
-        },
-        outlineTitle: '本页内容',
-        lastUpdatedText: '最近更新',
-        docFooter: {
-          prev: '上一页',
-          next: '下一页',
-        },
-        footer: {
-          message: '基于 Apache-2.0 License 发布。',
-          copyright: 'Copyright © 2026 sonofmagic',
-        },
-      },
-    },
-  },
+  themeConfig: rootThemeConfig,
 })
