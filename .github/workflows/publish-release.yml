@@ -56,6 +56,7 @@ jobs:
           distribution: corretto
           java-version: '8'
           cache: maven
+          cache-dependency-path: pom.xml
           server-id: central
           server-username: MAVEN_CENTRAL_USERNAME
           server-password: MAVEN_CENTRAL_PASSWORD
