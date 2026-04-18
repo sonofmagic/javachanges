@@ -18,13 +18,36 @@ jobs:
 
     steps:
       - name: Checkout merged release commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 0
 
+      - name: Validate publishing secrets
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          MAVEN_GPG_PRIVATE_KEY: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+        run: |
+          missing=0
+          for secret_name in \
+            MAVEN_CENTRAL_USERNAME \
+            MAVEN_CENTRAL_PASSWORD \
+            MAVEN_GPG_PRIVATE_KEY \
+            MAVEN_GPG_PASSPHRASE; do
+            if [ -z "${!secret_name}" ]; then
+              echo "::error title=Missing GitHub Actions secret::Required secret '${secret_name}' is not configured. Add it in Settings > Secrets and variables > Actions, then rerun this workflow."
+              missing=1
+            fi
+          done
+
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+
       - name: Set up Java 8, Maven Central auth, and GPG
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         env:
           MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}

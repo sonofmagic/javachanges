@@ -80,6 +80,14 @@ changeset-release/main
 | `MAVEN_GPG_PRIVATE_KEY` | ASCII armored GPG 私钥 |
 | `MAVEN_GPG_PASSPHRASE` | GPG 私钥口令 |
 
+`publish-release.yml` 现在会在准备 Java、Maven settings 和 GPG 之前先校验这些 secrets。只要有任意一个缺失，工作流会立刻失败，并直接指出缺的是哪一个 secret。
+
+针对这次已经失败的 `Publish Release` 运行，实际恢复步骤就是：
+
+1. 把缺少的 secrets 补齐
+2. 在 Actions 页面重跑失败的 workflow 或 job
+3. 确认重跑后能进入 `Publish to Maven Central` 这一步
+
 ## 6. 推荐使用方式
 
 日常开发时：
@@ -137,6 +145,8 @@ publish workflow 会在真正部署时使用：
 | --- | --- |
 | `Release Plan` | 是 |
 | `Publish Release` | 否，默认只在 release PR merge 时触发 |
+
+如果某个已经 merge 的 release PR 触发过失败的 `Publish Release`，通常不需要重新再走一遍 release PR。把仓库 secrets 修好以后，直接在 Actions 页面重跑那次失败运行即可。
 
 ## 9. 发布前本地验证
 

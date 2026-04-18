@@ -80,6 +80,14 @@ Configure these in `Settings > Secrets and variables > Actions`:
 | `MAVEN_GPG_PRIVATE_KEY` | ASCII-armored GPG private key |
 | `MAVEN_GPG_PASSPHRASE` | GPG private key passphrase |
 
+`publish-release.yml` validates these secrets before it prepares Java, Maven settings, or GPG. If any secret is missing, the workflow stops immediately with a direct error that names the missing secret.
+
+For the failed run at `Actions > Publish Release`, the practical recovery path is:
+
+1. add the missing secrets
+2. rerun the failed workflow or failed job
+3. confirm the rerun reaches the `Publish to Maven Central` step
+
 ## 6. Recommended usage
 
 Typical development flow:
@@ -135,6 +143,8 @@ If you need to rerun the release-plan generation manually:
 | --- | --- |
 | `Release Plan` | Yes |
 | `Publish Release` | No, it only runs on merged release PRs |
+
+If a merged release PR already triggered a failed `Publish Release` run, you usually do not need a new release PR. After fixing repository secrets, rerun the existing failed run from the Actions page.
 
 ## 9. Local validation
 
