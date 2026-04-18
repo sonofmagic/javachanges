@@ -83,6 +83,7 @@ GitLab-specific helpers:
 
 - [Overview](docs/index.md)
 - [Getting Started](docs/getting-started.md)
+- [Development Guide (zh-CN)](docs/development-guide.zh-CN.md)
 - [Use Cases](docs/use-cases.md)
 
 ## License
