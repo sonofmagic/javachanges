@@ -97,7 +97,11 @@ final class ReleaseUtils {
             String pomContent = new String(java.nio.file.Files.readAllBytes(pomPath), StandardCharsets.UTF_8);
             Matcher modulesMatcher = Pattern.compile("(?s)<modules>(.*?)</modules>").matcher(pomContent);
             if (!modulesMatcher.find()) {
-                return Collections.emptyList();
+                String artifactId = detectRootArtifactId(pomContent);
+                if (artifactId == null) {
+                    return Collections.emptyList();
+                }
+                return Collections.singletonList(artifactId);
             }
 
             List<String> modules = new ArrayList<String>();
@@ -127,6 +131,15 @@ final class ReleaseUtils {
         } catch (IOException exception) {
             throw new IllegalStateException("Failed to detect Maven modules from " + repoRoot, exception);
         }
+    }
+
+    private static String detectRootArtifactId(String pomContent) {
+        String withoutParent = pomContent.replaceFirst("(?s)<parent>.*?</parent>", "");
+        Matcher artifactMatcher = Pattern.compile("<artifactId>([^<]+)</artifactId>").matcher(withoutParent);
+        if (!artifactMatcher.find()) {
+            return null;
+        }
+        return trimToNull(artifactMatcher.group(1));
     }
 
     static void assertKnownModule(Path repoRoot, String module) {

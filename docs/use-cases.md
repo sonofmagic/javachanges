@@ -4,6 +4,10 @@
 
 Use `javachanges` to manage version bumps across multiple artifacts while keeping a single reviewed release plan.
 
+## Single-module Maven CLI or library
+
+Use `javachanges` to keep a file-based release workflow even when the repository only has one publishable Maven artifact.
+
 ## Internal platform release automation
 
 Use `write-settings`, `render-vars`, `doctor-platform`, and `audit-vars` to standardize CI variables and Maven credentials across repositories.
@@ -15,4 +19,3 @@ Use `gitlab-release-plan` and `gitlab-tag-from-plan` when you want release branc
 ## Safer publish dry-runs
 
 Use `preflight` and `publish --execute false` to preview the exact Maven deploy command and generated settings before touching a real repository.
-

@@ -1,6 +1,6 @@
 # javachanges
 
-`javachanges` is a release-planning CLI for Maven monorepos.
+`javachanges` is a release-planning CLI for Maven monorepos and single-module Maven repositories.
 
 The workflow is intentionally simple:
 
@@ -20,8 +20,7 @@ The tool stays file-centric. It does not require a database or a hosted service.
 
 ## What the CLI assumes
 
-- a Maven monorepo with a root `pom.xml`
-- a `<modules>` section in that root pom
+- a Maven repository with a root `pom.xml`
+- either `<modules>` in the root pom, or a single root artifact
 - a root `revision` property used for versioning
 - a `.changesets/` directory to store release notes-in-progress
-

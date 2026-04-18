@@ -12,14 +12,22 @@ Your target repository should have:
 
 - git initialized
 - a root `pom.xml`
-- `<modules>` in the root pom
 - a `<revision>` property
 - a `CHANGELOG.md` file, or let `javachanges` create/update it during plan application
+- either `<modules>` in the root pom, or a single root artifact
 
 ## 3. Create a changeset
 
+Monorepo example:
+
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="add --directory /path/to/repo --summary 'add release notes command' --release minor --type feat --modules core"
+```
+
+Single-module example:
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="add --directory /path/to/repo --summary 'add release notes command' --release minor --type feat --modules your-artifact-id"
 ```
 
 This writes a markdown file into `.changesets/`.

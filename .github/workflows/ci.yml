@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '8'
+          cache: maven
+
+      - name: Verify default build
+        run: mvn -B verify
+
+      - name: Verify Central publish profile
+        run: mvn -B -Pcentral-publish -Dgpg.skip=true verify
+
+      - name: Verify javachanges can plan this repository
+        run: mvn -B -DskipTests compile exec:java -Dexec.args="status --directory $GITHUB_WORKSPACE"

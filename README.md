@@ -1,6 +1,6 @@
 # javachanges
 
-`javachanges` is a small Java CLI that brings a Changesets-like release planning workflow to Maven monorepos.
+`javachanges` is a small Java CLI that brings a Changesets-like release planning workflow to Maven monorepos and single-module Maven repositories.
 
 It is designed for repositories that want:
 
@@ -32,7 +32,8 @@ Requirements:
 - Java 8+
 - Maven 3.8+
 - a git repository
-- a Maven monorepo with a root `pom.xml` and `<modules>`
+- a Maven repository with a root `pom.xml`
+- either `<modules>` in the root pom, or a single root artifact
 
 Build the CLI:
 
@@ -84,6 +85,8 @@ GitLab-specific helpers:
 - [Overview](docs/index.md)
 - [Getting Started](docs/getting-started.md)
 - [Development Guide (zh-CN)](docs/development-guide.zh-CN.md)
+- [GitHub Actions Release Flow (zh-CN)](docs/github-actions-release.zh-CN.md)
+- [Publish To Maven Central (zh-CN)](docs/publish-to-maven-central.zh-CN.md)
 - [Use Cases](docs/use-cases.md)
 
 ## License

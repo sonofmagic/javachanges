@@ -2,7 +2,7 @@
 
 ## 1. 概述
 
-`javachanges` 是一个面向 Maven Monorepo 的 Java CLI 工具。
+`javachanges` 是一个面向 Maven Monorepo 和单模块 Maven 仓库的 Java CLI 工具。
 
 这个仓库当前的使用方式不是：
 
@@ -29,7 +29,7 @@
 | JDK | Java 8+ |
 | Maven | 3.8+ |
 | Git | 需要 |
-| 目标仓库 | 必须是带根 `pom.xml` 和 `<modules>` 的 Maven Monorepo |
+| 目标仓库 | 必须有根 `pom.xml`，并且要么包含 `<modules>`，要么是单模块根 artifact |
 
 ### 2.2 开发环境建议
 
@@ -239,7 +239,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="help"
 
 1. 安装好 JDK 和 Maven
 2. 运行 `mvn -q test`，确认仓库能编译
-3. 准备一个用于测试的 Maven Monorepo
+3. 准备一个用于测试的 Maven 仓库
 4. 修改 `src/main/java` 下的源码
 5. 用 `mvn -q -DskipTests compile exec:java -Dexec.args="..."` 验证行为
 6. 确认无误后，再执行 `mvn test` 或 `mvn package`
@@ -282,7 +282,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="help"
 | --- | --- |
 | Git 仓库 | 必须已初始化 |
 | 根 `pom.xml` | 必须存在 |
-| `<modules>` | 根 `pom.xml` 中必须存在 |
+| `<modules>` 或单模块根 artifact | 二选一即可 |
 | `<revision>` | 用于版本计算 |
 | `.changesets/` | 用于记录 changeset |
 
