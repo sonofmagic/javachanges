@@ -1,14 +1,13 @@
 ## Release Plan
 
-- Release type: `minor`
+- Release type: `patch`
 - Affected packages: `javachanges`
-- Release version: `v1.3.0`
-- Next snapshot: `1.3.0-SNAPSHOT`
+- Release version: `v1.3.1`
+- Next snapshot: `1.3.1-SNAPSHOT`
 
 ## Included Changesets
 
-- `minor` `packages: javachanges` Add Maven plugin invocation support so `javachanges` can run directly through Maven goals instead of only `java -jar` or `exec:java`.
-- `patch` `packages: javachanges` Update installation docs to use the published Maven Central release instead of source-only examples.
+- `patch` `packages: javachanges` Clarify which Maven Central POM metadata fields improve the Sonatype Central artifact page.
 
 This PR was generated automatically from `.changesets/*.md` files.
 Merging it will trigger an automatic tag push and then reuse the existing release workflows.

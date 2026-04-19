@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.3.1 - 2026-04-19
+
+### Patch Changes
+
+- Clarify which Maven Central POM metadata fields improve the Sonatype Central artifact page. (packages: javachanges) Clarify which Maven Central POM metadata fields improve the Sonatype Central artifact page.
+
 ## 1.3.0 - 2026-04-19
 
 ### Minor Changes
