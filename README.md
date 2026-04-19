@@ -145,7 +145,7 @@ Field reference:
 
 - `src/main/java`: the CLI source code
 - `docs/`: public documentation pages
-- `examples/basic-monorepo/`: a minimal example target repository
+- `examples/basic-monorepo/`: a minimal example target repository with CI templates and generated release-plan snapshots
 - `website/`: the VitePress site published as static assets with Workers + Wrangler
 - `env/release.env.example`: a generic env template for release automation
 
@@ -178,6 +178,8 @@ GitLab-specific helpers:
 - [Overview (zh-CN)](docs/index.zh-CN.md)
 - [Getting Started](docs/getting-started.md)
 - [Getting Started (zh-CN)](docs/getting-started.zh-CN.md)
+- [Examples Guide](docs/examples-guide.md)
+- [Examples Guide (zh-CN)](docs/examples-guide.zh-CN.md)
 - [Configuration Reference](docs/configuration-reference.md)
 - [Configuration Reference (zh-CN)](docs/configuration-reference.zh-CN.md)
 - [CLI Reference](docs/cli-reference.md)

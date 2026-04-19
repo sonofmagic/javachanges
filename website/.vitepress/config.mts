@@ -21,6 +21,12 @@ const guideItems: DefaultTheme.SidebarItem[] = [
       { text: 'Overview', link: '/' },
       { text: 'Getting Started', link: '/getting-started' },
       { text: 'Development Guide', link: '/development-guide' },
+    ],
+  },
+  {
+    text: 'Examples',
+    items: [
+      { text: 'Examples Guide', link: '/examples-guide' },
       { text: 'Use Cases', link: '/use-cases' },
     ],
   },
@@ -50,6 +56,12 @@ const zhGuideItems: DefaultTheme.SidebarItem[] = [
       { text: '概览', link: '/zh-CN/' },
       { text: '快速开始', link: '/zh-CN/getting-started' },
       { text: '开发指南', link: '/zh-CN/development-guide' },
+    ],
+  },
+  {
+    text: '示例',
+    items: [
+      { text: 'Examples Guide 使用指南', link: '/zh-CN/examples-guide' },
       { text: '使用场景', link: '/zh-CN/use-cases' },
     ],
   },

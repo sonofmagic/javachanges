@@ -1,0 +1,61 @@
+stages:
+  - verify
+  - release-plan
+  - tag
+  - publish
+
+default:
+  image: maven:3.9.9-eclipse-temurin-8
+  cache:
+    key:
+      files:
+        - pom.xml
+    paths:
+      - .m2/repository
+  before_script:
+    - >
+      mvn -B -q org.apache.maven.plugins:maven-dependency-plugin:3.8.1:copy
+      -Dartifact=io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:jar
+      -DoutputDirectory=.tools
+
+variables:
+  JAVACHANGES_VERSION: "1.1.1"
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+
+verify:
+  stage: verify
+  script:
+    - mvn -B verify
+    - java -jar .tools/javachanges-${JAVACHANGES_VERSION}.jar status --directory "$CI_PROJECT_DIR"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+release_plan_mr:
+  stage: release-plan
+  script:
+    - java -jar .tools/javachanges-${JAVACHANGES_VERSION}.jar gitlab-release-plan --directory "$CI_PROJECT_DIR" --execute true
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+release_tag:
+  stage: tag
+  script:
+    - >
+      java -jar .tools/javachanges-${JAVACHANGES_VERSION}.jar
+      gitlab-tag-from-plan
+      --directory "$CI_PROJECT_DIR"
+      --before-sha "$CI_COMMIT_BEFORE_SHA"
+      --current-sha "$CI_COMMIT_SHA"
+      --execute true
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+publish_release:
+  stage: publish
+  script:
+    - java -jar .tools/javachanges-${JAVACHANGES_VERSION}.jar preflight --directory "$CI_PROJECT_DIR" --tag "$CI_COMMIT_TAG"
+    - java -jar .tools/javachanges-${JAVACHANGES_VERSION}.jar write-settings --output .m2/settings.xml
+    - java -jar .tools/javachanges-${JAVACHANGES_VERSION}.jar publish --directory "$CI_PROJECT_DIR" --tag "$CI_COMMIT_TAG" --execute true
+  rules:
+    - if: $CI_COMMIT_TAG

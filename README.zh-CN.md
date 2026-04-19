@@ -145,7 +145,7 @@ summary: automate javachanges self-release publishing via GitHub Actions
 
 - `src/main/java`: CLI 源码
 - `docs/`: 文档
-- `examples/basic-monorepo/`: 最小 Maven 目标仓库示例
+- `examples/basic-monorepo/`: 带 CI 模板和 release-plan 快照的最小 Maven 目标仓库示例
 - `website/`: 使用 Workers + Wrangler 部署静态资源的 VitePress 文档站
 - `env/release.env.example`: 通用发布环境变量模板
 
@@ -178,6 +178,8 @@ GitLab 相关辅助：
 - [Overview (zh-CN)](docs/index.zh-CN.md)
 - [Getting Started](docs/getting-started.md)
 - [Getting Started (zh-CN)](docs/getting-started.zh-CN.md)
+- [Examples Guide 使用指南](docs/examples-guide.md)
+- [Examples Guide 使用指南（zh-CN）](docs/examples-guide.zh-CN.md)
 - [配置参考大全](docs/configuration-reference.md)
 - [配置参考大全（zh-CN）](docs/configuration-reference.zh-CN.md)
 - [CLI 命令参考](docs/cli-reference.md)

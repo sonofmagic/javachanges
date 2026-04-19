@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  JAVACHANGES_VERSION: 1.1.1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: corretto
+          java-version: '8'
+          cache: maven
+          cache-dependency-path: pom.xml
+
+      - name: Download javachanges CLI
+        run: >
+          mvn -B -q org.apache.maven.plugins:maven-dependency-plugin:3.8.1:copy
+          -Dartifact=io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:jar
+          -DoutputDirectory=.tools
+
+      - name: Verify build
+        run: mvn -B verify
+
+      - name: Inspect release state
+        run: java -jar .tools/javachanges-${JAVACHANGES_VERSION}.jar status --directory "$GITHUB_WORKSPACE"

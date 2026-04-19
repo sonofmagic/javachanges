@@ -1,0 +1,49 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+env:
+  JAVACHANGES_VERSION: 1.1.1
+  MAVEN_RELEASE_REPOSITORY_URL: ${{ vars.MAVEN_RELEASE_REPOSITORY_URL }}
+  MAVEN_SNAPSHOT_REPOSITORY_URL: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_URL }}
+  MAVEN_RELEASE_REPOSITORY_ID: ${{ vars.MAVEN_RELEASE_REPOSITORY_ID }}
+  MAVEN_SNAPSHOT_REPOSITORY_ID: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_ID }}
+  MAVEN_REPOSITORY_USERNAME: ${{ secrets.MAVEN_REPOSITORY_USERNAME }}
+  MAVEN_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_REPOSITORY_PASSWORD }}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: corretto
+          java-version: '8'
+          cache: maven
+          cache-dependency-path: pom.xml
+
+      - name: Download javachanges CLI
+        run: >
+          mvn -B -q org.apache.maven.plugins:maven-dependency-plugin:3.8.1:copy
+          -Dartifact=io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:jar
+          -DoutputDirectory=.tools
+
+      - name: Preflight
+        run: java -jar .tools/javachanges-${JAVACHANGES_VERSION}.jar preflight --directory "$GITHUB_WORKSPACE" --tag "$GITHUB_REF_NAME"
+
+      - name: Write Maven settings
+        run: java -jar .tools/javachanges-${JAVACHANGES_VERSION}.jar write-settings --output .m2/settings.xml
+
+      - name: Publish
+        run: java -jar .tools/javachanges-${JAVACHANGES_VERSION}.jar publish --directory "$GITHUB_WORKSPACE" --tag "$GITHUB_REF_NAME" --execute true
