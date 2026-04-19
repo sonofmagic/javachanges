@@ -167,6 +167,55 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void renderVarsJsonReturnsMachineReadablePayload(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+        Path envDir = repoRoot.resolve("env");
+        Files.createDirectories(envDir);
+        Files.write(envDir.resolve("release.env.local"), envFile().getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = execute(
+            "render-vars",
+            "--directory", repoRoot.toString(),
+            "--env-file", "env/release.env.local",
+            "--platform", "github",
+            "--format", "json"
+        );
+
+        assertEquals(0, result.exitCode);
+        assertTrue(result.stdout.trim().startsWith("{"));
+        assertTrue(result.stdout.contains("\"ok\":true"));
+        assertTrue(result.stdout.contains("\"command\":\"render-vars\""));
+        assertTrue(result.stdout.contains("\"platform\":\"github\""));
+        assertTrue(result.stdout.contains("\"sections\":["));
+        assertFalse(result.stdout.contains("== GitHub Actions Variables =="));
+        assertEquals("", result.stderr);
+    }
+
+    @Test
+    void doctorLocalJsonPrintsOnlyJson(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+        Path envDir = repoRoot.resolve("env");
+        Files.createDirectories(envDir);
+        Files.write(envDir.resolve("release.env.local"), envFile().getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = execute(
+            "doctor-local",
+            "--directory", repoRoot.toString(),
+            "--env-file", "env/release.env.local",
+            "--format", "json"
+        );
+
+        assertNotEquals(0, result.exitCode);
+        assertTrue(result.stdout.trim().startsWith("{"));
+        assertTrue(result.stdout.contains("\"ok\":false"));
+        assertTrue(result.stdout.contains("\"command\":\"doctor-local\""));
+        assertTrue(result.stdout.contains("\"sections\":["));
+        assertTrue(result.stdout.contains("\"error\":\"本机发布环境未就绪\""));
+        assertFalse(result.stdout.contains("== 本机运行时 =="));
+        assertEquals("", result.stderr);
+    }
+
+    @Test
     void resolveMavenCommandPrefersWrapper(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, false);
         Files.write(repoRoot.resolve(ReleaseUtils.mavenWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));

@@ -20,9 +20,12 @@ Use it when you are:
 | `.changesets/release-plan.json` | scripts and CI | preferred machine-readable interface |
 | `.changesets/release-plan.md` | pull request and merge request bodies | human-readable, structure may evolve |
 | `status` stdout | local operators and reviewers | human-oriented, do not parse rigidly |
-| `render-vars` stdout | local operators | human-oriented, do not parse rigidly |
-| `doctor-local` stdout | local operators | human-oriented, do not parse rigidly |
-| `doctor-platform` stdout | local operators | human-oriented, do not parse rigidly |
+| `render-vars` stdout | local operators | human-oriented by default |
+| `render-vars --format json` stdout | scripts and CI | machine-readable JSON contract |
+| `doctor-local` stdout | local operators | human-oriented by default |
+| `doctor-local --format json` stdout | scripts and CI | machine-readable JSON contract |
+| `doctor-platform` stdout | local operators | human-oriented by default |
+| `doctor-platform --format json` stdout | scripts and CI | machine-readable JSON contract |
 | `sync-vars` dry-run stdout | local operators | preview text only, not a stable API |
 | `audit-vars` stdout | local operators | status-oriented text, not a stable API |
 
@@ -216,6 +219,41 @@ Automation guidance:
 - treat this as an operator preview only
 - use the env file itself as the source of truth, not the rendered table text
 
+JSON mode:
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="render-vars --env-file env/release.env.local --platform github --format json"
+```
+
+Current JSON shape:
+
+```json
+{
+  "ok": true,
+  "command": "render-vars",
+  "envFile": "env/release.env.local",
+  "platform": "github",
+  "showSecrets": false,
+  "sections": [
+    {
+      "title": "GitHub Actions Variables",
+      "entries": [
+        {
+          "label": "MAVEN_RELEASE_REPOSITORY_URL",
+          "value": "https://repo.example.com/maven-releases/"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Contract notes:
+
+- stdout contains only the JSON object
+- exit code `0` means the command succeeded
+- `sections[].entries[].label` is the field name and `value` is the rendered value or status word
+
 ## 8. `doctor-local` output
 
 `doctor-local` validates local runtime prerequisites, env completeness, CLI auth, and optional repository identifiers.
@@ -269,6 +307,19 @@ Important current behavior:
 - if the wrapper is absent, it falls back to a system-installed `mvn`
 - failure ends with a human-readable checklist and a thrown error
 
+JSON mode:
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --env-file env/release.env.local --format json"
+```
+
+Current JSON behavior:
+
+- stdout contains only one JSON object
+- exit code `0` means all local checks passed
+- non-zero exit code means at least one required check failed
+- the payload includes `sections`, and may include `suggestions` plus final `error`
+
 ## 9. `doctor-platform` and `audit-vars`
 
 `doctor-platform` validates local env values and authenticated platform access before sync or audit work.
@@ -302,13 +353,21 @@ Current audit result words:
 
 These are operator-facing summaries, not a JSON contract.
 
+`doctor-platform --format json` behaves similarly to `doctor-local --format json`:
+
+- stdout contains only one JSON object
+- exit code `0` means the env and selected platform checks passed
+- non-zero exit code means auth, repo identifiers, or required env values failed validation
+- the payload includes `platform`, `sections`, and optional final `error`
+
 ## 10. Automation recommendations
 
 For CI and scripting:
 
 1. use `plan --apply true` to generate the manifest
 2. read `releaseVersion` and `releaseLevel` through `manifest-field` or `release-plan.json`
-3. use `render-vars`, `doctor-local`, `doctor-platform`, and `audit-vars` only as operator diagnostics
+3. if scripts need structured diagnostics, use `render-vars --format json`, `doctor-local --format json`, or `doctor-platform --format json`
+4. keep using `audit-vars` as an operator-facing diagnostic, not a machine contract
 
 Avoid:
 

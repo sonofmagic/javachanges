@@ -20,9 +20,12 @@
 | `.changesets/release-plan.json` | 脚本和 CI | 优先使用的机器可读接口 |
 | `.changesets/release-plan.md` | Pull Request / Merge Request 正文 | 面向人阅读，结构可能演进 |
 | `status` 标准输出 | 本地操作者和审阅者 | 面向人，不要做刚性解析 |
-| `render-vars` 标准输出 | 本地操作者 | 面向人，不要做刚性解析 |
-| `doctor-local` 标准输出 | 本地操作者 | 面向人，不要做刚性解析 |
-| `doctor-platform` 标准输出 | 本地操作者 | 面向人，不要做刚性解析 |
+| `render-vars` 标准输出 | 本地操作者 | 默认面向人 |
+| `render-vars --format json` 标准输出 | 脚本和 CI | 机器可读 JSON 契约 |
+| `doctor-local` 标准输出 | 本地操作者 | 默认面向人 |
+| `doctor-local --format json` 标准输出 | 脚本和 CI | 机器可读 JSON 契约 |
+| `doctor-platform` 标准输出 | 本地操作者 | 默认面向人 |
+| `doctor-platform --format json` 标准输出 | 脚本和 CI | 机器可读 JSON 契约 |
 | `sync-vars` dry-run 输出 | 本地操作者 | 只是预览文本，不是稳定 API |
 | `audit-vars` 标准输出 | 本地操作者 | 是状态摘要，不是稳定 API |
 
@@ -216,6 +219,41 @@ MAVEN_REPOSITORY_USERNAME                PL****ER
 - 这个输出只是给操作者预览
 - 真正的 source of truth 仍然是 env 文件本身，不是这张终端表格
 
+JSON 模式：
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="render-vars --env-file env/release.env.local --platform github --format json"
+```
+
+当前 JSON 结构：
+
+```json
+{
+  "ok": true,
+  "command": "render-vars",
+  "envFile": "env/release.env.local",
+  "platform": "github",
+  "showSecrets": false,
+  "sections": [
+    {
+      "title": "GitHub Actions Variables",
+      "entries": [
+        {
+          "label": "MAVEN_RELEASE_REPOSITORY_URL",
+          "value": "https://repo.example.com/maven-releases/"
+        }
+      ]
+    }
+  ]
+}
+```
+
+契约说明：
+
+- 标准输出只包含一个 JSON 对象
+- 退出码 `0` 表示命令成功
+- `sections[].entries[].label` 表示字段名，`value` 表示渲染后的值或状态词
+
 ## 8. `doctor-local` 输出
 
 `doctor-local` 会检查本地运行时、env 完整性、平台 CLI 登录状态，以及可选的仓库标识。
@@ -269,6 +307,19 @@ GITLAB_REPO                              NOT_SET
 - 如果仓库里没有 wrapper，会回退到系统安装的 `mvn`
 - 失败时最后会打印一段面向人的处理建议，并抛错退出
 
+JSON 模式：
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --env-file env/release.env.local --format json"
+```
+
+当前 JSON 行为：
+
+- 标准输出只包含一个 JSON 对象
+- 退出码 `0` 表示本地检查全部通过
+- 非 `0` 退出码表示至少一个必需检查失败
+- 返回值会包含 `sections`，失败时还可能包含 `suggestions` 和最终的 `error`
+
 ## 9. `doctor-platform` 和 `audit-vars`
 
 `doctor-platform` 用来在真正 sync 或 audit 之前，确认本地 env 和平台 CLI 鉴权是否已经准备好。
@@ -302,13 +353,21 @@ gh auth status                           FAILED
 
 这些仍然是给操作者看的状态摘要，不是 JSON 契约。
 
+`doctor-platform --format json` 的行为和 `doctor-local --format json` 类似：
+
+- 标准输出只包含一个 JSON 对象
+- 退出码 `0` 表示 env 与所选平台检查通过
+- 非 `0` 退出码表示鉴权、仓库标识或必需 env 值校验失败
+- 返回值会包含 `platform`、`sections`，失败时可能包含最终 `error`
+
 ## 10. 自动化建议
 
 对 CI 和脚本来说：
 
 1. 用 `plan --apply true` 生成 manifest
 2. 用 `manifest-field` 或 `release-plan.json` 读取 `releaseVersion`、`releaseLevel` 这类字段
-3. 把 `render-vars`、`doctor-local`、`doctor-platform`、`audit-vars` 当作诊断输出，而不是脚本输入
+3. 如果脚本需要结构化诊断，使用 `render-vars --format json`、`doctor-local --format json`、`doctor-platform --format json`
+4. `audit-vars` 继续只当作面向人的诊断输出，不作为机器契约
 
 避免这样做：
 

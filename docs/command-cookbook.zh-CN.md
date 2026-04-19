@@ -133,6 +133,15 @@ mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --directory $REPO
 
 等真实仓库变量同步完成后，再执行 `doctor-platform`。
 
+### 5.5 输出给 CI 使用的机器可读诊断信息
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="render-vars --directory $REPO --env-file env/release.env.local --platform github --format json"
+mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --directory $REPO --env-file env/release.env.local --format json"
+```
+
+当 shell 步骤需要结构化诊断信息，而不是解析对齐表格文本时，用这两个命令更合适。
+
 ## 6. Recipe：GitHub Actions release PR 流程
 
 适用于 `main` 持续累积 `.changesets/*.md`，然后由 workflow 自动创建一份可审阅 release PR 的场景。

@@ -160,9 +160,9 @@ Common fields:
 | `write-settings` | Generate a Maven `settings.xml` file |
 | `init-env` | Initialize a local release env file from the example template |
 | `auth-help` | Print platform auth requirements |
-| `render-vars` | Preview GitHub/GitLab variables and secrets |
-| `doctor-local` | Check local release prerequisites |
-| `doctor-platform` | Check remote platform readiness |
+| `render-vars` | Preview GitHub/GitLab variables and secrets, or emit JSON with `--format json` |
+| `doctor-local` | Check local release prerequisites, or emit JSON with `--format json` |
+| `doctor-platform` | Check remote platform readiness, or emit JSON with `--format json` |
 | `sync-vars` | Sync variables to GitHub or GitLab |
 | `audit-vars` | Compare local env values with remote platform state |
 
@@ -171,6 +171,37 @@ Example:
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="render-vars --directory /path/to/repo --env-file env/release.env.local --platform github"
 ```
+
+Structured-output example:
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --directory /path/to/repo --env-file env/release.env.local --format json"
+```
+
+Commands that currently support `--format json`:
+
+| Command | Notes |
+| --- | --- |
+| `render-vars` | Includes `platform` and `showSecrets` in the payload |
+| `doctor-local` | Includes section summaries, suggestions, and final error text on failure |
+| `doctor-platform` | Includes `platform` and section summaries for env and CLI checks |
+
+Common flags for these commands:
+
+| Flag | Used by | Meaning |
+| --- | --- | --- |
+| `--env-file` | all three | input env file path |
+| `--platform` | `render-vars`, `doctor-platform` | `github`, `gitlab`, or `all` |
+| `--show-secrets` | `render-vars` | reveal secret values instead of masking them |
+| `--github-repo` | `doctor-local`, `doctor-platform` | optional GitHub `owner/repo` identifier |
+| `--gitlab-repo` | `doctor-local`, `doctor-platform` | optional GitLab `group/project` identifier |
+| `--format json` | all three | switch stdout from human text to machine-readable JSON |
+
+JSON mode contract:
+
+- stdout contains only one JSON object
+- exit code `0` means success, non-zero means validation failure or execution error
+- top-level fields may include `ok`, `command`, `envFile`, `platform`, `showSecrets`, `sections`, `suggestions`, and `error`
 
 ## 7. Publish Commands
 

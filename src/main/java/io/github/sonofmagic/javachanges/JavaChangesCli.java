@@ -391,6 +391,9 @@ final class JavaChangesCommand implements Runnable {
         @Option(names = "--platform", description = "github, gitlab, or all.")
         private String platform;
 
+        @Option(names = "--format", description = "Output format: text or json.")
+        private String format;
+
         @Option(names = "--show-secrets", arity = "0..1", fallbackValue = "true", defaultValue = "false",
             description = "Show secret values instead of masking them.")
         private boolean showSecrets;
@@ -400,9 +403,18 @@ final class JavaChangesCommand implements Runnable {
             Map<String, String> options = options();
             putOption(options, "env-file", envFile);
             putOption(options, "platform", platform);
+            putOption(options, "format", format);
             putFlag(options, "show-secrets", showSecrets);
-            new ReleaseEnvSupport(repoRoot(), out()).renderVars(PlatformEnvRequest.fromOptions(options));
-            return success();
+            PlatformEnvRequest request = PlatformEnvRequest.fromOptions(options);
+            try {
+                return new ReleaseEnvSupport(repoRoot(), out()).renderVars(request) ? success() : 1;
+            } catch (Exception exception) {
+                if (request.format == OutputFormat.JSON) {
+                    out().println(ReleaseEnvSupport.errorJson("render-vars", exception));
+                    return 1;
+                }
+                throw exception;
+            }
         }
     }
 
@@ -418,14 +430,26 @@ final class JavaChangesCommand implements Runnable {
         @Option(names = "--gitlab-repo", description = "GitLab group/project.")
         private String gitlabRepo;
 
+        @Option(names = "--format", description = "Output format: text or json.")
+        private String format;
+
         @Override
         public Integer call() throws Exception {
             Map<String, String> options = options();
             putOption(options, "env-file", envFile);
             putOption(options, "github-repo", githubRepo);
             putOption(options, "gitlab-repo", gitlabRepo);
-            new ReleaseEnvSupport(repoRoot(), out()).doctorLocal(LocalDoctorRequest.fromOptions(options));
-            return success();
+            putOption(options, "format", format);
+            LocalDoctorRequest request = LocalDoctorRequest.fromOptions(options);
+            try {
+                return new ReleaseEnvSupport(repoRoot(), out()).doctorLocal(request) ? success() : 1;
+            } catch (Exception exception) {
+                if (request.format == OutputFormat.JSON) {
+                    out().println(ReleaseEnvSupport.errorJson("doctor-local", exception));
+                    return 1;
+                }
+                throw exception;
+            }
         }
     }
 
@@ -444,6 +468,9 @@ final class JavaChangesCommand implements Runnable {
         @Option(names = "--gitlab-repo", description = "GitLab group/project.")
         private String gitlabRepo;
 
+        @Option(names = "--format", description = "Output format: text or json.")
+        private String format;
+
         @Override
         public Integer call() throws Exception {
             Map<String, String> options = options();
@@ -451,8 +478,17 @@ final class JavaChangesCommand implements Runnable {
             putOption(options, "platform", platform);
             putOption(options, "github-repo", githubRepo);
             putOption(options, "gitlab-repo", gitlabRepo);
-            new ReleaseEnvSupport(repoRoot(), out()).doctorPlatform(DoctorPlatformRequest.fromOptions(options));
-            return success();
+            putOption(options, "format", format);
+            DoctorPlatformRequest request = DoctorPlatformRequest.fromOptions(options);
+            try {
+                return new ReleaseEnvSupport(repoRoot(), out()).doctorPlatform(request) ? success() : 1;
+            } catch (Exception exception) {
+                if (request.format == OutputFormat.JSON) {
+                    out().println(ReleaseEnvSupport.errorJson("doctor-platform", exception));
+                    return 1;
+                }
+                throw exception;
+            }
         }
     }
 

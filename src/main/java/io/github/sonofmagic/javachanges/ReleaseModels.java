@@ -53,6 +53,30 @@ enum Platform {
     }
 }
 
+enum OutputFormat {
+    TEXT("text"),
+    JSON("json");
+
+    final String id;
+
+    OutputFormat(String id) {
+        this.id = id;
+    }
+
+    static OutputFormat parse(String value, OutputFormat defaultValue) {
+        String normalized = trimToNull(value);
+        if (normalized == null) {
+            return defaultValue;
+        }
+        for (OutputFormat format : values()) {
+            if (format.id.equalsIgnoreCase(normalized)) {
+                return format;
+            }
+        }
+        throw new IllegalArgumentException("不支持的输出格式: " + value + "，可选值: text, json");
+    }
+}
+
 final class InitEnvRequest {
     final String template;
     final String target;
@@ -81,18 +105,21 @@ final class PlatformEnvRequest {
     final String envFile;
     final Platform platform;
     final boolean showSecrets;
+    final OutputFormat format;
 
-    private PlatformEnvRequest(String envFile, Platform platform, boolean showSecrets) {
+    private PlatformEnvRequest(String envFile, Platform platform, boolean showSecrets, OutputFormat format) {
         this.envFile = envFile;
         this.platform = platform;
         this.showSecrets = showSecrets;
+        this.format = format;
     }
 
     static PlatformEnvRequest fromOptions(Map<String, String> options) {
         return new PlatformEnvRequest(
             requiredOption(options, "env-file"),
             platformOption(options),
-            isTrue(options.get("show-secrets"))
+            isTrue(options.get("show-secrets")),
+            OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );
     }
 }
@@ -101,18 +128,21 @@ final class LocalDoctorRequest {
     final String envFile;
     final String githubRepo;
     final String gitlabRepo;
+    final OutputFormat format;
 
-    private LocalDoctorRequest(String envFile, String githubRepo, String gitlabRepo) {
+    private LocalDoctorRequest(String envFile, String githubRepo, String gitlabRepo, OutputFormat format) {
         this.envFile = envFile;
         this.githubRepo = githubRepo;
         this.gitlabRepo = gitlabRepo;
+        this.format = format;
     }
 
     static LocalDoctorRequest fromOptions(Map<String, String> options) {
         return new LocalDoctorRequest(
             trimToNull(options.get("env-file")) == null ? "env/release.env.local" : trimToNull(options.get("env-file")),
             trimToNull(options.get("github-repo")),
-            trimToNull(options.get("gitlab-repo"))
+            trimToNull(options.get("gitlab-repo")),
+            OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );
     }
 }
@@ -122,12 +152,15 @@ final class DoctorPlatformRequest {
     final Platform platform;
     final String githubRepo;
     final String gitlabRepo;
+    final OutputFormat format;
 
-    private DoctorPlatformRequest(String envFile, Platform platform, String githubRepo, String gitlabRepo) {
+    private DoctorPlatformRequest(String envFile, Platform platform, String githubRepo, String gitlabRepo,
+                                  OutputFormat format) {
         this.envFile = envFile;
         this.platform = platform;
         this.githubRepo = githubRepo;
         this.gitlabRepo = gitlabRepo;
+        this.format = format;
     }
 
     static DoctorPlatformRequest fromOptions(Map<String, String> options) {
@@ -135,7 +168,8 @@ final class DoctorPlatformRequest {
             requiredOption(options, "env-file"),
             platformOption(options),
             trimToNull(options.get("github-repo")),
-            trimToNull(options.get("gitlab-repo"))
+            trimToNull(options.get("gitlab-repo")),
+            OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );
     }
 }

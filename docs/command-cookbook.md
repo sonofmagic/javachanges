@@ -133,6 +133,15 @@ mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --directory $REPO
 
 Use `doctor-platform` after syncing real repository variables.
 
+### 5.5 Emit machine-readable diagnostics for CI glue
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="render-vars --directory $REPO --env-file env/release.env.local --platform github --format json"
+mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --directory $REPO --env-file env/release.env.local --format json"
+```
+
+Use these when a shell step needs structured diagnostics instead of parsing aligned terminal columns.
+
 ## 6. Recipe: GitHub Actions release PR flow
 
 Use this when `main` accumulates `.changesets/*.md` files and a workflow should open one reviewed release PR.

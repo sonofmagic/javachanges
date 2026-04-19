@@ -159,9 +159,9 @@ mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /pa
 | `write-settings` | 生成 Maven `settings.xml` |
 | `init-env` | 从示例模板初始化本地 env 文件 |
 | `auth-help` | 输出平台认证要求 |
-| `render-vars` | 预览 GitHub/GitLab 变量与 secrets |
-| `doctor-local` | 检查本地发布环境 |
-| `doctor-platform` | 检查远端平台状态 |
+| `render-vars` | 预览 GitHub/GitLab 变量与 secrets，或通过 `--format json` 输出 JSON |
+| `doctor-local` | 检查本地发布环境，或通过 `--format json` 输出 JSON |
+| `doctor-platform` | 检查远端平台状态，或通过 `--format json` 输出 JSON |
 | `sync-vars` | 把变量同步到 GitHub 或 GitLab |
 | `audit-vars` | 对比本地 env 和远端平台变量 |
 
@@ -170,6 +170,37 @@ mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /pa
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="render-vars --directory /path/to/repo --env-file env/release.env.local --platform github"
 ```
+
+结构化输出示例：
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --directory /path/to/repo --env-file env/release.env.local --format json"
+```
+
+当前支持 `--format json` 的命令：
+
+| 命令 | 说明 |
+| --- | --- |
+| `render-vars` | 返回值里会带上 `platform` 和 `showSecrets` |
+| `doctor-local` | 失败时会包含分组检查结果、建议列表和最终错误信息 |
+| `doctor-platform` | 会带上 `platform` 以及 env / CLI 检查分组 |
+
+这些命令的常用参数：
+
+| 参数 | 适用命令 | 含义 |
+| --- | --- | --- |
+| `--env-file` | 三者都支持 | 输入 env 文件路径 |
+| `--platform` | `render-vars`、`doctor-platform` | `github`、`gitlab` 或 `all` |
+| `--show-secrets` | `render-vars` | 显示原始 secret，而不是打码 |
+| `--github-repo` | `doctor-local`、`doctor-platform` | 可选的 GitHub `owner/repo` 标识 |
+| `--gitlab-repo` | `doctor-local`、`doctor-platform` | 可选的 GitLab `group/project` 标识 |
+| `--format json` | 三者都支持 | 把标准输出从文本切换为机器可读 JSON |
+
+JSON 模式约定：
+
+- 标准输出只包含一个 JSON 对象
+- 退出码为 `0` 表示成功，非 `0` 表示校验失败或命令执行错误
+- 顶层字段可能包含 `ok`、`command`、`envFile`、`platform`、`showSecrets`、`sections`、`suggestions`、`error`
 
 ## 7. 发布命令
 
