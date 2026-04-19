@@ -62,6 +62,7 @@ The tool stays file-centric. It does not require a database or a hosted service.
 - [CLI Reference](./cli-reference.md)
 - [Development Guide](./development-guide.md)
 - [Release Plan Manifest](./release-plan-manifest.md)
+- [Troubleshooting Guide](./troubleshooting-guide.md)
 - [GitHub Actions Release Flow](./github-actions-release.md)
 - [GitHub Actions Usage Guide](./github-actions-guide.md)
 - [GitLab CI/CD Usage Guide](./gitlab-ci-guide.md)

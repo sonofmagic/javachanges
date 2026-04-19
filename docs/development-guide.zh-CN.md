@@ -308,6 +308,28 @@ mvn -q -DskipTests compile exec:java -Dexec.args="help"
 mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/your/repo"
 ```
 
+### 8.5 现在可以直接全局安装成一个命令吗？
+
+这个源码仓库本身还不是“安装后自动得到全局命令”的模式。
+
+当前更稳定的使用方式是：
+
+- 用 `mvn ... exec:java` 直接从源码运行
+- 用 Maven 打 jar，再通过 `java -jar ...` 运行
+- 在已经发布之后，由 CI 从 Maven Central 下载 jar 使用
+
+### 8.6 怎么安全地调试真实发布链路？
+
+建议按这个顺序来：
+
+1. `status`
+2. `plan`
+3. 在一次性测试仓库里执行 `plan --apply true`
+4. `preflight`
+5. 不带 `--execute true` 先执行 `publish`
+
+这样可以在真正 deploy 之前把整个流程观察清楚。
+
 ## 9. 总结
 
 你可以把这个项目理解为“通过 Maven 运行的 Java 命令行工具源码仓库”。
@@ -332,3 +354,4 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/yo
 | Amazon Corretto 8 macOS 安装 | https://docs.aws.amazon.com/corretto/latest/corretto-8-ug/macos-install.html |
 | 项目说明 | [README.md](https://github.com/sonofmagic/javachanges/blob/main/README.md) |
 | 快速开始 | [docs/getting-started.md](./getting-started.md) |
+| 故障排查 | [docs/troubleshooting-guide.md](./troubleshooting-guide.md) |

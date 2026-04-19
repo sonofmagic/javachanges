@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 env:
-  JAVACHANGES_VERSION: 1.1.1
+  JAVACHANGES_VERSION: "REPLACE_WITH_PUBLISHED_VERSION"
 
 jobs:
   build:

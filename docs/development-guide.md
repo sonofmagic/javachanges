@@ -298,6 +298,28 @@ Because this is a Java CLI project, not a long-running frontend or backend servi
 mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/your/repo"
 ```
 
+### 8.5 Can I install `javachanges` as a global command today?
+
+Not from this source repository directly.
+
+Current supported workflows are:
+
+- run from source with `mvn ... exec:java`
+- build the jar with Maven and run `java -jar ...`
+- consume a published jar from Maven Central in CI after a release exists
+
+### 8.6 What is the safest way to test release behavior?
+
+Use this order:
+
+1. `status`
+2. `plan`
+3. `plan --apply true` in a disposable test repository
+4. `preflight`
+5. `publish` without `--execute true`
+
+That lets you inspect the release flow before any real deployment happens.
+
 ## 9. Summary
 
 You can think of this repository as “the source repository of a Java CLI that is run through Maven.”
@@ -322,3 +344,4 @@ Shortest path:
 | Amazon Corretto 8 macOS install | https://docs.aws.amazon.com/corretto/latest/corretto-8-ug/macos-install.html |
 | Project overview | [README.md](https://github.com/sonofmagic/javachanges/blob/main/README.md) |
 | Getting started | [getting-started.md](./getting-started.md) |
+| Troubleshooting | [troubleshooting-guide.md](./troubleshooting-guide.md) |

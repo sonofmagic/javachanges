@@ -67,11 +67,13 @@ Changeset item fields:
 | --- | --- | --- |
 | `file` | string | Original changeset filename |
 | `release` | string | Declared release type for that changeset |
-| `type` | string | Legacy metadata field, often `other` |
+| `type` | string | Legacy compatibility field, often `other`, safe to ignore in new integrations |
 | `summary` | string | User-facing summary derived from the changeset body or legacy frontmatter |
 | `modules` | array | Maven artifactIds affected by that changeset |
 
 > Note: the JSON field is still named `modules` for compatibility with the current implementation, even though the user-facing docs now prefer the term `packages`.
+>
+> Note: if your changeset uses the official package-map format, the manifest may still emit `"type": "other"`. That field is not the release bump. Use `release` as the meaningful release signal.
 
 ## 4. `release-plan.md`
 

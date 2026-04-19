@@ -67,11 +67,13 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo
 | --- | --- | --- |
 | `file` | string | 原始 changeset 文件名 |
 | `release` | string | 这个 changeset 声明的发布类型 |
-| `type` | string | 兼容旧格式保留的元数据字段，常见值是 `other` |
+| `type` | string | 为兼容旧格式保留的字段，常见值是 `other`，新集成里可以忽略 |
 | `summary` | string | 从正文第一行或旧 frontmatter 派生出的用户可见摘要 |
 | `modules` | array | 这个 changeset 影响到的 Maven artifactId |
 
 > **注意**：当前 JSON 字段名仍然叫 `modules`，这是为了兼容现有实现；用户可见文档层面现在更推荐使用 `packages` 这个术语。
+>
+> **注意**：如果你使用的是官方 package-map changeset 格式，manifest 里仍然可能出现 `"type": "other"`。它不是发布级别，真正表示发布升级类型的是 `release`。
 
 ## 4. `release-plan.md`
 

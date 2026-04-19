@@ -19,7 +19,7 @@ default:
       -DoutputDirectory=.tools
 
 variables:
-  JAVACHANGES_VERSION: "1.1.1"
+  JAVACHANGES_VERSION: "REPLACE_WITH_PUBLISHED_VERSION"
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
 
 verify:

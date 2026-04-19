@@ -188,6 +188,8 @@ GitLab 相关辅助：
 - [Development Guide (zh-CN)](docs/development-guide.zh-CN.md)
 - [Release Plan Manifest](docs/release-plan-manifest.md)
 - [Release Plan Manifest 说明（zh-CN）](docs/release-plan-manifest.zh-CN.md)
+- [Troubleshooting Guide](docs/troubleshooting-guide.md)
+- [故障排查指南（zh-CN）](docs/troubleshooting-guide.zh-CN.md)
 - [GitHub Actions Release Flow](docs/github-actions-release.md)
 - [GitHub Actions Release Flow (zh-CN)](docs/github-actions-release.zh-CN.md)
 - [GitHub Actions Usage Guide](docs/github-actions-guide.md)

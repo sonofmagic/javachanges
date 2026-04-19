@@ -55,4 +55,4 @@ The checked-in workflow files assume `javachanges` has been published and can be
 | `.github/workflows/publish.yml` | Run `preflight`, generate `.m2/settings.xml`, and publish |
 | `.gitlab-ci.yml` | Validate, create a release MR, tag from the plan, and publish |
 
-Update `JAVACHANGES_VERSION`, repository URLs, and credentials before copying these templates into a real repository.
+Replace `JAVACHANGES_VERSION`, repository URLs, and credentials before copying these templates into a real repository.

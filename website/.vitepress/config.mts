@@ -36,6 +36,12 @@ const guideItems: DefaultTheme.SidebarItem[] = [
       { text: 'Configuration Reference', link: '/configuration-reference' },
       { text: 'CLI Reference', link: '/cli-reference' },
       { text: 'Release Plan Manifest', link: '/release-plan-manifest' },
+      { text: 'Troubleshooting Guide', link: '/troubleshooting-guide' },
+    ],
+  },
+  {
+    text: 'Operations',
+    items: [
       { text: 'Publish To Maven Central', link: '/publish-to-maven-central' },
     ],
   },
@@ -71,6 +77,12 @@ const zhGuideItems: DefaultTheme.SidebarItem[] = [
       { text: '配置参考大全', link: '/zh-CN/configuration-reference' },
       { text: 'CLI 命令参考', link: '/zh-CN/cli-reference' },
       { text: 'Release Plan Manifest', link: '/zh-CN/release-plan-manifest' },
+      { text: '故障排查指南', link: '/zh-CN/troubleshooting-guide' },
+    ],
+  },
+  {
+    text: '运维',
+    items: [
       { text: '发布到 Maven Central', link: '/zh-CN/publish-to-maven-central' },
     ],
   },

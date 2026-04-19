@@ -55,4 +55,4 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory examples/basi
 | `.github/workflows/publish.yml` | 先执行 `preflight`，再生成 `.m2/settings.xml` 并发布 |
 | `.gitlab-ci.yml` | 校验、创建 release MR、按 plan 打 tag、再发布 |
 
-复制到真实仓库前，请先更新 `JAVACHANGES_VERSION`、仓库地址和认证凭据。
+复制到真实仓库前，请先替换 `JAVACHANGES_VERSION`、仓库地址和认证凭据。
