@@ -46,6 +46,15 @@ mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:1.2.0 -Doutpu
 java -jar .javachanges/javachanges-1.2.0.jar --help
 ```
 
+Run the released package directly as a Maven plugin:
+
+```bash
+mvn io.github.sonofmagic:javachanges:1.2.0:run -Djavachanges.command=status
+mvn io.github.sonofmagic:javachanges:1.2.0:run -Djavachanges.args="plan --apply true"
+```
+
+The plugin defaults `--directory` to the current Maven project's `${project.basedir}`, so if you run it inside the target repository you usually do not need to pass `--directory` explicitly.
+
 Published package:
 
 - Maven Central page: `https://central.sonatype.com/artifact/io.github.sonofmagic/javachanges`
@@ -57,6 +66,22 @@ Run it against a target repository:
 java -jar .javachanges/javachanges-1.2.0.jar status --directory /path/to/your/repo
 java -jar .javachanges/javachanges-1.2.0.jar add --directory /path/to/your/repo
 java -jar .javachanges/javachanges-1.2.0.jar plan --directory /path/to/your/repo
+```
+
+Optional plugin declaration for shorter local usage:
+
+```xml
+<plugin>
+  <groupId>io.github.sonofmagic</groupId>
+  <artifactId>javachanges</artifactId>
+  <version>1.2.0</version>
+</plugin>
+```
+
+Then inside that repository:
+
+```bash
+mvn javachanges:run -Djavachanges.command=status
 ```
 
 If you want to work on this repository itself from source, see [Development Guide](docs/development-guide.md).

@@ -46,6 +46,15 @@ mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:1.2.0 -Doutpu
 java -jar .javachanges/javachanges-1.2.0.jar --help
 ```
 
+也可以直接把正式发布包当作 Maven plugin 使用：
+
+```bash
+mvn io.github.sonofmagic:javachanges:1.2.0:run -Djavachanges.command=status
+mvn io.github.sonofmagic:javachanges:1.2.0:run -Djavachanges.args="plan --apply true"
+```
+
+这个 plugin 会默认把 `--directory` 设成当前 Maven 项目的 `${project.basedir}`，所以如果你就是在目标仓库里执行，通常不需要再手动写 `--directory`。
+
 已发布包地址：
 
 - Maven Central 页面：`https://central.sonatype.com/artifact/io.github.sonofmagic/javachanges`
@@ -57,6 +66,22 @@ java -jar .javachanges/javachanges-1.2.0.jar --help
 java -jar .javachanges/javachanges-1.2.0.jar status --directory /path/to/your/repo
 java -jar .javachanges/javachanges-1.2.0.jar add --directory /path/to/your/repo
 java -jar .javachanges/javachanges-1.2.0.jar plan --directory /path/to/your/repo
+```
+
+如果希望本地调用再短一些，也可以先在目标仓库的 `pom.xml` 里声明 plugin：
+
+```xml
+<plugin>
+  <groupId>io.github.sonofmagic</groupId>
+  <artifactId>javachanges</artifactId>
+  <version>1.2.0</version>
+</plugin>
+```
+
+然后在该仓库里执行：
+
+```bash
+mvn javachanges:run -Djavachanges.command=status
 ```
 
 如果你要开发这个仓库本身，请看 [Development Guide](docs/development-guide.md)。

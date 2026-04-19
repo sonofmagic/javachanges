@@ -14,7 +14,14 @@ Use it when you already understand the release workflow and need to look up:
 
 ## 2. Invocation Pattern
 
-The most common local invocation path is:
+Released-package invocation:
+
+```bash
+mvn io.github.sonofmagic:javachanges:1.2.0:run -Djavachanges.command=status
+mvn io.github.sonofmagic:javachanges:1.2.0:run -Djavachanges.args="plan --apply true"
+```
+
+Source-driven invocation while developing this repository:
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/repo"
@@ -24,9 +31,16 @@ Common parts:
 
 | Part | Meaning |
 | --- | --- |
+| `mvn io.github.sonofmagic:javachanges:1.2.0:run` | Run the released Maven plugin goal |
+| `-Djavachanges.command=status` | Short structured plugin invocation |
+| `-Djavachanges.args="..."` | Pass the raw `javachanges` CLI argument string through the plugin |
 | `mvn -q -DskipTests compile exec:java` | Build the CLI and run the Java entrypoint |
 | `-Dexec.args="..."` | Pass `javachanges` CLI arguments |
 | `--directory /path/to/repo` | Target Maven repository root or a subdirectory inside it |
+
+Plugin note:
+
+- `javachanges:run` injects `--directory ${project.basedir}` automatically unless you already passed `--directory` in `javachanges.args`
 
 > Note: some commands do not require a repository, for example `release-version-from-tag`.
 

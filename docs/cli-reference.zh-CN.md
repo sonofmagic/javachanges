@@ -13,7 +13,14 @@
 
 ## 2. 调用方式
 
-本地最常见的调用方式：
+正式发布包的调用方式：
+
+```bash
+mvn io.github.sonofmagic:javachanges:1.2.0:run -Djavachanges.command=status
+mvn io.github.sonofmagic:javachanges:1.2.0:run -Djavachanges.args="plan --apply true"
+```
+
+开发这个仓库本身时的源码调用方式：
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/repo"
@@ -23,9 +30,16 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/re
 
 | 片段 | 说明 |
 | --- | --- |
+| `mvn io.github.sonofmagic:javachanges:1.2.0:run` | 执行正式发布版的 Maven plugin goal |
+| `-Djavachanges.command=status` | 最短的结构化 plugin 调用 |
+| `-Djavachanges.args="..."` | 通过 plugin 透传原始 `javachanges` CLI 参数 |
 | `mvn -q -DskipTests compile exec:java` | 编译 CLI 并运行 Java 入口 |
 | `-Dexec.args="..."` | 传递 `javachanges` 命令行参数 |
 | `--directory /path/to/repo` | 指定目标 Maven 仓库根目录或其子目录 |
+
+plugin 说明：
+
+- `javachanges:run` 会自动注入 `--directory ${project.basedir}`，除非你已经在 `javachanges.args` 里显式传了 `--directory`
 
 > **注意**：有些命令不依赖仓库，例如 `release-version-from-tag`。
 
