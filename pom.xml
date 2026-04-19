@@ -12,6 +12,12 @@
     <name>javachanges</name>
     <description>Java Changesets for Maven repositories and release-plan workflows.</description>
     <url>https://github.com/sonofmagic/javachanges</url>
+    <inceptionYear>2026</inceptionYear>
+
+    <organization>
+        <name>sonofmagic</name>
+        <url>https://github.com/sonofmagic</url>
+    </organization>
 
     <properties>
         <revision>1.3.0-SNAPSHOT</revision>
@@ -48,10 +54,27 @@
 
     <developers>
         <developer>
+            <id>sonofmagic</id>
             <name>sonofmagic</name>
             <url>https://github.com/sonofmagic</url>
+            <organization>sonofmagic</organization>
+            <organizationUrl>https://github.com/sonofmagic</organizationUrl>
+            <roles>
+                <role>maintainer</role>
+                <role>developer</role>
+            </roles>
         </developer>
     </developers>
+
+    <issueManagement>
+        <system>GitHub Issues</system>
+        <url>https://github.com/sonofmagic/javachanges/issues</url>
+    </issueManagement>
+
+    <ciManagement>
+        <system>GitHub Actions</system>
+        <url>https://github.com/sonofmagic/javachanges/actions</url>
+    </ciManagement>
 
     <scm>
         <connection>scm:git:https://github.com/sonofmagic/javachanges.git</connection>
@@ -233,4 +256,3 @@
         </profile>
     </profiles>
 </project>
-
