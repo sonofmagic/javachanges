@@ -160,6 +160,12 @@ export default defineConfigWithTheme<DefaultTheme.Config>({
   outDir: '../website/dist',
   cleanUrls: true,
   lastUpdated: true,
+  markdown: {
+    theme: {
+      light: 'github-light-high-contrast',
+      dark: 'github-dark-high-contrast',
+    },
+  },
   sitemap: {
     hostname: 'https://javachanges.icebreaker.top',
   },
