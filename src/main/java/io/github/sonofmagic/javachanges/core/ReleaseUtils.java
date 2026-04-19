@@ -1,4 +1,4 @@
-package io.github.sonofmagic.javachanges;
+package io.github.sonofmagic.javachanges.core;
 
 import java.io.IOException;
 import java.io.InputStream;

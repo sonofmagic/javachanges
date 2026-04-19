@@ -1,4 +1,4 @@
-package io.github.sonofmagic.javachanges;
+package io.github.sonofmagic.javachanges.core;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static io.github.sonofmagic.javachanges.ReleaseUtils.*;
+import static io.github.sonofmagic.javachanges.core.ReleaseUtils.*;
 
 final class PublishSupport {
     private final Path repoRoot;

@@ -1,4 +1,4 @@
-package io.github.sonofmagic.javachanges;
+package io.github.sonofmagic.javachanges.core;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -11,7 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static io.github.sonofmagic.javachanges.ReleaseUtils.*;
+import static io.github.sonofmagic.javachanges.core.ReleaseUtils.*;
 
 final class ReleasePlanner {
     private final Path repoRoot;

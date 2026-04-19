@@ -1,4 +1,4 @@
-package io.github.sonofmagic.javachanges;
+package io.github.sonofmagic.javachanges.core;
 
 import java.io.Console;
 import java.io.IOException;
@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
-import static io.github.sonofmagic.javachanges.ReleaseUtils.*;
+import static io.github.sonofmagic.javachanges.core.ReleaseUtils.*;
 
 enum Platform {
     GITHUB("github"),

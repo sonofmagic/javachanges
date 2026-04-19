@@ -1,4 +1,4 @@
-package io.github.sonofmagic.javachanges;
+package io.github.sonofmagic.javachanges.core;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -16,12 +16,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import static io.github.sonofmagic.javachanges.ReleaseUtils.renderVisibleType;
-import static io.github.sonofmagic.javachanges.ReleaseUtils.releaseModuleFromTag;
-import static io.github.sonofmagic.javachanges.ReleaseUtils.releaseVersionFromTag;
-import static io.github.sonofmagic.javachanges.ReleaseUtils.trimToNull;
-import static io.github.sonofmagic.javachanges.ReleaseUtils.moduleSelectorArgs;
-import static io.github.sonofmagic.javachanges.ReleaseUtils.assertKnownModule;
+import static io.github.sonofmagic.javachanges.core.ReleaseUtils.assertKnownModule;
+import static io.github.sonofmagic.javachanges.core.ReleaseUtils.moduleSelectorArgs;
+import static io.github.sonofmagic.javachanges.core.ReleaseUtils.releaseModuleFromTag;
+import static io.github.sonofmagic.javachanges.core.ReleaseUtils.releaseVersionFromTag;
+import static io.github.sonofmagic.javachanges.core.ReleaseUtils.renderVisibleType;
+import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
 
 public final class JavaChangesCli {
 
@@ -35,7 +35,7 @@ public final class JavaChangesCli {
         }
     }
 
-    static int execute(String[] args, PrintStream out, PrintStream err) {
+    public static int execute(String[] args, PrintStream out, PrintStream err) {
         JavaChangesCommand root = new JavaChangesCommand(out, err);
         CommandLine commandLine = new CommandLine(root);
         commandLine.setOut(new PrintWriter(out, true));

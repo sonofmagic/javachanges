@@ -1,5 +1,6 @@
-package io.github.sonofmagic.javachanges;
+package io.github.sonofmagic.javachanges.maven;
 
+import io.github.sonofmagic.javachanges.core.JavaChangesCli;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -28,10 +29,10 @@ abstract class AbstractJavaChangesMojo extends AbstractMojo {
             getLog().info("Skipping javachanges:run");
             return;
         }
-        if (ReleaseUtils.trimToNull(rawArgs) != null) {
+        if (JavaChangesMavenPluginSupport.trimToNull(rawArgs) != null) {
             getLog().info("Running javachanges with javachanges.args");
         } else {
-            String effectiveCommand = ReleaseUtils.trimToNull(command);
+            String effectiveCommand = JavaChangesMavenPluginSupport.trimToNull(command);
             getLog().info("Running javachanges command: " + (effectiveCommand == null ? "status" : effectiveCommand));
         }
         execute(JavaChangesMavenPluginSupport.resolveCliArgs(directoryValue(), command, arguments, rawArgs));

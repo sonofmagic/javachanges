@@ -1,4 +1,4 @@
-package io.github.sonofmagic.javachanges;
+package io.github.sonofmagic.javachanges.core;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;

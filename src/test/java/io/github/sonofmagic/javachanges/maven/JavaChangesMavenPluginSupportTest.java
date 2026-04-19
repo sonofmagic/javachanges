@@ -1,9 +1,13 @@
-package io.github.sonofmagic.javachanges;
+package io.github.sonofmagic.javachanges.maven;
+
+import io.github.sonofmagic.javachanges.core.JavaChangesCli;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -153,7 +157,7 @@ class JavaChangesMavenPluginSupportTest {
             null,
             null
         ));
-        JavaChangesCliTestBridge.ExecutionResult result = JavaChangesCliTestBridge.execute(cliArgs.toArray(new String[0]));
+        ExecutionResult result = execute(cliArgs.toArray(new String[0]));
 
         assertEquals(0, result.exitCode);
         org.junit.jupiter.api.Assertions.assertTrue(result.stdout.contains("plugin invocation works"));
@@ -175,5 +179,32 @@ class JavaChangesMavenPluginSupportTest {
             content.append(new String(bytes, 0, count, StandardCharsets.UTF_8));
         }
         return content.toString();
+    }
+
+    private static ExecutionResult execute(String... args) {
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+        int exitCode = JavaChangesCli.execute(
+            args,
+            new PrintStream(stdout, true),
+            new PrintStream(stderr, true)
+        );
+        return new ExecutionResult(
+            exitCode,
+            new String(stdout.toByteArray(), StandardCharsets.UTF_8),
+            new String(stderr.toByteArray(), StandardCharsets.UTF_8)
+        );
+    }
+
+    private static final class ExecutionResult {
+        private final int exitCode;
+        private final String stdout;
+        private final String stderr;
+
+        private ExecutionResult(int exitCode, String stdout, String stderr) {
+            this.exitCode = exitCode;
+            this.stdout = stdout;
+            this.stderr = stderr;
+        }
     }
 }

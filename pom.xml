@@ -18,7 +18,7 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <exec.mainClass>io.github.sonofmagic.javachanges.JavaChangesCli</exec.mainClass>
+        <exec.mainClass>io.github.sonofmagic.javachanges.core.JavaChangesCli</exec.mainClass>
         <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
         <maven.jar.plugin.version>3.4.2</maven.jar.plugin.version>
         <maven.source.plugin.version>3.3.1</maven.source.plugin.version>

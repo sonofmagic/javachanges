@@ -1,4 +1,4 @@
-package io.github.sonofmagic.javachanges;
+package io.github.sonofmagic.javachanges.maven;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,7 +10,7 @@ final class JavaChangesMavenPluginSupport {
     }
 
     static String[] resolveCliArgs(String directory, String command, String[] arguments, String rawArgs) {
-        if (ReleaseUtils.trimToNull(rawArgs) != null) {
+        if (trimToNull(rawArgs) != null) {
             return resolveRawCliArgs(directory, rawArgs);
         }
         return resolveStructuredCliArgs(directory, command, arguments);
@@ -22,10 +22,10 @@ final class JavaChangesMavenPluginSupport {
 
     static String[] resolveStructuredCliArgs(String directory, String command, String... arguments) {
         List<String> effectiveArgs = new ArrayList<String>();
-        effectiveArgs.add(ReleaseUtils.trimToNull(command) == null ? "status" : command.trim());
+        effectiveArgs.add(trimToNull(command) == null ? "status" : command.trim());
         if (arguments != null) {
             for (String argument : arguments) {
-                String value = ReleaseUtils.trimToNull(argument);
+                String value = trimToNull(argument);
                 if (value != null) {
                     effectiveArgs.add(value);
                 }
@@ -35,7 +35,7 @@ final class JavaChangesMavenPluginSupport {
     }
 
     static List<String> tokenize(String rawArgs) {
-        String value = ReleaseUtils.trimToNull(rawArgs);
+        String value = trimToNull(rawArgs);
         if (value == null) {
             return Collections.emptyList();
         }
@@ -104,7 +104,7 @@ final class JavaChangesMavenPluginSupport {
     }
 
     static void addOption(List<String> args, String optionName, String value) {
-        String trimmed = ReleaseUtils.trimToNull(value);
+        String trimmed = trimToNull(value);
         if (trimmed == null) {
             return;
         }
@@ -120,11 +120,19 @@ final class JavaChangesMavenPluginSupport {
     }
 
     private static String[] prependDirectoryIfMissing(String directory, List<String> effectiveArgs) {
-        String directoryValue = ReleaseUtils.trimToNull(directory);
+        String directoryValue = trimToNull(directory);
         if (directoryValue != null && !containsDirectoryOption(effectiveArgs)) {
             effectiveArgs.add(0, directoryValue);
             effectiveArgs.add(0, "--directory");
         }
         return effectiveArgs.toArray(new String[0]);
+    }
+
+    static String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }
