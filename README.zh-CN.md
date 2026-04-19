@@ -39,19 +39,27 @@
 - 一个带根 `pom.xml` 的 Maven 仓库
 - 根 `pom.xml` 中要么有 `<modules>`，要么是单模块根 artifact
 
-构建 CLI：
+先从 Maven Central 安装正式发布版 CLI：
 
 ```bash
-mvn -q test
+mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:1.2.0 -DoutputDirectory=.javachanges
+java -jar .javachanges/javachanges-1.2.0.jar --help
 ```
+
+已发布包地址：
+
+- Maven Central 页面：`https://central.sonatype.com/artifact/io.github.sonofmagic/javachanges`
+- 直链 jar 地址：`https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/1.2.0/javachanges-1.2.0.jar`
 
 对目标仓库执行：
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/your/repo"
-mvn -q -DskipTests compile exec:java -Dexec.args="add --directory /path/to/your/repo"
-mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/your/repo"
+java -jar .javachanges/javachanges-1.2.0.jar status --directory /path/to/your/repo
+java -jar .javachanges/javachanges-1.2.0.jar add --directory /path/to/your/repo
+java -jar .javachanges/javachanges-1.2.0.jar plan --directory /path/to/your/repo
 ```
+
+如果你要开发这个仓库本身，请看 [Development Guide](docs/development-guide.md)。
 
 ## Changeset 格式
 

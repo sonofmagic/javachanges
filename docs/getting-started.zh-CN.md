@@ -1,10 +1,25 @@
 # 快速开始
 
+## 1. 从 Maven Central 安装
 
-## 1. 构建 CLI
+当前已发布坐标：
+
+- GroupId：`io.github.sonofmagic`
+- ArtifactId：`javachanges`
+- 当前正式版本：`1.2.0`
+- Maven Central 页面：`https://central.sonatype.com/artifact/io.github.sonofmagic/javachanges`
+- 直链 jar 地址：`https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/1.2.0/javachanges-1.2.0.jar`
+
+先把正式发布的 jar 下载到本地：
 
 ```bash
-mvn -q test
+mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:1.2.0 -DoutputDirectory=.javachanges
+```
+
+然后运行 CLI：
+
+```bash
+java -jar .javachanges/javachanges-1.2.0.jar --help
 ```
 
 ## 2. 准备目标仓库
@@ -22,13 +37,13 @@ mvn -q test
 Monorepo 示例：
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="add --directory /path/to/repo --summary 'add release notes command' --release minor --modules core"
+java -jar .javachanges/javachanges-1.2.0.jar add --directory /path/to/repo --summary "add release notes command" --release minor --modules core
 ```
 
 单模块示例：
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="add --directory /path/to/repo --summary 'add release notes command' --release minor"
+java -jar .javachanges/javachanges-1.2.0.jar add --directory /path/to/repo --summary "add release notes command" --release minor
 ```
 
 这个命令会往 `.changesets/` 写入一个 Markdown 文件。
@@ -64,13 +79,13 @@ Improve CLI parsing and release planning.
 ## 4. 查看计划
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo"
+java -jar .javachanges/javachanges-1.2.0.jar plan --directory /path/to/repo
 ```
 
 ## 5. 应用计划
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo --apply true"
+java -jar .javachanges/javachanges-1.2.0.jar plan --directory /path/to/repo --apply true
 ```
 
 应用后会更新：
@@ -79,3 +94,14 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo
 - `CHANGELOG.md`
 - `.changesets/release-plan.json`
 - `.changesets/release-plan.md`
+
+## 6. 以源码方式进入开发模式
+
+如果你是在开发 `javachanges` 这个仓库本身，才使用源码驱动的开发方式：
+
+```bash
+mvn -q test
+mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/your/repo"
+```
+
+完整开发流程请看 [Development Guide](./development-guide.md)。

@@ -39,19 +39,27 @@ Requirements:
 - a Maven repository with a root `pom.xml`
 - either `<modules>` in the root pom, or a single root artifact
 
-Build the CLI:
+Install the released CLI from Maven Central:
 
 ```bash
-mvn -q test
+mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:1.2.0 -DoutputDirectory=.javachanges
+java -jar .javachanges/javachanges-1.2.0.jar --help
 ```
+
+Published package:
+
+- Maven Central page: `https://central.sonatype.com/artifact/io.github.sonofmagic/javachanges`
+- Direct jar URL: `https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/1.2.0/javachanges-1.2.0.jar`
 
 Run it against a target repository:
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/your/repo"
-mvn -q -DskipTests compile exec:java -Dexec.args="add --directory /path/to/your/repo"
-mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/your/repo"
+java -jar .javachanges/javachanges-1.2.0.jar status --directory /path/to/your/repo
+java -jar .javachanges/javachanges-1.2.0.jar add --directory /path/to/your/repo
+java -jar .javachanges/javachanges-1.2.0.jar plan --directory /path/to/your/repo
 ```
+
+If you want to work on this repository itself from source, see [Development Guide](docs/development-guide.md).
 
 ## Changeset Format
 

@@ -208,14 +208,14 @@ mvn -Pcentral-publish \
 <dependency>
   <groupId>io.github.sonofmagic</groupId>
   <artifactId>javachanges</artifactId>
-  <version>1.0.0</version>
+  <version>1.2.0</version>
 </dependency>
 ```
 
 如果你希望直接运行发布产物，也可以验证：
 
 ```bash
-java -jar javachanges-1.0.0.jar
+java -jar javachanges-1.2.0.jar
 ```
 
 ## 11. 常见问题

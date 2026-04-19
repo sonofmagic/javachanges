@@ -202,14 +202,14 @@ You can also verify dependency resolution in a small sample project:
 <dependency>
   <groupId>io.github.sonofmagic</groupId>
   <artifactId>javachanges</artifactId>
-  <version>1.0.0</version>
+  <version>1.2.0</version>
 </dependency>
 ```
 
 And since this project produces an executable jar, you can also test:
 
 ```bash
-java -jar javachanges-1.0.0.jar
+java -jar javachanges-1.2.0.jar
 ```
 
 ## 11. FAQ

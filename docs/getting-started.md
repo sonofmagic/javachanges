@@ -1,10 +1,25 @@
 # Getting Started
 
+## 1. Install from Maven Central
 
-## 1. Build the CLI
+Published coordinates:
+
+- GroupId: `io.github.sonofmagic`
+- ArtifactId: `javachanges`
+- Current release: `1.2.0`
+- Maven Central page: `https://central.sonatype.com/artifact/io.github.sonofmagic/javachanges`
+- Direct jar URL: `https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/1.2.0/javachanges-1.2.0.jar`
+
+Download the released jar:
 
 ```bash
-mvn -q test
+mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:1.2.0 -DoutputDirectory=.javachanges
+```
+
+Run the CLI:
+
+```bash
+java -jar .javachanges/javachanges-1.2.0.jar --help
 ```
 
 ## 2. Prepare a target repository
@@ -22,13 +37,13 @@ Your target repository should have:
 Monorepo example:
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="add --directory /path/to/repo --summary 'add release notes command' --release minor --modules core"
+java -jar .javachanges/javachanges-1.2.0.jar add --directory /path/to/repo --summary "add release notes command" --release minor --modules core
 ```
 
 Single-module example:
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="add --directory /path/to/repo --summary 'add release notes command' --release minor"
+java -jar .javachanges/javachanges-1.2.0.jar add --directory /path/to/repo --summary "add release notes command" --release minor
 ```
 
 This writes a markdown file into `.changesets/`.
@@ -64,13 +79,13 @@ Notes:
 ## 4. Inspect the plan
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo"
+java -jar .javachanges/javachanges-1.2.0.jar plan --directory /path/to/repo
 ```
 
 ## 5. Apply the plan
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo --apply true"
+java -jar .javachanges/javachanges-1.2.0.jar plan --directory /path/to/repo --apply true
 ```
 
 That updates:
@@ -79,3 +94,14 @@ That updates:
 - `CHANGELOG.md`
 - `.changesets/release-plan.json`
 - `.changesets/release-plan.md`
+
+## 6. Running from source during development
+
+If you are working on the `javachanges` repository itself, use the source-driven development flow instead:
+
+```bash
+mvn -q test
+mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/your/repo"
+```
+
+For the full development workflow, see [Development Guide](./development-guide.md).
