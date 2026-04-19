@@ -55,34 +55,56 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/your
 
 ## Changeset 格式
 
-推荐的最短格式只需要 `release` 和 `summary`：
+`javachanges` 现在默认使用与 Node.js Changesets 相同的核心 Markdown 结构：
 
 ```md
 ---
-release: minor
-summary: add GitHub Actions release automation
+"javachanges": minor
 ---
 
-- Add CI, release-plan PR creation, and publish workflows.
+Add GitHub Actions release automation.
 ```
 
-默认值：
-
-- `modules` 默认是 `all`
-- 如果省略 `summary`，`javachanges` 会回退到正文第一条非空行
-- changelog 会按 `release` 分成 `major`、`minor`、`patch`
-
-因此下面这种更短的写法也能工作：
+Monorepo 示例：
 
 ```md
 ---
-release: patch
+"core": minor
+"cli": patch
+---
+
+Improve CLI parsing and release planning.
+```
+
+它的含义是：
+
+- frontmatter 里的每个 key 都是一个 Maven artifactId
+- 每个 value 都是这个模块对应的语义化版本升级级别：`patch`、`minor`、`major`
+- Markdown 正文就是面向用户的变更说明与补充备注
+
+默认行为：
+
+- `javachanges add` 默认会生成这种官方 package-map 风格
+- 如果使用 `--modules all`，会为当前仓库检测到的所有 Maven artifactId 写入对应条目
+- 正文第一条非空行会被复用为 `status`、release PR、changelog 和 release notes 里的 summary
+- changelog 仍然按聚合后的 release level 分成 `major`、`minor`、`patch`
+
+单模块仓库的最短手写格式：
+
+```md
+---
+"javachanges": patch
 ---
 
 Fix Windows path handling in release-notes generation.
 ```
 
-只有在你需要覆盖默认值时，才需要完整格式：
+兼容性说明：
+
+- 旧的 `release` / `modules` / `summary` / `type` frontmatter 格式仍然可以继续读取
+- 新建 changeset 推荐统一使用上面的官方 package-map 风格
+
+旧格式示例：
 
 ```md
 ---
@@ -95,33 +117,29 @@ summary: automate javachanges self-release publishing via GitHub Actions
 
 字段说明：
 
-- `release`
-  必填。决定本次 release plan 的语义化版本升级级别。
+- `"artifactId"`
+  新格式必填。
+  每个 frontmatter key 都是一个 Maven artifactId，通常建议像官方 Changesets 一样加双引号。
+  对于单模块仓库，一般就是根 artifactId。
+  对于 monorepo，则为每个受影响模块写一条。
+- `patch` / `minor` / `major`
+  每个 artifactId 对应的必填值。
+  表示这个模块贡献的语义化版本升级级别。
   可选值：`patch`、`minor`、`major`。
   一般规则：
   `patch` 用于兼容性修复、文档、杂项、CI、小改动。
   `minor` 用于向后兼容的新功能。
   `major` 用于破坏性变更。
-- `summary`
-  可选但强烈建议填写。
-  会显示在 `status` 输出、release PR、changelog 和生成的 release notes 中。
-  建议保持简洁、面向用户、使用动词开头。
-  如果不填，会自动回退到正文第一条非空行。
-- `type`
-  可选。
-  当你希望额外标记 `ci`、`docs`、`fix` 这类信息时，可以填写它。
-  可选值：`feat`、`fix`、`docs`、`build`、`ci`、`test`、`refactor`、`perf`、`chore`、`other`。
-  changelog 的主分组按 `release` 走，不按 `type` 走。
-  如果你不需要这层附加标签，可以直接省略。
-- `modules`
-  可选，默认 `all`。
-  对于 Maven monorepo，可以写成逗号分隔的 artifactId，例如 `core, api`。
-  对于单模块仓库，通常无需填写。
-  只有当你希望 release plan 记录受影响模块时才需要显式写它。
 - body
-  可选，frontmatter 后面的自由 Markdown 正文。
-  第一条非空正文可能会被用作 summary 回退值。
-  在 changelog 渲染时，第一条正文也可能附加到 summary 后面作为补充说明。
+  推荐填写的 Markdown 正文。
+  第一条非空正文会被复用为 summary。
+  后续段落或列表可以继续写迁移说明、发布备注或补充背景。
+- `type`
+  旧格式里的可选元数据字段，仅为兼容历史文件而保留。
+  新文件一般不再推荐使用。
+- `release`、`modules`、`summary`
+  旧版 `javachanges` 使用过的 frontmatter 字段。
+  现阶段仍可兼容解析，但不再推荐用于新 changeset。
 
 ## 仓库结构
 

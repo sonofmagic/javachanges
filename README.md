@@ -55,34 +55,56 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/your
 
 ## Changeset Format
 
-The shortest recommended changeset only needs `release` and `summary`:
+`javachanges` now defaults to the same core markdown shape used by Node.js Changesets:
 
 ```md
 ---
-release: minor
-summary: add GitHub Actions release automation
+"javachanges": minor
 ---
 
-- Add CI, release-plan PR creation, and publish workflows.
+Add GitHub Actions release automation.
 ```
 
-Defaults:
-
-- `modules` defaults to `all`
-- if `summary` is omitted, `javachanges` falls back to the first non-empty body line
-- changelog sections are grouped by `release`: `major`, `minor`, `patch`
-
-That means this shorter form also works:
+Monorepo example:
 
 ```md
 ---
-release: patch
+"core": minor
+"cli": patch
+---
+
+Improve CLI parsing and release planning.
+```
+
+How to read it:
+
+- each frontmatter key is a Maven artifactId
+- each value is the semver bump for that artifact: `patch`, `minor`, `major`
+- the markdown body is the user-facing summary and notes
+
+Defaults and behavior:
+
+- `javachanges add` writes the official package-map style by default
+- if you use `--modules all`, `javachanges` writes all detected Maven artifactIds
+- the first non-empty body line becomes the summary shown in `status`, release PRs, changelogs, and release notes
+- changelog sections are grouped by the aggregated release level: `major`, `minor`, `patch`
+
+The shortest hand-written form for a single-module repository is:
+
+```md
+---
+"javachanges": patch
 ---
 
 Fix Windows path handling in release-notes generation.
 ```
 
-Use the full format only when you need to override the defaults:
+Compatibility:
+
+- the old `release` / `modules` / `summary` / `type` frontmatter format is still accepted when reading existing files
+- new files should use the official package-map style above
+
+Legacy format example:
 
 ```md
 ---
@@ -95,33 +117,29 @@ summary: automate javachanges self-release publishing via GitHub Actions
 
 Field reference:
 
-- `release`
-  Required. Controls the semver bump for the aggregated release plan.
+- `"artifactId"`
+  Required in the new format.
+  Each frontmatter key is a Maven artifactId, usually quoted to match official Changesets style.
+  For single-module repositories, this is typically the root artifactId.
+  For monorepos, add one entry per affected module.
+- `patch` / `minor` / `major`
+  Required value for each artifactId entry.
+  Controls the semver bump contributed by that module.
   Allowed values: `patch`, `minor`, `major`.
   Typical guidance:
   `patch` for backwards-compatible fixes, docs, chores, CI, or small improvements.
   `minor` for backwards-compatible features.
   `major` for breaking changes.
-- `summary`
-  Optional but strongly recommended.
-  Used in `status` output, release PR content, changelog sections, and generated release notes.
-  Keep it short, imperative, and user-facing.
-  If omitted, `javachanges` falls back to the first non-empty body line.
-- `type`
-  Optional.
-  Used as extra classification metadata when you want to distinguish entries such as `ci`, `docs`, or `fix`.
-  Allowed values: `feat`, `fix`, `docs`, `build`, `ci`, `test`, `refactor`, `perf`, `chore`, `other`.
-  Changelog headings are primarily grouped by `release`, not by `type`.
-  If you do not care about this extra label, you can skip it.
-- `modules`
-  Optional. Defaults to `all`.
-  For Maven monorepos, this can be a comma-separated list of artifactIds such as `core, api`.
-  For single-module repositories, you usually do not need to write it.
-  Use it only when you want the release plan to record which Maven modules are affected.
 - body
-  Optional free-form Markdown below the frontmatter.
-  The first non-empty line may be reused as the fallback summary.
-  In changelog rendering, the first body line may appear after the summary to give extra context.
+  Recommended markdown body below the frontmatter.
+  The first non-empty line is reused as the summary.
+  Additional paragraphs or bullets can hold rollout notes, migration details, or context.
+- `type`
+  Legacy optional metadata field, only for backwards compatibility with older `javachanges` files.
+  New files should generally omit it.
+- `release`, `modules`, `summary`
+  Legacy fields from the older `javachanges` format.
+  Still accepted for parsing existing files, but no longer recommended for new changesets.
 
 ## Repository Layout
 

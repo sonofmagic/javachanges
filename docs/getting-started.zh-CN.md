@@ -38,18 +38,29 @@ mvn -q -DskipTests compile exec:java -Dexec.args="add --directory /path/to/repo 
 
 ```md
 ---
-release: patch
-summary: fix release-notes rendering
+"your-artifact-id": patch
 ---
 
-- Explain the change here.
+Fix release-notes rendering.
 ```
 
-默认值：
+Monorepo 示例：
 
-- `modules` 默认 `all`
-- 如果省略 `summary`，会回退到正文第一条非空行
-- changelog 会按 `release` 分成 `major`、`minor`、`patch`
+```md
+---
+"core": minor
+"cli": patch
+---
+
+Improve CLI parsing and release planning.
+```
+
+说明：
+
+- `javachanges add` 默认会生成这种官方 Changesets 风格的 package map
+- 正文第一条非空行会作为 `status`、changelog 和 release notes 使用的 summary
+- 旧的 `release` / `modules` / `summary` frontmatter 仍然可兼容读取，但新文件建议统一写 package map
+- changelog 会按聚合后的 release level 分成 `major`、`minor`、`patch`
 
 ## 4. 查看计划
 

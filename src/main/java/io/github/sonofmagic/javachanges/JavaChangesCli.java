@@ -164,13 +164,14 @@ final class JavaChangesCommand implements Runnable {
         @Option(names = "--release", description = "Release level: patch, minor, or major.")
         private String release;
 
-        @Option(names = "--type", description = "Change type metadata.")
+        @Option(names = "--type",
+            description = "Legacy change type metadata. Accepted for compatibility but not written in the default official-style format.")
         private String type;
 
-        @Option(names = "--modules", description = "Comma-separated Maven artifactIds or all.")
+        @Option(names = "--modules", description = "Comma-separated Maven artifactIds or all. Written as official Changesets package keys.")
         private String modules;
 
-        @Option(names = "--body", description = "Optional Markdown body.")
+        @Option(names = "--body", description = "Optional Markdown body after the summary paragraph.")
         private String body;
 
         @Override

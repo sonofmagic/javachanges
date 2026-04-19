@@ -38,18 +38,29 @@ Shortest hand-written format:
 
 ```md
 ---
-release: patch
-summary: fix release-notes rendering
+"your-artifact-id": patch
 ---
 
-- Explain the change here.
+Fix release-notes rendering.
 ```
 
-Defaults:
+Monorepo example:
 
-- `modules` defaults to `all`
-- `summary` falls back to the first non-empty body line if omitted
-- changelog sections are grouped by `release`: `major`, `minor`, `patch`
+```md
+---
+"core": minor
+"cli": patch
+---
+
+Improve CLI parsing and release planning.
+```
+
+Notes:
+
+- `javachanges add` writes this official Changesets-style package map by default
+- the first non-empty body line becomes the summary used by `status`, changelogs, and release notes
+- legacy `release` / `modules` / `summary` frontmatter is still read for compatibility, but new files should use the package-map form
+- changelog sections are grouped by the aggregated release level: `major`, `minor`, `patch`
 
 ## 4. Inspect the plan
 

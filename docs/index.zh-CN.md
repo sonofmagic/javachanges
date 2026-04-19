@@ -18,7 +18,7 @@ hero:
       link: https://github.com/sonofmagic/javachanges
 features:
   - title: 文件驱动的发布意图
-    details: 用可版本控制的 `.changesets/*.md` 文件记录发布内容，而不是散落在表格、聊天或脚本里。
+    details: 用官方 Changesets 风格的 `.changesets/*.md` package map 记录发布内容，而不是散落在表格、聊天或脚本里。
   - title: 面向 Maven 的工作流
     details: 围绕根 `revision` 规划版本、生成 changelog，并兼容 monorepo 与单模块仓库。
   - title: 易于自动化
@@ -44,7 +44,7 @@ features:
 
 - 把发布意图保存在可版本控制的文件里
 - 在真正发布前先审阅 release plan
-- 从结构化元数据生成 changelog
+- 从兼容 Changesets 的结构化元数据生成 changelog
 - 尽量减少脆弱、难维护的 shell 发布脚本
 
 ## CLI 假设

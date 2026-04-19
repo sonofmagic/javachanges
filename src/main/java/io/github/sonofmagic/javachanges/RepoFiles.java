@@ -62,16 +62,12 @@ final class RepoFiles {
 
         List<String> lines = new ArrayList<String>();
         lines.add("---");
-        lines.add("release: " + input.release.id);
-        lines.add("summary: " + input.summary);
+        for (String module : input.modules) {
+            lines.add("\"" + module + "\": " + input.release.id);
+        }
         lines.add("---");
         lines.add("");
-        if (!input.body.isEmpty()) {
-            lines.addAll(Arrays.asList(input.body.split("\\r?\\n")));
-        } else {
-            lines.add("- Why this change is needed.");
-            lines.add("- Any migration or rollout notes.");
-        }
+        lines.addAll(Arrays.asList(renderChangesetBody(input.summary, input.body).split("\\r?\\n")));
         Files.write(file, lines, StandardCharsets.UTF_8);
         return file;
     }
@@ -148,20 +144,27 @@ final class RepoFiles {
             if (separator <= 0) {
                 throw new IllegalStateException("Invalid changeset line in " + path + ": " + line);
             }
-            String key = line.substring(0, separator).trim();
+            String key = stripWrappingQuotes(line.substring(0, separator).trim());
             String value = line.substring(separator + 1).trim();
             frontmatter.put(key, value);
         }
-
-        String releaseValue = required(frontmatter, "release", path);
-        String typeValue = optional(frontmatter, "type", "other");
-        String modulesValue = optional(frontmatter, "modules", "all");
 
         List<String> bodyLines = new ArrayList<String>();
         for (; index < lines.size(); index++) {
             bodyLines.add(lines.get(index));
         }
         String body = trimTrailingBlankLines(bodyLines);
+
+        if (frontmatter.containsKey("release")) {
+            return parseLegacyChangeset(repoRoot, path, frontmatter, body);
+        }
+        return parseOfficialChangeset(repoRoot, path, frontmatter, body);
+    }
+
+    private static Changeset parseLegacyChangeset(Path repoRoot, Path path, Map<String, String> frontmatter, String body) {
+        String releaseValue = required(frontmatter, "release", path);
+        String typeValue = optional(frontmatter, "type", "other");
+        String modulesValue = optional(frontmatter, "modules", "all");
         String summaryValue = trimToNull(frontmatter.get("summary"));
         if (summaryValue == null) {
             summaryValue = fallbackSummary(path, body);
@@ -174,6 +177,44 @@ final class RepoFiles {
             normalizeType(typeValue),
             parseModules(repoRoot, modulesValue),
             summaryValue,
+            body
+        );
+    }
+
+    private static Changeset parseOfficialChangeset(Path repoRoot, Path path, Map<String, String> frontmatter, String body) {
+        List<String> knownModules = detectKnownModules(repoRoot);
+        List<String> modules = new ArrayList<String>();
+        ReleaseLevel releaseLevel = ReleaseLevel.PATCH;
+        String typeValue = optional(frontmatter, "type", "other");
+
+        for (Map.Entry<String, String> entry : frontmatter.entrySet()) {
+            String key = entry.getKey();
+            if ("type".equals(key)) {
+                continue;
+            }
+            if (!knownModules.contains(key)) {
+                throw new IllegalArgumentException("Unknown module: " + key + ", allowed: " + knownModules);
+            }
+            if (!modules.contains(key)) {
+                modules.add(key);
+            }
+            ReleaseLevel declared = ReleaseLevel.parse(entry.getValue());
+            if (declared.weight > releaseLevel.weight) {
+                releaseLevel = declared;
+            }
+        }
+
+        if (modules.isEmpty()) {
+            throw new IllegalStateException("Missing package release entries in " + path);
+        }
+
+        return new Changeset(
+            path,
+            path.getFileName().toString(),
+            releaseLevel,
+            normalizeType(typeValue),
+            modules,
+            fallbackSummary(path, body),
             body
         );
     }
@@ -242,6 +283,18 @@ final class RepoFiles {
     private static String optional(Map<String, String> frontmatter, String key, String defaultValue) {
         String value = trimToNull(frontmatter.get(key));
         return value == null ? defaultValue : value;
+    }
+
+    private static String renderChangesetBody(String summary, String body) {
+        String normalizedSummary = summary.trim();
+        String normalizedBody = trimToNull(body);
+        if (normalizedBody == null) {
+            return normalizedSummary;
+        }
+        if (normalizedSummary.equals(firstBodyLine(normalizedBody))) {
+            return normalizedBody;
+        }
+        return normalizedSummary + "\n\n" + normalizedBody;
     }
 
     private static String fallbackSummary(Path path, String body) {

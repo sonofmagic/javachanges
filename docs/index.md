@@ -18,7 +18,7 @@ hero:
       link: https://github.com/sonofmagic/javachanges
 features:
   - title: File-based release intent
-    details: Keep release intent in versioned `.changesets/*.md` files instead of ad-hoc spreadsheets or chat messages.
+    details: Keep release intent in versioned `.changesets/*.md` files using an official Changesets-style package map instead of ad-hoc spreadsheets or chat messages.
   - title: Maven-aware workflows
     details: Plan versions from a root `revision`, generate changelogs, and work cleanly with monorepos and single-module repositories.
   - title: Automation-ready
@@ -44,7 +44,7 @@ The tool stays file-centric. It does not require a database or a hosted service.
 
 - Keep release intent in versioned files.
 - Review release plans before publishing.
-- Generate changelogs from structured metadata.
+- Generate changelogs from structured Changesets-compatible metadata.
 - Avoid shell-heavy release logic where possible.
 
 ## What the CLI assumes

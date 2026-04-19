@@ -54,8 +54,10 @@ class JavaChangesCliTest {
         List<Path> files = listChangesetFiles(changesetsDir);
         assertEquals(1, files.size());
         String content = read(files.get(0));
-        assertTrue(content.contains("release: minor"));
-        assertTrue(content.contains("summary: add picocli command parsing"));
+        assertTrue(content.contains("\"fixture-app\": minor"));
+        assertTrue(content.contains("\nadd picocli command parsing\n"));
+        assertFalse(content.contains("release:"));
+        assertFalse(content.contains("summary:"));
         assertFalse(content.contains("type:"));
     }
 
@@ -65,12 +67,10 @@ class JavaChangesCliTest {
         writeChangeset(repoRoot,
             "hide-other-label.md",
             "---\n" +
-                "release: patch\n" +
-                "type: other\n" +
-                "summary: hide the implicit other label\n" +
+                "\"fixture-app\": patch\n" +
                 "---\n" +
                 "\n" +
-                "Body.\n");
+                "hide the implicit other label\n");
 
         ExecutionResult result = execute("status", "--directory", repoRoot.toString());
 
@@ -85,12 +85,10 @@ class JavaChangesCliTest {
         writeChangeset(repoRoot,
             "minor-release.md",
             "---\n" +
-                "release: minor\n" +
-                "type: ci\n" +
-                "summary: automate self release\n" +
+                "\"fixture-app\": minor\n" +
                 "---\n" +
                 "\n" +
-                "Body.\n");
+                "automate self release\n");
 
         ExecutionResult result = execute("plan", "--directory", repoRoot.toString(), "--apply", "true");
 
@@ -102,6 +100,44 @@ class JavaChangesCliTest {
         assertTrue(Files.exists(repoRoot.resolve(".changesets").resolve("release-plan.json")));
         assertTrue(Files.exists(repoRoot.resolve(".changesets").resolve("release-plan.md")));
         assertFalse(Files.exists(repoRoot.resolve(".changesets").resolve("minor-release.md")));
+    }
+
+    @Test
+    void legacyFrontmatterStillWorks(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, true);
+        writeChangeset(repoRoot,
+            "legacy-format.md",
+            "---\n" +
+                "release: patch\n" +
+                "modules: fixture-app\n" +
+                "summary: keep supporting the legacy format\n" +
+                "---\n" +
+                "\n" +
+                "Compatibility body.\n");
+
+        ExecutionResult result = execute("status", "--directory", repoRoot.toString());
+
+        assertEquals(0, result.exitCode);
+        assertTrue(result.stdout.contains("[patch] keep supporting the legacy format"));
+    }
+
+    @Test
+    void officialPackageMapSupportsMultipleModules(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createMonorepo(tempDir, true);
+        writeChangeset(repoRoot,
+            "multi-module.md",
+            "---\n" +
+                "\"core\": minor\n" +
+                "\"cli\": patch\n" +
+                "---\n" +
+                "\n" +
+                "improve multi-module release planning\n");
+
+        ExecutionResult result = execute("status", "--directory", repoRoot.toString());
+
+        assertEquals(0, result.exitCode);
+        assertTrue(result.stdout.contains("Release bump: minor"));
+        assertTrue(result.stdout.contains("[minor] improve multi-module release planning"));
     }
 
     @Test
@@ -136,6 +172,19 @@ class JavaChangesCliTest {
         return repoRoot;
     }
 
+    private static Path createMonorepo(Path tempDir, boolean git) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot.resolve("core"));
+        Files.createDirectories(repoRoot.resolve("cli"));
+        Files.write(repoRoot.resolve("pom.xml"), monorepoPom().getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve("core").resolve("pom.xml"), childModulePom("core").getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve("cli").resolve("pom.xml"), childModulePom("cli").getBytes(StandardCharsets.UTF_8));
+        if (git) {
+            run(repoRoot, "git", "init", "-q");
+        }
+        return repoRoot;
+    }
+
     private static String singleModulePom() {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
             + "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n"
@@ -148,6 +197,41 @@ class JavaChangesCliTest {
             + "    <properties>\n"
             + "        <revision>1.1.1-SNAPSHOT</revision>\n"
             + "    </properties>\n"
+            + "</project>\n";
+    }
+
+    private static String monorepoPom() {
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            + "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n"
+            + "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+            + "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd\">\n"
+            + "    <modelVersion>4.0.0</modelVersion>\n"
+            + "    <groupId>example</groupId>\n"
+            + "    <artifactId>parent</artifactId>\n"
+            + "    <version>${revision}</version>\n"
+            + "    <packaging>pom</packaging>\n"
+            + "    <properties>\n"
+            + "        <revision>1.1.1-SNAPSHOT</revision>\n"
+            + "    </properties>\n"
+            + "    <modules>\n"
+            + "        <module>core</module>\n"
+            + "        <module>cli</module>\n"
+            + "    </modules>\n"
+            + "</project>\n";
+    }
+
+    private static String childModulePom(String artifactId) {
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            + "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n"
+            + "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+            + "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd\">\n"
+            + "    <modelVersion>4.0.0</modelVersion>\n"
+            + "    <parent>\n"
+            + "        <groupId>example</groupId>\n"
+            + "        <artifactId>parent</artifactId>\n"
+            + "        <version>${revision}</version>\n"
+            + "    </parent>\n"
+            + "    <artifactId>" + artifactId + "</artifactId>\n"
             + "</project>\n";
     }
 
