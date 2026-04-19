@@ -178,6 +178,8 @@ GitLab-specific helpers:
 - [Overview (zh-CN)](docs/index.zh-CN.md)
 - [Getting Started](docs/getting-started.md)
 - [Getting Started (zh-CN)](docs/getting-started.zh-CN.md)
+- [Configuration Reference](docs/configuration-reference.md)
+- [Configuration Reference (zh-CN)](docs/configuration-reference.zh-CN.md)
 - [CLI Reference](docs/cli-reference.md)
 - [CLI Reference (zh-CN)](docs/cli-reference.zh-CN.md)
 - [Development Guide](docs/development-guide.md)

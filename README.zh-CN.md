@@ -178,6 +178,8 @@ GitLab 相关辅助：
 - [Overview (zh-CN)](docs/index.zh-CN.md)
 - [Getting Started](docs/getting-started.md)
 - [Getting Started (zh-CN)](docs/getting-started.zh-CN.md)
+- [配置参考大全](docs/configuration-reference.md)
+- [配置参考大全（zh-CN）](docs/configuration-reference.zh-CN.md)
 - [CLI 命令参考](docs/cli-reference.md)
 - [CLI 命令参考（zh-CN）](docs/cli-reference.zh-CN.md)
 - [Development Guide](docs/development-guide.md)

@@ -57,6 +57,7 @@ features:
 ## 指南
 
 - [Getting Started](./getting-started.md)
+- [配置参考大全](./configuration-reference.md)
 - [CLI 命令参考](./cli-reference.md)
 - [Development Guide](./development-guide.md)
 - [Release Plan Manifest 说明](./release-plan-manifest.md)
