@@ -89,7 +89,18 @@ Expected direction:
 | --- | --- | --- |
 | Maven cannot run `exec:java` | dependencies were not built yet, or the build is broken | run `mvn -q test` first |
 
-### 3.3 Example workflow cannot download `javachanges`
+### 3.3 `doctor-local` says `./mvnw` is missing
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| the runtime section shows `./mvnw MISSING` | the target repository does not vendor a Maven wrapper | this is fine if a system `mvn` is available and `Maven command` resolves to `mvn (system)` |
+
+What to check:
+
+- if `Maven command` is `mvn (system)`, the fallback worked
+- if both wrapper and system Maven are unavailable, install Maven or add a wrapper
+
+### 3.4 Example workflow cannot download `javachanges`
 
 | Symptom | Cause | Fix |
 | --- | --- | --- |

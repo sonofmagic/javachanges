@@ -267,6 +267,36 @@ final class ReleaseUtils {
         return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win") ? "mvnw.cmd" : "./mvnw";
     }
 
+    static MavenCommand resolveMavenCommand(Path repoRoot) throws IOException, InterruptedException {
+        return resolveMavenCommand(repoRoot, new MavenCommandProbe() {
+            @Override
+            public boolean fileExists(Path path) {
+                return java.nio.file.Files.exists(path);
+            }
+
+            @Override
+            public boolean commandAvailable(Path workingDirectory, String... command) throws IOException, InterruptedException {
+                ProcessBuilder builder = new ProcessBuilder(Arrays.asList(command));
+                builder.directory(workingDirectory.toFile());
+                Process process = builder.start();
+                closeQuietly(process.getInputStream());
+                closeQuietly(process.getErrorStream());
+                return process.waitFor() == 0;
+            }
+        });
+    }
+
+    static MavenCommand resolveMavenCommand(Path repoRoot, MavenCommandProbe probe) throws IOException, InterruptedException {
+        Path wrapperPath = repoRoot.resolve(mavenWrapperPath());
+        if (probe.fileExists(wrapperPath)) {
+            return new MavenCommand(mavenWrapperPath(), "wrapper");
+        }
+        if (probe.commandAvailable(repoRoot, "mvn", "-q", "-version")) {
+            return new MavenCommand("mvn", "system");
+        }
+        return null;
+    }
+
     static Map<String, Map<String, String>> parseFlatJsonObjects(String json) {
         Map<String, Map<String, String>> result = new HashMap<String, Map<String, String>>();
         Matcher matcher = Pattern.compile("\\{([^{}]*)\\}").matcher(json);
@@ -462,5 +492,25 @@ final class ReleaseUtils {
             inputStream.close();
         } catch (IOException ignored) {
         }
+    }
+}
+
+interface MavenCommandProbe {
+    boolean fileExists(Path path);
+
+    boolean commandAvailable(Path workingDirectory, String... command) throws IOException, InterruptedException;
+}
+
+final class MavenCommand {
+    final String command;
+    final String source;
+
+    MavenCommand(String command, String source) {
+        this.command = command;
+        this.source = source;
+    }
+
+    String versionLabel() {
+        return command + " -q -version";
     }
 }

@@ -89,7 +89,18 @@ mvn -v
 | --- | --- | --- |
 | Maven 无法执行 `exec:java` | 依赖还没准备好，或者项目本身没编过 | 先执行一次 `mvn -q test` |
 
-### 3.3 示例 workflow 无法下载 `javachanges`
+### 3.3 `doctor-local` 提示 `./mvnw` 缺失
+
+| 现象 | 原因 | 修复方式 |
+| --- | --- | --- |
+| 运行时检查里出现 `./mvnw MISSING` | 目标仓库本身没有提交 Maven wrapper | 如果 `Maven command` 已经解析成 `mvn (system)`，这属于正常回退 |
+
+重点看两件事：
+
+- 如果 `Maven command` 是 `mvn (system)`，说明 fallback 已经生效
+- 如果 wrapper 和系统 Maven 都没有，就需要安装 Maven 或补上 wrapper
+
+### 3.4 示例 workflow 无法下载 `javachanges`
 
 | 现象 | 原因 | 修复方式 |
 | --- | --- | --- |

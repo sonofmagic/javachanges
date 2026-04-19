@@ -108,8 +108,13 @@ final class PublishSupport {
             }
         }
 
+        MavenCommand mavenCommand = resolveMavenCommand(repoRoot);
+        if (mavenCommand == null) {
+            throw new IllegalStateException("未找到可用的 Maven 命令，期望仓库内存在 " + mavenWrapperPath() + " 或系统中可用 mvn");
+        }
+
         List<String> command = new ArrayList<String>();
-        command.add(mavenWrapperPath());
+        command.add(mavenCommand.command);
         command.add("--batch-mode");
         command.add("--errors");
         command.add("--show-version");
@@ -136,6 +141,7 @@ final class PublishSupport {
         out.println();
         out.println("== Dry Run 输出 ==");
         out.println("已生成 .m2/settings.xml");
+        out.println("Maven 命令: " + mavenCommand.command + " (" + mavenCommand.source + ")");
         if (localMavenRepo != null) {
             out.println("本地 Maven 仓库: " + localMavenRepo);
         }

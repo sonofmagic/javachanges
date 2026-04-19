@@ -14,6 +14,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JavaChangesCliTest {
@@ -147,6 +148,85 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void doctorLocalFallsBackToSystemMavenWhenWrapperMissing(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+        Path envDir = repoRoot.resolve("env");
+        Files.createDirectories(envDir);
+        Files.write(envDir.resolve("release.env.local"), envFile().getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = execute(
+            "doctor-local",
+            "--directory", repoRoot.toString(),
+            "--env-file", "env/release.env.local"
+        );
+
+        assertNotEquals(0, result.exitCode);
+        assertTrue(result.stdout.matches("(?s).*\\./mvnw\\s+MISSING.*"));
+        assertTrue(result.stdout.matches("(?s).*Maven command\\s+mvn \\(system\\).*"));
+        assertTrue(result.stdout.matches("(?s).*mvn -q -version\\s+OK.*"));
+    }
+
+    @Test
+    void resolveMavenCommandPrefersWrapper(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+        Files.write(repoRoot.resolve(ReleaseUtils.mavenWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+
+        MavenCommand command = ReleaseUtils.resolveMavenCommand(repoRoot, new MavenCommandProbe() {
+            @Override
+            public boolean fileExists(Path path) {
+                return Files.exists(path);
+            }
+
+            @Override
+            public boolean commandAvailable(Path workingDirectory, String... command) {
+                return true;
+            }
+        });
+
+        assertEquals(ReleaseUtils.mavenWrapperPath(), command.command);
+        assertEquals("wrapper", command.source);
+    }
+
+    @Test
+    void resolveMavenCommandFallsBackToSystemMaven(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+
+        MavenCommand command = ReleaseUtils.resolveMavenCommand(repoRoot, new MavenCommandProbe() {
+            @Override
+            public boolean fileExists(Path path) {
+                return false;
+            }
+
+            @Override
+            public boolean commandAvailable(Path workingDirectory, String... command) {
+                return true;
+            }
+        });
+
+        assertEquals("mvn", command.command);
+        assertEquals("system", command.source);
+    }
+
+    @Test
+    void resolveMavenCommandReturnsNullWhenUnavailable(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+
+        MavenCommand command = ReleaseUtils.resolveMavenCommand(repoRoot, new MavenCommandProbe() {
+            @Override
+            public boolean fileExists(Path path) {
+                return false;
+            }
+
+            @Override
+            public boolean commandAvailable(Path workingDirectory, String... command) {
+                return false;
+            }
+        });
+
+        assertNull(command);
+    }
+
+    @Test
     void unknownCommandReturnsNonZero() {
         ExecutionResult result = execute("unknown-command");
 
@@ -239,6 +319,15 @@ class JavaChangesCliTest {
             + "    </parent>\n"
             + "    <artifactId>" + artifactId + "</artifactId>\n"
             + "</project>\n";
+    }
+
+    private static String envFile() {
+        return "MAVEN_RELEASE_REPOSITORY_URL=https://repo.example.com/maven-releases/\n"
+            + "MAVEN_SNAPSHOT_REPOSITORY_URL=https://repo.example.com/maven-snapshots/\n"
+            + "MAVEN_RELEASE_REPOSITORY_ID=maven-releases\n"
+            + "MAVEN_SNAPSHOT_REPOSITORY_ID=maven-snapshots\n"
+            + "MAVEN_REPOSITORY_USERNAME=replace-me\n"
+            + "MAVEN_REPOSITORY_PASSWORD=replace-me\n";
     }
 
     private static void writeChangeset(Path repoRoot, String fileName, String content) throws IOException {

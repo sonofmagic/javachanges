@@ -232,7 +232,9 @@ mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --env-file env/re
 == 本机运行时 ==
 java -version                            OK
 ./mvnw                                   MISSING
-./mvnw -q -version                       SKIPPED
+mvn                                      OK
+Maven command                           mvn (system)
+mvn -q -version                         OK
 
 == 本地 env 文件 ==
 env/release.env.local                    OK
@@ -263,7 +265,8 @@ GITLAB_REPO                              NOT_SET
 
 当前实现里一个重要细节：
 
-- 这里检查的是 `./mvnw`，不是系统安装的 `mvn`
+- 这里会优先使用仓库内的 `./mvnw`
+- 如果仓库里没有 wrapper，会回退到系统安装的 `mvn`
 - 失败时最后会打印一段面向人的处理建议，并抛错退出
 
 ## 9. `doctor-platform` 和 `audit-vars`

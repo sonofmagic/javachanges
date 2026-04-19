@@ -206,8 +206,8 @@ final class ReleaseEnvSupport {
         boolean envPresent = false;
         boolean envNeedsEdit = false;
         boolean javaMissing = false;
-        boolean mvnwMissing = false;
-        boolean mvnwFailed = false;
+        boolean mavenMissing = false;
+        boolean mavenFailed = false;
         boolean ghMissing = false;
         boolean ghAuthFailed = false;
         boolean glabMissing = false;
@@ -223,24 +223,38 @@ final class ReleaseEnvSupport {
         }
 
         Path mvnw = repoRoot.resolve(mavenWrapperPath());
-        if (Files.exists(mvnw)) {
+        boolean wrapperPresent = Files.exists(mvnw);
+        if (wrapperPresent) {
             printStatus(mavenWrapperPath(), "OK");
         } else {
             printStatus(mavenWrapperPath(), "MISSING");
-            mvnwMissing = true;
-            failed = true;
         }
 
-        if (!javaMissing && !mvnwMissing) {
-            if (commandAvailable(mavenWrapperPath(), "-q", "-version")) {
-                printStatus(mavenWrapperPath() + " -q -version", "OK");
+        boolean systemMavenPresent = commandExists("mvn");
+        if (!wrapperPresent) {
+            printStatus("mvn", systemMavenPresent ? "OK" : "MISSING");
+        }
+
+        MavenCommand mavenCommand = resolveMavenCommand(repoRoot);
+        if (mavenCommand == null) {
+            printStatus("Maven command", "MISSING");
+            mavenMissing = true;
+            failed = true;
+        } else {
+            printStatus("Maven command", mavenCommand.command + " (" + mavenCommand.source + ")");
+        }
+
+        if (!javaMissing && mavenCommand != null) {
+            if (commandAvailable(mavenCommand.command, "-q", "-version")) {
+                printStatus(mavenCommand.versionLabel(), "OK");
             } else {
-                printStatus(mavenWrapperPath() + " -q -version", "FAILED");
-                mvnwFailed = true;
+                printStatus(mavenCommand.versionLabel(), "FAILED");
+                mavenFailed = true;
                 failed = true;
             }
         } else {
-            printStatus(mavenWrapperPath() + " -q -version", "SKIPPED");
+            String versionLabel = mavenCommand == null ? "maven -q -version" : mavenCommand.versionLabel();
+            printStatus(versionLabel, "SKIPPED");
         }
 
         out.println();
@@ -336,8 +350,8 @@ final class ReleaseEnvSupport {
         if (envNeedsEdit) {
             out.println("  2. 编辑 env/release.env.local，替换仓库地址、用户名、密码和需要的 token");
         }
-        if (javaMissing || mvnwFailed) {
-            out.println("  3. 安装并配置可用的 Java Runtime，然后重新执行 make readiness");
+        if (javaMissing || mavenMissing || mavenFailed) {
+            out.println("  3. 安装并配置可用的 Java Runtime 与 Maven 命令（优先 ./mvnw，其次系统 mvn），然后重新执行 make readiness");
         }
         if (ghMissing || ghAuthFailed || glabMissing || glabAuthFailed) {
             out.println("  4. 执行 make auth-help，完成 gh / glab 的安装和登录");

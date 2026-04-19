@@ -232,7 +232,9 @@ Current section layout:
 == 本机运行时 ==
 java -version                            OK
 ./mvnw                                   MISSING
-./mvnw -q -version                       SKIPPED
+mvn                                      OK
+Maven command                           mvn (system)
+mvn -q -version                         OK
 
 == 本地 env 文件 ==
 env/release.env.local                    OK
@@ -263,7 +265,8 @@ Current status words:
 
 Important current behavior:
 
-- the implementation currently checks `./mvnw`, not a system-installed `mvn`
+- the implementation prefers `./mvnw` when it exists
+- if the wrapper is absent, it falls back to a system-installed `mvn`
 - failure ends with a human-readable checklist and a thrown error
 
 ## 9. `doctor-platform` and `audit-vars`
