@@ -64,6 +64,7 @@ The tool stays file-centric. It does not require a database or a hosted service.
 - [Release Plan Manifest](./release-plan-manifest.md)
 - [Output Contracts](./output-contracts.md)
 - [Troubleshooting Guide](./troubleshooting-guide.md)
+- [Cloudflare Workers Builds](./cloudflare-workers-builds.md)
 - [GitHub Actions Release Flow](./github-actions-release.md)
 - [GitHub Actions Usage Guide](./github-actions-guide.md)
 - [GitLab CI/CD Usage Guide](./gitlab-ci-guide.md)

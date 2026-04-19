@@ -147,6 +147,7 @@ Field reference:
 - `docs/`: public documentation pages
 - `examples/basic-monorepo/`: a minimal example target repository with CI templates and generated release-plan snapshots
 - `website/`: the VitePress site published as static assets with Workers + Wrangler
+- Cloudflare can connect this repository directly through Workers Builds, so GitHub does not need a dedicated docs deploy workflow
 - `env/release.env.example`: a generic env template for release automation
 
 ## Commands
@@ -194,6 +195,8 @@ GitLab-specific helpers:
 - [Release Plan Manifest (zh-CN)](docs/release-plan-manifest.zh-CN.md)
 - [Troubleshooting Guide](docs/troubleshooting-guide.md)
 - [Troubleshooting Guide (zh-CN)](docs/troubleshooting-guide.zh-CN.md)
+- [Cloudflare Workers Builds](docs/cloudflare-workers-builds.md)
+- [Cloudflare Workers Builds (zh-CN)](docs/cloudflare-workers-builds.zh-CN.md)
 - [GitHub Actions Release Flow](docs/github-actions-release.md)
 - [GitHub Actions Release Flow (zh-CN)](docs/github-actions-release.zh-CN.md)
 - [GitHub Actions Usage Guide](docs/github-actions-guide.md)

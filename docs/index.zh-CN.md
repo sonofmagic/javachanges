@@ -64,6 +64,7 @@ features:
 - [Release Plan Manifest 说明](./release-plan-manifest.md)
 - [输出契约说明](./output-contracts.md)
 - [故障排查指南](./troubleshooting-guide.md)
+- [Cloudflare Workers Builds 配置指南](./cloudflare-workers-builds.md)
 - [GitHub Actions Release Flow](./github-actions-release.md)
 - [GitHub Actions Usage Guide](./github-actions-guide.md)
 - [GitLab CI/CD Usage Guide](./gitlab-ci-guide.md)

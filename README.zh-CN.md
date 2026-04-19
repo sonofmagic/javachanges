@@ -147,6 +147,7 @@ summary: automate javachanges self-release publishing via GitHub Actions
 - `docs/`: 文档
 - `examples/basic-monorepo/`: 带 CI 模板和 release-plan 快照的最小 Maven 目标仓库示例
 - `website/`: 使用 Workers + Wrangler 部署静态资源的 VitePress 文档站
+- Cloudflare 可以直接通过 Workers Builds 连接这个仓库，因此 GitHub 不再需要单独负责 docs 部署的 workflow
 - `env/release.env.example`: 通用发布环境变量模板
 
 ## 命令
@@ -194,6 +195,8 @@ GitLab 相关辅助：
 - [Release Plan Manifest 说明（zh-CN）](docs/release-plan-manifest.zh-CN.md)
 - [Troubleshooting Guide](docs/troubleshooting-guide.md)
 - [故障排查指南（zh-CN）](docs/troubleshooting-guide.zh-CN.md)
+- [Cloudflare Workers Builds](docs/cloudflare-workers-builds.md)
+- [Cloudflare Workers Builds 配置指南（zh-CN）](docs/cloudflare-workers-builds.zh-CN.md)
 - [GitHub Actions Release Flow](docs/github-actions-release.md)
 - [GitHub Actions Release Flow (zh-CN)](docs/github-actions-release.zh-CN.md)
 - [GitHub Actions Usage Guide](docs/github-actions-guide.md)

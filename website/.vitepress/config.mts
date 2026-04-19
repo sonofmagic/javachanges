@@ -44,6 +44,7 @@ const guideItems: DefaultTheme.SidebarItem[] = [
   {
     text: 'Operations',
     items: [
+      { text: 'Cloudflare Workers Builds', link: '/cloudflare-workers-builds' },
       { text: 'Publish To Maven Central', link: '/publish-to-maven-central' },
     ],
   },
@@ -87,6 +88,7 @@ const zhGuideItems: DefaultTheme.SidebarItem[] = [
   {
     text: '运维',
     items: [
+      { text: 'Cloudflare Workers Builds 配置指南', link: '/zh-CN/cloudflare-workers-builds' },
       { text: '发布到 Maven Central', link: '/zh-CN/publish-to-maven-central' },
     ],
   },
