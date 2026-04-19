@@ -1,44 +1,78 @@
 # Getting Started
 
-## 1. Install from Maven Central
+## 1. Recommended: use the Maven plugin inside the target repository
 
 Published coordinates:
 
 - GroupId: `io.github.sonofmagic`
 - ArtifactId: `javachanges`
-- Current release: `1.2.0`
-- Maven Central page: `https://central.sonatype.com/artifact/io.github.sonofmagic/javachanges`
-- Direct jar URL: `https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/1.2.0/javachanges-1.2.0.jar`
+- Current release: `__JAVACHANGES_LATEST_RELEASE_VERSION__`
+- Maven Central page: `__JAVACHANGES_CENTRAL_OVERVIEW_URL__`
+- Direct jar URL: `https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/__JAVACHANGES_LATEST_RELEASE_VERSION__/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar`
+
+Add the plugin to the target repository `pom.xml`:
+
+```xml
+<plugin>
+  <groupId>io.github.sonofmagic</groupId>
+  <artifactId>javachanges</artifactId>
+  <version>__JAVACHANGES_LATEST_RELEASE_VERSION__</version>
+</plugin>
+```
+
+Then inside that repository, use the shortest local form:
+
+```bash
+mvn javachanges:status
+mvn javachanges:plan -Djavachanges.apply=true
+mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn javachanges:manifest-field -Djavachanges.field=releaseVersion
+```
+
+Notes:
+
+- this is the recommended day-to-day usage for target repositories
+- the plugin defaults `--directory` to the current Maven project's `${project.basedir}`
+- the generic `run` goal still exists for commands that do not have a dedicated goal yet
+
+## 2. Alternative: run the released jar directly
 
 Download the released jar:
 
 ```bash
-mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:1.2.0 -DoutputDirectory=.javachanges
+mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__ -DoutputDirectory=.javachanges
 ```
 
 Run the CLI:
 
 ```bash
-java -jar .javachanges/javachanges-1.2.0.jar --help
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar --help
 ```
 
-On the current `main` branch, after installing the snapshot locally, you can also run the package as a Maven plugin:
+Run it against a target repository:
+
+```bash
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar status --directory /path/to/repo
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar add --directory /path/to/repo --summary "add release notes command" --release minor
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar plan --directory /path/to/repo
+```
+
+## 3. Working on the current `main` branch
 
 ```bash
 mvn -q -DskipTests install
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:status
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:plan -Djavachanges.apply=true
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
+mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:status
+mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:plan -Djavachanges.apply=true
+mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:manifest-field -Djavachanges.field=releaseVersion
 ```
 
 Notes:
 
 - dedicated goals now exist for `status`, `plan`, `add`, and `manifest-field`
-- `javachanges:run` still exists and defaults `--directory` to `${project.basedir}`
-- `-Djavachanges.args="..."` is still available when you need the full raw CLI shape
+- `javachanges:run` is still available with `-Djavachanges.args="..."`
 
-## 2. Prepare a target repository
+## 4. Prepare a target repository
 
 Your target repository should have:
 
@@ -48,18 +82,18 @@ Your target repository should have:
 - a `CHANGELOG.md` file, or let `javachanges` create/update it during plan application
 - either `<modules>` in the root pom, or a single root artifact
 
-## 3. Create a changeset
+## 5. Create a changeset
 
 Monorepo example:
 
 ```bash
-java -jar .javachanges/javachanges-1.2.0.jar add --directory /path/to/repo --summary "add release notes command" --release minor --modules core
+mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor -Djavachanges.modules=core
 ```
 
 Single-module example:
 
 ```bash
-java -jar .javachanges/javachanges-1.2.0.jar add --directory /path/to/repo --summary "add release notes command" --release minor
+mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
 ```
 
 This writes a markdown file into `.changesets/`.
@@ -92,16 +126,16 @@ Notes:
 - legacy `release` / `modules` / `summary` frontmatter is still read for compatibility, but new files should use the package-map form
 - changelog sections are grouped by the aggregated release level: `major`, `minor`, `patch`
 
-## 4. Inspect the plan
+## 6. Inspect the plan
 
 ```bash
-java -jar .javachanges/javachanges-1.2.0.jar plan --directory /path/to/repo
+mvn javachanges:plan
 ```
 
-## 5. Apply the plan
+## 7. Apply the plan
 
 ```bash
-java -jar .javachanges/javachanges-1.2.0.jar plan --directory /path/to/repo --apply true
+mvn javachanges:plan -Djavachanges.apply=true
 ```
 
 That updates:
@@ -111,7 +145,7 @@ That updates:
 - `.changesets/release-plan.json`
 - `.changesets/release-plan.md`
 
-## 6. Running from source during development
+## 8. Running from source during development
 
 If you are working on the `javachanges` repository itself, use the source-driven development flow instead:
 

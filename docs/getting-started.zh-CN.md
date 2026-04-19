@@ -1,44 +1,78 @@
 # 快速开始
 
-## 1. 从 Maven Central 安装
+## 1. 推荐用法：在目标仓库里直接用 Maven plugin
 
 当前已发布坐标：
 
 - GroupId：`io.github.sonofmagic`
 - ArtifactId：`javachanges`
-- 当前正式版本：`1.2.0`
-- Maven Central 页面：`https://central.sonatype.com/artifact/io.github.sonofmagic/javachanges`
-- 直链 jar 地址：`https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/1.2.0/javachanges-1.2.0.jar`
+- 当前正式版本：`__JAVACHANGES_LATEST_RELEASE_VERSION__`
+- Maven Central 页面：`__JAVACHANGES_CENTRAL_OVERVIEW_URL__`
+- 直链 jar 地址：`https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/__JAVACHANGES_LATEST_RELEASE_VERSION__/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar`
+
+先在目标仓库的 `pom.xml` 里声明 plugin：
+
+```xml
+<plugin>
+  <groupId>io.github.sonofmagic</groupId>
+  <artifactId>javachanges</artifactId>
+  <version>__JAVACHANGES_LATEST_RELEASE_VERSION__</version>
+</plugin>
+```
+
+然后直接在该仓库里执行最短写法：
+
+```bash
+mvn javachanges:status
+mvn javachanges:plan -Djavachanges.apply=true
+mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn javachanges:manifest-field -Djavachanges.field=releaseVersion
+```
+
+说明：
+
+- 这是目标仓库里最推荐的日常用法
+- plugin 会默认把 `--directory` 设成当前 Maven 项目的 `${project.basedir}`
+- 对还没有独立 goal 的命令，仍然可以继续使用通用的 `run` goal
+
+## 2. 备选用法：直接运行发布版 jar
 
 先把正式发布的 jar 下载到本地：
 
 ```bash
-mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:1.2.0 -DoutputDirectory=.javachanges
+mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__ -DoutputDirectory=.javachanges
 ```
 
 然后运行 CLI：
 
 ```bash
-java -jar .javachanges/javachanges-1.2.0.jar --help
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar --help
 ```
 
-在当前 `main` 分支上，如果你先把 SNAPSHOT 安装到本地，也可以把它直接当作 Maven plugin 使用：
+对目标仓库执行：
+
+```bash
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar status --directory /path/to/repo
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar add --directory /path/to/repo --summary "add release notes command" --release minor
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar plan --directory /path/to/repo
+```
+
+## 3. 开发当前 `main` 分支时的 plugin 用法
 
 ```bash
 mvn -q -DskipTests install
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:status
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:plan -Djavachanges.apply=true
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
+mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:status
+mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:plan -Djavachanges.apply=true
+mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:manifest-field -Djavachanges.field=releaseVersion
 ```
 
 说明：
 
 - 现在 `status`、`plan`、`add`、`manifest-field` 都有独立 goal
-- `javachanges:run` 仍然保留，并且会默认把 `--directory` 设成 `${project.basedir}`
-- `-Djavachanges.args="..."` 适合你需要完整传递原始 CLI 参数时使用
+- `javachanges:run` 仍然保留，适合配合 `-Djavachanges.args="..."` 传递完整原始参数
 
-## 2. 准备目标仓库
+## 4. 准备目标仓库
 
 你的目标仓库至少需要满足：
 
@@ -48,18 +82,18 @@ mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:manifest-field -Djavachanges
 - 有 `CHANGELOG.md`，或者让 `javachanges` 在应用 release plan 时自动创建/更新
 - 根 `pom.xml` 中要么有 `<modules>`，要么是单模块根 artifact
 
-## 3. 创建 changeset
+## 5. 创建 changeset
 
 Monorepo 示例：
 
 ```bash
-java -jar .javachanges/javachanges-1.2.0.jar add --directory /path/to/repo --summary "add release notes command" --release minor --modules core
+mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor -Djavachanges.modules=core
 ```
 
 单模块示例：
 
 ```bash
-java -jar .javachanges/javachanges-1.2.0.jar add --directory /path/to/repo --summary "add release notes command" --release minor
+mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
 ```
 
 这个命令会往 `.changesets/` 写入一个 Markdown 文件。
@@ -92,16 +126,16 @@ Improve CLI parsing and release planning.
 - 旧的 `release` / `modules` / `summary` frontmatter 仍然可兼容读取，但新文件建议统一写 package map
 - changelog 会按聚合后的 release level 分成 `major`、`minor`、`patch`
 
-## 4. 查看计划
+## 6. 查看计划
 
 ```bash
-java -jar .javachanges/javachanges-1.2.0.jar plan --directory /path/to/repo
+mvn javachanges:plan
 ```
 
-## 5. 应用计划
+## 7. 应用计划
 
 ```bash
-java -jar .javachanges/javachanges-1.2.0.jar plan --directory /path/to/repo --apply true
+mvn javachanges:plan -Djavachanges.apply=true
 ```
 
 应用后会更新：
@@ -111,7 +145,7 @@ java -jar .javachanges/javachanges-1.2.0.jar plan --directory /path/to/repo --ap
 - `.changesets/release-plan.json`
 - `.changesets/release-plan.md`
 
-## 6. 以源码方式进入开发模式
+## 8. 以源码方式进入开发模式
 
 如果你是在开发 `javachanges` 这个仓库本身，才使用源码驱动的开发方式：
 

@@ -1,4 +1,4 @@
-import { readdirSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfigWithTheme } from 'vitepress'
@@ -6,7 +6,85 @@ import type { DefaultTheme } from 'vitepress'
 
 const repoUrl = 'https://github.com/sonofmagic/javachanges'
 const docsDir = resolve(fileURLToPath(new URL('../../docs', import.meta.url)))
+const pomPath = resolve(fileURLToPath(new URL('../../pom.xml', import.meta.url)))
 const docsFiles = readdirSync(docsDir).filter((file) => file.endsWith('.md'))
+const packageCoordinates = {
+  groupId: 'io.github.sonofmagic',
+  artifactId: 'javachanges',
+}
+const docsReleaseVersionOverride = process.env.JAVACHANGES_DOCS_RELEASE_VERSION?.trim()
+const docsSnapshotVersionOverride = process.env.JAVACHANGES_DOCS_SNAPSHOT_VERSION?.trim()
+const fallbackLatestReleaseVersion = '1.2.0'
+const centralOverviewUrl = `https://central.sonatype.com/artifact/${packageCoordinates.groupId}/${packageCoordinates.artifactId}/overview`
+
+function extractPomRevision(xml: string): string {
+  const revisionMatch = xml.match(/<revision>([^<]+)<\/revision>/)
+
+  if (!revisionMatch?.[1]) {
+    throw new Error('Unable to resolve <revision> from pom.xml')
+  }
+
+  return revisionMatch[1].trim()
+}
+
+async function resolveLatestReleaseVersion(): Promise<string> {
+  if (docsReleaseVersionOverride) {
+    return docsReleaseVersionOverride
+  }
+
+  try {
+    const response = await fetch(
+      `https://search.maven.org/solrsearch/select?q=g:%22${packageCoordinates.groupId}%22+AND+a:%22${packageCoordinates.artifactId}%22&rows=1&wt=json`,
+      {
+        headers: {
+          accept: 'application/json',
+        },
+      },
+    )
+
+    if (!response.ok) {
+      throw new Error(`search.maven.org returned ${response.status}`)
+    }
+
+    const payload = await response.json() as {
+      response?: {
+        docs?: Array<{
+          latestVersion?: string
+        }>
+      }
+    }
+    const latestVersion = payload.response?.docs?.[0]?.latestVersion?.trim()
+
+    if (!latestVersion) {
+      throw new Error('search.maven.org response did not include latestVersion')
+    }
+
+    return latestVersion
+  }
+  catch (error) {
+    const reason = error instanceof Error ? error.message : String(error)
+    console.warn(
+      `[docs] Failed to resolve latest javachanges release from Maven Central search API (${reason}). Falling back to ${fallbackLatestReleaseVersion}.`,
+    )
+    return fallbackLatestReleaseVersion
+  }
+}
+
+function replaceDocVersionTokens(source: string, versions: {
+  latestReleaseVersion: string
+  currentSnapshotVersion: string
+}): string {
+  return source
+    .replaceAll('__JAVACHANGES_LATEST_RELEASE_VERSION__', versions.latestReleaseVersion)
+    .replaceAll('__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__', versions.currentSnapshotVersion)
+    .replaceAll('__JAVACHANGES_CENTRAL_OVERVIEW_URL__', centralOverviewUrl)
+}
+
+const pomRevision = docsSnapshotVersionOverride || extractPomRevision(readFileSync(pomPath, 'utf8'))
+const docsVersions = {
+  latestReleaseVersion: await resolveLatestReleaseVersion(),
+  currentSnapshotVersion: pomRevision,
+}
 
 const zhRewrites = Object.fromEntries(
   docsFiles
@@ -164,6 +242,13 @@ export default defineConfigWithTheme<DefaultTheme.Config>({
     theme: {
       light: 'github-light-high-contrast',
       dark: 'github-dark-high-contrast',
+    },
+    config(md) {
+      const render = md.render.bind(md)
+      const renderInline = md.renderInline.bind(md)
+
+      md.render = (src, env) => render(replaceDocVersionTokens(src, docsVersions), env)
+      md.renderInline = (src, env) => renderInline(replaceDocVersionTokens(src, docsVersions), env)
     },
   },
   sitemap: {
