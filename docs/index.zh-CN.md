@@ -57,7 +57,9 @@ features:
 ## 指南
 
 - [Getting Started](./getting-started.md)
+- [CLI 命令参考](./cli-reference.md)
 - [Development Guide](./development-guide.md)
+- [Release Plan Manifest 说明](./release-plan-manifest.md)
 - [GitHub Actions Release Flow](./github-actions-release.md)
 - [GitHub Actions Usage Guide](./github-actions-guide.md)
 - [GitLab CI/CD Usage Guide](./gitlab-ci-guide.md)

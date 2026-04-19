@@ -129,7 +129,7 @@ mvn -q test
 | 下载依赖 | 初始化本地 Maven 缓存 |
 | 编译项目 | 确认源码可正常构建 |
 
-> **说明**：当前仓库没有看到 `src/test/java`，所以这里的 `mvn test` 主要用于执行一次完整的 Maven 构建校验。
+> **说明**：当前仓库已经包含面向 CLI 的单元测试，因此 `mvn test` 现在既会验证编译，也会验证命令行为。
 
 ### 4.3 安装到本地 Maven 仓库（可选）
 
@@ -196,6 +196,18 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/yo
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="add --directory /path/to/your/repo --summary 'add release notes command' --release minor"
 ```
+
+这条命令现在默认会写出官方 Changesets 风格的文件，例如：
+
+````md
+```md
+---
+"your-artifact-id": minor
+---
+
+add release notes command
+```
+````
 
 ### 6.3 生成发布计划
 

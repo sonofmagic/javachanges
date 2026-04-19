@@ -15,25 +15,59 @@ const zhRewrites = Object.fromEntries(
 )
 
 const guideItems: DefaultTheme.SidebarItem[] = [
-  { text: 'Overview', link: '/' },
-  { text: 'Getting Started', link: '/getting-started' },
-  { text: 'Development Guide', link: '/development-guide' },
-  { text: 'GitHub Actions Release Flow', link: '/github-actions-release' },
-  { text: 'GitHub Actions Usage Guide', link: '/github-actions-guide' },
-  { text: 'GitLab CI/CD Usage Guide', link: '/gitlab-ci-guide' },
-  { text: 'Publish To Maven Central', link: '/publish-to-maven-central' },
-  { text: 'Use Cases', link: '/use-cases' },
+  {
+    text: 'Essentials',
+    items: [
+      { text: 'Overview', link: '/' },
+      { text: 'Getting Started', link: '/getting-started' },
+      { text: 'Development Guide', link: '/development-guide' },
+      { text: 'Use Cases', link: '/use-cases' },
+    ],
+  },
+  {
+    text: 'Reference',
+    items: [
+      { text: 'CLI Reference', link: '/cli-reference' },
+      { text: 'Release Plan Manifest', link: '/release-plan-manifest' },
+      { text: 'Publish To Maven Central', link: '/publish-to-maven-central' },
+    ],
+  },
+  {
+    text: 'Automation',
+    items: [
+      { text: 'GitHub Actions Release Flow', link: '/github-actions-release' },
+      { text: 'GitHub Actions Usage Guide', link: '/github-actions-guide' },
+      { text: 'GitLab CI/CD Usage Guide', link: '/gitlab-ci-guide' },
+    ],
+  },
 ]
 
 const zhGuideItems: DefaultTheme.SidebarItem[] = [
-  { text: '概览', link: '/zh-CN/' },
-  { text: '快速开始', link: '/zh-CN/getting-started' },
-  { text: '开发指南', link: '/zh-CN/development-guide' },
-  { text: 'GitHub Actions 发布流程', link: '/zh-CN/github-actions-release' },
-  { text: 'GitHub Actions 使用指南', link: '/zh-CN/github-actions-guide' },
-  { text: 'GitLab CI/CD 使用指南', link: '/zh-CN/gitlab-ci-guide' },
-  { text: '发布到 Maven Central', link: '/zh-CN/publish-to-maven-central' },
-  { text: '使用场景', link: '/zh-CN/use-cases' },
+  {
+    text: '基础',
+    items: [
+      { text: '概览', link: '/zh-CN/' },
+      { text: '快速开始', link: '/zh-CN/getting-started' },
+      { text: '开发指南', link: '/zh-CN/development-guide' },
+      { text: '使用场景', link: '/zh-CN/use-cases' },
+    ],
+  },
+  {
+    text: '参考',
+    items: [
+      { text: 'CLI 命令参考', link: '/zh-CN/cli-reference' },
+      { text: 'Release Plan Manifest', link: '/zh-CN/release-plan-manifest' },
+      { text: '发布到 Maven Central', link: '/zh-CN/publish-to-maven-central' },
+    ],
+  },
+  {
+    text: '自动化',
+    items: [
+      { text: 'GitHub Actions 发布流程', link: '/zh-CN/github-actions-release' },
+      { text: 'GitHub Actions 使用指南', link: '/zh-CN/github-actions-guide' },
+      { text: 'GitLab CI/CD 使用指南', link: '/zh-CN/gitlab-ci-guide' },
+    ],
+  },
 ]
 
 const rootThemeConfig: DefaultTheme.Config = {
@@ -46,12 +80,7 @@ const rootThemeConfig: DefaultTheme.Config = {
     { text: 'Docs', link: '/getting-started' },
     { text: 'GitHub', link: repoUrl },
   ],
-  sidebar: [
-    {
-      text: 'Guides',
-      items: guideItems,
-    },
-  ],
+  sidebar: guideItems,
   socialLinks: [
     { icon: 'github', link: repoUrl },
   ],
@@ -76,12 +105,7 @@ const zhThemeConfig: DefaultTheme.Config = {
     { text: '文档', link: '/zh-CN/getting-started' },
     { text: 'GitHub', link: repoUrl },
   ],
-  sidebar: [
-    {
-      text: '指南',
-      items: zhGuideItems,
-    },
-  ],
+  sidebar: zhGuideItems,
   editLink: {
     pattern: `${repoUrl}/edit/main/docs/:path`,
     text: '在 GitHub 上编辑此页',

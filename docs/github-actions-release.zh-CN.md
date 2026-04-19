@@ -106,7 +106,17 @@ changeset-release/main
 mvn -q -DskipTests compile exec:java -Dexec.args="add --directory $PWD --summary 'add GitHub Actions release automation' --release minor"
 ```
 
-> **提示**：当前仓库是单模块时，`modules` 默认就是 `all`，通常不需要手写。
+这条命令现在会写出官方 package-map 风格的 changeset 文件，例如：
+
+````md
+```md
+---
+"javachanges": minor
+---
+
+add GitHub Actions release automation
+```
+````
 
 ## 7. 版本模式说明
 

@@ -106,7 +106,17 @@ Example:
 mvn -q -DskipTests compile exec:java -Dexec.args="add --directory $PWD --summary 'add GitHub Actions release automation' --release minor"
 ```
 
-> Tip: for single-module repositories, `modules` defaults to `all`, so you usually do not need to write it.
+That command writes a changeset file in the official package-map format, for example:
+
+````md
+```md
+---
+"javachanges": minor
+---
+
+add GitHub Actions release automation
+```
+````
 
 ## 7. Versioning model
 

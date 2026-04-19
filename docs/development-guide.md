@@ -129,7 +129,7 @@ This mainly does two things:
 | Download dependencies | Prime the local Maven cache |
 | Compile the project | Confirm the source builds cleanly |
 
-> Note: the repository currently has no visible `src/test/java`, so `mvn test` mainly serves as a full Maven build check.
+> Note: the repository now includes CLI-focused unit tests, so `mvn test` validates both compilation and command behavior.
 
 ### 4.3 Install into the local Maven repository (optional)
 
@@ -188,6 +188,18 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/yo
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="add --directory /path/to/your/repo --summary 'add release notes command' --release minor"
 ```
+
+That command now writes an official Changesets-style file, for example:
+
+````md
+```md
+---
+"your-artifact-id": minor
+---
+
+add release notes command
+```
+````
 
 ### 6.3 Generate a release plan
 

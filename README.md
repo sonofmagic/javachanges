@@ -146,7 +146,7 @@ Field reference:
 - `src/main/java`: the CLI source code
 - `docs/`: public documentation pages
 - `examples/basic-monorepo/`: a minimal example target repository
-- `website/`: a simple static landing page that can be published as GitHub Pages
+- `website/`: the VitePress site published as static assets with Workers + Wrangler
 - `env/release.env.example`: a generic env template for release automation
 
 ## Commands
@@ -178,8 +178,12 @@ GitLab-specific helpers:
 - [Overview (zh-CN)](docs/index.zh-CN.md)
 - [Getting Started](docs/getting-started.md)
 - [Getting Started (zh-CN)](docs/getting-started.zh-CN.md)
+- [CLI Reference](docs/cli-reference.md)
+- [CLI Reference (zh-CN)](docs/cli-reference.zh-CN.md)
 - [Development Guide](docs/development-guide.md)
 - [Development Guide (zh-CN)](docs/development-guide.zh-CN.md)
+- [Release Plan Manifest](docs/release-plan-manifest.md)
+- [Release Plan Manifest (zh-CN)](docs/release-plan-manifest.zh-CN.md)
 - [GitHub Actions Release Flow](docs/github-actions-release.md)
 - [GitHub Actions Release Flow (zh-CN)](docs/github-actions-release.zh-CN.md)
 - [GitHub Actions Usage Guide](docs/github-actions-guide.md)
