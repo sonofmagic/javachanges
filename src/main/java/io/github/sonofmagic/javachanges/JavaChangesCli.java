@@ -540,6 +540,9 @@ final class JavaChangesCommand implements Runnable {
         @Option(names = "--gitlab-repo", description = "GitLab group/project.")
         private String gitlabRepo;
 
+        @Option(names = "--format", description = "Output format: text or json.")
+        private String format;
+
         @Override
         public Integer call() throws Exception {
             Map<String, String> options = options();
@@ -547,8 +550,17 @@ final class JavaChangesCommand implements Runnable {
             putOption(options, "platform", platform);
             putOption(options, "github-repo", githubRepo);
             putOption(options, "gitlab-repo", gitlabRepo);
-            new ReleaseEnvSupport(repoRoot(), out()).auditVars(AuditVarsRequest.fromOptions(options));
-            return success();
+            putOption(options, "format", format);
+            AuditVarsRequest request = AuditVarsRequest.fromOptions(options);
+            try {
+                return new ReleaseEnvSupport(repoRoot(), out()).auditVars(request) ? success() : 1;
+            } catch (Exception exception) {
+                if (request.format == OutputFormat.JSON) {
+                    out().println(ReleaseEnvSupport.errorJson("audit-vars", exception));
+                    return 1;
+                }
+                throw exception;
+            }
         }
     }
 

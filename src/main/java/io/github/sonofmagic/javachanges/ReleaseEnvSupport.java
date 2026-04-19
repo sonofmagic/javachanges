@@ -568,17 +568,52 @@ final class ReleaseEnvSupport {
         }
     }
 
-    void auditVars(AuditVarsRequest request) throws IOException, InterruptedException {
+    boolean auditVars(AuditVarsRequest request) throws IOException, InterruptedException {
+        boolean textOutput = request.format != OutputFormat.JSON;
         LoadedEnv env = LoadedEnv.load(resolveEnvFile(request.envFile));
         boolean failed = false;
-        out.println("使用 env 文件: " + relativizePath(env.path));
+        List<JsonSection> sections = new ArrayList<JsonSection>();
+        if (textOutput) {
+            out.println("使用 env 文件: " + relativizePath(env.path));
+        }
 
         if (request.platform.includesGithub()) {
-            requireRepo("GITHUB_REPO", request.githubRepo);
-            requireCommand("gh");
+            JsonSection githubPreconditions = new JsonSection("GitHub Audit Preconditions");
+            JsonSection githubVariablesSection = new JsonSection("GitHub Variables 审计");
+            JsonSection githubSecretsSection = new JsonSection("GitHub Secrets 审计");
+            sections.add(githubPreconditions);
+            sections.add(githubVariablesSection);
+            sections.add(githubSecretsSection);
+            if (isBlank(request.githubRepo)) {
+                githubPreconditions.add("GITHUB_REPO", "MISSING");
+                if (request.format == OutputFormat.JSON) {
+                    out.println(commandReportJson("audit-vars", false, relativizePath(env.path), request.platform.id,
+                        false, sections, Collections.<String>emptyList(), "缺少仓库参数: GITHUB_REPO"));
+                    return false;
+                }
+                throw new IllegalArgumentException("缺少仓库参数: GITHUB_REPO");
+            }
+            githubPreconditions.add("GITHUB_REPO", request.githubRepo);
+            if (!commandExists("gh")) {
+                githubPreconditions.add("gh", "MISSING");
+                if (request.format == OutputFormat.JSON) {
+                    out.println(commandReportJson("audit-vars", false, relativizePath(env.path), request.platform.id,
+                        false, sections, Collections.<String>emptyList(), "未找到 gh CLI"));
+                    return false;
+                }
+                throw new IllegalStateException("未找到 gh CLI");
+            }
+            githubPreconditions.add("gh", "OK");
             if (!runQuietly(Arrays.asList("gh", "auth", "status"))) {
+                githubPreconditions.add("gh auth status", "FAILED");
+                if (request.format == OutputFormat.JSON) {
+                    out.println(commandReportJson("audit-vars", false, relativizePath(env.path), request.platform.id,
+                        false, sections, Collections.<String>emptyList(), "gh auth status 失败，请先执行 make auth-help"));
+                    return false;
+                }
                 throw new IllegalStateException("gh auth status 失败，请先执行 make auth-help");
             }
+            githubPreconditions.add("gh auth status", "OK");
             String variablesJson = runAndCapture(Arrays.asList("gh", "variable", "list", "--repo", request.githubRepo,
                 "--json", "name,value,updatedAt")).stdoutText();
             String secretsJson = runAndCapture(Arrays.asList("gh", "secret", "list", "--repo", request.githubRepo,
@@ -586,21 +621,25 @@ final class ReleaseEnvSupport {
             Map<String, Map<String, String>> githubVariables = parseFlatJsonObjects(variablesJson);
             Map<String, Map<String, String>> githubSecrets = parseFlatJsonObjects(secretsJson);
 
-            out.println();
-            out.println("== GitHub Variables 审计 ==");
+            if (textOutput) {
+                out.println();
+                out.println("== GitHub Variables 审计 ==");
+            }
             for (EnvEntry entry : GITHUB_ACTIONS_VARIABLES) {
                 AuditOutcome outcome = auditValue(env.value(entry.name), githubVariables.get(entry.name), true);
-                printAuditStatus(entry.name, outcome);
+                recordAuditStatus(textOutput, githubVariablesSection, entry.name, outcome);
                 if (outcome.isFailure()) {
                     failed = true;
                 }
             }
 
-            out.println();
-            out.println("== GitHub Secrets 审计 ==");
+            if (textOutput) {
+                out.println();
+                out.println("== GitHub Secrets 审计 ==");
+            }
             for (EnvEntry entry : GITHUB_ACTIONS_SECRETS) {
                 AuditOutcome outcome = auditPresence(env.value(entry.name), githubSecrets.get(entry.name));
-                printAuditStatus(entry.name, outcome);
+                recordAuditStatus(textOutput, githubSecretsSection, entry.name, outcome);
                 if (outcome.isFailure()) {
                     failed = true;
                 }
@@ -608,31 +647,77 @@ final class ReleaseEnvSupport {
         }
 
         if (request.platform.includesGitlab()) {
-            requireRepo("GITLAB_REPO", request.gitlabRepo);
-            requireCommand("glab");
+            JsonSection gitlabPreconditions = new JsonSection("GitLab Audit Preconditions");
+            JsonSection gitlabSection = new JsonSection("GitLab Variables 审计");
+            sections.add(gitlabPreconditions);
+            sections.add(gitlabSection);
+            if (isBlank(request.gitlabRepo)) {
+                gitlabPreconditions.add("GITLAB_REPO", "MISSING");
+                if (request.format == OutputFormat.JSON) {
+                    out.println(commandReportJson("audit-vars", false, relativizePath(env.path), request.platform.id,
+                        false, sections, Collections.<String>emptyList(), "缺少仓库参数: GITLAB_REPO"));
+                    return false;
+                }
+                throw new IllegalArgumentException("缺少仓库参数: GITLAB_REPO");
+            }
+            gitlabPreconditions.add("GITLAB_REPO", request.gitlabRepo);
+            if (!commandExists("glab")) {
+                gitlabPreconditions.add("glab", "MISSING");
+                if (request.format == OutputFormat.JSON) {
+                    out.println(commandReportJson("audit-vars", false, relativizePath(env.path), request.platform.id,
+                        false, sections, Collections.<String>emptyList(), "未找到 glab CLI"));
+                    return false;
+                }
+                throw new IllegalStateException("未找到 glab CLI");
+            }
+            gitlabPreconditions.add("glab", "OK");
             if (!runQuietly(Arrays.asList("glab", "auth", "status"))) {
+                gitlabPreconditions.add("glab auth status", "FAILED");
+                if (request.format == OutputFormat.JSON) {
+                    out.println(commandReportJson("audit-vars", false, relativizePath(env.path), request.platform.id,
+                        false, sections, Collections.<String>emptyList(), "glab auth status 失败，请先执行 make auth-help"));
+                    return false;
+                }
                 throw new IllegalStateException("glab auth status 失败，请先执行 make auth-help");
             }
+            gitlabPreconditions.add("glab auth status", "OK");
             String exported = runAndCapture(Arrays.asList("glab", "variable", "export", "--repo", request.gitlabRepo,
                 "--output", "env")).stdoutText();
             LoadedEnv remoteEnv = LoadedEnv.parse(exported, repoRoot.resolve("target/gitlab-variables.env"));
 
-            out.println();
-            out.println("== GitLab Variables 审计 ==");
+            if (textOutput) {
+                out.println();
+                out.println("== GitLab Variables 审计 ==");
+            }
             for (EnvEntry entry : GITLAB_VARIABLES) {
                 AuditOutcome outcome = auditValue(env.value(entry.name), remoteEnv.value(entry.name), true);
-                printAuditStatus(entry.name, outcome);
+                recordAuditStatus(textOutput, gitlabSection, entry.name, outcome);
                 if (outcome.isFailure()) {
                     failed = true;
                 }
             }
         }
 
-        out.println();
+        if (textOutput) {
+            out.println();
+        }
         if (failed) {
+            if (request.format == OutputFormat.JSON) {
+                out.println(commandReportJson("audit-vars", false, relativizePath(env.path), request.platform.id,
+                    false, sections, Collections.<String>emptyList(),
+                    "平台变量审计失败，请修正 MISSING_REMOTE / MISMATCH 项后重试"));
+                return false;
+            }
             throw new IllegalStateException("平台变量审计失败，请修正 MISSING_REMOTE / MISMATCH 项后重试");
         }
-        out.println("平台变量审计通过");
+        if (textOutput) {
+            out.println("平台变量审计通过");
+        }
+        if (request.format == OutputFormat.JSON) {
+            out.println(commandReportJson("audit-vars", true, relativizePath(env.path), request.platform.id,
+                false, sections, Collections.<String>emptyList(), null));
+        }
+        return true;
     }
 
     private void printEnvEntries(LoadedEnv env, List<EnvEntry> entries, boolean showSecrets) {
@@ -883,6 +968,15 @@ final class ReleaseEnvSupport {
 
     private void printAuditStatus(String label, AuditOutcome outcome) {
         printStatus(label, outcome.message);
+    }
+
+    private void recordAuditStatus(boolean textOutput, JsonSection section, String label, AuditOutcome outcome) {
+        if (textOutput) {
+            printAuditStatus(label, outcome);
+        }
+        if (section != null) {
+            section.add(label, outcome.message);
+        }
     }
 
     private Path resolveEnvFile(String envFile) throws IOException {

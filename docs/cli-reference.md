@@ -164,7 +164,7 @@ Common fields:
 | `doctor-local` | Check local release prerequisites, or emit JSON with `--format json` |
 | `doctor-platform` | Check remote platform readiness, or emit JSON with `--format json` |
 | `sync-vars` | Sync variables to GitHub or GitLab |
-| `audit-vars` | Compare local env values with remote platform state |
+| `audit-vars` | Compare local env values with remote platform state, or emit JSON with `--format json` |
 
 Example:
 
@@ -185,17 +185,18 @@ Commands that currently support `--format json`:
 | `render-vars` | Includes `platform` and `showSecrets` in the payload |
 | `doctor-local` | Includes section summaries, suggestions, and final error text on failure |
 | `doctor-platform` | Includes `platform` and section summaries for env and CLI checks |
+| `audit-vars` | Includes `platform`, audit sections, and final error text on failure |
 
 Common flags for these commands:
 
 | Flag | Used by | Meaning |
 | --- | --- | --- |
-| `--env-file` | all three | input env file path |
-| `--platform` | `render-vars`, `doctor-platform` | `github`, `gitlab`, or `all` |
+| `--env-file` | all four | input env file path |
+| `--platform` | `render-vars`, `doctor-platform`, `audit-vars` | `github`, `gitlab`, or `all` |
 | `--show-secrets` | `render-vars` | reveal secret values instead of masking them |
-| `--github-repo` | `doctor-local`, `doctor-platform` | optional GitHub `owner/repo` identifier |
-| `--gitlab-repo` | `doctor-local`, `doctor-platform` | optional GitLab `group/project` identifier |
-| `--format json` | all three | switch stdout from human text to machine-readable JSON |
+| `--github-repo` | `doctor-local`, `doctor-platform`, `audit-vars` | optional GitHub `owner/repo` identifier |
+| `--gitlab-repo` | `doctor-local`, `doctor-platform`, `audit-vars` | optional GitLab `group/project` identifier |
+| `--format json` | all four | switch stdout from human text to machine-readable JSON |
 
 JSON mode contract:
 

@@ -27,7 +27,8 @@
 | `doctor-platform` 标准输出 | 本地操作者 | 默认面向人 |
 | `doctor-platform --format json` 标准输出 | 脚本和 CI | 机器可读 JSON 契约 |
 | `sync-vars` dry-run 输出 | 本地操作者 | 只是预览文本，不是稳定 API |
-| `audit-vars` 标准输出 | 本地操作者 | 是状态摘要，不是稳定 API |
+| `audit-vars` 标准输出 | 本地操作者 | 默认面向人 |
+| `audit-vars --format json` 标准输出 | 脚本和 CI | 机器可读 JSON 契约 |
 
 实际建议：
 
@@ -351,13 +352,18 @@ gh auth status                           FAILED
 | `MISSING_REMOTE` | 本地是真实值，但远端不存在 |
 | `MISMATCH` | 本地值和远端值不一致 |
 
-这些仍然是给操作者看的状态摘要，不是 JSON 契约。
-
 `doctor-platform --format json` 的行为和 `doctor-local --format json` 类似：
 
 - 标准输出只包含一个 JSON 对象
 - 退出码 `0` 表示 env 与所选平台检查通过
 - 非 `0` 退出码表示鉴权、仓库标识或必需 env 值校验失败
+- 返回值会包含 `platform`、`sections`，失败时可能包含最终 `error`
+
+`audit-vars --format json` 现在也提供机器可读契约：
+
+- 标准输出只包含一个 JSON 对象
+- 退出码 `0` 表示所有远端变量都符合本地期望状态
+- 非 `0` 退出码表示至少一个审计项出现了 `MISSING_REMOTE` / `MISMATCH`，或者平台前置条件失败
 - 返回值会包含 `platform`、`sections`，失败时可能包含最终 `error`
 
 ## 10. 自动化建议
@@ -366,8 +372,8 @@ gh auth status                           FAILED
 
 1. 用 `plan --apply true` 生成 manifest
 2. 用 `manifest-field` 或 `release-plan.json` 读取 `releaseVersion`、`releaseLevel` 这类字段
-3. 如果脚本需要结构化诊断，使用 `render-vars --format json`、`doctor-local --format json`、`doctor-platform --format json`
-4. `audit-vars` 继续只当作面向人的诊断输出，不作为机器契约
+3. 如果脚本需要结构化诊断，使用 `render-vars --format json`、`doctor-local --format json`、`doctor-platform --format json`、`audit-vars --format json`
+4. 发布计划相关数据继续优先读 manifest，诊断类 JSON 只用于环境校验与审计流程
 
 避免这样做：
 

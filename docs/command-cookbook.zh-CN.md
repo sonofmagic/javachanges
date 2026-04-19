@@ -138,6 +138,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --directory $REPO
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="render-vars --directory $REPO --env-file env/release.env.local --platform github --format json"
 mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --directory $REPO --env-file env/release.env.local --format json"
+mvn -q -DskipTests compile exec:java -Dexec.args="audit-vars --directory $REPO --env-file env/release.env.local --platform github --github-repo owner/repo --format json"
 ```
 
 当 shell 步骤需要结构化诊断信息，而不是解析对齐表格文本时，用这两个命令更合适。

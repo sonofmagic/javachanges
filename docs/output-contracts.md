@@ -27,7 +27,8 @@ Use it when you are:
 | `doctor-platform` stdout | local operators | human-oriented by default |
 | `doctor-platform --format json` stdout | scripts and CI | machine-readable JSON contract |
 | `sync-vars` dry-run stdout | local operators | preview text only, not a stable API |
-| `audit-vars` stdout | local operators | status-oriented text, not a stable API |
+| `audit-vars` stdout | local operators | human-oriented by default |
+| `audit-vars --format json` stdout | scripts and CI | machine-readable JSON contract |
 
 Practical rule:
 
@@ -351,13 +352,18 @@ Current audit result words:
 | `MISSING_REMOTE` | local real value exists but remote value is missing |
 | `MISMATCH` | local and remote values differ |
 
-These are operator-facing summaries, not a JSON contract.
-
 `doctor-platform --format json` behaves similarly to `doctor-local --format json`:
 
 - stdout contains only one JSON object
 - exit code `0` means the env and selected platform checks passed
 - non-zero exit code means auth, repo identifiers, or required env values failed validation
+- the payload includes `platform`, `sections`, and optional final `error`
+
+`audit-vars --format json` now provides a machine-readable contract as well:
+
+- stdout contains only one JSON object
+- exit code `0` means all audited remote values matched the expected local state
+- non-zero exit code means at least one audited item ended in `MISSING_REMOTE` or `MISMATCH`, or a platform precondition failed
 - the payload includes `platform`, `sections`, and optional final `error`
 
 ## 10. Automation recommendations
@@ -366,8 +372,8 @@ For CI and scripting:
 
 1. use `plan --apply true` to generate the manifest
 2. read `releaseVersion` and `releaseLevel` through `manifest-field` or `release-plan.json`
-3. if scripts need structured diagnostics, use `render-vars --format json`, `doctor-local --format json`, or `doctor-platform --format json`
-4. keep using `audit-vars` as an operator-facing diagnostic, not a machine contract
+3. if scripts need structured diagnostics, use `render-vars --format json`, `doctor-local --format json`, `doctor-platform --format json`, or `audit-vars --format json`
+4. keep parsing generated manifests for release planning data, and use diagnostic JSON only for environment validation flows
 
 Avoid:
 

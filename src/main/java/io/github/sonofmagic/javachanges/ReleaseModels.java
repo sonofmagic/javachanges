@@ -205,12 +205,15 @@ final class AuditVarsRequest {
     final Platform platform;
     final String githubRepo;
     final String gitlabRepo;
+    final OutputFormat format;
 
-    private AuditVarsRequest(String envFile, Platform platform, String githubRepo, String gitlabRepo) {
+    private AuditVarsRequest(String envFile, Platform platform, String githubRepo, String gitlabRepo,
+                             OutputFormat format) {
         this.envFile = envFile;
         this.platform = platform;
         this.githubRepo = githubRepo;
         this.gitlabRepo = gitlabRepo;
+        this.format = format;
     }
 
     static AuditVarsRequest fromOptions(Map<String, String> options) {
@@ -218,7 +221,8 @@ final class AuditVarsRequest {
             requiredOption(options, "env-file"),
             platformOption(options),
             trimToNull(options.get("github-repo")),
-            trimToNull(options.get("gitlab-repo"))
+            trimToNull(options.get("gitlab-repo")),
+            OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );
     }
 }

@@ -138,6 +138,7 @@ Use `doctor-platform` after syncing real repository variables.
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="render-vars --directory $REPO --env-file env/release.env.local --platform github --format json"
 mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --directory $REPO --env-file env/release.env.local --format json"
+mvn -q -DskipTests compile exec:java -Dexec.args="audit-vars --directory $REPO --env-file env/release.env.local --platform github --github-repo owner/repo --format json"
 ```
 
 Use these when a shell step needs structured diagnostics instead of parsing aligned terminal columns.

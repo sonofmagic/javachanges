@@ -163,7 +163,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /pa
 | `doctor-local` | 检查本地发布环境，或通过 `--format json` 输出 JSON |
 | `doctor-platform` | 检查远端平台状态，或通过 `--format json` 输出 JSON |
 | `sync-vars` | 把变量同步到 GitHub 或 GitLab |
-| `audit-vars` | 对比本地 env 和远端平台变量 |
+| `audit-vars` | 对比本地 env 和远端平台变量，或通过 `--format json` 输出 JSON |
 
 示例：
 
@@ -184,17 +184,18 @@ mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --directory /path
 | `render-vars` | 返回值里会带上 `platform` 和 `showSecrets` |
 | `doctor-local` | 失败时会包含分组检查结果、建议列表和最终错误信息 |
 | `doctor-platform` | 会带上 `platform` 以及 env / CLI 检查分组 |
+| `audit-vars` | 会带上 `platform`、审计分组结果，以及失败时的最终错误信息 |
 
 这些命令的常用参数：
 
 | 参数 | 适用命令 | 含义 |
 | --- | --- | --- |
-| `--env-file` | 三者都支持 | 输入 env 文件路径 |
-| `--platform` | `render-vars`、`doctor-platform` | `github`、`gitlab` 或 `all` |
+| `--env-file` | 四者都支持 | 输入 env 文件路径 |
+| `--platform` | `render-vars`、`doctor-platform`、`audit-vars` | `github`、`gitlab` 或 `all` |
 | `--show-secrets` | `render-vars` | 显示原始 secret，而不是打码 |
-| `--github-repo` | `doctor-local`、`doctor-platform` | 可选的 GitHub `owner/repo` 标识 |
-| `--gitlab-repo` | `doctor-local`、`doctor-platform` | 可选的 GitLab `group/project` 标识 |
-| `--format json` | 三者都支持 | 把标准输出从文本切换为机器可读 JSON |
+| `--github-repo` | `doctor-local`、`doctor-platform`、`audit-vars` | 可选的 GitHub `owner/repo` 标识 |
+| `--gitlab-repo` | `doctor-local`、`doctor-platform`、`audit-vars` | 可选的 GitLab `group/project` 标识 |
+| `--format json` | 四者都支持 | 把标准输出从文本切换为机器可读 JSON |
 
 JSON 模式约定：
 

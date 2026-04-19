@@ -216,6 +216,33 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void auditVarsJsonPrintsOnlyJson(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+        Path envDir = repoRoot.resolve("env");
+        Files.createDirectories(envDir);
+        Files.write(envDir.resolve("release.env.local"), envFile().getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = execute(
+            "audit-vars",
+            "--directory", repoRoot.toString(),
+            "--env-file", "env/release.env.local",
+            "--platform", "github",
+            "--format", "json"
+        );
+
+        assertNotEquals(0, result.exitCode);
+        assertTrue(result.stdout.trim().startsWith("{"));
+        assertTrue(result.stdout.contains("\"ok\":false"));
+        assertTrue(result.stdout.contains("\"command\":\"audit-vars\""));
+        assertTrue(result.stdout.contains("\"platform\":\"github\""));
+        assertTrue(result.stdout.contains("\"sections\":["));
+        assertTrue(result.stdout.contains("\"error\":\"缺少仓库参数: GITHUB_REPO\""));
+        assertTrue(result.stdout.contains("\"label\":\"GITHUB_REPO\""));
+        assertFalse(result.stdout.contains("== GitHub Variables 审计 =="));
+        assertEquals("", result.stderr);
+    }
+
+    @Test
     void resolveMavenCommandPrefersWrapper(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, false);
         Files.write(repoRoot.resolve(ReleaseUtils.mavenWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
