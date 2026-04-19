@@ -1,6 +1,5 @@
 # Examples Guide 使用指南
 
-[English](/examples-guide) | [简体中文](/zh-CN/examples-guide)
 
 ## 1. 概述
 

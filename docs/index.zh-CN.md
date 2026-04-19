@@ -27,7 +27,6 @@ features:
 
 # javachanges
 
-[English](/) | [简体中文](/zh-CN/)
 
 `javachanges` 是一个面向 Maven Monorepo 和单模块 Maven 仓库的发布规划 CLI。
 

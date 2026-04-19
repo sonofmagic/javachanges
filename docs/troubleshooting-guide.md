@@ -1,6 +1,5 @@
 # javachanges Troubleshooting Guide
 
-[English](/troubleshooting-guide) | [简体中文](/zh-CN/troubleshooting-guide)
 
 ## 1. Overview
 

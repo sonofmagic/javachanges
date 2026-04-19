@@ -1,6 +1,5 @@
 # 使用场景
 
-[English](/use-cases) | [简体中文](/zh-CN/use-cases)
 
 ## Maven 库 Monorepo
 

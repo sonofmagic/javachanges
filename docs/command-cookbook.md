@@ -1,6 +1,5 @@
 # javachanges Command Cookbook
 
-[English](/command-cookbook) | [简体中文](/zh-CN/command-cookbook)
 
 ## 1. Overview
 

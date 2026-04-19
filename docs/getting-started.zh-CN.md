@@ -1,6 +1,5 @@
 # 快速开始
 
-[English](/getting-started) | [简体中文](/zh-CN/getting-started)
 
 ## 1. 构建 CLI
 

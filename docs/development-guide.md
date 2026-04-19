@@ -1,6 +1,5 @@
 # javachanges Development Guide
 
-[English](/development-guide) | [简体中文](/zh-CN/development-guide)
 
 ## 1. Overview
 

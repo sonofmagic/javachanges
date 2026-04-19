@@ -1,6 +1,5 @@
 # javachanges 输出契约说明
 
-[English](/output-contracts) | [简体中文](/zh-CN/output-contracts)
 
 ## 1. 概述
 

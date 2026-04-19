@@ -1,6 +1,5 @@
 # javachanges Release Plan Manifest
 
-[English](/release-plan-manifest) | [简体中文](/zh-CN/release-plan-manifest)
 
 ## 1. Overview
 

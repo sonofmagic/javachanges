@@ -1,6 +1,5 @@
 # javachanges 命令实战手册
 
-[English](/command-cookbook) | [简体中文](/zh-CN/command-cookbook)
 
 ## 1. 概述
 

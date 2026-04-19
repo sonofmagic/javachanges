@@ -27,7 +27,6 @@ features:
 
 # javachanges
 
-[English](/) | [简体中文](/zh-CN/)
 
 `javachanges` is a release-planning CLI for Maven monorepos and single-module Maven repositories.
 

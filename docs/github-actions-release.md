@@ -1,6 +1,5 @@
 # javachanges GitHub Actions Release Flow
 
-[English](/github-actions-release) | [简体中文](/zh-CN/github-actions-release)
 
 ## 1. Overview
 

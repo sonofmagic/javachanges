@@ -1,6 +1,5 @@
 # javachanges 故障排查指南
 
-[English](/troubleshooting-guide) | [简体中文](/zh-CN/troubleshooting-guide)
 
 ## 1. 概述
 

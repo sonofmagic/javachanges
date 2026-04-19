@@ -1,6 +1,5 @@
 # javachanges Output Contracts
 
-[English](/output-contracts) | [简体中文](/zh-CN/output-contracts)
 
 ## 1. Overview
 

@@ -1,6 +1,5 @@
 # javachanges Publish To Maven Central Guide
 
-[English](/publish-to-maven-central) | [简体中文](/zh-CN/publish-to-maven-central)
 
 ## 1. Overview
 

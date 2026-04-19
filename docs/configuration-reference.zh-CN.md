@@ -1,6 +1,5 @@
 # javachanges 配置参考大全
 
-[English](/configuration-reference) | [简体中文](/zh-CN/configuration-reference)
 
 ## 1. 概述
 

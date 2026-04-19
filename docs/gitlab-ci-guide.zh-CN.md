@@ -1,6 +1,5 @@
 # javachanges GitLab CI/CD 使用指南
 
-[English](/gitlab-ci-guide) | [简体中文](/zh-CN/gitlab-ci-guide)
 
 ## 1. 概述
 

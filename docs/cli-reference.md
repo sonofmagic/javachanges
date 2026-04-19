@@ -1,6 +1,5 @@
 # javachanges CLI Reference
 
-[English](/cli-reference) | [简体中文](/zh-CN/cli-reference)
 
 ## 1. Overview
 

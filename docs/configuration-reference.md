@@ -1,6 +1,5 @@
 # javachanges Configuration Reference
 
-[English](/configuration-reference) | [简体中文](/zh-CN/configuration-reference)
 
 ## 1. Overview
 

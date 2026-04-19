@@ -1,6 +1,5 @@
 # Use Cases
 
-[English](/use-cases) | [简体中文](/zh-CN/use-cases)
 
 ## Maven library monorepo
 

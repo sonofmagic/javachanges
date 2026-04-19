@@ -1,6 +1,5 @@
 # javachanges GitHub Actions Usage Guide
 
-[English](/github-actions-guide) | [简体中文](/zh-CN/github-actions-guide)
 
 ## 1. Overview
 
