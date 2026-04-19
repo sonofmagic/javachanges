@@ -22,17 +22,20 @@ mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:1.2.0 -Doutpu
 java -jar .javachanges/javachanges-1.2.0.jar --help
 ```
 
-也可以把正式发布包直接当作 Maven plugin 使用：
+在当前 `main` 分支上，如果你先把 SNAPSHOT 安装到本地，也可以把它直接当作 Maven plugin 使用：
 
 ```bash
-mvn io.github.sonofmagic:javachanges:1.2.0:run -Djavachanges.command=status
-mvn io.github.sonofmagic:javachanges:1.2.0:run -Djavachanges.args="add --summary 'add release notes command' --release minor"
+mvn -q -DskipTests install
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:status
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:plan -Djavachanges.apply=true
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
 ```
 
 说明：
 
-- `javachanges:run` 会默认把 `--directory` 设成 `${project.basedir}`
-- `-Djavachanges.command=status` 是最短的结构化写法
+- 现在 `status`、`plan`、`add`、`manifest-field` 都有独立 goal
+- `javachanges:run` 仍然保留，并且会默认把 `--directory` 设成 `${project.basedir}`
 - `-Djavachanges.args="..."` 适合你需要完整传递原始 CLI 参数时使用
 
 ## 2. 准备目标仓库

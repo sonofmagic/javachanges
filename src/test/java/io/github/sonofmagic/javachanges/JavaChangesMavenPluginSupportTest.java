@@ -47,10 +47,8 @@ class JavaChangesMavenPluginSupportTest {
 
     @Test
     void structuredConfigurationDefaultsToStatus() {
-        String[] args = JavaChangesMavenPluginSupport.resolveCliArgs(
+        String[] args = JavaChangesMavenPluginSupport.resolveStructuredCliArgs(
             "/tmp/repo",
-            null,
-            null,
             null
         );
 
@@ -61,11 +59,10 @@ class JavaChangesMavenPluginSupportTest {
 
     @Test
     void structuredConfigurationAppendsArguments() {
-        String[] args = JavaChangesMavenPluginSupport.resolveCliArgs(
+        String[] args = JavaChangesMavenPluginSupport.resolveStructuredCliArgs(
             "/tmp/repo",
             "plan",
-            new String[]{"--apply", "true"},
-            null
+            "--apply", "true"
         );
 
         assertArrayEquals(new String[]{
@@ -81,6 +78,37 @@ class JavaChangesMavenPluginSupportTest {
         );
 
         assertEquals("Unterminated quoted argument in javachanges.args", exception.getMessage());
+    }
+
+    @Test
+    void rawArgsRespectExplicitDirectory() {
+        String[] args = JavaChangesMavenPluginSupport.resolveRawCliArgs(
+            "/tmp/repo",
+            "status --directory /custom/repo"
+        );
+
+        assertArrayEquals(new String[]{
+            "status", "--directory", "/custom/repo"
+        }, args);
+    }
+
+    @Test
+    void structuredArgsIgnoreBlankArguments() {
+        String[] args = JavaChangesMavenPluginSupport.resolveStructuredCliArgs(
+            "/tmp/repo",
+            "add",
+            "--summary",
+            "release notes",
+            "   ",
+            null,
+            "--release",
+            "minor"
+        );
+
+        assertArrayEquals(new String[]{
+            "--directory", "/tmp/repo",
+            "add", "--summary", "release notes", "--release", "minor"
+        }, args);
     }
 
     @Test

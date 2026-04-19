@@ -154,7 +154,7 @@ mvn install
 
 1. 修改 `src/main/java` 下的源码
 2. 用 Maven 重新编译
-3. 直接通过 `exec:java` 运行入口类
+3. 直接通过 `exec:java` 运行入口类，或者先安装本地 SNAPSHOT 再走 Maven plugin goals
 4. 观察命令输出，继续迭代
 
 ### 5.2 最常用的开发命令
@@ -174,7 +174,23 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/yo
 | `-DskipTests` | 跳过测试阶段，加快迭代 |
 | `-Dexec.args="..."` | 传递 CLI 参数 |
 
-### 5.3 入口类
+### 5.3 当前分支下最快的 plugin 验证方式
+
+如果你想直接验证面向开发者的 Maven plugin 体验，可以先把当前 SNAPSHOT 安装到本地：
+
+```bash
+mvn -q -DskipTests install
+```
+
+然后执行独立的 plugin goals：
+
+```bash
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:status
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:plan -Djavachanges.apply=true
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+```
+
+### 5.4 入口类
 
 当前 CLI 入口类是：
 

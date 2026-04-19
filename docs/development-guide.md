@@ -150,7 +150,7 @@ For this repository, “development mode” usually means:
 
 1. edit files under `src/main/java`
 2. recompile with Maven
-3. run the CLI entrypoint through `exec:java`
+3. run the CLI entrypoint through `exec:java`, or install the snapshot and use Maven plugin goals
 4. inspect command output and iterate
 
 ### 5.2 Most common development command
@@ -166,7 +166,23 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/yo
 | `-DskipTests` | Skip tests for faster iteration |
 | `-Dexec.args="..."` | Pass CLI arguments |
 
-### 5.3 Entry class
+### 5.3 Fastest plugin-style loop on the current branch
+
+If you want to validate the developer-facing plugin UX itself, first install the current snapshot locally:
+
+```bash
+mvn -q -DskipTests install
+```
+
+Then run the dedicated plugin goals:
+
+```bash
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:status
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:plan -Djavachanges.apply=true
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+```
+
+### 5.4 Entry class
 
 The current CLI entry class is:
 

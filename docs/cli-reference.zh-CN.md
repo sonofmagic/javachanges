@@ -13,11 +13,15 @@
 
 ## 2. 调用方式
 
-正式发布包的调用方式：
+当前 `main` 分支在本地安装 SNAPSHOT 之后的 Maven plugin 调用方式：
 
 ```bash
-mvn io.github.sonofmagic:javachanges:1.2.0:run -Djavachanges.command=status
-mvn io.github.sonofmagic:javachanges:1.2.0:run -Djavachanges.args="plan --apply true"
+mvn -q -DskipTests install
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:status
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:plan -Djavachanges.apply=true
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:run -Djavachanges.args="release-notes --tag v1.2.3"
 ```
 
 开发这个仓库本身时的源码调用方式：
@@ -30,16 +34,25 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/re
 
 | 片段 | 说明 |
 | --- | --- |
-| `mvn io.github.sonofmagic:javachanges:1.2.0:run` | 执行正式发布版的 Maven plugin goal |
-| `-Djavachanges.command=status` | 最短的结构化 plugin 调用 |
-| `-Djavachanges.args="..."` | 通过 plugin 透传原始 `javachanges` CLI 参数 |
+| `mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:status` | 执行独立的 status goal |
+| `mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:plan -Djavachanges.apply=true` | 执行独立的 plan goal |
+| `mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:run -Djavachanges.args="..."` | 对还没有独立 goal 的命令继续走通用桥接 goal |
 | `mvn -q -DskipTests compile exec:java` | 编译 CLI 并运行 Java 入口 |
 | `-Dexec.args="..."` | 传递 `javachanges` 命令行参数 |
 | `--directory /path/to/repo` | 指定目标 Maven 仓库根目录或其子目录 |
 
 plugin 说明：
 
-- `javachanges:run` 会自动注入 `--directory ${project.basedir}`，除非你已经在 `javachanges.args` 里显式传了 `--directory`
+- 所有独立 goal 和 `javachanges:run` 都会自动注入 `--directory ${project.basedir}`，除非你已经显式传了 `--directory`
+
+如果你已经在目标仓库的 `pom.xml` 里声明了 plugin，本地最短写法就是：
+
+```bash
+mvn javachanges:status
+mvn javachanges:plan -Djavachanges.apply=true
+mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn javachanges:manifest-field -Djavachanges.field=releaseVersion
+```
 
 > **注意**：有些命令不依赖仓库，例如 `release-version-from-tag`。
 

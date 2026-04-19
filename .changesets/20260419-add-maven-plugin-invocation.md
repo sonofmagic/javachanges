@@ -2,8 +2,9 @@
 "javachanges": minor
 ---
 
-Add Maven plugin invocation support so `javachanges` can run directly through `mvn ...:run` without downloading the jar first.
+Add Maven plugin invocation support so `javachanges` can run directly through Maven goals instead of only `java -jar` or `exec:java`.
 
-- Bridge the existing CLI commands through a new Maven `run` goal.
+- Add dedicated `status`, `plan`, `add`, and `manifest-field` Maven goals for the most common workflows.
+- Keep a generic `run` goal as a bridge for commands that do not have a dedicated goal yet.
 - Default the plugin repository directory to `${project.basedir}` for shorter usage inside target repositories.
-- Document the released-package plugin flow alongside the existing `java -jar` and source `exec:java` workflows.
+- Document the plugin flow alongside the existing `java -jar` and source `exec:java` workflows.

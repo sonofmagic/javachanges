@@ -14,11 +14,15 @@ Use it when you already understand the release workflow and need to look up:
 
 ## 2. Invocation Pattern
 
-Released-package invocation:
+Current `main` branch Maven plugin invocation after local snapshot install:
 
 ```bash
-mvn io.github.sonofmagic:javachanges:1.2.0:run -Djavachanges.command=status
-mvn io.github.sonofmagic:javachanges:1.2.0:run -Djavachanges.args="plan --apply true"
+mvn -q -DskipTests install
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:status
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:plan -Djavachanges.apply=true
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:run -Djavachanges.args="release-notes --tag v1.2.3"
 ```
 
 Source-driven invocation while developing this repository:
@@ -31,16 +35,25 @@ Common parts:
 
 | Part | Meaning |
 | --- | --- |
-| `mvn io.github.sonofmagic:javachanges:1.2.0:run` | Run the released Maven plugin goal |
-| `-Djavachanges.command=status` | Short structured plugin invocation |
-| `-Djavachanges.args="..."` | Pass the raw `javachanges` CLI argument string through the plugin |
+| `mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:status` | Run the dedicated Maven plugin status goal |
+| `mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:plan -Djavachanges.apply=true` | Run the dedicated plan goal |
+| `mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:run -Djavachanges.args="..."` | Use the generic bridge goal for commands without a dedicated goal |
 | `mvn -q -DskipTests compile exec:java` | Build the CLI and run the Java entrypoint |
 | `-Dexec.args="..."` | Pass `javachanges` CLI arguments |
 | `--directory /path/to/repo` | Target Maven repository root or a subdirectory inside it |
 
 Plugin note:
 
-- `javachanges:run` injects `--directory ${project.basedir}` automatically unless you already passed `--directory` in `javachanges.args`
+- all dedicated goals and `javachanges:run` inject `--directory ${project.basedir}` automatically unless you already passed `--directory` explicitly
+
+If you declare the plugin in a target repository `pom.xml`, the shortest local form becomes:
+
+```bash
+mvn javachanges:status
+mvn javachanges:plan -Djavachanges.apply=true
+mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn javachanges:manifest-field -Djavachanges.field=releaseVersion
+```
 
 > Note: some commands do not require a repository, for example `release-version-from-tag`.
 

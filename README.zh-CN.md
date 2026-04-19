@@ -46,14 +46,17 @@ mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:1.2.0 -Doutpu
 java -jar .javachanges/javachanges-1.2.0.jar --help
 ```
 
-也可以直接把正式发布包当作 Maven plugin 使用：
+在当前 `main` 分支上，如果你先把 SNAPSHOT 安装到本地，也可以把 `javachanges` 当作 Maven plugin 使用：
 
 ```bash
-mvn io.github.sonofmagic:javachanges:1.2.0:run -Djavachanges.command=status
-mvn io.github.sonofmagic:javachanges:1.2.0:run -Djavachanges.args="plan --apply true"
+mvn -q -DskipTests install
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:status
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:plan -Djavachanges.apply=true
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
 ```
 
-这个 plugin 会默认把 `--directory` 设成当前 Maven 项目的 `${project.basedir}`，所以如果你就是在目标仓库里执行，通常不需要再手动写 `--directory`。
+这个 plugin 会默认把 `--directory` 设成当前 Maven 项目的 `${project.basedir}`，所以如果你就是在目标仓库里执行，通常不需要再手动写 `--directory`。通用的 `run` goal 也仍然保留，方便覆盖还没有拆成独立 goal 的命令。
 
 已发布包地址：
 
@@ -68,7 +71,7 @@ java -jar .javachanges/javachanges-1.2.0.jar add --directory /path/to/your/repo
 java -jar .javachanges/javachanges-1.2.0.jar plan --directory /path/to/your/repo
 ```
 
-如果希望本地调用再短一些，也可以先在目标仓库的 `pom.xml` 里声明 plugin：
+如果希望在目标仓库里的调用再短一些，也可以先在该仓库的 `pom.xml` 里声明 plugin：
 
 ```xml
 <plugin>
@@ -81,7 +84,11 @@ java -jar .javachanges/javachanges-1.2.0.jar plan --directory /path/to/your/repo
 然后在该仓库里执行：
 
 ```bash
-mvn javachanges:run -Djavachanges.command=status
+mvn javachanges:status
+mvn javachanges:plan -Djavachanges.apply=true
+mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn javachanges:manifest-field -Djavachanges.field=releaseVersion
+mvn javachanges:run -Djavachanges.args="release-notes --tag v1.2.3"
 ```
 
 如果你要开发这个仓库本身，请看 [Development Guide](docs/development-guide.md)。

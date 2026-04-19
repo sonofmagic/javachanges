@@ -46,14 +46,17 @@ mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:1.2.0 -Doutpu
 java -jar .javachanges/javachanges-1.2.0.jar --help
 ```
 
-Run the released package directly as a Maven plugin:
+On the current `main` branch, after installing the snapshot locally, you can also run `javachanges` as a Maven plugin:
 
 ```bash
-mvn io.github.sonofmagic:javachanges:1.2.0:run -Djavachanges.command=status
-mvn io.github.sonofmagic:javachanges:1.2.0:run -Djavachanges.args="plan --apply true"
+mvn -q -DskipTests install
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:status
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:plan -Djavachanges.apply=true
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
 ```
 
-The plugin defaults `--directory` to the current Maven project's `${project.basedir}`, so if you run it inside the target repository you usually do not need to pass `--directory` explicitly.
+The plugin defaults `--directory` to the current Maven project's `${project.basedir}`, so if you run it inside the target repository you usually do not need to pass `--directory` explicitly. The generic `run` goal still exists for commands that do not have a dedicated goal yet.
 
 Published package:
 
@@ -68,7 +71,7 @@ java -jar .javachanges/javachanges-1.2.0.jar add --directory /path/to/your/repo
 java -jar .javachanges/javachanges-1.2.0.jar plan --directory /path/to/your/repo
 ```
 
-Optional plugin declaration for shorter local usage:
+Optional plugin declaration for shorter local usage inside a target repository:
 
 ```xml
 <plugin>
@@ -81,7 +84,11 @@ Optional plugin declaration for shorter local usage:
 Then inside that repository:
 
 ```bash
-mvn javachanges:run -Djavachanges.command=status
+mvn javachanges:status
+mvn javachanges:plan -Djavachanges.apply=true
+mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn javachanges:manifest-field -Djavachanges.field=releaseVersion
+mvn javachanges:run -Djavachanges.args="release-notes --tag v1.2.3"
 ```
 
 If you want to work on this repository itself from source, see [Development Guide](docs/development-guide.md).

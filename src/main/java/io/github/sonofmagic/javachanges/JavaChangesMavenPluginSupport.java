@@ -10,26 +10,28 @@ final class JavaChangesMavenPluginSupport {
     }
 
     static String[] resolveCliArgs(String directory, String command, String[] arguments, String rawArgs) {
-        List<String> effectiveArgs = new ArrayList<String>();
         if (ReleaseUtils.trimToNull(rawArgs) != null) {
-            effectiveArgs.addAll(tokenize(rawArgs));
-        } else {
-            effectiveArgs.add(ReleaseUtils.trimToNull(command) == null ? "status" : command.trim());
-            if (arguments != null) {
-                for (String argument : arguments) {
-                    String value = ReleaseUtils.trimToNull(argument);
-                    if (value != null) {
-                        effectiveArgs.add(value);
-                    }
+            return resolveRawCliArgs(directory, rawArgs);
+        }
+        return resolveStructuredCliArgs(directory, command, arguments);
+    }
+
+    static String[] resolveRawCliArgs(String directory, String rawArgs) {
+        return prependDirectoryIfMissing(directory, tokenize(rawArgs));
+    }
+
+    static String[] resolveStructuredCliArgs(String directory, String command, String... arguments) {
+        List<String> effectiveArgs = new ArrayList<String>();
+        effectiveArgs.add(ReleaseUtils.trimToNull(command) == null ? "status" : command.trim());
+        if (arguments != null) {
+            for (String argument : arguments) {
+                String value = ReleaseUtils.trimToNull(argument);
+                if (value != null) {
+                    effectiveArgs.add(value);
                 }
             }
         }
-        String directoryValue = ReleaseUtils.trimToNull(directory);
-        if (directoryValue != null && !containsDirectoryOption(effectiveArgs)) {
-            effectiveArgs.add(0, directoryValue);
-            effectiveArgs.add(0, "--directory");
-        }
-        return effectiveArgs.toArray(new String[0]);
+        return prependDirectoryIfMissing(directory, effectiveArgs);
     }
 
     static List<String> tokenize(String rawArgs) {
@@ -99,5 +101,30 @@ final class JavaChangesMavenPluginSupport {
             }
         }
         return false;
+    }
+
+    static void addOption(List<String> args, String optionName, String value) {
+        String trimmed = ReleaseUtils.trimToNull(value);
+        if (trimmed == null) {
+            return;
+        }
+        args.add(optionName);
+        args.add(trimmed);
+    }
+
+    static void addFlag(List<String> args, String optionName, boolean enabled) {
+        if (enabled) {
+            args.add(optionName);
+            args.add("true");
+        }
+    }
+
+    private static String[] prependDirectoryIfMissing(String directory, List<String> effectiveArgs) {
+        String directoryValue = ReleaseUtils.trimToNull(directory);
+        if (directoryValue != null && !containsDirectoryOption(effectiveArgs)) {
+            effectiveArgs.add(0, directoryValue);
+            effectiveArgs.add(0, "--directory");
+        }
+        return effectiveArgs.toArray(new String[0]);
     }
 }

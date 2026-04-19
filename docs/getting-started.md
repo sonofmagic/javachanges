@@ -22,18 +22,21 @@ Run the CLI:
 java -jar .javachanges/javachanges-1.2.0.jar --help
 ```
 
-Run the released package as a Maven plugin:
+On the current `main` branch, after installing the snapshot locally, you can also run the package as a Maven plugin:
 
 ```bash
-mvn io.github.sonofmagic:javachanges:1.2.0:run -Djavachanges.command=status
-mvn io.github.sonofmagic:javachanges:1.2.0:run -Djavachanges.args="add --summary 'add release notes command' --release minor"
+mvn -q -DskipTests install
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:status
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:plan -Djavachanges.apply=true
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
 ```
 
 Notes:
 
-- `javachanges:run` defaults `--directory` to `${project.basedir}`
-- `-Djavachanges.command=status` is the shortest structured form
-- `-Djavachanges.args="..."` lets you pass raw CLI flags when you need the full command line shape
+- dedicated goals now exist for `status`, `plan`, `add`, and `manifest-field`
+- `javachanges:run` still exists and defaults `--directory` to `${project.basedir}`
+- `-Djavachanges.args="..."` is still available when you need the full raw CLI shape
 
 ## 2. Prepare a target repository
 
