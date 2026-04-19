@@ -658,17 +658,21 @@ final class JavaChangesCommand implements Runnable {
         out.println("Pending changesets: " + plan.getChangesets().size());
 
         if (!plan.hasPendingChangesets()) {
-            out.println("Next release: none");
+            out.println("Release plan: none");
             return;
         }
 
-        out.println("Release bump: " + plan.getReleaseLevel().id);
-        out.println("Next release: v" + plan.getReleaseVersion());
-        out.println("Next snapshot: " + plan.getNextSnapshotVersion());
+        out.println("Release plan:");
+        out.println("- Release type: " + plan.getReleaseLevel().id);
+        out.println("- Affected packages: " + ReleaseUtils.joinModules(plan.getAffectedPackages()));
+        out.println("- Release version: v" + plan.getReleaseVersion());
+        out.println("- Next snapshot: " + plan.getNextSnapshotVersion());
         out.println();
+        out.println("Changesets:");
         for (Changeset changeset : plan.getChangesets()) {
             String visibleType = renderVisibleType(changeset.type);
             out.println("- " + changeset.fileName + " [" + changeset.release.id + "] "
+                + "(packages: " + ReleaseUtils.joinModules(changeset.modules) + ") "
                 + (visibleType.isEmpty() ? "" : visibleType + ": ") + changeset.summary);
         }
     }

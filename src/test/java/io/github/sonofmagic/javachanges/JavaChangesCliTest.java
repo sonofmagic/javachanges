@@ -75,7 +75,9 @@ class JavaChangesCliTest {
         ExecutionResult result = execute("status", "--directory", repoRoot.toString());
 
         assertEquals(0, result.exitCode);
-        assertTrue(result.stdout.contains("[patch] hide the implicit other label"));
+        assertTrue(result.stdout.contains("Release plan:"));
+        assertTrue(result.stdout.contains("- Affected packages: fixture-app"));
+        assertTrue(result.stdout.contains("[patch] (packages: fixture-app) hide the implicit other label"));
         assertFalse(result.stdout.contains("other:"));
     }
 
@@ -94,7 +96,10 @@ class JavaChangesCliTest {
 
         assertEquals(0, result.exitCode);
         assertTrue(result.stdout.contains("Applied release plan for v1.2.0"));
+        assertTrue(result.stdout.contains("- Release type: minor"));
+        assertTrue(result.stdout.contains("- Affected packages: fixture-app"));
         assertTrue(read(repoRoot.resolve("CHANGELOG.md")).contains("### Minor Changes"));
+        assertTrue(read(repoRoot.resolve("CHANGELOG.md")).contains("(packages: fixture-app)"));
         assertFalse(read(repoRoot.resolve("CHANGELOG.md")).contains("### Other"));
         assertTrue(read(repoRoot.resolve("pom.xml")).contains("<revision>1.2.0-SNAPSHOT</revision>"));
         assertTrue(Files.exists(repoRoot.resolve(".changesets").resolve("release-plan.json")));
@@ -118,7 +123,7 @@ class JavaChangesCliTest {
         ExecutionResult result = execute("status", "--directory", repoRoot.toString());
 
         assertEquals(0, result.exitCode);
-        assertTrue(result.stdout.contains("[patch] keep supporting the legacy format"));
+        assertTrue(result.stdout.contains("[patch] (packages: fixture-app) keep supporting the legacy format"));
     }
 
     @Test
@@ -136,8 +141,9 @@ class JavaChangesCliTest {
         ExecutionResult result = execute("status", "--directory", repoRoot.toString());
 
         assertEquals(0, result.exitCode);
-        assertTrue(result.stdout.contains("Release bump: minor"));
-        assertTrue(result.stdout.contains("[minor] improve multi-module release planning"));
+        assertTrue(result.stdout.contains("- Release type: minor"));
+        assertTrue(result.stdout.contains("- Affected packages: core, cli"));
+        assertTrue(result.stdout.contains("[minor] (packages: core, cli) improve multi-module release planning"));
     }
 
     @Test

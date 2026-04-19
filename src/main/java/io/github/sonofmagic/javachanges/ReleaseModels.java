@@ -11,10 +11,12 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 
 import static io.github.sonofmagic.javachanges.ReleaseUtils.*;
 
@@ -483,6 +485,14 @@ final class ReleasePlan {
         return nextSnapshotVersion;
     }
 
+    List<String> getAffectedPackages() {
+        Set<String> packages = new LinkedHashSet<String>();
+        for (Changeset changeset : changesets) {
+            packages.addAll(changeset.modules);
+        }
+        return new ArrayList<String>(packages);
+    }
+
     String renderChangelogSection() {
         StringBuilder builder = new StringBuilder();
         builder.append("## ").append(releaseVersion).append(" - ")
@@ -505,7 +515,7 @@ final class ReleasePlan {
             builder.append("### ").append(releaseLevelHeading(level)).append("\n\n");
             for (Changeset changeset : levelChangesets) {
                 builder.append("- ").append(changeset.summary);
-                builder.append(" (modules: ").append(joinModules(changeset.modules)).append(")");
+                builder.append(" (packages: ").append(joinModules(changeset.modules)).append(")");
                 if (!changeset.body.isEmpty()) {
                     builder.append(" ");
                     builder.append(firstBodyLine(changeset.body));
@@ -527,17 +537,19 @@ final class ReleasePlan {
         List<String> lines = new ArrayList<String>();
         lines.add("## Release Plan");
         lines.add("");
+        lines.add("- Release type: `" + releaseLevel.id + "`");
+        lines.add("- Affected packages: `" + joinModules(getAffectedPackages()) + "`");
         lines.add("- Release version: `v" + releaseVersion + "`");
         lines.add("- Next snapshot: `" + nextSnapshotVersion + "`");
-        lines.add("- Release level: `" + releaseLevel.id + "`");
         lines.add("");
         lines.add("## Included Changesets");
         lines.add("");
         for (Changeset changeset : changesets) {
             String visibleType = renderVisibleType(changeset.type);
             lines.add("- `" + changeset.release.id + "` "
+                + "`packages: " + joinModules(changeset.modules) + "` "
                 + (visibleType.isEmpty() ? "" : "`" + visibleType + "` ")
-                + changeset.summary + " (`" + joinModules(changeset.modules) + "`)");
+                + changeset.summary);
         }
         lines.add("");
         lines.add("This PR was generated automatically from `.changesets/*.md` files.");
