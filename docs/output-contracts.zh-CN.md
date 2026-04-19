@@ -1,0 +1,323 @@
+# javachanges 输出契约说明
+
+[English](/output-contracts) | [简体中文](/zh-CN/output-contracts)
+
+## 1. 概述
+
+这篇文档专门说明 `javachanges` 的哪些输出适合给自动化脚本读取，哪些输出只适合给人看，以及当前实现里的输出结构大致长什么样。
+
+适合这些场景：
+
+- 你要围绕 `javachanges` 写 CI 脚本
+- 你在判断到底该解析终端输出，还是该读取生成文件
+- 你想知道哪些字段是更适合长期依赖的
+
+## 2. 稳定性总览
+
+| 输出 | 面向对象 | 稳定性建议 |
+| --- | --- | --- |
+| `manifest-field` 标准输出 | 脚本和 CI | 优先使用的机器可读接口 |
+| `.changesets/release-plan.json` | 脚本和 CI | 优先使用的机器可读接口 |
+| `.changesets/release-plan.md` | Pull Request / Merge Request 正文 | 面向人阅读，结构可能演进 |
+| `status` 标准输出 | 本地操作者和审阅者 | 面向人，不要做刚性解析 |
+| `render-vars` 标准输出 | 本地操作者 | 面向人，不要做刚性解析 |
+| `doctor-local` 标准输出 | 本地操作者 | 面向人，不要做刚性解析 |
+| `doctor-platform` 标准输出 | 本地操作者 | 面向人，不要做刚性解析 |
+| `sync-vars` dry-run 输出 | 本地操作者 | 只是预览文本，不是稳定 API |
+| `audit-vars` 标准输出 | 本地操作者 | 是状态摘要，不是稳定 API |
+
+实际建议：
+
+- 自动化如果只需要一个值，优先用 `manifest-field`
+- 自动化如果需要多个字段，优先读 `.changesets/release-plan.json`
+- 不要把终端标题、列对齐空格或中英文文案当作稳定契约
+
+## 3. `status` 输出
+
+`status` 打印的是给人看的发布摘要。
+
+当前命令：
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/repo"
+```
+
+当前结构：
+
+```text
+Repository: /path/to/repo
+Current revision: 0.1.0-SNAPSHOT
+Latest whole-repo tag: none
+Pending changesets: 1
+Release plan:
+- Release type: minor
+- Affected packages: core, api
+- Release version: v0.2.0
+- Next snapshot: 0.2.0-SNAPSHOT
+
+Changesets:
+- 20260418-add-release-notes.md [minor] (packages: core, api) Add release notes generation workflow.
+```
+
+当前行为要点：
+
+- 如果没有待发布 changeset，会输出 `Release plan: none`
+- 这个命令当前使用英文标题
+- 当内部 `type` 是 `other` 时，可见输出里会省略类型文本
+
+自动化建议：
+
+- 不要解析 bullet 文本或空格对齐
+- 如果你需要 `releaseVersion` 或 `releaseLevel`，直接读 manifest
+
+## 4. `manifest-field` 输出
+
+`manifest-field` 是最窄、最适合脚本消费的接口。
+
+命令：
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /path/to/repo --field releaseVersion"
+```
+
+当前行为：
+
+- 读取 `.changesets/release-plan.json`
+- 输出目标字段对应的值
+- 很适合在 CI 里拼 PR 标题、tag 名称和发布元数据
+
+常用字段：
+
+| 字段 | 含义 |
+| --- | --- |
+| `releaseVersion` | 不带 `v` 的正式发布版本 |
+| `nextSnapshotVersion` | 写回 `pom.xml` 的下一个快照版本 |
+| `releaseLevel` | 聚合后的发布级别 |
+
+## 5. `.changesets/release-plan.json`
+
+这是当前最主要的机器可读发布 manifest。
+
+当前结构：
+
+```json
+{
+  "releaseVersion": "0.2.0",
+  "nextSnapshotVersion": "0.2.0-SNAPSHOT",
+  "releaseLevel": "minor",
+  "generatedAt": "2026-04-19T13:29:58.202943+08:00",
+  "changesets": [
+    {
+      "file": "20260418-add-release-notes.md",
+      "release": "minor",
+      "type": "other",
+      "summary": "Add release notes generation workflow.",
+      "modules": ["core", "api"]
+    }
+  ]
+}
+```
+
+字段契约：
+
+| 字段 | 含义 |
+| --- | --- |
+| `releaseVersion` | 不带 `v` 前缀的最终发布版本 |
+| `nextSnapshotVersion` | 应用 plan 后推进到的下一个根快照版本 |
+| `releaseLevel` | 本次包含的所有 changeset 聚合后的发布级别 |
+| `generatedAt` | manifest 生成时间 |
+| `changesets[].file` | 原始 changeset 文件名 |
+| `changesets[].release` | 该 changeset 的发布升级级别 |
+| `changesets[].type` | 兼容旧格式保留的字段，常见值是 `other` |
+| `changesets[].summary` | 从 changeset 正文或旧元数据推导出的摘要 |
+| `changesets[].modules` | 受影响的 Maven artifactId |
+
+需要注意：
+
+- 为了兼容当前实现，JSON 字段仍然叫 `modules`，即使用户文档里更推荐 `packages`
+- `type` 不是发布升级类型，真正有意义的是 `release`
+
+## 6. `.changesets/release-plan.md`
+
+这个文件是给人审阅的 release PR / MR 正文。
+
+当前结构：
+
+```md
+## Release Plan
+
+- Release type: `minor`
+- Affected packages: `core, api`
+- Release version: `v0.2.0`
+- Next snapshot: `0.2.0-SNAPSHOT`
+
+## Included Changesets
+
+- `minor` `packages: core, api` Add release notes generation workflow.
+```
+
+建议：
+
+- 很适合直接用作 PR 正文
+- 不适合作为稳定的机器接口
+- 标题和句子文案未来可能调整
+
+## 7. `render-vars` 输出
+
+`render-vars` 用来展示某个 env 文件里的值会如何映射成 GitHub / GitLab 变量与 secrets。
+
+当前命令：
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="render-vars --env-file env/release.env.local --platform github"
+```
+
+当前 GitHub 结构：
+
+```text
+使用 env 文件: env/release.env.local
+敏感值默认已打码。传入 --show-secrets true 可显示原值。
+
+== GitHub Actions Variables ==
+MAVEN_RELEASE_REPOSITORY_URL             https://repo.example.com/maven-releases/
+MAVEN_SNAPSHOT_REPOSITORY_URL            https://repo.example.com/maven-snapshots/
+MAVEN_RELEASE_REPOSITORY_ID              maven-releases
+MAVEN_SNAPSHOT_REPOSITORY_ID             maven-snapshots
+
+== GitHub Actions Secrets ==
+MAVEN_REPOSITORY_USERNAME                PLACEHOLDER
+MAVEN_REPOSITORY_PASSWORD                PLACEHOLDER
+MAVEN_RELEASE_REPOSITORY_USERNAME        MISSING
+```
+
+当前 GitLab 结构：
+
+```text
+使用 env 文件: env/release.env.local
+敏感值默认已打码。传入 --show-secrets true 可显示原值。
+
+== GitLab CI/CD Variables ==
+GITLAB_RELEASE_TOKEN                     OPTIONAL (fallback: CI_JOB_TOKEN)
+MAVEN_RELEASE_REPOSITORY_URL             https://repo.example.com/maven-releases/
+MAVEN_REPOSITORY_USERNAME                PL****ER
+```
+
+当前会出现的值状态：
+
+| 状态 | 含义 |
+| --- | --- |
+| 原始值 | 当前是有效真实值 |
+| `MISSING` | key 不存在 |
+| `PLACEHOLDER` | 还是 `replace-me` 这种占位值 |
+| 类似 `ab****yz` 的掩码值 | secret 存在，但默认被打码 |
+
+自动化建议：
+
+- 这个输出只是给操作者预览
+- 真正的 source of truth 仍然是 env 文件本身，不是这张终端表格
+
+## 8. `doctor-local` 输出
+
+`doctor-local` 会检查本地运行时、env 完整性、平台 CLI 登录状态，以及可选的仓库标识。
+
+当前命令：
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --env-file env/release.env.local"
+```
+
+当前分段结构：
+
+```text
+== 本机运行时 ==
+java -version                            OK
+./mvnw                                   MISSING
+./mvnw -q -version                       SKIPPED
+
+== 本地 env 文件 ==
+env/release.env.local                    OK
+MAVEN_REPOSITORY_USERNAME                PLACEHOLDER
+
+== 平台 CLI ==
+gh                                       OK
+gh auth status                           FAILED
+glab                                     MISSING
+
+== 仓库标识 ==
+GITHUB_REPO                              NOT_SET
+GITLAB_REPO                              NOT_SET
+```
+
+当前状态词：
+
+| 状态 | 含义 |
+| --- | --- |
+| `OK` | 校验通过 |
+| `MISSING` | 必需工具、文件或值不存在 |
+| `FAILED` | 命令存在，但校验失败 |
+| `SKIPPED` | 依赖检查没通过，因此跳过 |
+| `PLACEHOLDER` | 值仍然是占位数据 |
+| `OPTIONAL` | key 缺失，但本来就是可选的 |
+| `NOT_SET` | 可选仓库标识参数没有传 |
+| `INVALID` | 传入的仓库标识格式不合法 |
+
+当前实现里一个重要细节：
+
+- 这里检查的是 `./mvnw`，不是系统安装的 `mvn`
+- 失败时最后会打印一段面向人的处理建议，并抛错退出
+
+## 9. `doctor-platform` 和 `audit-vars`
+
+`doctor-platform` 用来在真正 sync 或 audit 之前，确认本地 env 和平台 CLI 鉴权是否已经准备好。
+
+当前结构：
+
+```text
+使用 env 文件: env/release.env.local
+
+== 本地 env 检查 ==
+MAVEN_RELEASE_REPOSITORY_URL             OK
+MAVEN_REPOSITORY_USERNAME                PLACEHOLDER
+
+== GitHub CLI 检查 ==
+gh                                       OK
+gh auth status                           FAILED
+```
+
+`audit-vars` 则是把本地值和远端平台状态做对比。
+
+当前审计状态词：
+
+| 状态 | 含义 |
+| --- | --- |
+| `MATCH` | 远端值与本地值一致 |
+| `PRESENT` | 远端 secret 已存在 |
+| `REMOTE_ONLY` | 远端有值，但本地输入为空或仍是占位值 |
+| `SKIPPED` | 没有可比较的有效值 |
+| `MISSING_REMOTE` | 本地是真实值，但远端不存在 |
+| `MISMATCH` | 本地值和远端值不一致 |
+
+这些仍然是给操作者看的状态摘要，不是 JSON 契约。
+
+## 10. 自动化建议
+
+对 CI 和脚本来说：
+
+1. 用 `plan --apply true` 生成 manifest
+2. 用 `manifest-field` 或 `release-plan.json` 读取 `releaseVersion`、`releaseLevel` 这类字段
+3. 把 `render-vars`、`doctor-local`、`doctor-platform`、`audit-vars` 当作诊断输出，而不是脚本输入
+
+避免这样做：
+
+- 解析列对齐空格
+- 依赖 `== 本地 env 检查 ==` 这种标题文本
+- 依赖失败总结段落里的自然语言表述
+
+## 11. 相关阅读
+
+| 需求 | 文档 |
+| --- | --- |
+| 完整命令列表 | [CLI Reference](./cli-reference.md) |
+| 生成的 manifest 字段说明 | [Release Plan Manifest](./release-plan-manifest.md) |
+| 常见命令实战 | [Command Cookbook](./command-cookbook.md) |
+| 故障排查 | [Troubleshooting Guide](./troubleshooting-guide.md) |

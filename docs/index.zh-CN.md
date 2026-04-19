@@ -63,6 +63,7 @@ features:
 - [CLI 命令参考](./cli-reference.md)
 - [Development Guide](./development-guide.md)
 - [Release Plan Manifest 说明](./release-plan-manifest.md)
+- [输出契约说明](./output-contracts.md)
 - [故障排查指南](./troubleshooting-guide.md)
 - [GitHub Actions Release Flow](./github-actions-release.md)
 - [GitHub Actions Usage Guide](./github-actions-guide.md)

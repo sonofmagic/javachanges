@@ -186,6 +186,8 @@ GitLab 相关辅助：
 - [配置参考大全（zh-CN）](docs/configuration-reference.zh-CN.md)
 - [CLI 命令参考](docs/cli-reference.md)
 - [CLI 命令参考（zh-CN）](docs/cli-reference.zh-CN.md)
+- [Output Contracts](docs/output-contracts.md)
+- [输出契约说明（zh-CN）](docs/output-contracts.zh-CN.md)
 - [Development Guide](docs/development-guide.md)
 - [Development Guide (zh-CN)](docs/development-guide.zh-CN.md)
 - [Release Plan Manifest](docs/release-plan-manifest.md)
