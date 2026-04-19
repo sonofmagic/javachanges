@@ -117,7 +117,65 @@ After the release, move it forward again, for example:
 <revision>1.0.1-SNAPSHOT</revision>
 ```
 
-## 6. Local preflight
+## 6. Enrich the Sonatype Central artifact page
+
+The Sonatype Central artifact page is not a customizable project website.
+
+It mostly renders a fixed layout from standard POM metadata. That means:
+
+1. what the page can show depends on which standard fields are present in `pom.xml`
+2. already-published versions do not refresh just because you changed `main`
+3. richer metadata only shows up after the next real release that contains it
+
+This repository now includes the main metadata fields that help Central show a fuller artifact page:
+
+| POM field | Purpose |
+| --- | --- |
+| `<name>` | artifact display name |
+| `<description>` | short artifact summary |
+| `<url>` | project homepage |
+| `<licenses>` | license details |
+| `<developers>` | developer details |
+| `<organization>` | organization details |
+| `<issueManagement>` | issue tracker link |
+| `<ciManagement>` | CI link |
+| `<scm>` | source control details |
+| `<inceptionYear>` | project start year |
+
+A representative metadata block looks like this:
+
+```xml
+<organization>
+  <name>sonofmagic</name>
+  <url>https://github.com/sonofmagic</url>
+</organization>
+
+<issueManagement>
+  <system>GitHub Issues</system>
+  <url>https://github.com/sonofmagic/javachanges/issues</url>
+</issueManagement>
+
+<ciManagement>
+  <system>GitHub Actions</system>
+  <url>https://github.com/sonofmagic/javachanges/actions</url>
+</ciManagement>
+```
+
+> Note: Central uses a fixed template. You cannot add a custom logo section, README rendering, screenshots, arbitrary badges, or custom landing-page blocks there.
+
+If your goal is a fuller Central page, check these fields before release:
+
+| Check | Recommendation |
+| --- | --- |
+| `description` | explain the package in one sentence |
+| `url` | point to the repo or project home |
+| `developers` | include at least `name` and `url` |
+| `organization` | add it when available |
+| `issueManagement` | link to Issues |
+| `ciManagement` | link to Actions or your CI |
+| `scm` | keep `connection`, `developerConnection`, and `url` complete |
+
+## 7. Local preflight
 
 Before `deploy`, validate the publishing build:
 
@@ -136,9 +194,9 @@ This checks:
 
 `-Dgpg.skip=true` is only for validating the build chain before real signing.
 
-## 7. First manual release
+## 8. First manual release
 
-### 7.1 Recommended first step
+### 8.1 Recommended first step
 
 For the first release, it is safer to upload and validate first instead of immediately auto-publishing.
 
@@ -155,7 +213,7 @@ So the normal behavior is:
 2. wait for validation
 3. publish manually in the portal once validation passes
 
-### 7.2 Publish command
+### 8.2 Publish command
 
 ```bash
 mvn -Pcentral-publish clean deploy
@@ -163,7 +221,7 @@ mvn -Pcentral-publish clean deploy
 
 If your GPG key requires a passphrase, Maven will ask for it.
 
-## 8. Auto-publish
+## 9. Auto-publish
 
 Once the first manual release has proven stable, you can auto-publish:
 
@@ -176,7 +234,7 @@ mvn -Pcentral-publish \
 
 That uploads, validates, publishes, and waits until the deployment reaches `published`.
 
-## 9. Recommended release sequence
+## 10. Recommended release sequence
 
 1. make sure the worktree is clean: `git status`
 2. change `revision` to the real release version, for example `1.0.0`
@@ -187,7 +245,7 @@ That uploads, validates, publishes, and waits until the deployment reaches `publ
 7. create a git tag such as `v1.0.0`
 8. move the version to the next snapshot, such as `1.0.1-SNAPSHOT`
 
-## 10. Verify the result
+## 11. Verify the result
 
 After publishing, check:
 
@@ -212,9 +270,9 @@ And since this project produces an executable jar, you can also test:
 java -jar javachanges-1.2.0.jar
 ```
 
-## 11. FAQ
+## 12. FAQ
 
-### 11.1 Missing `sources.jar` or `javadoc.jar`
+### 12.1 Missing `sources.jar` or `javadoc.jar`
 
 Cause: the `central-publish` profile was not enabled, or the packaging chain is broken.
 
@@ -224,7 +282,7 @@ Fix:
 mvn -Pcentral-publish -Dgpg.skip=true verify
 ```
 
-### 11.2 Missing signatures
+### 12.2 Missing signatures
 
 Cause: GPG is not configured correctly, or `gpg-agent` has not cached the passphrase.
 
@@ -234,7 +292,7 @@ Fix:
 2. run `echo "test" | gpg --clearsign`
 3. rerun the Maven publish command
 
-### 11.3 Authentication failures
+### 12.3 Authentication failures
 
 Cause: the token in `settings.xml` is wrong, or the server id does not match.
 
@@ -244,7 +302,17 @@ Fix:
 2. inspect `central.publishing.serverId` in `pom.xml`
 3. confirm the token has not expired or been revoked
 
-## 12. Summary
+### 12.4 Why the Central page did not change immediately after I edited `pom.xml`
+
+Cause: Central shows the metadata snapshot embedded in a published version, not the current state of your repository.
+
+Fix:
+
+1. update the metadata in `pom.xml`
+2. publish a new version
+3. inspect the new version page in Central
+
+## 13. Summary
 
 The publishing commands for this repository reduce to:
 

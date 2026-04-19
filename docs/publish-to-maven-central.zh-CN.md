@@ -121,7 +121,65 @@ echo "test" | gpg --clearsign
 <revision>1.0.1-SNAPSHOT</revision>
 ```
 
-## 6. 本地预检
+## 6. 丰富 Sonatype Central 页面信息
+
+Sonatype Central 的 artifact 页面不是自定义官网，它主要根据你发布出去的 POM 元数据展示固定信息。
+
+这意味着：
+
+1. 页面能展示什么，主要取决于 `pom.xml` 里有没有标准字段
+2. 已发布版本不会因为你后来改了 `pom.xml` 就自动刷新
+3. 想让页面显示更多信息，必须把这些元数据带进“下一次正式发布”
+
+当前仓库里已经补充了这批对 Central 页面最有帮助的字段：
+
+| POM 字段 | 作用 |
+| --- | --- |
+| `<name>` | artifact 显示名称 |
+| `<description>` | artifact 简介 |
+| `<url>` | 项目主页 |
+| `<licenses>` | 许可证信息 |
+| `<developers>` | 开发者信息 |
+| `<organization>` | 组织信息 |
+| `<issueManagement>` | Issues 页面入口 |
+| `<ciManagement>` | CI 页面入口 |
+| `<scm>` | 源码仓库与 SCM 信息 |
+| `<inceptionYear>` | 项目起始年份 |
+
+一个更完整的 Central 元数据思路如下：
+
+```xml
+<organization>
+  <name>sonofmagic</name>
+  <url>https://github.com/sonofmagic</url>
+</organization>
+
+<issueManagement>
+  <system>GitHub Issues</system>
+  <url>https://github.com/sonofmagic/javachanges/issues</url>
+</issueManagement>
+
+<ciManagement>
+  <system>GitHub Actions</system>
+  <url>https://github.com/sonofmagic/javachanges/actions</url>
+</ciManagement>
+```
+
+> **注意**：Central 页面是固定模板。你不能像文档站那样加 Logo、README 渲染、自定义按钮、截图或任意模块。
+
+如果你的目标是“Central 页面尽量完整”，建议发布前自查：
+
+| 检查项 | 建议 |
+| --- | --- |
+| `description` | 用一句话说清项目用途 |
+| `url` | 指向项目主页或 GitHub 仓库 |
+| `developers` | 至少填 `name` 和 `url` |
+| `organization` | 有就补上 |
+| `issueManagement` | 指向 Issues |
+| `ciManagement` | 指向 Actions / CI 页面 |
+| `scm` | `connection`、`developerConnection`、`url` 都尽量完整 |
+
+## 7. 本地预检
 
 在真正执行 `deploy` 前，建议先做一次发布前构建验证：
 
@@ -140,9 +198,9 @@ mvn -Pcentral-publish -Dgpg.skip=true verify
 
 这里先用 `-Dgpg.skip=true`，是为了先验证打包链路本身没有问题。
 
-## 7. 手动发布正式版
+## 8. 手动发布正式版
 
-### 7.1 首次发布建议
+### 8.1 首次发布建议
 
 第一次建议先使用“上传并等待校验，不自动发布”的默认行为。
 
@@ -159,7 +217,7 @@ mvn -Pcentral-publish -Dgpg.skip=true verify
 2. Central 会执行校验
 3. 校验通过后，你再去 Portal 页面手动点击发布
 
-### 7.2 发布命令
+### 8.2 发布命令
 
 ```bash
 mvn -Pcentral-publish clean deploy
@@ -167,7 +225,7 @@ mvn -Pcentral-publish clean deploy
 
 如果你的 GPG 需要口令，过程中会提示输入。
 
-## 8. 自动发布
+## 9. 自动发布
 
 当你确认首次发布流程没有问题后，可以改用自动发布：
 
@@ -180,7 +238,7 @@ mvn -Pcentral-publish \
 
 这会在上传并校验通过后自动发布，并等待到 `published` 状态。
 
-## 9. 版本发布建议流程
+## 10. 版本发布建议流程
 
 推荐按下面顺序做一次正式版发布：
 
@@ -193,7 +251,7 @@ mvn -Pcentral-publish \
 7. 发布完成后，创建 git tag，例如 `v1.0.0`
 8. 把版本切到下一个开发版本，例如 `1.0.1-SNAPSHOT`
 
-## 10. 验证发布结果
+## 11. 验证发布结果
 
 发布完成后，可以在以下位置检查：
 
@@ -218,9 +276,9 @@ mvn -Pcentral-publish \
 java -jar javachanges-1.2.0.jar
 ```
 
-## 11. 常见问题
+## 12. 常见问题
 
-### 11.1 发布时提示缺少 `sources.jar` 或 `javadoc.jar`
+### 12.1 发布时提示缺少 `sources.jar` 或 `javadoc.jar`
 
 原因：没有启用 `central-publish` profile，或者构建链路异常。
 
@@ -230,7 +288,7 @@ java -jar javachanges-1.2.0.jar
 mvn -Pcentral-publish -Dgpg.skip=true verify
 ```
 
-### 11.2 发布时提示签名缺失
+### 12.2 发布时提示签名缺失
 
 原因：GPG 没有配置好，或者 `gpg-agent` 没有拿到口令。
 
@@ -240,7 +298,7 @@ mvn -Pcentral-publish -Dgpg.skip=true verify
 2. 先执行一次 `echo "test" | gpg --clearsign`
 3. 再重新执行 Maven 发布
 
-### 11.3 发布时提示认证失败
+### 12.3 发布时提示认证失败
 
 原因：`settings.xml` 里的 token 不对，或者 `server id` 不匹配。
 
@@ -250,7 +308,17 @@ mvn -Pcentral-publish -Dgpg.skip=true verify
 2. 检查 `pom.xml` 中 `central.publishing.serverId`
 3. 确认 token 没有过期或被撤销
 
-## 12. 总结
+### 12.4 为什么我改了 `pom.xml`，Central 页面没有立刻变化
+
+原因：Central 页面展示的是“某个已发布版本”里的元数据快照，而不是你仓库当前 `main` 分支的最新内容。
+
+处理方式：
+
+1. 先补全 `pom.xml` 元数据
+2. 发布一个新版本
+3. 到新版本对应的 Central 页面确认展示结果
+
+## 13. 总结
 
 这个仓库的正式发布命令可以概括为两条：
 
