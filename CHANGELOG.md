@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.3.0 - 2026-04-19
+
+### Minor Changes
+
+- Add Maven plugin invocation support so `javachanges` can run directly through Maven goals instead of only `java -jar` or `exec:java`. (packages: javachanges) Add Maven plugin invocation support so `javachanges` can run directly through Maven goals instead of only `java -jar` or `exec:java`.
+
+### Patch Changes
+
+- Update installation docs to use the published Maven Central release instead of source-only examples. (packages: javachanges) Update installation docs to use the published Maven Central release instead of source-only examples.
+
 ## 1.2.0 - 2026-04-19
 
 ### Minor Changes

@@ -14,7 +14,7 @@
     <url>https://github.com/sonofmagic/javachanges</url>
 
     <properties>
-        <revision>1.2.0-SNAPSHOT</revision>
+        <revision>1.3.0-SNAPSHOT</revision>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -233,3 +233,4 @@
         </profile>
     </profiles>
 </project>
+
