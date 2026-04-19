@@ -1,98 +1,21 @@
 {
-  "releaseVersion": "1.2.0",
-  "nextSnapshotVersion": "1.2.0-SNAPSHOT",
+  "releaseVersion": "1.3.0",
+  "nextSnapshotVersion": "1.3.0-SNAPSHOT",
   "releaseLevel": "minor",
-  "generatedAt": "2026-04-19T07:32:24.163Z",
+  "generatedAt": "2026-04-19T11:28:11.675Z",
   "changesets": [
     {
-      "file": "20260419-add-audit-vars-json-output.md",
-      "release": "patch",
-      "type": "other",
-      "summary": "Add `--format json` support to `audit-vars`.",
-      "modules": ["javachanges"]
-    },
-    {
-      "file": "20260419-add-command-cookbook.md",
-      "release": "patch",
-      "type": "other",
-      "summary": "Add a bilingual command cookbook for common release workflows.",
-      "modules": ["javachanges"]
-    },
-    {
-      "file": "20260419-add-configuration-reference.md",
-      "release": "patch",
-      "type": "other",
-      "summary": "Add a dedicated configuration reference for `javachanges`.",
-      "modules": ["javachanges"]
-    },
-    {
-      "file": "20260419-add-json-output-mode.md",
-      "release": "patch",
-      "type": "other",
-      "summary": "Add `--format json` output support for `render-vars`, `doctor-local`, and `doctor-platform`.",
-      "modules": ["javachanges"]
-    },
-    {
-      "file": "20260419-add-output-contract-docs.md",
-      "release": "patch",
-      "type": "other",
-      "summary": "Add bilingual output contract documentation for CLI and manifest consumers.",
-      "modules": ["javachanges"]
-    },
-    {
-      "file": "20260419-add-troubleshooting-docs.md",
-      "release": "patch",
-      "type": "other",
-      "summary": "Add troubleshooting documentation and clarify example CI placeholders.",
-      "modules": ["javachanges"]
-    },
-    {
-      "file": "20260419-align-release-plan-terminology.md",
-      "release": "patch",
-      "type": "other",
-      "summary": "Align the release plan and status output terminology more closely with official Changesets language.",
-      "modules": ["javachanges"]
-    },
-    {
-      "file": "20260419-align-with-official-changesets.md",
+      "file": "20260419-add-maven-plugin-invocation.md",
       "release": "minor",
       "type": "other",
-      "summary": "Align the default changeset file format with the official Changesets package-map style.",
+      "summary": "Add Maven plugin invocation support so `javachanges` can run directly through Maven goals instead of only `java -jar` or `exec:java`.",
       "modules": ["javachanges"]
     },
     {
-      "file": "20260419-expand-examples-guide.md",
+      "file": "20260419-update-installation-docs-for-central-release.md",
       "release": "patch",
       "type": "other",
-      "summary": "Expand the checked-in example repository and add a bilingual examples guide.",
-      "modules": ["javachanges"]
-    },
-    {
-      "file": "20260419-fallback-to-system-maven.md",
-      "release": "patch",
-      "type": "other",
-      "summary": "Allow local doctor and publish flows to fall back to system Maven when no wrapper is present.",
-      "modules": ["javachanges"]
-    },
-    {
-      "file": "20260419-fix-docs-deploy-and-doc-locale-links.md",
-      "release": "patch",
-      "type": "other",
-      "summary": "Fix the docs deployment workflow and remove duplicated locale switch links from documentation pages.",
-      "modules": ["javachanges"]
-    },
-    {
-      "file": "20260419-improve-docs-navigation-and-reference.md",
-      "release": "patch",
-      "type": "other",
-      "summary": "Improve the documentation structure and reference coverage.",
-      "modules": ["javachanges"]
-    },
-    {
-      "file": "20260419-switch-docs-deploy-to-cloudflare-builds.md",
-      "release": "patch",
-      "type": "other",
-      "summary": "Document and simplify docs deployment around Cloudflare Workers Builds.",
+      "summary": "Update installation docs to use the published Maven Central release instead of source-only examples.",
       "modules": ["javachanges"]
     }
   ]
