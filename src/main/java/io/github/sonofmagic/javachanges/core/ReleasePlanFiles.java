@@ -1,0 +1,86 @@
+package io.github.sonofmagic.javachanges.core;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import static io.github.sonofmagic.javachanges.core.ReleaseUtils.CHANGESETS_DIR;
+import static io.github.sonofmagic.javachanges.core.ReleaseUtils.RELEASE_PLAN_JSON;
+import static io.github.sonofmagic.javachanges.core.ReleaseUtils.RELEASE_PLAN_MD;
+
+final class ReleasePlanFiles {
+    private ReleasePlanFiles() {
+    }
+
+    static void applyPlan(Path repoRoot, ReleasePlan plan) throws IOException {
+        updateRootRevision(repoRoot.resolve("pom.xml"), plan.getNextSnapshotVersion());
+        updateChangelog(repoRoot.resolve("CHANGELOG.md"), plan);
+        Files.write(repoRoot.resolve(CHANGESETS_DIR).resolve(RELEASE_PLAN_JSON),
+            Collections.singletonList(plan.toJson()),
+            StandardCharsets.UTF_8);
+        Files.write(repoRoot.resolve(CHANGESETS_DIR).resolve(RELEASE_PLAN_MD),
+            plan.toPullRequestBodyLines(),
+            StandardCharsets.UTF_8);
+        for (Changeset changeset : plan.getChangesets()) {
+            Files.deleteIfExists(changeset.path);
+        }
+    }
+
+    private static void updateRootRevision(Path pomPath, String newSnapshotVersion) throws IOException {
+        String original = new String(Files.readAllBytes(pomPath), StandardCharsets.UTF_8);
+        String updated = original.replaceFirst(
+            "<revision>[^<]+</revision>",
+            "<revision>" + newSnapshotVersion + "</revision>"
+        );
+        if (original.equals(updated)) {
+            throw new IllegalStateException("Unable to update <revision> in " + pomPath);
+        }
+        Files.write(pomPath, Collections.singletonList(updated), StandardCharsets.UTF_8);
+    }
+
+    private static void updateChangelog(Path changelogPath, ReleasePlan plan) throws IOException {
+        String section = plan.renderChangelogSection();
+        List<String> existing = Files.exists(changelogPath)
+            ? Files.readAllLines(changelogPath, StandardCharsets.UTF_8)
+            : defaultChangelogLines();
+
+        String heading = "## " + plan.getReleaseVersion() + " - ";
+        for (String line : existing) {
+            if (line.startsWith(heading)) {
+                return;
+            }
+        }
+
+        List<String> updated = new ArrayList<String>();
+        boolean inserted = false;
+        for (String line : existing) {
+            updated.add(line);
+            if (!inserted && "All notable changes to this project will be documented in this file.".equals(line)) {
+                updated.add("");
+                updated.addAll(Arrays.asList(section.split("\\r?\\n")));
+                inserted = true;
+            }
+        }
+        if (!inserted) {
+            if (!updated.isEmpty() && !updated.get(updated.size() - 1).isEmpty()) {
+                updated.add("");
+            }
+            updated.addAll(Arrays.asList(section.split("\\r?\\n")));
+        }
+        Files.write(changelogPath, updated, StandardCharsets.UTF_8);
+    }
+
+    private static List<String> defaultChangelogLines() {
+        return Arrays.asList(
+            "# Changelog",
+            "",
+            "All notable changes to this project will be documented in this file.",
+            ""
+        );
+    }
+}
