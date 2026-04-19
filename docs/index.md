@@ -58,6 +58,7 @@ The tool stays file-centric. It does not require a database or a hosted service.
 
 - [Getting Started](./getting-started.md)
 - [Examples Guide](./examples-guide.md)
+- [Command Cookbook](./command-cookbook.md)
 - [Configuration Reference](./configuration-reference.md)
 - [CLI Reference](./cli-reference.md)
 - [Development Guide](./development-guide.md)

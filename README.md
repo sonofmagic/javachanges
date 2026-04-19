@@ -180,6 +180,8 @@ GitLab-specific helpers:
 - [Getting Started (zh-CN)](docs/getting-started.zh-CN.md)
 - [Examples Guide](docs/examples-guide.md)
 - [Examples Guide (zh-CN)](docs/examples-guide.zh-CN.md)
+- [Command Cookbook](docs/command-cookbook.md)
+- [Command Cookbook (zh-CN)](docs/command-cookbook.zh-CN.md)
 - [Configuration Reference](docs/configuration-reference.md)
 - [Configuration Reference (zh-CN)](docs/configuration-reference.zh-CN.md)
 - [CLI Reference](docs/cli-reference.md)

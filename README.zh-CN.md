@@ -180,6 +180,8 @@ GitLab 相关辅助：
 - [Getting Started (zh-CN)](docs/getting-started.zh-CN.md)
 - [Examples Guide 使用指南](docs/examples-guide.md)
 - [Examples Guide 使用指南（zh-CN）](docs/examples-guide.zh-CN.md)
+- [命令实战手册](docs/command-cookbook.md)
+- [命令实战手册（zh-CN）](docs/command-cookbook.zh-CN.md)
 - [配置参考大全](docs/configuration-reference.md)
 - [配置参考大全（zh-CN）](docs/configuration-reference.zh-CN.md)
 - [CLI 命令参考](docs/cli-reference.md)

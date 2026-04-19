@@ -58,6 +58,7 @@ features:
 
 - [Getting Started](./getting-started.md)
 - [Examples Guide 使用指南](./examples-guide.md)
+- [命令实战手册](./command-cookbook.md)
 - [配置参考大全](./configuration-reference.md)
 - [CLI 命令参考](./cli-reference.md)
 - [Development Guide](./development-guide.md)

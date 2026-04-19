@@ -24,8 +24,9 @@ const guideItems: DefaultTheme.SidebarItem[] = [
     ],
   },
   {
-    text: 'Examples',
+    text: 'Recipes',
     items: [
+      { text: 'Command Cookbook', link: '/command-cookbook' },
       { text: 'Examples Guide', link: '/examples-guide' },
       { text: 'Use Cases', link: '/use-cases' },
     ],
@@ -65,8 +66,9 @@ const zhGuideItems: DefaultTheme.SidebarItem[] = [
     ],
   },
   {
-    text: '示例',
+    text: '实战',
     items: [
+      { text: '命令实战手册', link: '/zh-CN/command-cookbook' },
       { text: 'Examples Guide 使用指南', link: '/zh-CN/examples-guide' },
       { text: '使用场景', link: '/zh-CN/use-cases' },
     ],
