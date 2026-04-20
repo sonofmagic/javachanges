@@ -368,7 +368,7 @@ final class ReleaseTextUtils {
 然后在 `properties` 里定义：
 
 ```xml
-<revision>1.2.0-SNAPSHOT</revision>
+<revision>__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__</revision>
 ```
 
 这样做的好处是：
@@ -386,7 +386,7 @@ final class ReleaseTextUtils {
 所以它虽然既可以这样调用：
 
 ```bash
-java -jar javachanges-1.2.0.jar status
+java -jar javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar status
 ```
 
 但更推荐这样调用：

@@ -34,8 +34,8 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo
 
 ```json
 {
-  "releaseVersion": "1.2.0",
-  "nextSnapshotVersion": "1.2.1-SNAPSHOT",
+  "releaseVersion": "__JAVACHANGES_LATEST_RELEASE_VERSION__",
+  "nextSnapshotVersion": "1.3.2-SNAPSHOT",
   "releaseLevel": "minor",
   "generatedAt": "2026-04-19T12:34:56+08:00",
   "changesets": [

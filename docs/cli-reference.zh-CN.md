@@ -17,11 +17,11 @@
 
 ```bash
 mvn -q -DskipTests install
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:status
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:plan -Djavachanges.apply=true
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:run -Djavachanges.args="release-notes --tag v1.2.3"
+mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:status
+mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:plan -Djavachanges.apply=true
+mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:manifest-field -Djavachanges.field=releaseVersion
+mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:run -Djavachanges.args="release-notes --tag v1.2.3"
 ```
 
 开发这个仓库本身时的源码调用方式：
@@ -34,9 +34,9 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/re
 
 | 片段 | 说明 |
 | --- | --- |
-| `mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:status` | 执行独立的 status goal |
-| `mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:plan -Djavachanges.apply=true` | 执行独立的 plan goal |
-| `mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:run -Djavachanges.args="..."` | 对还没有独立 goal 的命令继续走通用桥接 goal |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:status` | 执行独立的 status goal |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:plan -Djavachanges.apply=true` | 执行独立的 plan goal |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:run -Djavachanges.args="..."` | 对还没有独立 goal 的命令继续走通用桥接 goal |
 | `mvn -q -DskipTests compile exec:java` | 编译 CLI 并运行 Java 入口 |
 | `-Dexec.args="..."` | 传递 `javachanges` 命令行参数 |
 | `--directory /path/to/repo` | 指定目标 Maven 仓库根目录或其子目录 |

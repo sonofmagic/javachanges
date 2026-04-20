@@ -266,7 +266,7 @@ mvn -Pcentral-publish \
 <dependency>
   <groupId>io.github.sonofmagic</groupId>
   <artifactId>javachanges</artifactId>
-  <version>1.2.0</version>
+  <version>__JAVACHANGES_LATEST_RELEASE_VERSION__</version>
 </dependency>
 ```
 
@@ -279,7 +279,7 @@ mvn javachanges:status
 如果你就是要验证可执行 CLI 产物，也仍然可以运行：
 
 ```bash
-java -jar javachanges-1.2.0.jar
+java -jar javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar
 ```
 
 ## 12. 常见问题

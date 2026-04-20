@@ -18,11 +18,11 @@ Current `main` branch Maven plugin invocation after local snapshot install:
 
 ```bash
 mvn -q -DskipTests install
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:status
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:plan -Djavachanges.apply=true
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:run -Djavachanges.args="release-notes --tag v1.2.3"
+mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:status
+mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:plan -Djavachanges.apply=true
+mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:manifest-field -Djavachanges.field=releaseVersion
+mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:run -Djavachanges.args="release-notes --tag v1.2.3"
 ```
 
 Source-driven invocation while developing this repository:
@@ -35,9 +35,9 @@ Common parts:
 
 | Part | Meaning |
 | --- | --- |
-| `mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:status` | Run the dedicated Maven plugin status goal |
-| `mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:plan -Djavachanges.apply=true` | Run the dedicated plan goal |
-| `mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:run -Djavachanges.args="..."` | Use the generic bridge goal for commands without a dedicated goal |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:status` | Run the dedicated Maven plugin status goal |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:plan -Djavachanges.apply=true` | Run the dedicated plan goal |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:run -Djavachanges.args="..."` | Use the generic bridge goal for commands without a dedicated goal |
 | `mvn -q -DskipTests compile exec:java` | Build the CLI and run the Java entrypoint |
 | `-Dexec.args="..."` | Pass `javachanges` CLI arguments |
 | `--directory /path/to/repo` | Target Maven repository root or a subdirectory inside it |

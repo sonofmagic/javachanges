@@ -260,7 +260,7 @@ You can also verify dependency resolution in a small sample project:
 <dependency>
   <groupId>io.github.sonofmagic</groupId>
   <artifactId>javachanges</artifactId>
-  <version>1.2.0</version>
+  <version>__JAVACHANGES_LATEST_RELEASE_VERSION__</version>
 </dependency>
 ```
 
@@ -273,7 +273,7 @@ mvn javachanges:status
 If you specifically want to verify the executable CLI artifact, you can still test:
 
 ```bash
-java -jar javachanges-1.2.0.jar
+java -jar javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar
 ```
 
 ## 12. FAQ
