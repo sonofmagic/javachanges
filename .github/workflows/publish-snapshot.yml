@@ -33,6 +33,8 @@ jobs:
         env:
           MAVEN_SNAPSHOT_REPOSITORY_URL: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_URL }}
           MAVEN_SNAPSHOT_REPOSITORY_ID: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_ID }}
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
           MAVEN_REPOSITORY_USERNAME: ${{ secrets.MAVEN_REPOSITORY_USERNAME }}
           MAVEN_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_REPOSITORY_PASSWORD }}
           MAVEN_SNAPSHOT_REPOSITORY_USERNAME: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_USERNAME }}
@@ -46,16 +48,16 @@ jobs:
             fi
           done
 
-          snapshot_username="${MAVEN_SNAPSHOT_REPOSITORY_USERNAME:-$MAVEN_REPOSITORY_USERNAME}"
-          snapshot_password="${MAVEN_SNAPSHOT_REPOSITORY_PASSWORD:-$MAVEN_REPOSITORY_PASSWORD}"
+          snapshot_username="${MAVEN_SNAPSHOT_REPOSITORY_USERNAME:-${MAVEN_REPOSITORY_USERNAME:-$MAVEN_CENTRAL_USERNAME}}"
+          snapshot_password="${MAVEN_SNAPSHOT_REPOSITORY_PASSWORD:-${MAVEN_REPOSITORY_PASSWORD:-$MAVEN_CENTRAL_PASSWORD}}"
 
           if [ -z "$snapshot_username" ]; then
-            echo "::error title=Missing GitHub Actions secret::Configure MAVEN_SNAPSHOT_REPOSITORY_USERNAME or MAVEN_REPOSITORY_USERNAME before running snapshot publish."
+            echo "::error title=Missing GitHub Actions secret::Configure MAVEN_SNAPSHOT_REPOSITORY_USERNAME, MAVEN_REPOSITORY_USERNAME, or MAVEN_CENTRAL_USERNAME before running snapshot publish."
             missing=1
           fi
 
           if [ -z "$snapshot_password" ]; then
-            echo "::error title=Missing GitHub Actions secret::Configure MAVEN_SNAPSHOT_REPOSITORY_PASSWORD or MAVEN_REPOSITORY_PASSWORD before running snapshot publish."
+            echo "::error title=Missing GitHub Actions secret::Configure MAVEN_SNAPSHOT_REPOSITORY_PASSWORD, MAVEN_REPOSITORY_PASSWORD, or MAVEN_CENTRAL_PASSWORD before running snapshot publish."
             missing=1
           fi
 
@@ -91,11 +93,17 @@ jobs:
           JAVACHANGES_SNAPSHOT_BUILD_STAMP: ${{ steps.snapshot_build_stamp.outputs.value }}
           MAVEN_SNAPSHOT_REPOSITORY_URL: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_URL }}
           MAVEN_SNAPSHOT_REPOSITORY_ID: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_ID }}
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
           MAVEN_REPOSITORY_USERNAME: ${{ secrets.MAVEN_REPOSITORY_USERNAME }}
           MAVEN_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_REPOSITORY_PASSWORD }}
           MAVEN_SNAPSHOT_REPOSITORY_USERNAME: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_USERNAME }}
           MAVEN_SNAPSHOT_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_PASSWORD }}
+          MAVEN_EFFECTIVE_USERNAME: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_USERNAME || secrets.MAVEN_REPOSITORY_USERNAME || secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_EFFECTIVE_PASSWORD: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_PASSWORD || secrets.MAVEN_REPOSITORY_PASSWORD || secrets.MAVEN_CENTRAL_PASSWORD }}
         run: |
+          export MAVEN_REPOSITORY_USERNAME="${MAVEN_EFFECTIVE_USERNAME}"
+          export MAVEN_REPOSITORY_PASSWORD="${MAVEN_EFFECTIVE_PASSWORD}"
           mvn -B -DskipTests compile exec:java \
             -Dexec.args="preflight --directory $GITHUB_WORKSPACE --snapshot"
 
@@ -104,10 +112,16 @@ jobs:
           JAVACHANGES_SNAPSHOT_BUILD_STAMP: ${{ steps.snapshot_build_stamp.outputs.value }}
           MAVEN_SNAPSHOT_REPOSITORY_URL: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_URL }}
           MAVEN_SNAPSHOT_REPOSITORY_ID: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_ID }}
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
           MAVEN_REPOSITORY_USERNAME: ${{ secrets.MAVEN_REPOSITORY_USERNAME }}
           MAVEN_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_REPOSITORY_PASSWORD }}
           MAVEN_SNAPSHOT_REPOSITORY_USERNAME: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_USERNAME }}
           MAVEN_SNAPSHOT_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_PASSWORD }}
+          MAVEN_EFFECTIVE_USERNAME: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_USERNAME || secrets.MAVEN_REPOSITORY_USERNAME || secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_EFFECTIVE_PASSWORD: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_PASSWORD || secrets.MAVEN_REPOSITORY_PASSWORD || secrets.MAVEN_CENTRAL_PASSWORD }}
         run: |
+          export MAVEN_REPOSITORY_USERNAME="${MAVEN_EFFECTIVE_USERNAME}"
+          export MAVEN_REPOSITORY_PASSWORD="${MAVEN_EFFECTIVE_PASSWORD}"
           mvn -B -DskipTests compile exec:java \
             -Dexec.args="publish --directory $GITHUB_WORKSPACE --snapshot --execute true"
