@@ -29,7 +29,18 @@ final class ChangesetConfigSupport {
         return ChangesetConfig.fromValues(baseBranch, releaseBranch, snapshotBranch);
     }
 
-    private static Path resolveConfigPath(Path repoRoot) {
+    static Path resolveConfigRoot(Path start) {
+        Path probe = start.toAbsolutePath().normalize();
+        while (probe != null) {
+            if (resolveConfigPath(probe) != null) {
+                return probe;
+            }
+            probe = probe.getParent();
+        }
+        return null;
+    }
+
+    static Path resolveConfigPath(Path repoRoot) {
         Path changesetsDir = repoRoot.resolve(CHANGESETS_DIR);
         Path jsonPath = changesetsDir.resolve(CONFIG_JSON);
         if (Files.exists(jsonPath)) {

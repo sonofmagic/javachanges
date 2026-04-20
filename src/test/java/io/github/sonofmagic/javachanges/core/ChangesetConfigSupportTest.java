@@ -105,10 +105,12 @@ class ChangesetConfigSupportTest {
     }
 
     @Test
-    void gitlabReleasePlanRequestFallsBackToChangesetConfig(@TempDir Path tempDir) throws Exception {
+    void gitlabReleasePlanRequestFallsBackToChangesetConfigFromNestedDirectory(@TempDir Path tempDir) throws Exception {
         Path repoRoot = tempDir.resolve("repo");
         Path changesetsDir = repoRoot.resolve(".changesets");
+        Path nestedDirectory = repoRoot.resolve("apps/api");
         Files.createDirectories(changesetsDir);
+        Files.createDirectories(nestedDirectory);
         Files.write(changesetsDir.resolve("config.json"), (
             "{\n" +
                 "  \"baseBranch\": \"develop\",\n" +
@@ -116,7 +118,7 @@ class ChangesetConfigSupportTest {
                 "}\n").getBytes(StandardCharsets.UTF_8));
 
         Map<String, String> options = new LinkedHashMap<String, String>();
-        options.put("directory", repoRoot.toString());
+        options.put("directory", nestedDirectory.toString());
 
         GitlabReleasePlanRequest request = GitlabReleasePlanRequest.fromOptions(options);
 
