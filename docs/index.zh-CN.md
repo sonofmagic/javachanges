@@ -39,6 +39,18 @@ features:
 
 这个工具保持文件驱动，不依赖数据库或托管服务。
 
+## 一眼看懂发布流程
+
+```mermaid
+flowchart TD
+  A[编写 .changesets 文件] --> B[查看 status 和 release plan]
+  B --> C[应用 plan]
+  C --> D[更新 revision 与 changelog]
+  D --> E[选择发布路径]
+  E --> F[走 GitHub Actions 自动发布]
+  E --> G[走 Maven Central 手动发布]
+```
+
 ## 核心理念
 
 - 把发布意图保存在可版本控制的文件里

@@ -1,5 +1,18 @@
 # 快速开始
 
+## 0. 快速流程图
+
+```mermaid
+flowchart TD
+  A[先把 plugin 加进 pom.xml] --> B[执行 mvn javachanges:add]
+  B --> C[执行 mvn javachanges:status]
+  C --> D[执行 mvn javachanges:plan]
+  D --> E{准备应用 plan 了吗?}
+  E -- 是 --> F[执行 mvn javachanges:plan -Djavachanges.apply=true]
+  E -- 否 --> C
+  F --> G[进入 CI 发布或 Maven Central 发布流程]
+```
+
 ## 1. 推荐用法：在目标仓库里直接用 Maven plugin
 
 当前已发布坐标：

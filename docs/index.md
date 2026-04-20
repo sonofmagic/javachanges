@@ -39,6 +39,18 @@ The workflow is intentionally simple:
 
 The tool stays file-centric. It does not require a database or a hosted service.
 
+## Release flow at a glance
+
+```mermaid
+flowchart TD
+  A[Write .changesets files] --> B[Review status and release plan]
+  B --> C[Apply plan]
+  C --> D[Update revision and changelog]
+  D --> E[Choose publish path]
+  E --> F[GitHub Actions release flow]
+  E --> G[Maven Central manual publish flow]
+```
+
 ## Core ideas
 
 - Keep release intent in versioned files.

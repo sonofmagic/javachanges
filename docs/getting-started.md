@@ -1,5 +1,18 @@
 # Getting Started
 
+## 0. Quick flow
+
+```mermaid
+flowchart TD
+  A[Add plugin to pom.xml] --> B[mvn javachanges:add]
+  B --> C[mvn javachanges:status]
+  C --> D[mvn javachanges:plan]
+  D --> E{Ready to apply?}
+  E -- Yes --> F[mvn javachanges:plan -Djavachanges.apply=true]
+  E -- No --> C
+  F --> G[Publish with CI or Maven Central flow]
+```
+
 ## 1. Recommended: use the Maven plugin inside the target repository
 
 Published coordinates:
