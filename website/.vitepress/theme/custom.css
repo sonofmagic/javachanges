@@ -202,6 +202,7 @@ body {
   display: block;
   max-width: none;
   height: auto;
+  overflow: visible;
 }
 
 .vp-mermaid__error,
