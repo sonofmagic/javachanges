@@ -7,6 +7,7 @@ const props = defineProps<{
 
 const svg = ref('')
 const error = ref('')
+const loading = ref(true)
 
 async function renderDiagram(source: string) {
   if (typeof window === 'undefined') {
@@ -31,13 +32,20 @@ async function renderDiagram(source: string) {
     svg.value = ''
     error.value = cause instanceof Error ? cause.message : String(cause)
   }
+  finally {
+    loading.value = false
+  }
 }
 
 onMounted(() => {
+  loading.value = true
   void renderDiagram(props.graph)
 })
 
 watch(() => props.graph, (nextGraph) => {
+  loading.value = true
+  svg.value = ''
+  error.value = ''
   void renderDiagram(nextGraph)
 })
 </script>
@@ -46,6 +54,9 @@ watch(() => props.graph, (nextGraph) => {
   <div class="vp-mermaid" data-mermaid>
     <div v-if="svg" class="vp-mermaid__diagram" v-html="svg" />
     <pre v-else-if="error" class="vp-mermaid__error">{{ error }}</pre>
-    <pre v-else class="vp-mermaid__source">{{ graph }}</pre>
+    <div v-else-if="loading" class="vp-mermaid__loading" aria-live="polite">
+      <span class="vp-mermaid__loading-dot" />
+      <span>Loading diagram...</span>
+    </div>
   </div>
 </template>
