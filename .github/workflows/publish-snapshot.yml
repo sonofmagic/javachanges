@@ -29,49 +29,45 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Validate snapshot publishing configuration
+      - name: Validate snapshot publishing secrets
         env:
-          MAVEN_SNAPSHOT_REPOSITORY_URL: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_URL }}
-          MAVEN_SNAPSHOT_REPOSITORY_ID: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_ID }}
           MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-          MAVEN_REPOSITORY_USERNAME: ${{ secrets.MAVEN_REPOSITORY_USERNAME }}
-          MAVEN_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_REPOSITORY_PASSWORD }}
-          MAVEN_SNAPSHOT_REPOSITORY_USERNAME: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_USERNAME }}
-          MAVEN_SNAPSHOT_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_PASSWORD }}
+          MAVEN_GPG_PRIVATE_KEY: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
         run: |
           missing=0
-          for variable_name in MAVEN_SNAPSHOT_REPOSITORY_URL; do
-            if [ -z "${!variable_name}" ]; then
-              echo "::error title=Missing GitHub Actions variable::Required variable '${variable_name}' is not configured. Add it in Settings > Secrets and variables > Actions, then rerun this workflow."
+          for secret_name in \
+            MAVEN_CENTRAL_USERNAME \
+            MAVEN_CENTRAL_PASSWORD \
+            MAVEN_GPG_PRIVATE_KEY \
+            MAVEN_GPG_PASSPHRASE; do
+            if [ -z "${!secret_name}" ]; then
+              echo "::error title=Missing GitHub Actions secret::Required secret '${secret_name}' is not configured. Add it in Settings > Secrets and variables > Actions, then rerun this workflow."
               missing=1
             fi
           done
-
-          snapshot_username="${MAVEN_SNAPSHOT_REPOSITORY_USERNAME:-${MAVEN_REPOSITORY_USERNAME:-$MAVEN_CENTRAL_USERNAME}}"
-          snapshot_password="${MAVEN_SNAPSHOT_REPOSITORY_PASSWORD:-${MAVEN_REPOSITORY_PASSWORD:-$MAVEN_CENTRAL_PASSWORD}}"
-
-          if [ -z "$snapshot_username" ]; then
-            echo "::error title=Missing GitHub Actions secret::Configure MAVEN_SNAPSHOT_REPOSITORY_USERNAME, MAVEN_REPOSITORY_USERNAME, or MAVEN_CENTRAL_USERNAME before running snapshot publish."
-            missing=1
-          fi
-
-          if [ -z "$snapshot_password" ]; then
-            echo "::error title=Missing GitHub Actions secret::Configure MAVEN_SNAPSHOT_REPOSITORY_PASSWORD, MAVEN_REPOSITORY_PASSWORD, or MAVEN_CENTRAL_PASSWORD before running snapshot publish."
-            missing=1
-          fi
 
           if [ "$missing" -ne 0 ]; then
             exit 1
           fi
 
-      - name: Set up Java 8
+      - name: Set up Java 8, Maven Central auth, and GPG
         uses: actions/setup-java@v5
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
         with:
           distribution: corretto
           java-version: '8'
           cache: maven
           cache-dependency-path: pom.xml
+          server-id: central
+          server-username: MAVEN_CENTRAL_USERNAME
+          server-password: MAVEN_CENTRAL_PASSWORD
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
       - name: Build CLI
         run: mvn -B -DskipTests compile
@@ -88,40 +84,33 @@ jobs:
           fi
           echo "value=$value" >> "$GITHUB_OUTPUT"
 
-      - name: Preflight snapshot publish
+      - name: Assert snapshot revision
         env:
           JAVACHANGES_SNAPSHOT_BUILD_STAMP: ${{ steps.snapshot_build_stamp.outputs.value }}
-          MAVEN_SNAPSHOT_REPOSITORY_URL: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_URL }}
-          MAVEN_SNAPSHOT_REPOSITORY_ID: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_ID }}
-          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
-          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-          MAVEN_REPOSITORY_USERNAME: ${{ secrets.MAVEN_REPOSITORY_USERNAME }}
-          MAVEN_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_REPOSITORY_PASSWORD }}
-          MAVEN_SNAPSHOT_REPOSITORY_USERNAME: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_USERNAME }}
-          MAVEN_SNAPSHOT_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_PASSWORD }}
-          MAVEN_EFFECTIVE_USERNAME: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_USERNAME || secrets.MAVEN_REPOSITORY_USERNAME || secrets.MAVEN_CENTRAL_USERNAME }}
-          MAVEN_EFFECTIVE_PASSWORD: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_PASSWORD || secrets.MAVEN_REPOSITORY_PASSWORD || secrets.MAVEN_CENTRAL_PASSWORD }}
         run: |
-          export MAVEN_REPOSITORY_USERNAME="${MAVEN_EFFECTIVE_USERNAME}"
-          export MAVEN_REPOSITORY_PASSWORD="${MAVEN_EFFECTIVE_PASSWORD}"
           mvn -B -DskipTests compile exec:java \
-            -Dexec.args="preflight --directory $GITHUB_WORKSPACE --snapshot"
+            -Dexec.args="assert-snapshot --directory $GITHUB_WORKSPACE"
 
-      - name: Publish snapshot
+      - name: Resolve snapshot publish revision
+        id: snapshot_revision
         env:
           JAVACHANGES_SNAPSHOT_BUILD_STAMP: ${{ steps.snapshot_build_stamp.outputs.value }}
-          MAVEN_SNAPSHOT_REPOSITORY_URL: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_URL }}
-          MAVEN_SNAPSHOT_REPOSITORY_ID: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_ID }}
+        run: |
+          current_revision="$(mvn -q -DskipTests compile exec:java -Dexec.args="version --directory $GITHUB_WORKSPACE" | tail -n 1)"
+          base_revision="${current_revision%-SNAPSHOT}"
+          resolved_revision="${base_revision}-${JAVACHANGES_SNAPSHOT_BUILD_STAMP}-SNAPSHOT"
+          echo "value=${resolved_revision}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish snapshot to Maven Central snapshots
+        env:
           MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-          MAVEN_REPOSITORY_USERNAME: ${{ secrets.MAVEN_REPOSITORY_USERNAME }}
-          MAVEN_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_REPOSITORY_PASSWORD }}
-          MAVEN_SNAPSHOT_REPOSITORY_USERNAME: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_USERNAME }}
-          MAVEN_SNAPSHOT_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_PASSWORD }}
-          MAVEN_EFFECTIVE_USERNAME: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_USERNAME || secrets.MAVEN_REPOSITORY_USERNAME || secrets.MAVEN_CENTRAL_USERNAME }}
-          MAVEN_EFFECTIVE_PASSWORD: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_PASSWORD || secrets.MAVEN_REPOSITORY_PASSWORD || secrets.MAVEN_CENTRAL_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+          SNAPSHOT_REVISION: ${{ steps.snapshot_revision.outputs.value }}
         run: |
-          export MAVEN_REPOSITORY_USERNAME="${MAVEN_EFFECTIVE_USERNAME}"
-          export MAVEN_REPOSITORY_PASSWORD="${MAVEN_EFFECTIVE_PASSWORD}"
-          mvn -B -DskipTests compile exec:java \
-            -Dexec.args="publish --directory $GITHUB_WORKSPACE --snapshot --execute true"
+          mvn -B \
+            -Pcentral-publish \
+            -Drevision="${SNAPSHOT_REVISION}" \
+            -Dcentral.autoPublish=true \
+            -Dcentral.waitUntil=published \
+            clean deploy
