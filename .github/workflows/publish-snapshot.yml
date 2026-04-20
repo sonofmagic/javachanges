@@ -69,6 +69,45 @@ jobs:
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
+      - name: Debug snapshot Maven settings
+        run: |
+          settings_path="$HOME/.m2/settings.xml"
+          echo "settings_path=$settings_path"
+          if [ ! -f "$settings_path" ]; then
+            echo "::error title=Missing Maven settings::actions/setup-java did not generate settings.xml"
+            exit 1
+          fi
+
+          awk '
+            /<server>/ {
+              in_server=1
+              id=""
+              has_user=0
+              has_pass=0
+            }
+            /<\/server>/ {
+              if (in_server) {
+                printf("server id=%s username=%s password=%s\n",
+                  id,
+                  has_user ? "present" : "missing",
+                  has_pass ? "present" : "missing")
+              }
+              in_server=0
+            }
+            in_server && /<id>/ {
+              line=$0
+              sub(/^.*<id>/, "", line)
+              sub(/<\/id>.*$/, "", line)
+              id=line
+            }
+            in_server && /<username>/ {
+              has_user=1
+            }
+            in_server && /<password>/ {
+              has_pass=1
+            }
+          ' "$settings_path"
+
       - name: Build CLI
         run: mvn -B -DskipTests compile
 
