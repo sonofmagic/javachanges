@@ -36,6 +36,26 @@ final class VersionSupport {
         }
     }
 
+    String resolveSnapshotPublishVersion(String buildStamp) throws IOException {
+        String version = readRevision();
+        if (!version.endsWith("-SNAPSHOT")) {
+            throw new IllegalStateException("当前项目版本不是 SNAPSHOT: " + version);
+        }
+        String normalizedBuildStamp = normalizeSnapshotBuildStamp(buildStamp);
+        return stripSnapshot(version) + "-" + normalizedBuildStamp + "-SNAPSHOT";
+    }
+
+    private String normalizeSnapshotBuildStamp(String buildStamp) {
+        String normalized = buildStamp == null ? "" : buildStamp.trim();
+        if (normalized.isEmpty()) {
+            throw new IllegalArgumentException("snapshot build stamp 不能为空");
+        }
+        if (!normalized.matches("[A-Za-z0-9.]+")) {
+            throw new IllegalArgumentException("snapshot build stamp 只允许字母、数字和点号: " + buildStamp);
+        }
+        return normalized;
+    }
+
     void assertReleaseTag(String tag) throws IOException {
         String version = readRevision();
         String releaseVersion = releaseVersionFromTag(tag);

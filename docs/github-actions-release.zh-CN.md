@@ -13,13 +13,16 @@
 2. `main` 上如果存在 `.changesets/*.md`
 3. GitHub Actions 自动生成或更新 release PR
 4. release PR 合并后
-5. GitHub Actions 自动打 tag、发布到 Maven Central、创建 GitHub Release
+5. GitHub Actions 可以在 `main` 上自动发布 snapshot
+6. GitHub Actions 自动打 tag、发布到 Maven Central、创建 GitHub Release
 
 ## 1.1 工作流流程图
 
 ```mermaid
 flowchart TD
   A[功能分支合并到 main] --> B[main 上存在待处理的 .changesets 文件]
+  B --> S[触发 publish-snapshot.yml]
+  S --> T[发布唯一 snapshot 版本]
   B --> C[触发 release-plan.yml]
   C --> D[执行 javachanges plan --apply true]
   D --> E[更新 revision、changelog 和 release-plan 清单]
@@ -35,12 +38,13 @@ flowchart TD
 
 ## 2. 工作流组成
 
-仓库包含三条工作流：
+仓库包含四条工作流：
 
 | 文件 | 作用 |
 | --- | --- |
 | `.github/workflows/ci.yml` | 常规 CI，验证 Java 8 构建和发布 profile |
 | `.github/workflows/release-plan.yml` | 在 `main` 上扫描 changesets，自动生成 release PR |
+| `.github/workflows/publish-snapshot.yml` | 把 `main` 上当前 snapshot 发布到配置好的 snapshot 仓库 |
 | `.github/workflows/publish-release.yml` | 在 release PR 合并后执行正式发布 |
 
 ## 3. release PR 工作流
@@ -68,7 +72,41 @@ changeset-release/main
 
 并自动创建或更新 PR。
 
-## 4. publish 工作流
+## 4. snapshot 发布工作流
+
+`publish-snapshot.yml` 会在 `main` push 和手动 `workflow_dispatch` 时运行。
+
+它会依次做这些事：
+
+1. 校验 snapshot 仓库变量和凭据
+2. 为本次 workflow 生成稳定的 snapshot build stamp
+3. 执行 `javachanges preflight --snapshot`
+4. 执行 `javachanges publish --snapshot --execute true`
+
+最终发布的不是根 `1.3.1-SNAPSHOT` 原样坐标，而是类似：
+
+```text
+1.3.1-20260420.154500.abc1234-SNAPSHOT
+```
+
+当前仓库的 workflow 默认使用：
+
+```text
+<github.run_id>.<github.run_attempt>.<git short sha>
+```
+
+作为构建标识，所以即使同一 commit 重跑，也能得到可区分的 snapshot 版本。
+
+snapshot 发布需要配置这些 GitHub Actions 值：
+
+| 类型 | 名称 | 是否必需 |
+| --- | --- | --- |
+| Variable | `MAVEN_SNAPSHOT_REPOSITORY_URL` | 是 |
+| Variable | `MAVEN_SNAPSHOT_REPOSITORY_ID` | 否 |
+| Secret | `MAVEN_SNAPSHOT_REPOSITORY_USERNAME` 或 `MAVEN_REPOSITORY_USERNAME` | 是 |
+| Secret | `MAVEN_SNAPSHOT_REPOSITORY_PASSWORD` 或 `MAVEN_REPOSITORY_PASSWORD` | 是 |
+
+## 5. 正式发布工作流
 
 `publish-release.yml` 只在以下条件满足时触发：
 
@@ -88,7 +126,7 @@ changeset-release/main
 6. 推送 git tag
 7. 创建 GitHub Release
 
-## 5. 仓库必须配置的 Secrets
+## 6. 仓库必须配置的 Secrets
 
 你需要在 GitHub 仓库的 `Settings > Secrets and variables > Actions` 中配置：
 
@@ -107,7 +145,7 @@ changeset-release/main
 2. 在 Actions 页面重跑失败的 workflow 或 job
 3. 确认重跑后能进入 `Publish to Maven Central` 这一步
 
-## 6. 推荐使用方式
+## 7. 推荐使用方式
 
 日常开发时：
 
@@ -135,7 +173,7 @@ add GitHub Actions release automation
 ```
 ````
 
-## 7. 版本模式说明
+## 8. 版本模式说明
 
 为了支持 release PR 合并后再发布正式版，当前仓库已经切换到：
 
@@ -166,18 +204,27 @@ publish workflow 会在真正部署时使用：
 
 从而发布正式版，而不会把快照版上传到 Central。
 
-## 8. 手动触发
+snapshot workflow 则会使用：
 
-如果你需要手动重跑 release PR 生成流程，可以在 GitHub Actions 页面手动触发：
+```bash
+-Drevision=<baseVersion>-<snapshotBuildStamp>-SNAPSHOT
+```
+
+这样同一个开发 snapshot 线可以连续发布多个唯一构建，而不会都挤在同一个可见版本名下。
+
+## 9. 手动触发
+
+如果你需要手动重跑某条流程，可以在 GitHub Actions 页面触发：
 
 | 工作流 | 是否支持 `workflow_dispatch` |
 | --- | --- |
 | `Release Plan` | 是 |
+| `Publish Snapshot` | 是 |
 | `Publish Release` | 否，默认只在 release PR merge 时触发 |
 
 如果某个已经 merge 的 release PR 触发过失败的 `Publish Release`，通常不需要重新再走一遍 release PR。把仓库 secrets 修好以后，直接在 Actions 页面重跑那次失败运行即可。
 
-## 9. 发布前本地验证
+## 10. 发布前本地验证
 
 在本地，你可以先验证这个自举流程是否正常：
 
@@ -185,15 +232,17 @@ publish workflow 会在真正部署时使用：
 mvn -B verify
 mvn -B -Pcentral-publish -Dgpg.skip=true verify
 mvn -B -DskipTests compile exec:java -Dexec.args="status --directory $PWD"
+mvn -B -DskipTests compile exec:java -Dexec.args="preflight --directory $PWD --snapshot --snapshot-build-stamp local.dev.001"
 ```
 
-## 10. 总结
+## 11. 总结
 
 现在这个仓库的标准发布路径是：
 
 | 阶段 | 入口 |
 | --- | --- |
 | 日常校验 | `CI` workflow |
+| snapshot 发布 | `Publish Snapshot` workflow |
 | 生成 release PR | `Release Plan` workflow |
 | 正式发布 | `Publish Release` workflow |
 

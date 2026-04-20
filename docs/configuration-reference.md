@@ -105,6 +105,7 @@ Compatibility status:
 | Flag | Meaning | Default |
 | --- | --- | --- |
 | `--snapshot` | Publish the current snapshot version | `false` |
+| `--snapshot-build-stamp` | Explicit snapshot publish stamp | auto-generated |
 | `--tag` | Publish a release tag like `v1.2.3` | none |
 | `--module` | Restrict publish to one Maven artifactId | all packages |
 | `--allow-dirty` | Skip dirty worktree protection | `false` |
@@ -136,6 +137,7 @@ Current template:
 | `MAVEN_RELEASE_REPOSITORY_PASSWORD` | No | Explicit release password override |
 | `MAVEN_SNAPSHOT_REPOSITORY_USERNAME` | No | Explicit snapshot username override |
 | `MAVEN_SNAPSHOT_REPOSITORY_PASSWORD` | No | Explicit snapshot password override |
+| `JAVACHANGES_SNAPSHOT_BUILD_STAMP` | No | Snapshot publish stamp; defaults to UTC timestamp + git short sha when unset |
 | `GITLAB_RELEASE_TOKEN` | No | Optional GitLab release token for some GitLab release scenarios |
 
 Resolution rules used by the code:

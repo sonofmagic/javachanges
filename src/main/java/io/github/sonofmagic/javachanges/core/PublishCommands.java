@@ -22,6 +22,10 @@ final class PreflightCommand extends AbstractCliCommand {
     @Option(names = "--module", description = "Target Maven module.")
     private String module;
 
+    @Option(names = "--snapshot-build-stamp",
+        description = "Explicit snapshot build stamp used to derive the publish revision.")
+    private String snapshotBuildStamp;
+
     @Override
     public Integer call() throws Exception {
         Map<String, String> options = options();
@@ -29,6 +33,7 @@ final class PreflightCommand extends AbstractCliCommand {
         putOption(options, "tag", tag);
         putFlag(options, "allow-dirty", allowDirty);
         putOption(options, "module", module);
+        putOption(options, "snapshot-build-stamp", snapshotBuildStamp);
         new PublishSupport(repoRoot(), out()).preflight(PublishRequest.fromOptions(options, false));
         return success();
     }
@@ -55,6 +60,10 @@ final class PublishCommand extends AbstractCliCommand {
     @Option(names = "--module", description = "Target Maven module.")
     private String module;
 
+    @Option(names = "--snapshot-build-stamp",
+        description = "Explicit snapshot build stamp used to derive the publish revision.")
+    private String snapshotBuildStamp;
+
     @Override
     public Integer call() throws Exception {
         Map<String, String> options = options();
@@ -63,6 +72,7 @@ final class PublishCommand extends AbstractCliCommand {
         putFlag(options, "allow-dirty", allowDirty);
         putFlag(options, "execute", execute);
         putOption(options, "module", module);
+        putOption(options, "snapshot-build-stamp", snapshotBuildStamp);
         new PublishSupport(repoRoot(), out()).publish(PublishRequest.fromOptions(options, true));
         return success();
     }

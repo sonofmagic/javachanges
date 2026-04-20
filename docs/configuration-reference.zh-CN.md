@@ -105,6 +105,7 @@ summary: automate javachanges self-release publishing via GitHub Actions
 | 参数 | 作用 | 默认值 |
 | --- | --- | --- |
 | `--snapshot` | 发布当前 snapshot 版本 | `false` |
+| `--snapshot-build-stamp` | 显式指定 snapshot 发布标识 | 自动生成 |
 | `--tag` | 发布正式 tag，例如 `v1.2.3` | 无 |
 | `--module` | 把发布限制到单个 Maven artifactId | 所有 package |
 | `--allow-dirty` | 跳过工作区脏检查 | `false` |
@@ -136,6 +137,7 @@ summary: automate javachanges self-release publishing via GitHub Actions
 | `MAVEN_RELEASE_REPOSITORY_PASSWORD` | 否 | release 专用密码覆盖值 |
 | `MAVEN_SNAPSHOT_REPOSITORY_USERNAME` | 否 | snapshot 专用用户名覆盖值 |
 | `MAVEN_SNAPSHOT_REPOSITORY_PASSWORD` | 否 | snapshot 专用密码覆盖值 |
+| `JAVACHANGES_SNAPSHOT_BUILD_STAMP` | 否 | snapshot 发布标识；未设置时回退到 UTC 时间戳 + git short sha |
 | `GITLAB_RELEASE_TOKEN` | 否 | 某些 GitLab release 场景下可选的额外 token |
 
 代码中的解析回退规则：

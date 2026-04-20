@@ -13,7 +13,8 @@ The intended flow is:
 2. `main` contains one or more `.changesets/*.md` files
 3. GitHub Actions generates or updates a release PR
 4. the release PR is merged
-5. GitHub Actions tags the release, publishes to Maven Central, and creates a GitHub Release
+5. GitHub Actions can publish snapshots from `main`
+6. GitHub Actions tags the release, publishes to Maven Central, and creates a GitHub Release
 
 ## 1.1 Workflow graph
 
@@ -21,6 +22,8 @@ The intended flow is:
 flowchart TD
   A[Feature PR merged to main] --> B[main contains pending .changesets files]
   B --> C[release-plan.yml runs]
+  B --> S[publish-snapshot.yml runs]
+  S --> T[Publish unique snapshot revision]
   C --> D[javachanges plan --apply true]
   D --> E[Update revision, changelog, and release-plan manifest]
   E --> F[Commit changes to changeset-release/main]
@@ -35,12 +38,13 @@ flowchart TD
 
 ## 2. Workflows
 
-The repository contains three workflows:
+The repository contains four workflows:
 
 | File | Purpose |
 | --- | --- |
 | `.github/workflows/ci.yml` | Regular CI for Java 8 build and publish-profile verification |
 | `.github/workflows/release-plan.yml` | Scans pending changesets on `main` and generates a release PR |
+| `.github/workflows/publish-snapshot.yml` | Publishes the current `main` snapshot to the configured snapshot repository |
 | `.github/workflows/publish-release.yml` | Publishes after the release PR is merged |
 
 ## 3. Release PR workflow
@@ -68,7 +72,41 @@ changeset-release/main
 
 and creates or updates a pull request.
 
-## 4. Publish workflow
+## 4. Snapshot publish workflow
+
+`publish-snapshot.yml` runs on pushes to `main` and on manual `workflow_dispatch`.
+
+It:
+
+1. validates snapshot repository variables and credentials
+2. derives a stable snapshot build stamp for the workflow run
+3. runs `javachanges preflight --snapshot`
+4. runs `javachanges publish --snapshot --execute true`
+
+The workflow publishes a unique snapshot revision such as:
+
+```text
+1.3.1-20260420.154500.abc1234-SNAPSHOT
+```
+
+In this repository, the workflow explicitly passes a build stamp based on:
+
+```text
+<github.run_id>.<github.run_attempt>.<git short sha>
+```
+
+so reruns remain distinguishable even when they target the same root snapshot line.
+
+Configure these GitHub Actions values for snapshot publishing:
+
+| Type | Name | Required |
+| --- | --- | --- |
+| Variable | `MAVEN_SNAPSHOT_REPOSITORY_URL` | Yes |
+| Variable | `MAVEN_SNAPSHOT_REPOSITORY_ID` | No |
+| Secret | `MAVEN_SNAPSHOT_REPOSITORY_USERNAME` or `MAVEN_REPOSITORY_USERNAME` | Yes |
+| Secret | `MAVEN_SNAPSHOT_REPOSITORY_PASSWORD` or `MAVEN_REPOSITORY_PASSWORD` | Yes |
+
+## 5. Release publish workflow
 
 `publish-release.yml` only runs when all of these are true:
 
@@ -88,7 +126,7 @@ It then:
 6. pushes the git tag
 7. creates a GitHub Release
 
-## 5. Required repository secrets
+## 6. Required repository secrets
 
 Configure these in `Settings > Secrets and variables > Actions`:
 
@@ -107,7 +145,7 @@ For the failed run at `Actions > Publish Release`, the practical recovery path i
 2. rerun the failed workflow or failed job
 3. confirm the rerun reaches the `Publish to Maven Central` step
 
-## 6. Recommended usage
+## 7. Recommended usage
 
 Typical development flow:
 
@@ -135,7 +173,7 @@ add GitHub Actions release automation
 ```
 ````
 
-## 7. Versioning model
+## 8. Versioning model
 
 To support “merge release PR first, publish the real release afterwards,” this repository now uses:
 
@@ -164,18 +202,27 @@ The publish workflow uses:
 
 so it publishes the real release version instead of the current snapshot revision on `main`.
 
-## 8. Manual triggers
+The snapshot workflow uses:
 
-If you need to rerun the release-plan generation manually:
+```bash
+-Drevision=<baseVersion>-<snapshotBuildStamp>-SNAPSHOT
+```
+
+so repeated snapshot publishes do not overwrite one another under the same visible revision line.
+
+## 9. Manual triggers
+
+If you need to rerun one of the workflows manually:
 
 | Workflow | Supports `workflow_dispatch` |
 | --- | --- |
 | `Release Plan` | Yes |
+| `Publish Snapshot` | Yes |
 | `Publish Release` | No, it only runs on merged release PRs |
 
 If a merged release PR already triggered a failed `Publish Release` run, you usually do not need a new release PR. After fixing repository secrets, rerun the existing failed run from the Actions page.
 
-## 9. Local validation
+## 10. Local validation
 
 Before relying on the automation, you can validate locally:
 
@@ -183,15 +230,17 @@ Before relying on the automation, you can validate locally:
 mvn -B verify
 mvn -B -Pcentral-publish -Dgpg.skip=true verify
 mvn -B -DskipTests compile exec:java -Dexec.args="status --directory $PWD"
+mvn -B -DskipTests compile exec:java -Dexec.args="preflight --directory $PWD --snapshot --snapshot-build-stamp local.dev.001"
 ```
 
-## 10. Summary
+## 11. Summary
 
 The standard release path for this repository is now:
 
 | Stage | Entry point |
 | --- | --- |
 | Regular validation | `CI` workflow |
+| Snapshot publishing | `Publish Snapshot` workflow |
 | Release PR generation | `Release Plan` workflow |
 | Real publishing | `Publish Release` workflow |
 

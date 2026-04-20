@@ -164,13 +164,16 @@ final class PublishRequest {
     final boolean allowDirty;
     final boolean execute;
     final String module;
+    final String snapshotBuildStamp;
 
-    private PublishRequest(boolean snapshot, String tag, boolean allowDirty, boolean execute, String module) {
+    private PublishRequest(boolean snapshot, String tag, boolean allowDirty, boolean execute, String module,
+                           String snapshotBuildStamp) {
         this.snapshot = snapshot;
         this.tag = tag;
         this.allowDirty = allowDirty;
         this.execute = execute;
         this.module = module;
+        this.snapshotBuildStamp = snapshotBuildStamp;
     }
 
     static PublishRequest fromOptions(Map<String, String> options, boolean supportExecute) {
@@ -187,7 +190,9 @@ final class PublishRequest {
             tag,
             isTrue(options.get("allow-dirty")),
             supportExecute && isTrue(options.get("execute")),
-            trimToNull(options.get("module"))
+            trimToNull(options.get("module")),
+            firstNonBlank(trimToNull(options.get("snapshot-build-stamp")),
+                System.getenv("JAVACHANGES_SNAPSHOT_BUILD_STAMP"))
         );
     }
 }

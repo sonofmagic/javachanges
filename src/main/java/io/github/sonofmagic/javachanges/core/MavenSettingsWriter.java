@@ -11,10 +11,23 @@ import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.xmlEscape;
 
 final class MavenSettingsWriter {
+    enum RepositoryMode {
+        RELEASE,
+        SNAPSHOT
+    }
+
     private MavenSettingsWriter() {
     }
 
     static void write(Path outputPath) throws IOException {
+        write(outputPath, true, true);
+    }
+
+    static void write(Path outputPath, RepositoryMode mode) throws IOException {
+        write(outputPath, mode == RepositoryMode.RELEASE, mode == RepositoryMode.SNAPSHOT);
+    }
+
+    private static void write(Path outputPath, boolean includeRelease, boolean includeSnapshot) throws IOException {
         String releaseUsername = firstNonBlank(
             System.getenv("MAVEN_RELEASE_REPOSITORY_USERNAME"),
             System.getenv("MAVEN_REPOSITORY_USERNAME")
@@ -32,10 +45,10 @@ final class MavenSettingsWriter {
             System.getenv("MAVEN_REPOSITORY_PASSWORD")
         );
 
-        if (releaseUsername == null || releasePassword == null) {
+        if (includeRelease && (releaseUsername == null || releasePassword == null)) {
             throw new IllegalStateException("缺少 release 仓库认证信息，请设置 MAVEN_RELEASE_REPOSITORY_USERNAME/MAVEN_RELEASE_REPOSITORY_PASSWORD 或通用 MAVEN_REPOSITORY_USERNAME/MAVEN_REPOSITORY_PASSWORD");
         }
-        if (snapshotUsername == null || snapshotPassword == null) {
+        if (includeSnapshot && (snapshotUsername == null || snapshotPassword == null)) {
             throw new IllegalStateException("缺少 snapshot 仓库认证信息，请设置 MAVEN_SNAPSHOT_REPOSITORY_USERNAME/MAVEN_SNAPSHOT_REPOSITORY_PASSWORD 或通用 MAVEN_REPOSITORY_USERNAME/MAVEN_REPOSITORY_PASSWORD");
         }
 
@@ -44,23 +57,28 @@ final class MavenSettingsWriter {
             Files.createDirectories(parent);
         }
 
-        String xml = "<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\"\n"
-            + "          xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
-            + "          xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd\">\n"
-            + "  <servers>\n"
-            + "    <server>\n"
-            + "      <id>" + xmlEscape(releaseServerId()) + "</id>\n"
-            + "      <username>" + xmlEscape(releaseUsername) + "</username>\n"
-            + "      <password>" + xmlEscape(releasePassword) + "</password>\n"
-            + "    </server>\n"
-            + "    <server>\n"
-            + "      <id>" + xmlEscape(snapshotServerId()) + "</id>\n"
-            + "      <username>" + xmlEscape(snapshotUsername) + "</username>\n"
-            + "      <password>" + xmlEscape(snapshotPassword) + "</password>\n"
-            + "    </server>\n"
-            + "  </servers>\n"
-            + "</settings>\n";
-        Files.write(outputPath, Collections.singletonList(xml), StandardCharsets.UTF_8);
+        StringBuilder xml = new StringBuilder();
+        xml.append("<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\"\n");
+        xml.append("          xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n");
+        xml.append("          xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd\">\n");
+        xml.append("  <servers>\n");
+        if (includeRelease) {
+            xml.append("    <server>\n");
+            xml.append("      <id>").append(xmlEscape(releaseServerId())).append("</id>\n");
+            xml.append("      <username>").append(xmlEscape(releaseUsername)).append("</username>\n");
+            xml.append("      <password>").append(xmlEscape(releasePassword)).append("</password>\n");
+            xml.append("    </server>\n");
+        }
+        if (includeSnapshot) {
+            xml.append("    <server>\n");
+            xml.append("      <id>").append(xmlEscape(snapshotServerId())).append("</id>\n");
+            xml.append("      <username>").append(xmlEscape(snapshotUsername)).append("</username>\n");
+            xml.append("      <password>").append(xmlEscape(snapshotPassword)).append("</password>\n");
+            xml.append("    </server>\n");
+        }
+        xml.append("  </servers>\n");
+        xml.append("</settings>\n");
+        Files.write(outputPath, Collections.singletonList(xml.toString()), StandardCharsets.UTF_8);
     }
 
     static String releaseServerId() {

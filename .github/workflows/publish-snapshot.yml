@@ -1,0 +1,113 @@
+name: Publish Snapshot
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      snapshot_build_stamp:
+        description: Optional explicit snapshot build stamp
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-snapshot-main
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.event_name == 'workflow_dispatch' || github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Validate snapshot publishing configuration
+        env:
+          MAVEN_SNAPSHOT_REPOSITORY_URL: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_URL }}
+          MAVEN_SNAPSHOT_REPOSITORY_ID: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_ID }}
+          MAVEN_REPOSITORY_USERNAME: ${{ secrets.MAVEN_REPOSITORY_USERNAME }}
+          MAVEN_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_REPOSITORY_PASSWORD }}
+          MAVEN_SNAPSHOT_REPOSITORY_USERNAME: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_USERNAME }}
+          MAVEN_SNAPSHOT_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_PASSWORD }}
+        run: |
+          missing=0
+          for variable_name in MAVEN_SNAPSHOT_REPOSITORY_URL; do
+            if [ -z "${!variable_name}" ]; then
+              echo "::error title=Missing GitHub Actions variable::Required variable '${variable_name}' is not configured. Add it in Settings > Secrets and variables > Actions, then rerun this workflow."
+              missing=1
+            fi
+          done
+
+          snapshot_username="${MAVEN_SNAPSHOT_REPOSITORY_USERNAME:-$MAVEN_REPOSITORY_USERNAME}"
+          snapshot_password="${MAVEN_SNAPSHOT_REPOSITORY_PASSWORD:-$MAVEN_REPOSITORY_PASSWORD}"
+
+          if [ -z "$snapshot_username" ]; then
+            echo "::error title=Missing GitHub Actions secret::Configure MAVEN_SNAPSHOT_REPOSITORY_USERNAME or MAVEN_REPOSITORY_USERNAME before running snapshot publish."
+            missing=1
+          fi
+
+          if [ -z "$snapshot_password" ]; then
+            echo "::error title=Missing GitHub Actions secret::Configure MAVEN_SNAPSHOT_REPOSITORY_PASSWORD or MAVEN_REPOSITORY_PASSWORD before running snapshot publish."
+            missing=1
+          fi
+
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Set up Java 8
+        uses: actions/setup-java@v5
+        with:
+          distribution: corretto
+          java-version: '8'
+          cache: maven
+          cache-dependency-path: pom.xml
+
+      - name: Build CLI
+        run: mvn -B -DskipTests compile
+
+      - name: Resolve snapshot build stamp
+        id: snapshot_build_stamp
+        env:
+          INPUT_SNAPSHOT_BUILD_STAMP: ${{ inputs.snapshot_build_stamp }}
+        run: |
+          if [ -n "$INPUT_SNAPSHOT_BUILD_STAMP" ]; then
+            value="$INPUT_SNAPSHOT_BUILD_STAMP"
+          else
+            value="${GITHUB_RUN_ID}.${GITHUB_RUN_ATTEMPT}.$(git rev-parse --short HEAD)"
+          fi
+          echo "value=$value" >> "$GITHUB_OUTPUT"
+
+      - name: Preflight snapshot publish
+        env:
+          JAVACHANGES_SNAPSHOT_BUILD_STAMP: ${{ steps.snapshot_build_stamp.outputs.value }}
+          MAVEN_SNAPSHOT_REPOSITORY_URL: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_URL }}
+          MAVEN_SNAPSHOT_REPOSITORY_ID: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_ID }}
+          MAVEN_REPOSITORY_USERNAME: ${{ secrets.MAVEN_REPOSITORY_USERNAME }}
+          MAVEN_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_REPOSITORY_PASSWORD }}
+          MAVEN_SNAPSHOT_REPOSITORY_USERNAME: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_USERNAME }}
+          MAVEN_SNAPSHOT_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_PASSWORD }}
+        run: |
+          mvn -B -DskipTests compile exec:java \
+            -Dexec.args="preflight --directory $GITHUB_WORKSPACE --snapshot"
+
+      - name: Publish snapshot
+        env:
+          JAVACHANGES_SNAPSHOT_BUILD_STAMP: ${{ steps.snapshot_build_stamp.outputs.value }}
+          MAVEN_SNAPSHOT_REPOSITORY_URL: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_URL }}
+          MAVEN_SNAPSHOT_REPOSITORY_ID: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_ID }}
+          MAVEN_REPOSITORY_USERNAME: ${{ secrets.MAVEN_REPOSITORY_USERNAME }}
+          MAVEN_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_REPOSITORY_PASSWORD }}
+          MAVEN_SNAPSHOT_REPOSITORY_USERNAME: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_USERNAME }}
+          MAVEN_SNAPSHOT_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_PASSWORD }}
+        run: |
+          mvn -B -DskipTests compile exec:java \
+            -Dexec.args="publish --directory $GITHUB_WORKSPACE --snapshot --execute true"

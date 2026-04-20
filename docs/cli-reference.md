@@ -242,6 +242,12 @@ Snapshot example:
 mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory /path/to/repo --snapshot"
 ```
 
+Explicit snapshot build stamp:
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory /path/to/repo --snapshot --snapshot-build-stamp 20260420.154500.ci001"
+```
+
 Release example:
 
 ```bash
@@ -262,11 +268,14 @@ Actually execute it:
 mvn -q -DskipTests compile exec:java -Dexec.args="publish --directory /path/to/repo --tag v1.2.3 --execute true"
 ```
 
+Snapshot publishing resolves the root `1.2.3-SNAPSHOT` into a unique publish revision such as `1.2.3-20260420.154500.abc1234-SNAPSHOT`, then injects it through `-Drevision=`. You can override the generated build stamp with `--snapshot-build-stamp` or the `JAVACHANGES_SNAPSHOT_BUILD_STAMP` environment variable.
+
 Important flags:
 
 | Flag | Meaning |
 | --- | --- |
 | `--snapshot` | Publish the current snapshot instead of a release tag |
+| `--snapshot-build-stamp` | Explicit snapshot publish stamp, overriding the default UTC timestamp + git short sha |
 | `--tag` | Target release tag |
 | `--module` | Restrict to one Maven artifactId |
 | `--allow-dirty` | Allow a dirty working tree |

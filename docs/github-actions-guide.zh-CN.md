@@ -78,6 +78,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="init-env --target env/release.
 | `MAVEN_RELEASE_REPOSITORY_PASSWORD` | 可选的 release 专用密码 |
 | `MAVEN_SNAPSHOT_REPOSITORY_USERNAME` | 可选的 snapshot 专用用户名 |
 | `MAVEN_SNAPSHOT_REPOSITORY_PASSWORD` | 可选的 snapshot 专用密码 |
+| `JAVACHANGES_SNAPSHOT_BUILD_STAMP` | 可选的 snapshot 构建标识，适合在 CI 中显式控制 |
 
 ### 4.3 检查本地环境
 
@@ -222,7 +223,88 @@ jobs:
             --body-file .changesets/release-plan.md
 ```
 
-### 5.3 使用 `javachanges publish` 进行通用 Maven 发布
+### 5.3 使用 `javachanges publish` 发布 snapshot
+
+适用于 `main` 上每次变更都要发布一个唯一 snapshot 到你自己的 snapshot 仓库。
+
+```yaml
+name: Publish Snapshot
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      snapshot_build_stamp:
+        description: Optional explicit snapshot build stamp
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish-snapshot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: corretto
+          java-version: '8'
+          cache: maven
+          cache-dependency-path: pom.xml
+
+      - name: Build CLI
+        run: mvn -B -DskipTests compile
+
+      - name: 计算 snapshot build stamp
+        id: snapshot_build_stamp
+        env:
+          INPUT_SNAPSHOT_BUILD_STAMP: ${{ inputs.snapshot_build_stamp }}
+        run: |
+          if [ -n "$INPUT_SNAPSHOT_BUILD_STAMP" ]; then
+            value="$INPUT_SNAPSHOT_BUILD_STAMP"
+          else
+            value="${GITHUB_RUN_ID}.${GITHUB_RUN_ATTEMPT}.$(git rev-parse --short HEAD)"
+          fi
+          echo "value=$value" >> "$GITHUB_OUTPUT"
+
+      - name: Snapshot 发布前检查
+        env:
+          JAVACHANGES_SNAPSHOT_BUILD_STAMP: ${{ steps.snapshot_build_stamp.outputs.value }}
+          MAVEN_SNAPSHOT_REPOSITORY_URL: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_URL }}
+          MAVEN_SNAPSHOT_REPOSITORY_ID: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_ID }}
+          MAVEN_REPOSITORY_USERNAME: ${{ secrets.MAVEN_REPOSITORY_USERNAME }}
+          MAVEN_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_REPOSITORY_PASSWORD }}
+          MAVEN_SNAPSHOT_REPOSITORY_USERNAME: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_USERNAME }}
+          MAVEN_SNAPSHOT_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_PASSWORD }}
+        run: |
+          mvn -B -DskipTests compile exec:java \
+            -Dexec.args="preflight --directory $GITHUB_WORKSPACE --snapshot"
+
+      - name: 发布 snapshot
+        env:
+          JAVACHANGES_SNAPSHOT_BUILD_STAMP: ${{ steps.snapshot_build_stamp.outputs.value }}
+          MAVEN_SNAPSHOT_REPOSITORY_URL: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_URL }}
+          MAVEN_SNAPSHOT_REPOSITORY_ID: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_ID }}
+          MAVEN_REPOSITORY_USERNAME: ${{ secrets.MAVEN_REPOSITORY_USERNAME }}
+          MAVEN_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_REPOSITORY_PASSWORD }}
+          MAVEN_SNAPSHOT_REPOSITORY_USERNAME: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_USERNAME }}
+          MAVEN_SNAPSHOT_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_SNAPSHOT_REPOSITORY_PASSWORD }}
+        run: |
+          mvn -B -DskipTests compile exec:java \
+            -Dexec.args="publish --directory $GITHUB_WORKSPACE --snapshot --execute true"
+```
+
+这样发布出去的会是类似 `1.2.3-123456789.1.abc1234-SNAPSHOT` 的唯一版本，而不是一遍遍重复部署裸的 `1.2.3-SNAPSHOT`。
+
+### 5.4 使用 `javachanges publish` 进行通用正式版发布
 
 适用于你自己的 Maven release / snapshot 仓库，希望让 `javachanges` 负责：
 
@@ -232,7 +314,7 @@ jobs:
 4. 在确认后执行真实发布
 
 ```yaml
-name: Publish
+name: Publish Release
 
 on:
   push:
@@ -243,7 +325,7 @@ permissions:
   contents: read
 
 jobs:
-  publish:
+  publish-release:
     runs-on: ubuntu-latest
 
     steps:
@@ -264,9 +346,10 @@ jobs:
       - name: Preflight
         env:
           MAVEN_RELEASE_REPOSITORY_URL: ${{ vars.MAVEN_RELEASE_REPOSITORY_URL }}
-          MAVEN_SNAPSHOT_REPOSITORY_URL: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_URL }}
           MAVEN_REPOSITORY_USERNAME: ${{ secrets.MAVEN_REPOSITORY_USERNAME }}
           MAVEN_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_REPOSITORY_PASSWORD }}
+          MAVEN_RELEASE_REPOSITORY_USERNAME: ${{ secrets.MAVEN_RELEASE_REPOSITORY_USERNAME }}
+          MAVEN_RELEASE_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_RELEASE_REPOSITORY_PASSWORD }}
         run: |
           mvn -B -DskipTests compile exec:java \
             -Dexec.args="preflight --directory $GITHUB_WORKSPACE --tag ${GITHUB_REF_NAME}"
@@ -274,15 +357,16 @@ jobs:
       - name: Publish
         env:
           MAVEN_RELEASE_REPOSITORY_URL: ${{ vars.MAVEN_RELEASE_REPOSITORY_URL }}
-          MAVEN_SNAPSHOT_REPOSITORY_URL: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_URL }}
           MAVEN_REPOSITORY_USERNAME: ${{ secrets.MAVEN_REPOSITORY_USERNAME }}
           MAVEN_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_REPOSITORY_PASSWORD }}
+          MAVEN_RELEASE_REPOSITORY_USERNAME: ${{ secrets.MAVEN_RELEASE_REPOSITORY_USERNAME }}
+          MAVEN_RELEASE_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_RELEASE_REPOSITORY_PASSWORD }}
         run: |
           mvn -B -DskipTests compile exec:java \
             -Dexec.args="publish --directory $GITHUB_WORKSPACE --tag ${GITHUB_REF_NAME} --execute true"
 ```
 
-> **注意**：这条通用 `publish` 流程依赖的是 `env/release.env.example` 里的那套 release / snapshot 仓库变量。  
+> **注意**：这两条通用 `publish` 流程都依赖 `env/release.env.example` 里的 release / snapshot 仓库变量。  
 > 如果你要做的是 Maven Central 发布，请结合阅读 [Publish To Maven Central](./publish-to-maven-central.md) 和 [GitHub Actions Release Flow](./github-actions-release.md)。
 
 ## 6. GitHub Actions 里的 Maven Cache 行为
@@ -323,8 +407,10 @@ jobs:
 1. `mvn -B verify`
 2. `javachanges status`
 3. 只有在 release-plan workflow 中才执行 `javachanges plan --apply true`
-4. 在真正发布前先执行 `javachanges preflight`
-5. 只有在正式发布 workflow 中才执行 `javachanges publish --execute true`
+4. 在 snapshot 发布前先执行 `javachanges preflight --snapshot`
+5. 只有在 snapshot workflow 中才执行 `javachanges publish --snapshot --execute true`
+6. 在正式发布前先执行 `javachanges preflight --tag ...`
+7. 只有在正式发布 workflow 中才执行 `javachanges publish --execute true`
 
 ## 8. 常见错误
 
@@ -332,6 +418,7 @@ jobs:
 | --- | --- | --- |
 | release PR 每次内容都异常波动 | release workflow 提交了 `.changesets`、`pom.xml`、`CHANGELOG.md` 之外的文件 | 收紧 release-plan 的提交范围 |
 | publish job 提示仓库凭据缺失 | 必需的 vars / secrets 没有同步到 GitHub | 先执行 `render-vars`、`sync-vars`，再执行 `audit-vars` |
+| snapshot workflow 总是生成同一个可见版本 | build stamp 被写死，或者没有跟随 CI 变化 | 设置 `JAVACHANGES_SNAPSHOT_BUILD_STAMP`，或基于 run id 和 commit sha 生成 |
 | 开了 cache 但日志里还是有下载 | 新 cache key 或第一次跑 | 让至少一轮成功 workflow 先把 cache 热起来 |
 | `publish` 因脏工作区失败 | `preflight` / `publish` 默认拒绝未提交修改 | 先提交，或只在明确知道风险时传 `--allow-dirty true` |
 | 工作流示例里出现你仓库没有的 wrapper | 复制了依赖本地脚本或 Make 目标的示例 | 使用本文中的直接 CLI 命令 |
@@ -353,8 +440,9 @@ GitHub Actions 中比较实用的路径是：
 1. 在 CI 中使用 `status` 校验发布状态
 2. 使用 `plan --apply true` 自动生成可审阅 release PR
 3. 用 `render-vars`、`sync-vars`、`audit-vars` 管理 GitHub 变量和 secrets
-4. 在任何真实 deploy 之前先执行 `preflight`
-5. 根据你的仓库类型，选择通用 `publish` 或 Maven Central 专用发布流程
+4. 用 `preflight --snapshot` 和 `publish --snapshot` 从 `main` 发布 snapshot
+5. 用 `preflight --tag ...` 和 `publish --tag ...` 发布正式版
+6. 只有当仓库确实发布到 Central 时，再切换到 Maven Central 专用流程
 
 ## 11. 参考资料
 

@@ -241,6 +241,12 @@ JSON 模式约定：
 mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory /path/to/repo --snapshot"
 ```
 
+指定快照构建标识：
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory /path/to/repo --snapshot --snapshot-build-stamp 20260420.154500.ci001"
+```
+
 正式版本示例：
 
 ```bash
@@ -261,11 +267,14 @@ mvn -q -DskipTests compile exec:java -Dexec.args="publish --directory /path/to/r
 mvn -q -DskipTests compile exec:java -Dexec.args="publish --directory /path/to/repo --tag v1.2.3 --execute true"
 ```
 
+快照发布会把根 `1.2.3-SNAPSHOT` 解析成唯一的实际发布版本，例如 `1.2.3-20260420.154500.abc1234-SNAPSHOT`，再通过 `-Drevision=` 注入给 Maven。你也可以通过 `--snapshot-build-stamp` 或环境变量 `JAVACHANGES_SNAPSHOT_BUILD_STAMP` 显式指定构建标识。
+
 关键参数：
 
 | 参数 | 说明 |
 | --- | --- |
 | `--snapshot` | 发布当前 snapshot，而不是正式 tag |
+| `--snapshot-build-stamp` | 显式指定 snapshot 发布标识，覆盖默认的 UTC 时间戳 + git short sha |
 | `--tag` | 目标发布 tag |
 | `--module` | 限制到单个 Maven artifactId |
 | `--allow-dirty` | 允许工作区不干净 |
