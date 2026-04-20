@@ -116,12 +116,17 @@ mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachan
 
 This writes a markdown file into `.changesets/`.
 
-If you want repository-level release branch conventions, also add `.changesets/config.json`:
+If you want repository-level release branch conventions, also add `.changesets/config.jsonc`:
 
-```json
+```jsonc
 {
+  // Default branch that receives reviewed release changesets.
   "baseBranch": "main",
+
+  // Default branch name used by release-plan automation.
   "releaseBranch": "changeset-release/main",
+
+  // Dedicated branch used for publishing snapshots.
   "snapshotBranch": "snapshot"
 }
 ```

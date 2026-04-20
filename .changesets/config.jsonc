@@ -1,0 +1,10 @@
+{
+  // Default branch that receives reviewed release changesets.
+  "baseBranch": "main",
+
+  // Default branch name used by release-plan automation.
+  "releaseBranch": "changeset-release/main",
+
+  // Dedicated branch used for publishing snapshots.
+  "snapshotBranch": "snapshot"
+}

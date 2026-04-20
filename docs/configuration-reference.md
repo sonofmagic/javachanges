@@ -57,17 +57,23 @@ Rules:
 | frontmatter value | `patch`, `minor`, or `major` |
 | markdown body | user-facing summary and notes |
 
-### 3.2 `.changesets/config.json`
+### 3.2 `.changesets/config.json` / `.changesets/config.jsonc`
 
 `javachanges` also supports a repository-level config file:
 
-```json
+```jsonc
 {
   "baseBranch": "main",
   "releaseBranch": "changeset-release/main",
   "snapshotBranch": "snapshot"
 }
 ```
+
+Accepted forms:
+
+- `.changesets/config.json`
+- `.changesets/config.jsonc`
+- comments are allowed in either form through `//` and `/* ... */`
 
 Supported fields:
 

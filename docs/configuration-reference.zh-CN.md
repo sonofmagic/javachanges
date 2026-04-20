@@ -57,17 +57,23 @@ Improve CLI parsing and release planning.
 | frontmatter value | `patch`、`minor`、`major` |
 | Markdown 正文 | 面向用户的变更说明和补充备注 |
 
-### 3.2 `.changesets/config.json`
+### 3.2 `.changesets/config.json` / `.changesets/config.jsonc`
 
 `javachanges` 也支持仓库级配置文件：
 
-```json
+```jsonc
 {
   "baseBranch": "main",
   "releaseBranch": "changeset-release/main",
   "snapshotBranch": "snapshot"
 }
 ```
+
+支持的形式：
+
+- `.changesets/config.json`
+- `.changesets/config.jsonc`
+- 这两种文件里都允许写 `//` 和 `/* ... */` 注释
 
 当前支持这些字段：
 

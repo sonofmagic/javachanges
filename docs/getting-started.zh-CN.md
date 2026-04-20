@@ -116,12 +116,17 @@ mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachan
 
 这个命令会往 `.changesets/` 写入一个 Markdown 文件。
 
-如果你还想约定仓库级的发布分支规则，也可以同时加上 `.changesets/config.json`：
+如果你还想约定仓库级的发布分支规则，也可以同时加上 `.changesets/config.jsonc`：
 
-```json
+```jsonc
 {
+  // 用于承接正式 release plan 的默认基线分支。
   "baseBranch": "main",
+
+  // release-plan 自动化默认生成的分支名。
   "releaseBranch": "changeset-release/main",
+
+  // 用于发布 snapshot 的专用分支。
   "snapshotBranch": "snapshot"
 }
 ```

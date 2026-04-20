@@ -45,6 +45,66 @@ class ChangesetConfigSupportTest {
     }
 
     @Test
+    void loadsJsonConfigWithComments(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Path changesetsDir = repoRoot.resolve(".changesets");
+        Files.createDirectories(changesetsDir);
+        Files.write(changesetsDir.resolve("config.json"), (
+            "{\n" +
+                "  // branch conventions\n" +
+                "  \"baseBranch\": \"develop\",\n" +
+                "  /* generated release branch */\n" +
+                "  \"releaseBranch\": \"changeset-release/develop\",\n" +
+                "  \"snapshotBranch\": \"snapshot-dev\" // snapshot lane\n" +
+                "}\n").getBytes(StandardCharsets.UTF_8));
+
+        ChangesetConfigSupport.ChangesetConfig config = ChangesetConfigSupport.load(repoRoot);
+
+        assertEquals("develop", config.baseBranch());
+        assertEquals("changeset-release/develop", config.releaseBranch());
+        assertEquals("snapshot-dev", config.snapshotBranch());
+    }
+
+    @Test
+    void loadsJsoncConfig(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Path changesetsDir = repoRoot.resolve(".changesets");
+        Files.createDirectories(changesetsDir);
+        Files.write(changesetsDir.resolve("config.jsonc"), (
+            "{\n" +
+                "  // jsonc config\n" +
+                "  \"baseBranch\": \"develop\",\n" +
+                "  \"releaseBranch\": \"changeset-release/develop\",\n" +
+                "  \"snapshotBranch\": \"snapshot-dev\"\n" +
+                "}\n").getBytes(StandardCharsets.UTF_8));
+
+        ChangesetConfigSupport.ChangesetConfig config = ChangesetConfigSupport.load(repoRoot);
+
+        assertEquals("develop", config.baseBranch());
+        assertEquals("changeset-release/develop", config.releaseBranch());
+        assertEquals("snapshot-dev", config.snapshotBranch());
+    }
+
+    @Test
+    void prefersJsonWhenBothJsonAndJsoncExist(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Path changesetsDir = repoRoot.resolve(".changesets");
+        Files.createDirectories(changesetsDir);
+        Files.write(changesetsDir.resolve("config.json"), (
+            "{\n" +
+                "  \"baseBranch\": \"json-main\"\n" +
+                "}\n").getBytes(StandardCharsets.UTF_8));
+        Files.write(changesetsDir.resolve("config.jsonc"), (
+            "{\n" +
+                "  \"baseBranch\": \"jsonc-main\"\n" +
+                "}\n").getBytes(StandardCharsets.UTF_8));
+
+        ChangesetConfigSupport.ChangesetConfig config = ChangesetConfigSupport.load(repoRoot);
+
+        assertEquals("json-main", config.baseBranch());
+    }
+
+    @Test
     void gitlabReleasePlanRequestFallsBackToChangesetConfig(@TempDir Path tempDir) throws Exception {
         Path repoRoot = tempDir.resolve("repo");
         Path changesetsDir = repoRoot.resolve(".changesets");
