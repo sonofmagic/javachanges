@@ -13,7 +13,7 @@
 2. `main` 上如果存在 `.changesets/*.md`
 3. GitHub Actions 自动生成或更新 release PR
 4. release PR 合并后
-5. GitHub Actions 可以在 `main` 上自动发布 snapshot
+5. GitHub Actions 可以在 `snapshot` 分支上自动发布 snapshot
 6. GitHub Actions 自动打 tag、发布到 Maven Central、创建 GitHub Release
 
 ## 1.1 工作流流程图
@@ -44,7 +44,7 @@ flowchart TD
 | --- | --- |
 | `.github/workflows/ci.yml` | 常规 CI，验证 Java 8 构建和发布 profile |
 | `.github/workflows/release-plan.yml` | 在 `main` 上扫描 changesets，自动生成 release PR |
-| `.github/workflows/publish-snapshot.yml` | 把 `main` 上当前 snapshot 发布到配置好的 snapshot 仓库 |
+| `.github/workflows/publish-snapshot.yml` | 把 `snapshot` 分支当前构建发布到配置好的 snapshot 仓库 |
 | `.github/workflows/publish-release.yml` | 在 release PR 合并后执行正式发布 |
 
 ## 3. release PR 工作流
@@ -74,7 +74,7 @@ changeset-release/main
 
 ## 4. snapshot 发布工作流
 
-`publish-snapshot.yml` 会在 `main` push 和手动 `workflow_dispatch` 时运行。
+`publish-snapshot.yml` 会在 `snapshot` 分支 push 和手动 `workflow_dispatch` 时运行。
 
 它会依次做这些事：
 
@@ -95,7 +95,7 @@ changeset-release/main
 <github.run_id>.<github.run_attempt>.<git short sha>
 ```
 
-作为构建标识，所以即使同一 commit 重跑，也能得到可区分的 snapshot 版本。
+作为构建标识，所以即使同一 commit 重跑，也能在 `snapshot` 分支上得到可区分的 snapshot 版本。
 
 snapshot 发布需要配置这些 GitHub Actions 值：
 
@@ -211,6 +211,12 @@ snapshot workflow 则会使用：
 ```
 
 这样同一个开发 snapshot 线可以连续发布多个唯一构建，而不会都挤在同一个可见版本名下。
+
+在当前仓库里，推荐的开发路径是：
+
+1. 正式发布相关变更先合并到 `main`
+2. 想触发对外 snapshot 发布的变更合并到 `snapshot`
+3. 由 `publish-snapshot.yml` 从 `snapshot` 分支头部自动发布
 
 ## 9. 手动触发
 

@@ -13,7 +13,7 @@ The intended flow is:
 2. `main` contains one or more `.changesets/*.md` files
 3. GitHub Actions generates or updates a release PR
 4. the release PR is merged
-5. GitHub Actions can publish snapshots from `main`
+5. GitHub Actions can publish snapshots from `snapshot`
 6. GitHub Actions tags the release, publishes to Maven Central, and creates a GitHub Release
 
 ## 1.1 Workflow graph
@@ -44,7 +44,7 @@ The repository contains four workflows:
 | --- | --- |
 | `.github/workflows/ci.yml` | Regular CI for Java 8 build and publish-profile verification |
 | `.github/workflows/release-plan.yml` | Scans pending changesets on `main` and generates a release PR |
-| `.github/workflows/publish-snapshot.yml` | Publishes the current `main` snapshot to the configured snapshot repository |
+| `.github/workflows/publish-snapshot.yml` | Publishes the current `snapshot` branch build to the configured snapshot repository |
 | `.github/workflows/publish-release.yml` | Publishes after the release PR is merged |
 
 ## 3. Release PR workflow
@@ -74,7 +74,7 @@ and creates or updates a pull request.
 
 ## 4. Snapshot publish workflow
 
-`publish-snapshot.yml` runs on pushes to `main` and on manual `workflow_dispatch`.
+`publish-snapshot.yml` runs on pushes to `snapshot` and on manual `workflow_dispatch`.
 
 It:
 
@@ -95,7 +95,7 @@ In this repository, the workflow explicitly passes a build stamp based on:
 <github.run_id>.<github.run_attempt>.<git short sha>
 ```
 
-so reruns remain distinguishable even when they target the same root snapshot line.
+so reruns remain distinguishable even when they target the same root snapshot line on the `snapshot` branch.
 
 Configure these GitHub Actions values for snapshot publishing:
 
@@ -209,6 +209,12 @@ The snapshot workflow uses:
 ```
 
 so repeated snapshot publishes do not overwrite one another under the same visible revision line.
+
+In this repository, the intended developer path is:
+
+1. merge release work into `main`
+2. merge work that should produce a published snapshot into `snapshot`
+3. let `publish-snapshot.yml` publish from the `snapshot` branch head
 
 ## 9. Manual triggers
 

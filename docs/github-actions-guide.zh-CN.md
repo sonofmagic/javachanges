@@ -225,7 +225,7 @@ jobs:
 
 ### 5.3 使用 `javachanges publish` 发布 snapshot
 
-适用于 `main` 上每次变更都要发布一个唯一 snapshot 到你自己的 snapshot 仓库。
+适用于专门的 `snapshot` 分支每次变更都要发布一个唯一 snapshot 到你自己的 snapshot 仓库。
 
 ```yaml
 name: Publish Snapshot
@@ -233,7 +233,7 @@ name: Publish Snapshot
 on:
   push:
     branches:
-      - main
+      - snapshot
   workflow_dispatch:
     inputs:
       snapshot_build_stamp:
@@ -302,7 +302,7 @@ jobs:
             -Dexec.args="publish --directory $GITHUB_WORKSPACE --snapshot --execute true"
 ```
 
-这样发布出去的会是类似 `1.2.3-123456789.1.abc1234-SNAPSHOT` 的唯一版本，而不是一遍遍重复部署裸的 `1.2.3-SNAPSHOT`。
+这样发布出去的会是类似 `1.2.3-123456789.1.abc1234-SNAPSHOT` 的唯一版本，而不是一遍遍重复部署裸的 `1.2.3-SNAPSHOT`。常见做法是把 `main` 留给正式版规划，把需要对外发布 snapshot 的变更合并到单独的 `snapshot` 分支。
 
 ### 5.4 使用 `javachanges publish` 进行通用正式版发布
 
@@ -440,7 +440,7 @@ GitHub Actions 中比较实用的路径是：
 1. 在 CI 中使用 `status` 校验发布状态
 2. 使用 `plan --apply true` 自动生成可审阅 release PR
 3. 用 `render-vars`、`sync-vars`、`audit-vars` 管理 GitHub 变量和 secrets
-4. 用 `preflight --snapshot` 和 `publish --snapshot` 从 `main` 发布 snapshot
+4. 用 `preflight --snapshot` 和 `publish --snapshot` 从单独的 `snapshot` 分支发布 snapshot
 5. 用 `preflight --tag ...` 和 `publish --tag ...` 发布正式版
 6. 只有当仓库确实发布到 Central 时，再切换到 Maven Central 专用流程
 

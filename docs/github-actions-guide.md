@@ -225,7 +225,7 @@ jobs:
 
 ### 5.3 Snapshot publish with `javachanges publish`
 
-Use this when pushes to `main` should publish unique snapshots into your own snapshot repository.
+Use this when pushes to a dedicated `snapshot` branch should publish unique snapshots into your own snapshot repository.
 
 ```yaml
 name: Publish Snapshot
@@ -233,7 +233,7 @@ name: Publish Snapshot
 on:
   push:
     branches:
-      - main
+      - snapshot
   workflow_dispatch:
     inputs:
       snapshot_build_stamp:
@@ -302,7 +302,7 @@ jobs:
             -Dexec.args="publish --directory $GITHUB_WORKSPACE --snapshot --execute true"
 ```
 
-This publishes a unique revision such as `1.2.3-123456789.1.abc1234-SNAPSHOT`, instead of repeatedly deploying the raw `1.2.3-SNAPSHOT`.
+This publishes a unique revision such as `1.2.3-123456789.1.abc1234-SNAPSHOT`, instead of repeatedly deploying the raw `1.2.3-SNAPSHOT`. A common repository policy is to reserve `main` for release planning and merge development that should produce published snapshots into a separate `snapshot` branch.
 
 ### 5.4 Generic release publish with `javachanges publish`
 
@@ -440,7 +440,7 @@ The practical GitHub Actions path is:
 1. validate with `status` in CI
 2. generate a reviewed release PR with `plan --apply true`
 3. manage GitHub variables and secrets with `render-vars`, `sync-vars`, and `audit-vars`
-4. publish snapshots from `main` with `preflight --snapshot` and `publish --snapshot`
+4. publish snapshots from a dedicated `snapshot` branch with `preflight --snapshot` and `publish --snapshot`
 5. publish tagged releases with `preflight --tag ...` and `publish --tag ...`
 6. use a Maven Central-specific workflow only when the repository really publishes releases to Central
 

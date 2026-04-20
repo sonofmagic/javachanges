@@ -3,7 +3,7 @@ name: Publish Snapshot
 on:
   push:
     branches:
-      - main
+      - snapshot
   workflow_dispatch:
     inputs:
       snapshot_build_stamp:
@@ -15,7 +15,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: publish-snapshot-main
+  group: publish-snapshot
   cancel-in-progress: false
 
 jobs:
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout main
+      - name: Checkout snapshot branch
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
