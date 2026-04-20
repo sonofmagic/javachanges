@@ -1,0 +1,5 @@
+{
+  "baseBranch": "main",
+  "releaseBranch": "changeset-release/main",
+  "snapshotBranch": "snapshot"
+}

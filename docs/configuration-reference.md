@@ -57,7 +57,33 @@ Rules:
 | frontmatter value | `patch`, `minor`, or `major` |
 | markdown body | user-facing summary and notes |
 
-### 3.2 Legacy compatibility
+### 3.2 `.changesets/config.json`
+
+`javachanges` also supports a repository-level config file:
+
+```json
+{
+  "baseBranch": "main",
+  "releaseBranch": "changeset-release/main",
+  "snapshotBranch": "snapshot"
+}
+```
+
+Supported fields:
+
+| Field | Meaning | Default |
+| --- | --- | --- |
+| `baseBranch` | Default base branch for release-plan automation | `main` |
+| `releaseBranch` | Default generated release branch name | `changeset-release/<baseBranch>` |
+| `snapshotBranch` | Conventional branch used for snapshot publishing | `snapshot` |
+
+Current behavior:
+
+- GitLab release-plan defaults read `baseBranch` and `releaseBranch` from this file when CLI flags and CI variables are absent
+- GitHub Actions examples in this repository follow the same branch naming model
+- `snapshotBranch` is currently a repository convention field; keep your workflow trigger aligned with it
+
+### 3.3 Legacy compatibility
 
 The older `javachanges` frontmatter is still accepted:
 

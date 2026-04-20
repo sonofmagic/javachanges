@@ -57,7 +57,33 @@ Improve CLI parsing and release planning.
 | frontmatter value | `patch`、`minor`、`major` |
 | Markdown 正文 | 面向用户的变更说明和补充备注 |
 
-### 3.2 旧格式兼容
+### 3.2 `.changesets/config.json`
+
+`javachanges` 也支持仓库级配置文件：
+
+```json
+{
+  "baseBranch": "main",
+  "releaseBranch": "changeset-release/main",
+  "snapshotBranch": "snapshot"
+}
+```
+
+当前支持这些字段：
+
+| 字段 | 含义 | 默认值 |
+| --- | --- | --- |
+| `baseBranch` | release-plan 自动化默认基线分支 | `main` |
+| `releaseBranch` | 默认生成的 release 分支名 | `changeset-release/<baseBranch>` |
+| `snapshotBranch` | 约定用于 snapshot 发布的分支名 | `snapshot` |
+
+当前行为：
+
+- 当 CLI 参数和 CI 变量都没显式传入时，GitLab release-plan 默认值会从这个文件读取 `baseBranch` 和 `releaseBranch`
+- 本仓库里的 GitHub Actions 示例也遵循同一套分支命名约定
+- `snapshotBranch` 目前属于仓库约定字段，请让你的 workflow trigger 与它保持一致
+
+### 3.3 旧格式兼容
 
 旧版 `javachanges` frontmatter 仍然可以读取：
 

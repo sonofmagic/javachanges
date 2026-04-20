@@ -31,4 +31,8 @@ final class RepoFiles {
     static void applyPlan(Path repoRoot, ReleasePlan plan) throws IOException {
         ReleasePlanFiles.applyPlan(repoRoot, plan);
     }
+
+    static ChangesetConfigSupport.ChangesetConfig readChangesetConfig(Path repoRoot) throws IOException {
+        return ChangesetConfigSupport.load(repoRoot);
+    }
 }

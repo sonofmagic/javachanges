@@ -211,13 +211,14 @@ final class GitlabReleasePlanRequest {
     }
 
     static GitlabReleasePlanRequest fromOptions(Map<String, String> options) {
+        String repoRootOption = trimToNull(options.get("directory"));
         String targetBranch = firstNonBlank(trimToNull(options.get("target-branch")), System.getenv("CI_DEFAULT_BRANCH"));
         if (targetBranch == null) {
-            targetBranch = "main";
+            targetBranch = readConfiguredBaseBranch(repoRootOption);
         }
         String releaseBranch = trimToNull(options.get("release-branch"));
         if (releaseBranch == null) {
-            releaseBranch = "changeset-release/" + targetBranch;
+            releaseBranch = readConfiguredReleaseBranch(repoRootOption, targetBranch);
         }
         return new GitlabReleasePlanRequest(
             firstNonBlank(trimToNull(options.get("project-id")), System.getenv("CI_PROJECT_ID")),
@@ -225,6 +226,27 @@ final class GitlabReleasePlanRequest {
             releaseBranch,
             isTrue(options.get("execute"))
         );
+    }
+
+    private static String readConfiguredBaseBranch(String directoryOption) {
+        try {
+            return RepoFiles.readChangesetConfig(RepoFiles.resolveRepoRoot(directoryOption)).baseBranch();
+        } catch (Exception ignored) {
+            return "main";
+        }
+    }
+
+    private static String readConfiguredReleaseBranch(String directoryOption, String targetBranch) {
+        try {
+            ChangesetConfigSupport.ChangesetConfig config =
+                RepoFiles.readChangesetConfig(RepoFiles.resolveRepoRoot(directoryOption));
+            String configured = trimToNull(config.releaseBranch());
+            if (configured != null) {
+                return configured;
+            }
+        } catch (Exception ignored) {
+        }
+        return "changeset-release/" + targetBranch;
     }
 }
 
