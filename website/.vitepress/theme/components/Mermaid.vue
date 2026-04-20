@@ -32,9 +32,9 @@ async function renderDiagram(source: string) {
       startOnLoad: false,
       securityLevel: 'antiscript',
       theme: 'base',
-      fontFamily: cssVar('--vp-font-family-base', 'sans-serif'),
+      fontFamily: '"IBM Plex Sans", "Helvetica Neue", Arial, sans-serif',
       flowchart: {
-        htmlLabels: false,
+        htmlLabels: true,
         curve: 'basis',
       },
       themeVariables: {
@@ -60,6 +60,14 @@ async function renderDiagram(source: string) {
         .label, .nodeLabel, .edgeLabel, .cluster-label, .label text, .nodeLabel p {
           color: ${cssVar('--vp-c-text-1', isDark ? '#f4eadf' : '#1f1d19')} !important;
           fill: ${cssVar('--vp-c-text-1', isDark ? '#f4eadf' : '#1f1d19')} !important;
+        }
+        .nodeLabel p, .edgeLabel p {
+          margin: 0 !important;
+          line-height: 1.4 !important;
+          padding-bottom: 0.22rem !important;
+        }
+        .node foreignObject, .edgeLabel foreignObject {
+          overflow: visible !important;
         }
         .edgeLabel rect {
           fill: ${cssVar('--vp-c-bg', isDark ? '#201915' : '#f5f1e8')} !important;
