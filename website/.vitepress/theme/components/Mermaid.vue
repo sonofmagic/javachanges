@@ -34,7 +34,7 @@ async function renderDiagram(source: string) {
       theme: 'base',
       fontFamily: cssVar('--vp-font-family-base', 'sans-serif'),
       flowchart: {
-        htmlLabels: true,
+        htmlLabels: false,
         curve: 'basis',
       },
       themeVariables: {
