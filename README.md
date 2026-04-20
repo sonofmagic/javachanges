@@ -39,45 +39,13 @@ Requirements:
 - a Maven repository with a root `pom.xml`
 - either `<modules>` in the root pom, or a single root artifact
 
-Install the released CLI from Maven Central:
-
-```bash
-mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:1.2.0 -DoutputDirectory=.javachanges
-java -jar .javachanges/javachanges-1.2.0.jar --help
-```
-
-On the current `main` branch, after installing the snapshot locally, you can also run `javachanges` as a Maven plugin:
-
-```bash
-mvn -q -DskipTests install
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:status
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:plan -Djavachanges.apply=true
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
-```
-
-The plugin defaults `--directory` to the current Maven project's `${project.basedir}`, so if you run it inside the target repository you usually do not need to pass `--directory` explicitly. The generic `run` goal still exists for commands that do not have a dedicated goal yet.
-
-Published package:
-
-- Maven Central page: `https://central.sonatype.com/artifact/io.github.sonofmagic/javachanges`
-- Direct jar URL: `https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/1.2.0/javachanges-1.2.0.jar`
-
-Run it against a target repository:
-
-```bash
-java -jar .javachanges/javachanges-1.2.0.jar status --directory /path/to/your/repo
-java -jar .javachanges/javachanges-1.2.0.jar add --directory /path/to/your/repo
-java -jar .javachanges/javachanges-1.2.0.jar plan --directory /path/to/your/repo
-```
-
-Optional plugin declaration for shorter local usage inside a target repository:
+Recommended for target repositories: declare the Maven plugin and run the short local goals:
 
 ```xml
 <plugin>
   <groupId>io.github.sonofmagic</groupId>
   <artifactId>javachanges</artifactId>
-  <version>1.2.0</version>
+  <version>1.3.1</version>
 </plugin>
 ```
 
@@ -89,6 +57,38 @@ mvn javachanges:plan -Djavachanges.apply=true
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
 mvn javachanges:manifest-field -Djavachanges.field=releaseVersion
 mvn javachanges:run -Djavachanges.args="release-notes --tag v1.2.3"
+```
+
+The plugin defaults `--directory` to the current Maven project's `${project.basedir}`, so if you run it inside the target repository you usually do not need to pass `--directory` explicitly. The generic `run` goal still exists for commands that do not have a dedicated goal yet.
+
+If you cannot modify the target repository `pom.xml`, use the released CLI from Maven Central instead:
+
+```bash
+mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:1.3.1 -DoutputDirectory=.javachanges
+java -jar .javachanges/javachanges-1.3.1.jar --help
+```
+
+On the current `main` branch, after installing the snapshot locally, you can also run `javachanges` as a Maven plugin:
+
+```bash
+mvn -q -DskipTests install
+mvn io.github.sonofmagic:javachanges:1.3.1-SNAPSHOT:status
+mvn io.github.sonofmagic:javachanges:1.3.1-SNAPSHOT:plan -Djavachanges.apply=true
+mvn io.github.sonofmagic:javachanges:1.3.1-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn io.github.sonofmagic:javachanges:1.3.1-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
+```
+
+Published package:
+
+- Maven Central page: `https://central.sonatype.com/artifact/io.github.sonofmagic/javachanges`
+- CLI jar URL: `https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/1.3.1/javachanges-1.3.1.jar`
+
+Released CLI examples against a target repository:
+
+```bash
+java -jar .javachanges/javachanges-1.3.1.jar status --directory /path/to/your/repo
+java -jar .javachanges/javachanges-1.3.1.jar add --directory /path/to/your/repo
+java -jar .javachanges/javachanges-1.3.1.jar plan --directory /path/to/your/repo
 ```
 
 If you want to work on this repository itself from source, see [Development Guide](docs/development-guide.md).

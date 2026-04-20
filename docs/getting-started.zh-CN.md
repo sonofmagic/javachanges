@@ -8,7 +8,7 @@
 - ArtifactId：`javachanges`
 - 当前正式版本：`__JAVACHANGES_LATEST_RELEASE_VERSION__`
 - Maven Central 页面：`__JAVACHANGES_CENTRAL_OVERVIEW_URL__`
-- 直链 jar 地址：`https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/__JAVACHANGES_LATEST_RELEASE_VERSION__/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar`
+- CLI jar 地址：`https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/__JAVACHANGES_LATEST_RELEASE_VERSION__/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar`
 
 先在目标仓库的 `pom.xml` 里声明 plugin：
 
@@ -35,7 +35,7 @@ mvn javachanges:manifest-field -Djavachanges.field=releaseVersion
 - plugin 会默认把 `--directory` 设成当前 Maven 项目的 `${project.basedir}`
 - 对还没有独立 goal 的命令，仍然可以继续使用通用的 `run` goal
 
-## 2. 备选用法：直接运行发布版 jar
+## 2. 备选用法：当你暂时不能修改 `pom.xml` 时，使用正式发布版 CLI
 
 先把正式发布的 jar 下载到本地：
 
@@ -43,7 +43,7 @@ mvn javachanges:manifest-field -Djavachanges.field=releaseVersion
 mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__ -DoutputDirectory=.javachanges
 ```
 
-然后运行 CLI：
+然后查看 CLI 帮助：
 
 ```bash
 java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar --help
@@ -56,6 +56,11 @@ java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar st
 java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar add --directory /path/to/repo --summary "add release notes command" --release minor
 java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar plan --directory /path/to/repo
 ```
+
+说明：
+
+- 日常对仓库执行命令时，优先使用 Maven plugin，命令更短，也不需要手动传当前项目目录
+- 正式版 CLI 更适合临时接管一个你还没来得及接入 plugin 的仓库
 
 ## 3. 开发当前 `main` 分支时的 plugin 用法
 

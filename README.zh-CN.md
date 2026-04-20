@@ -39,45 +39,13 @@
 - 一个带根 `pom.xml` 的 Maven 仓库
 - 根 `pom.xml` 中要么有 `<modules>`，要么是单模块根 artifact
 
-先从 Maven Central 安装正式发布版 CLI：
-
-```bash
-mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:1.2.0 -DoutputDirectory=.javachanges
-java -jar .javachanges/javachanges-1.2.0.jar --help
-```
-
-在当前 `main` 分支上，如果你先把 SNAPSHOT 安装到本地，也可以把 `javachanges` 当作 Maven plugin 使用：
-
-```bash
-mvn -q -DskipTests install
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:status
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:plan -Djavachanges.apply=true
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
-mvn io.github.sonofmagic:javachanges:1.2.0-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
-```
-
-这个 plugin 会默认把 `--directory` 设成当前 Maven 项目的 `${project.basedir}`，所以如果你就是在目标仓库里执行，通常不需要再手动写 `--directory`。通用的 `run` goal 也仍然保留，方便覆盖还没有拆成独立 goal 的命令。
-
-已发布包地址：
-
-- Maven Central 页面：`https://central.sonatype.com/artifact/io.github.sonofmagic/javachanges`
-- 直链 jar 地址：`https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/1.2.0/javachanges-1.2.0.jar`
-
-对目标仓库执行：
-
-```bash
-java -jar .javachanges/javachanges-1.2.0.jar status --directory /path/to/your/repo
-java -jar .javachanges/javachanges-1.2.0.jar add --directory /path/to/your/repo
-java -jar .javachanges/javachanges-1.2.0.jar plan --directory /path/to/your/repo
-```
-
-如果希望在目标仓库里的调用再短一些，也可以先在该仓库的 `pom.xml` 里声明 plugin：
+目标仓库里的推荐用法：先声明 Maven plugin，再直接执行最短 goal：
 
 ```xml
 <plugin>
   <groupId>io.github.sonofmagic</groupId>
   <artifactId>javachanges</artifactId>
-  <version>1.2.0</version>
+  <version>1.3.1</version>
 </plugin>
 ```
 
@@ -89,6 +57,38 @@ mvn javachanges:plan -Djavachanges.apply=true
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
 mvn javachanges:manifest-field -Djavachanges.field=releaseVersion
 mvn javachanges:run -Djavachanges.args="release-notes --tag v1.2.3"
+```
+
+这个 plugin 会默认把 `--directory` 设成当前 Maven 项目的 `${project.basedir}`，所以如果你就是在目标仓库里执行，通常不需要再手动写 `--directory`。通用的 `run` goal 也仍然保留，方便覆盖还没有拆成独立 goal 的命令。
+
+如果你暂时不能修改目标仓库 `pom.xml`，再使用正式发布版 CLI：
+
+```bash
+mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:1.3.1 -DoutputDirectory=.javachanges
+java -jar .javachanges/javachanges-1.3.1.jar --help
+```
+
+在当前 `main` 分支上，如果你先把 SNAPSHOT 安装到本地，也可以把 `javachanges` 当作 Maven plugin 使用：
+
+```bash
+mvn -q -DskipTests install
+mvn io.github.sonofmagic:javachanges:1.3.1-SNAPSHOT:status
+mvn io.github.sonofmagic:javachanges:1.3.1-SNAPSHOT:plan -Djavachanges.apply=true
+mvn io.github.sonofmagic:javachanges:1.3.1-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn io.github.sonofmagic:javachanges:1.3.1-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
+```
+
+已发布包地址：
+
+- Maven Central 页面：`https://central.sonatype.com/artifact/io.github.sonofmagic/javachanges`
+- CLI jar 地址：`https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/1.3.1/javachanges-1.3.1.jar`
+
+正式版 CLI 对目标仓库的用法：
+
+```bash
+java -jar .javachanges/javachanges-1.3.1.jar status --directory /path/to/your/repo
+java -jar .javachanges/javachanges-1.3.1.jar add --directory /path/to/your/repo
+java -jar .javachanges/javachanges-1.3.1.jar plan --directory /path/to/your/repo
 ```
 
 如果你要开发这个仓库本身，请看 [Development Guide](docs/development-guide.md)。

@@ -270,7 +270,13 @@ mvn -Pcentral-publish \
 </dependency>
 ```
 
-如果你希望直接运行发布产物，也可以验证：
+因为这个项目同时也发布 Maven plugin，所以最短的冒烟验证通常是：
+
+```bash
+mvn javachanges:status
+```
+
+如果你就是要验证可执行 CLI 产物，也仍然可以运行：
 
 ```bash
 java -jar javachanges-1.2.0.jar

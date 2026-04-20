@@ -7,14 +7,14 @@ import type { DefaultTheme } from 'vitepress'
 const repoUrl = 'https://github.com/sonofmagic/javachanges'
 const docsDir = resolve(fileURLToPath(new URL('../../docs', import.meta.url)))
 const pomPath = resolve(fileURLToPath(new URL('../../pom.xml', import.meta.url)))
+const changelogPath = resolve(fileURLToPath(new URL('../../CHANGELOG.md', import.meta.url)))
 const docsFiles = readdirSync(docsDir).filter((file) => file.endsWith('.md'))
+const docsReleaseVersionOverride = process.env.JAVACHANGES_DOCS_RELEASE_VERSION?.trim()
+const docsSnapshotVersionOverride = process.env.JAVACHANGES_DOCS_SNAPSHOT_VERSION?.trim()
 const packageCoordinates = {
   groupId: 'io.github.sonofmagic',
   artifactId: 'javachanges',
 }
-const docsReleaseVersionOverride = process.env.JAVACHANGES_DOCS_RELEASE_VERSION?.trim()
-const docsSnapshotVersionOverride = process.env.JAVACHANGES_DOCS_SNAPSHOT_VERSION?.trim()
-const fallbackLatestReleaseVersion = '1.2.0'
 const centralOverviewUrl = `https://central.sonatype.com/artifact/${packageCoordinates.groupId}/${packageCoordinates.artifactId}/overview`
 
 function extractPomRevision(xml: string): string {
@@ -27,47 +27,19 @@ function extractPomRevision(xml: string): string {
   return revisionMatch[1].trim()
 }
 
-async function resolveLatestReleaseVersion(): Promise<string> {
+function resolveLatestReleaseVersion(): string {
   if (docsReleaseVersionOverride) {
     return docsReleaseVersionOverride
   }
 
-  try {
-    const response = await fetch(
-      `https://search.maven.org/solrsearch/select?q=g:%22${packageCoordinates.groupId}%22+AND+a:%22${packageCoordinates.artifactId}%22&rows=1&wt=json`,
-      {
-        headers: {
-          accept: 'application/json',
-        },
-      },
-    )
+  const changelog = readFileSync(changelogPath, 'utf8')
+  const latestVersionMatch = changelog.match(/^##\s+(\d+\.\d+\.\d+)\s+-\s+\d{4}-\d{2}-\d{2}$/m)
 
-    if (!response.ok) {
-      throw new Error(`search.maven.org returned ${response.status}`)
-    }
-
-    const payload = await response.json() as {
-      response?: {
-        docs?: Array<{
-          latestVersion?: string
-        }>
-      }
-    }
-    const latestVersion = payload.response?.docs?.[0]?.latestVersion?.trim()
-
-    if (!latestVersion) {
-      throw new Error('search.maven.org response did not include latestVersion')
-    }
-
-    return latestVersion
+  if (!latestVersionMatch?.[1]) {
+    throw new Error('Unable to resolve latest release version from CHANGELOG.md')
   }
-  catch (error) {
-    const reason = error instanceof Error ? error.message : String(error)
-    console.warn(
-      `[docs] Failed to resolve latest javachanges release from Maven Central search API (${reason}). Falling back to ${fallbackLatestReleaseVersion}.`,
-    )
-    return fallbackLatestReleaseVersion
-  }
+
+  return latestVersionMatch[1]
 }
 
 function replaceDocVersionTokens(source: string, versions: {
@@ -82,7 +54,7 @@ function replaceDocVersionTokens(source: string, versions: {
 
 const pomRevision = docsSnapshotVersionOverride || extractPomRevision(readFileSync(pomPath, 'utf8'))
 const docsVersions = {
-  latestReleaseVersion: await resolveLatestReleaseVersion(),
+  latestReleaseVersion: resolveLatestReleaseVersion(),
   currentSnapshotVersion: pomRevision,
 }
 

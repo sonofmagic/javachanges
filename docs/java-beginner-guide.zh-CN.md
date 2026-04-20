@@ -383,13 +383,13 @@ final class ReleaseTextUtils {
 
 这个项目不只是普通 jar，它也是 Maven Plugin。
 
-所以它既可以这样调用：
+所以它虽然既可以这样调用：
 
 ```bash
 java -jar javachanges-1.2.0.jar status
 ```
 
-也可以这样调用：
+但更推荐这样调用：
 
 ```bash
 mvn javachanges:status

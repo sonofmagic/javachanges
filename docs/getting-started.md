@@ -8,7 +8,7 @@ Published coordinates:
 - ArtifactId: `javachanges`
 - Current release: `__JAVACHANGES_LATEST_RELEASE_VERSION__`
 - Maven Central page: `__JAVACHANGES_CENTRAL_OVERVIEW_URL__`
-- Direct jar URL: `https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/__JAVACHANGES_LATEST_RELEASE_VERSION__/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar`
+- CLI jar URL: `https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/__JAVACHANGES_LATEST_RELEASE_VERSION__/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar`
 
 Add the plugin to the target repository `pom.xml`:
 
@@ -35,7 +35,7 @@ Notes:
 - the plugin defaults `--directory` to the current Maven project's `${project.basedir}`
 - the generic `run` goal still exists for commands that do not have a dedicated goal yet
 
-## 2. Alternative: run the released jar directly
+## 2. Alternative: use the released CLI when you cannot edit `pom.xml`
 
 Download the released jar:
 
@@ -43,7 +43,7 @@ Download the released jar:
 mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__ -DoutputDirectory=.javachanges
 ```
 
-Run the CLI:
+Run the CLI help:
 
 ```bash
 java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar --help
@@ -56,6 +56,11 @@ java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar st
 java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar add --directory /path/to/repo --summary "add release notes command" --release minor
 java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar plan --directory /path/to/repo
 ```
+
+Notes:
+
+- prefer the Maven plugin for day-to-day repository usage because it keeps commands short and auto-detects the current project directory
+- keep the released CLI for temporary usage against repositories where you cannot add the plugin yet
 
 ## 3. Working on the current `main` branch
 

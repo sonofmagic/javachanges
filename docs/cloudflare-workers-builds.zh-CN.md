@@ -29,6 +29,7 @@
 - Worker 名称：`javachanges-docs`
 - 构建命令：`pnpm docs:build`
 - Wrangler 中的静态资源目录：`./website/dist`
+- Node.js 版本：通过 `.node-version` 和 `package.json#engines` 固定为 `22`
 
 一个关键约束：
 
@@ -90,6 +91,8 @@
 - Cloudflare 会在连接好的构建流水线里处理部署凭据
 
 对于当前这个文档站，暂时不需要额外的 build-time 环境变量。
+
+文档页里展示的正式版号也直接从仓库内提交的 `CHANGELOG.md` 读取，不再依赖构建时实时请求 Maven Central，因此 Cloudflare 构建会更稳定。
 
 ## 6. 推荐收口方式
 

@@ -264,7 +264,13 @@ You can also verify dependency resolution in a small sample project:
 </dependency>
 ```
 
-And since this project produces an executable jar, you can also test:
+And since this project also ships a Maven plugin, the shortest smoke test is usually:
+
+```bash
+mvn javachanges:status
+```
+
+If you specifically want to verify the executable CLI artifact, you can still test:
 
 ```bash
 java -jar javachanges-1.2.0.jar

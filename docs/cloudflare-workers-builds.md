@@ -29,6 +29,7 @@ Current important values:
 - Worker name: `javachanges-docs`
 - Build command: `pnpm docs:build`
 - Static assets directory in Wrangler: `./website/dist`
+- Node.js version: `22` via `.node-version` and `package.json#engines`
 
 Important rule:
 
@@ -90,6 +91,8 @@ That means:
 - Cloudflare handles the deploy token internally for the connected build pipeline
 
 For this repository, no extra build-time environment variables are currently required for the docs site.
+
+The docs build also resolves the displayed release version from the checked-in `CHANGELOG.md`, so Cloudflare does not need live access to Maven Central just to render the site.
 
 ## 6. Recommended cleanup
 
