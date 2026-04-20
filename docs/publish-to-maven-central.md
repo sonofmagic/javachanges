@@ -21,6 +21,26 @@ The publishing flow is isolated behind the Maven profile:
 
 That keeps everyday local builds separate from real Central publishing.
 
+## 1.1 Publishing flow
+
+```mermaid
+flowchart TD
+  A[Start release prep] --> B[Set revision to release version]
+  B --> C[Run mvn -Pcentral-publish -Dgpg.skip=true verify]
+  C --> D{Build and metadata valid?}
+  D -- No --> E[Fix pom.xml, javadocs, sources, or signing setup]
+  E --> C
+  D -- Yes --> F[Run mvn -Pcentral-publish clean deploy]
+  F --> G[Central Portal validates uploaded bundle]
+  G --> H{central.autoPublish true?}
+  H -- No --> I[Publish manually in Central Portal]
+  H -- Yes --> J[Central publishes automatically]
+  I --> K[Verify artifact page and dependency resolution]
+  J --> K
+  K --> L[Create git tag]
+  L --> M[Move revision to next snapshot]
+```
+
 ## 2. Prerequisites
 
 Before a real Maven Central release, make sure all of these are ready:

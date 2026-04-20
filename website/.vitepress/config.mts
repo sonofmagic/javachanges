@@ -1,6 +1,7 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import type Token from 'markdown-it/lib/token.mjs'
 import { defineConfigWithTheme } from 'vitepress'
 import type { DefaultTheme } from 'vitepress'
 
@@ -218,6 +219,21 @@ export default defineConfigWithTheme<DefaultTheme.Config>({
     config(md) {
       const render = md.render.bind(md)
       const renderInline = md.renderInline.bind(md)
+      const fence = md.renderer.rules.fence?.bind(md.renderer.rules)
+
+      md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+        const token = tokens[idx] as Token
+
+        if (token.info.trim() === 'mermaid') {
+          return `<Mermaid :graph='${JSON.stringify(token.content)}' />`
+        }
+
+        if (fence) {
+          return fence(tokens, idx, options, env, self)
+        }
+
+        return self.renderToken(tokens, idx, options)
+      }
 
       md.render = (src, env) => render(replaceDocVersionTokens(src, docsVersions), env)
       md.renderInline = (src, env) => renderInline(replaceDocVersionTokens(src, docsVersions), env)

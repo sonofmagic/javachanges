@@ -21,6 +21,26 @@
 
 这样做的目的是把“普通本地开发构建”和“正式发布到 Central”隔离开，避免你平时执行 `mvn deploy` 时误触发 Central 发布。
 
+## 1.1 发布流程图
+
+```mermaid
+flowchart TD
+  A[开始准备发布] --> B[把 revision 改成正式版]
+  B --> C[执行 mvn -Pcentral-publish -Dgpg.skip=true verify]
+  C --> D{构建与元数据校验通过?}
+  D -- 否 --> E[修复 pom.xml、javadoc、sources 或签名配置]
+  E --> C
+  D -- 是 --> F[执行 mvn -Pcentral-publish clean deploy]
+  F --> G[Central Portal 校验上传的 bundle]
+  G --> H{central.autoPublish 为 true?}
+  H -- 否 --> I[到 Central Portal 手动点击发布]
+  H -- 是 --> J[Central 自动发布]
+  I --> K[检查 artifact 页面与依赖解析]
+  J --> K
+  K --> L[创建 git tag]
+  L --> M[把 revision 推进到下一个 SNAPSHOT]
+```
+
 ## 2. 发布前提
 
 正式发布到 Maven Central 前，你需要确认以下前置条件都已完成：

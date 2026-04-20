@@ -15,6 +15,24 @@
 4. release PR 合并后
 5. GitHub Actions 自动打 tag、发布到 Maven Central、创建 GitHub Release
 
+## 1.1 工作流流程图
+
+```mermaid
+flowchart TD
+  A[功能分支合并到 main] --> B[main 上存在待处理的 .changesets 文件]
+  B --> C[触发 release-plan.yml]
+  C --> D[执行 javachanges plan --apply true]
+  D --> E[更新 revision、changelog 和 release-plan 清单]
+  E --> F[把变更提交到 changeset-release/main]
+  F --> G[创建或更新 release PR]
+  G --> H[release PR 被合并]
+  H --> I[触发 publish-release.yml]
+  I --> J[从 release-plan.json 读取 releaseVersion]
+  J --> K[生成 release notes 并创建 tag]
+  K --> L[发布到 Maven Central]
+  L --> M[推送 tag 并创建 GitHub Release]
+```
+
 ## 2. 工作流组成
 
 仓库包含三条工作流：

@@ -15,6 +15,24 @@ The intended flow is:
 4. the release PR is merged
 5. GitHub Actions tags the release, publishes to Maven Central, and creates a GitHub Release
 
+## 1.1 Workflow graph
+
+```mermaid
+flowchart TD
+  A[Feature PR merged to main] --> B[main contains pending .changesets files]
+  B --> C[release-plan.yml runs]
+  C --> D[javachanges plan --apply true]
+  D --> E[Update revision, changelog, and release-plan manifest]
+  E --> F[Commit changes to changeset-release/main]
+  F --> G[Open or update release PR]
+  G --> H[Release PR merged]
+  H --> I[publish-release.yml runs]
+  I --> J[Read releaseVersion from release-plan.json]
+  J --> K[Generate release notes and create tag]
+  K --> L[Publish to Maven Central]
+  L --> M[Push tag and create GitHub Release]
+```
+
 ## 2. Workflows
 
 The repository contains three workflows:
