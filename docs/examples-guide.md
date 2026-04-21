@@ -48,8 +48,8 @@ The example changeset uses the official Changesets-style package map:
 
 ```md
 ---
-"core": minor
-"api": minor
+"javachanges-basic-monorepo-core": minor
+"javachanges-basic-monorepo-api": minor
 ---
 
 Add release notes generation workflow.
@@ -60,7 +60,7 @@ Add release notes generation workflow.
 
 Read it as:
 
-- `core` and `api` are Maven artifactIds
+- `javachanges-basic-monorepo-core` and `javachanges-basic-monorepo-api` are Maven artifactIds
 - `minor` is the release bump contributed by each package
 - the first non-empty body line becomes the summary
 - extra bullets become changelog detail
@@ -73,6 +73,9 @@ Run the example from the `javachanges` source repository root:
 mvn -q -DskipTests compile exec:java -Dexec.args="status --directory examples/basic-monorepo"
 mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory examples/basic-monorepo --apply true"
 ```
+
+When you run the example in-place under the `javachanges` source tree, Git-aware version calculations can still see the outer repository tags.
+The curated `snapshots/` values below reflect the example after it has been copied into its own standalone Git repository.
 
 The curated `snapshots/` directory shows the expected generated artifacts:
 
@@ -90,7 +93,7 @@ The release-plan snapshot corresponds to:
 | `releaseVersion` | `0.2.0` |
 | `nextSnapshotVersion` | `0.2.0-SNAPSHOT` |
 | `releaseLevel` | `minor` |
-| `modules` | `core`, `api` |
+| `modules` | `javachanges-basic-monorepo-core`, `javachanges-basic-monorepo-api` |
 
 ## 5. GitHub Actions example
 
@@ -100,7 +103,7 @@ The example repository includes three GitHub Actions templates:
 | --- | --- |
 | `examples/basic-monorepo/.github/workflows/ci.yml` | Builds the Maven repo and runs `status` |
 | `examples/basic-monorepo/.github/workflows/release-plan.yml` | Applies the plan and opens a release PR |
-| `examples/basic-monorepo/.github/workflows/publish.yml` | Runs `preflight`, writes Maven settings, and publishes from a tag |
+| `examples/basic-monorepo/.github/workflows/publish.yml` | Publishes after a merged release-plan PR, then pushes the release tag |
 
 These templates assume:
 
@@ -108,6 +111,7 @@ These templates assume:
 - the pinned version is controlled by `JAVACHANGES_VERSION`
 - Maven credentials come from GitHub Actions variables and secrets
 - `actions/setup-java` uses `cache: maven`
+- the example POM coordinates are unique enough to be publish-safe until you replace them
 
 This makes the example copy-friendly for a target repository that does not vendor the `javachanges` source tree.
 
@@ -125,7 +129,7 @@ The template downloads the `javachanges` jar in `before_script`, reuses the Mave
 - `status` during validation
 - `gitlab-release-plan --execute true` on the default branch
 - `gitlab-tag-from-plan --execute true` after a release plan merge
-- `preflight`, `write-settings`, and `publish --execute true` for tag pipelines
+- `publish --execute true` for tag pipelines, with preflight and settings generation handled inside the command
 
 ## 7. How to adapt the example
 

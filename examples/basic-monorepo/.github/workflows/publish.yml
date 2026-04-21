@@ -1,12 +1,12 @@
-name: Publish
+name: Publish Release
 
 on:
-  push:
-    tags:
-      - 'v*'
+  pull_request:
+    types:
+      - closed
 
 permissions:
-  contents: read
+  contents: write
 
 env:
   JAVACHANGES_VERSION: "REPLACE_WITH_PUBLISHED_VERSION"
@@ -19,11 +19,16 @@ env:
 
 jobs:
   publish:
+    if: >
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'main' &&
+      github.event.pull_request.head.ref == 'changeset-release/main'
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v5
         with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 0
 
       - uses: actions/setup-java@v5
@@ -39,11 +44,40 @@ jobs:
           -Dartifact=io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:jar
           -DoutputDirectory=.tools
 
-      - name: Preflight
-        run: java -jar .tools/javachanges-${JAVACHANGES_VERSION}.jar preflight --directory "$GITHUB_WORKSPACE" --tag "$GITHUB_REF_NAME"
+      - name: Configure git author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Write Maven settings
-        run: java -jar .tools/javachanges-${JAVACHANGES_VERSION}.jar write-settings --output .m2/settings.xml
+      - name: Read release version
+        id: release_version
+        run: |
+          value="$(java -jar .tools/javachanges-${JAVACHANGES_VERSION}.jar manifest-field --directory "$GITHUB_WORKSPACE" --field releaseVersion | tail -n 1)"
+          echo "value=$value" >> "$GITHUB_OUTPUT"
+
+      - name: Create local release tag
+        env:
+          RELEASE_VERSION: ${{ steps.release_version.outputs.value }}
+        run: |
+          tag="v${RELEASE_VERSION}"
+          if git rev-parse "$tag" >/dev/null 2>&1; then
+            echo "Tag $tag already exists locally."
+          else
+            git tag -a "$tag" -m "Release $tag"
+          fi
 
       - name: Publish
-        run: java -jar .tools/javachanges-${JAVACHANGES_VERSION}.jar publish --directory "$GITHUB_WORKSPACE" --tag "$GITHUB_REF_NAME" --execute true
+        env:
+          RELEASE_VERSION: ${{ steps.release_version.outputs.value }}
+        run: |
+          java -jar .tools/javachanges-${JAVACHANGES_VERSION}.jar \
+            publish \
+            --directory "$GITHUB_WORKSPACE" \
+            --tag "v${RELEASE_VERSION}" \
+            --execute true
+
+      - name: Push git tag
+        env:
+          RELEASE_VERSION: ${{ steps.release_version.outputs.value }}
+        run: |
+          git push origin "v${RELEASE_VERSION}"

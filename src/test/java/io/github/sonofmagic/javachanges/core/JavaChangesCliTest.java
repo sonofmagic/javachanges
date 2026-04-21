@@ -148,6 +148,27 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void statusIgnoresLocalizedChangesetReadmes(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, true);
+        writeChangeset(repoRoot,
+            "feature-release.md",
+            "---\n" +
+                "\"fixture-app\": minor\n" +
+                "---\n" +
+                "\n" +
+                "ship localized changeset docs safely\n");
+        writeChangeset(repoRoot,
+            "README.zh-CN.md",
+            "# Changesets\n\n这个文件不应该被当成 changeset。\n");
+
+        ExecutionResult result = execute("status", "--directory", repoRoot.toString());
+
+        assertEquals(0, result.exitCode);
+        assertTrue(result.stdout.contains("ship localized changeset docs safely"));
+        assertFalse(result.stdout.contains("Invalid changeset frontmatter"));
+    }
+
+    @Test
     void doctorLocalFallsBackToSystemMavenWhenWrapperMissing(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, false);
         Path envDir = repoRoot.resolve("env");
@@ -416,7 +437,7 @@ class JavaChangesCliTest {
         try (java.util.stream.Stream<Path> stream = Files.list(changesetsDir)) {
             return stream
                 .filter(path -> path.getFileName().toString().endsWith(".md"))
-                .filter(path -> !"README.md".equals(path.getFileName().toString()))
+                .filter(path -> !path.getFileName().toString().startsWith("README"))
                 .collect(java.util.stream.Collectors.toList());
         }
     }

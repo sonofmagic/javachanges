@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.example</groupId>
-    <artifactId>basic-monorepo-parent</artifactId>
+    <groupId>io.github.sonofmagic.examples</groupId>
+    <artifactId>javachanges-basic-monorepo-parent</artifactId>
     <version>${revision}</version>
     <packaging>pom</packaging>
 
@@ -13,11 +13,25 @@
         <revision>0.1.0-SNAPSHOT</revision>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.release.repository.id>maven-releases</maven.release.repository.id>
+        <maven.release.repository.url>https://repo.example.com/maven-releases/</maven.release.repository.url>
+        <maven.snapshot.repository.id>maven-snapshots</maven.snapshot.repository.id>
+        <maven.snapshot.repository.url>https://repo.example.com/maven-snapshots/</maven.snapshot.repository.url>
     </properties>
+
+    <distributionManagement>
+        <repository>
+            <id>${maven.release.repository.id}</id>
+            <url>${maven.release.repository.url}</url>
+        </repository>
+        <snapshotRepository>
+            <id>${maven.snapshot.repository.id}</id>
+            <url>${maven.snapshot.repository.url}</url>
+        </snapshotRepository>
+    </distributionManagement>
 
     <modules>
         <module>modules/core</module>
         <module>modules/api</module>
     </modules>
 </project>
-

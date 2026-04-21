@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.example</groupId>
-        <artifactId>basic-monorepo-parent</artifactId>
+        <groupId>io.github.sonofmagic.examples</groupId>
+        <artifactId>javachanges-basic-monorepo-parent</artifactId>
         <version>${revision}</version>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>api</artifactId>
+    <artifactId>javachanges-basic-monorepo-api</artifactId>
 </project>
-

@@ -8,8 +8,8 @@ Each Markdown file in this directory describes one pending release for the examp
 
 ```md
 ---
-"core": minor
-"api": minor
+"javachanges-basic-monorepo-core": minor
+"javachanges-basic-monorepo-api": minor
 ---
 
 Add release notes generation workflow.

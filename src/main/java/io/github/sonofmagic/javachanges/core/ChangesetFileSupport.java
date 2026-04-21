@@ -67,7 +67,7 @@ final class ChangesetFileSupport {
         try {
             for (Path path : stream) {
                 String fileName = path.getFileName().toString();
-                if (CHANGESETS_README.equals(fileName) || RELEASE_PLAN_MD.equals(fileName)) {
+                if (isChangesetReadme(fileName) || RELEASE_PLAN_MD.equals(fileName)) {
                     continue;
                 }
                 changesets.add(ChangesetParser.parse(repoRoot, path));
@@ -96,6 +96,12 @@ final class ChangesetFileSupport {
             throw new IllegalStateException("Missing field `" + field + "` in " + manifest);
         }
         return matcher.group(1);
+    }
+
+    private static boolean isChangesetReadme(String fileName) {
+        return CHANGESETS_README.equals(fileName)
+            || fileName.startsWith("README.")
+            || fileName.startsWith("README-");
     }
 
     private static String renderChangesetBody(String summary, String body) {

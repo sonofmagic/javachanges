@@ -48,8 +48,8 @@ examples/basic-monorepo/
 
 ```md
 ---
-"core": minor
-"api": minor
+"javachanges-basic-monorepo-core": minor
+"javachanges-basic-monorepo-api": minor
 ---
 
 Add release notes generation workflow.
@@ -60,7 +60,7 @@ Add release notes generation workflow.
 
 可以这样理解：
 
-- `core` 和 `api` 是 Maven artifactId
+- `javachanges-basic-monorepo-core` 和 `javachanges-basic-monorepo-api` 是 Maven artifactId
 - `minor` 表示这两个包都贡献一次 `minor` 升级
 - 正文第一条非空文本会被当成 summary
 - 后续 bullet 会进入 changelog 补充说明
@@ -73,6 +73,9 @@ Add release notes generation workflow.
 mvn -q -DskipTests compile exec:java -Dexec.args="status --directory examples/basic-monorepo"
 mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory examples/basic-monorepo --apply true"
 ```
+
+如果你直接在 `javachanges` 源码仓库里原地运行这个示例，带 Git 语义的版本计算仍然可能看到外层仓库的 tag。
+下面 `snapshots/` 里的基线值，对应的是把该示例复制到独立 Git 仓库之后的结果。
 
 如果你不想直接改动示例目录，可以先看 `snapshots/` 里的整理结果：
 
@@ -90,7 +93,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory examples/basi
 | `releaseVersion` | `0.2.0` |
 | `nextSnapshotVersion` | `0.2.0-SNAPSHOT` |
 | `releaseLevel` | `minor` |
-| `modules` | `core`、`api` |
+| `modules` | `javachanges-basic-monorepo-core`、`javachanges-basic-monorepo-api` |
 
 ## 5. GitHub Actions 示例
 
@@ -100,7 +103,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory examples/basi
 | --- | --- |
 | `examples/basic-monorepo/.github/workflows/ci.yml` | 构建 Maven 仓库并执行 `status` |
 | `examples/basic-monorepo/.github/workflows/release-plan.yml` | 应用 plan 并创建 release PR |
-| `examples/basic-monorepo/.github/workflows/publish.yml` | 执行 `preflight`、生成 Maven settings、按 tag 发布 |
+| `examples/basic-monorepo/.github/workflows/publish.yml` | release-plan PR 合并后自动发布，并回推 release tag |
 
 这些模板默认假设：
 
@@ -108,6 +111,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory examples/basi
 - 固定版本由 `JAVACHANGES_VERSION` 控制
 - Maven 凭据来自 GitHub Actions variables / secrets
 - `actions/setup-java` 开启了 `cache: maven`
+- 示例 POM 坐标已经足够唯一，可先安全演示发布，之后再替换成真实命名
 
 这样做的好处是：目标仓库不需要把 `javachanges` 源码整个 vendoring 进去，也能直接复用这套流程。
 
@@ -125,7 +129,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory examples/basi
 - 校验阶段执行 `status`
 - 默认分支执行 `gitlab-release-plan --execute true`
 - release plan 合并后执行 `gitlab-tag-from-plan --execute true`
-- tag pipeline 中执行 `preflight`、`write-settings` 和 `publish --execute true`
+- tag pipeline 中直接执行 `publish --execute true`，由命令内部处理 preflight 和 settings 生成
 
 ## 7. 如何改造成真实仓库
 

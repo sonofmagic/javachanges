@@ -8,16 +8,16 @@ It demonstrates a two-module Maven monorepo with:
 
 - official Changesets-style `.changesets/*.md` files
 - generated release-plan snapshots
-- minimal GitHub Actions and GitLab CI templates
+- minimal GitHub Actions and GitLab CI templates that publish through CI/CD
 - a small `env/release.env.example` template for repository publishing
 
 ## Layout
 
 | Path | Purpose |
 | --- | --- |
-| `pom.xml` | Root Maven aggregator with a shared `revision` |
-| `modules/core/pom.xml` | Example `core` module |
-| `modules/api/pom.xml` | Example `api` module |
+| `pom.xml` | Root Maven aggregator with a shared `revision` and publish-ready `distributionManagement` |
+| `modules/core/pom.xml` | Example `javachanges-basic-monorepo-core` module |
+| `modules/api/pom.xml` | Example `javachanges-basic-monorepo-api` module |
 | `.changesets/20260418-add-release-notes.md` | Pending release intent in package-map format |
 | `snapshots/` | Generated outputs after `plan --apply true` |
 | `.github/workflows/` | Minimal GitHub Actions examples |
@@ -34,6 +34,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory examples/basi
 ```
 
 If you want to inspect the generated files without mutating the example tree, review the curated files under `snapshots/`.
+The checked-in snapshots reflect the example after it has been copied into its own standalone Git repository. When you run it inside the `javachanges` source tree, the outer repository tags are still visible to Git-based release calculations.
 
 ## Snapshot files
 
@@ -47,12 +48,13 @@ If you want to inspect the generated files without mutating the example tree, re
 ## CI templates
 
 The checked-in workflow files assume `javachanges` has been published and can be downloaded as an executable jar from Maven Central.
+The example coordinates are intentionally unique enough to be publish-safe, but you should still replace them when copying this repository into a real project.
 
 | Path | Purpose |
 | --- | --- |
 | `.github/workflows/ci.yml` | Build the Maven repo and print pending release state |
 | `.github/workflows/release-plan.yml` | Generate a reviewed release-plan pull request |
-| `.github/workflows/publish.yml` | Run `preflight`, generate `.m2/settings.xml`, and publish |
+| `.github/workflows/publish.yml` | Publish after a merged release-plan PR, then push the release tag |
 | `.gitlab-ci.yml` | Validate, create a release MR, tag from the plan, and publish |
 
-Replace `JAVACHANGES_VERSION`, repository URLs, and credentials before copying these templates into a real repository.
+Replace `JAVACHANGES_VERSION`, repository URLs, credentials, and the example Maven coordinates before copying these templates into a real repository.

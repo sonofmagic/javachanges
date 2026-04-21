@@ -1,6 +1,6 @@
 ---
-"core": minor
-"api": minor
+"javachanges-basic-monorepo-core": minor
+"javachanges-basic-monorepo-api": minor
 ---
 
 Add release notes generation workflow.
