@@ -96,6 +96,14 @@ These map to the same phases used elsewhere in the docs:
 
 The snapshot shortcuts pin Maven's local repository to `.m2/repository` inside this repository so local bootstrap does not depend on a writable global `~/.m2`.
 
+Snapshot verification:
+
+- Snapshot repository: `https://central.sonatype.com/repository/maven-snapshots/`
+- Snapshot metadata pattern: `https://central.sonatype.com/repository/maven-snapshots/io/github/sonofmagic/javachanges/<resolved-snapshot-version>/maven-metadata.xml`
+- Snapshot artifact pattern: `https://central.sonatype.com/repository/maven-snapshots/io/github/sonofmagic/javachanges/<resolved-snapshot-version>/javachanges-<timestamped-version>.jar`
+
+Sonatype currently does not provide a working browse UI for hosted snapshots, so the practical verification path is to open `maven-metadata.xml`, open the exact artifact URL, or resolve the dependency from Maven/Gradle.
+
 Published package:
 
 - Maven Central page: `https://central.sonatype.com/artifact/io.github.sonofmagic/javachanges`

@@ -284,6 +284,20 @@ pnpm snapshot:publish:local
 
 如果你想覆盖默认构建标识，可以在执行前设置 `JAVACHANGES_SNAPSHOT_BUILD_STAMP`。
 
+snapshot 发布成功后，可以通过下面这些地址验证：
+
+| 类型 | 地址 |
+| --- | --- |
+| snapshot 仓库根地址 | `https://central.sonatype.com/repository/maven-snapshots/` |
+| snapshot 元数据 | `https://central.sonatype.com/repository/maven-snapshots/io/github/sonofmagic/javachanges/<resolved-snapshot-version>/maven-metadata.xml` |
+| snapshot 产物 | `https://central.sonatype.com/repository/maven-snapshots/io/github/sonofmagic/javachanges/<resolved-snapshot-version>/javachanges-<timestamped-version>.jar` |
+
+说明：
+
+- Sonatype 的 hosted snapshot 仓库根地址不能直接浏览目录
+- 当前 hosted snapshot 的 browse 页面也暂时不可用
+- 实际验证时，建议直接打开 `maven-metadata.xml`、打开具体产物 URL，或者在一个干净的 Maven / Gradle 消费端里解析依赖
+
 ## 10. 版本发布建议流程
 
 推荐按下面顺序做一次正式版发布：
@@ -305,6 +319,7 @@ pnpm snapshot:publish:local
 | --- | --- |
 | Central Portal | `https://central.sonatype.com` |
 | Maven Central 搜索 | `https://central.sonatype.com/artifact/io.github.sonofmagic/javachanges` |
+| snapshot 仓库根地址 | `https://central.sonatype.com/repository/maven-snapshots/` |
 
 也可以用一个最小示例工程验证依赖是否可解析：
 

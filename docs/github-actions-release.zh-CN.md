@@ -108,6 +108,14 @@ snapshot 发布需要配置这些 GitHub Actions secrets：
 
 当前仓库的 snapshot workflow 已切换为使用 `central-publishing-maven-plugin` 配合 `-SNAPSHOT` 版本直接上传，不再依赖单独的 `maven-snapshots` server id 和 `distributionManagement` 认证入口。
 
+workflow 成功后，建议通过下面这些 snapshot 地址验证：
+
+- `https://central.sonatype.com/repository/maven-snapshots/`
+- `https://central.sonatype.com/repository/maven-snapshots/io/github/sonofmagic/javachanges/<resolved-snapshot-version>/maven-metadata.xml`
+- `https://central.sonatype.com/repository/maven-snapshots/io/github/sonofmagic/javachanges/<resolved-snapshot-version>/javachanges-<timestamped-version>.jar`
+
+需要注意的是，hosted snapshot 仓库根地址不能直接浏览目录，所以验证时应优先看 metadata URL、具体产物 URL，或者直接用 Maven / Gradle 做一次依赖解析。
+
 ## 5. 正式发布工作流
 
 `publish-release.yml` 只在以下条件满足时触发：
