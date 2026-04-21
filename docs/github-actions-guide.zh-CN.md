@@ -28,7 +28,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory $PWD"
 | 查看当前待发布状态 | `status` |
 | 创建或更新 GitHub release PR | `github-release-plan --execute true` |
 | 给合并后的 release commit 打 tag | `github-tag-from-plan --execute true` |
-| 从 manifest 读取 `releaseVersion` | `manifest-field --field releaseVersion` |
+| 生成发布元数据或同步 GitHub Release | `github-release-from-plan [--execute true]` |
 | 根据环境变量生成 Maven settings | `write-settings --output .m2/settings.xml` |
 | 渲染 GitHub 需要的变量和 secrets | `render-vars --env-file env/release.env.local --platform github` |
 | 检查本地 / 平台就绪状态 | `doctor-local`、`doctor-platform` |
@@ -36,7 +36,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory $PWD"
 | 回读审计 GitHub Actions variables / secrets | `audit-vars --platform github` |
 | 做发布前检查 | `preflight` |
 | 执行真正的 Maven deploy | `publish --execute true` |
-| 生成 release notes | `release-notes --tag vX.Y.Z --output target/release-notes.md` |
+| 直接生成 release notes | `release-notes --tag vX.Y.Z --output target/release-notes.md` |
 
 ## 3. 推荐的仓库文件布局
 

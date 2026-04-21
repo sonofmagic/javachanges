@@ -56,6 +56,26 @@ final class GithubReleaseRuntime {
         runGit("tag", tagName, sha);
     }
 
+    boolean releaseExists(String tagName) throws IOException, InterruptedException {
+        return runGhCapture("release", "view", tagName).exitCode == 0;
+    }
+
+    void createRelease(String tagName, Path notesFile) throws IOException, InterruptedException {
+        runGh(
+            "release", "create", tagName,
+            "--title", tagName,
+            "--notes-file", notesFile.toString()
+        );
+    }
+
+    void updateRelease(String tagName, Path notesFile) throws IOException, InterruptedException {
+        runGh(
+            "release", "edit", tagName,
+            "--title", tagName,
+            "--notes-file", notesFile.toString()
+        );
+    }
+
     String findOpenPullRequestNumber(String githubRepo, String headBranch, String baseBranch)
         throws IOException, InterruptedException {
         CommandResult result = runGhCapture(

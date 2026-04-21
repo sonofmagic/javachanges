@@ -2,7 +2,11 @@ package io.github.sonofmagic.javachanges.core;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.*;
 
@@ -89,5 +93,60 @@ final class GithubReleaseSupport {
         runtime.createOrUpdateTag(tagName, currentSha);
         runtime.runGit("push", "origin", "refs/tags/" + tagName);
         out.println("Created and pushed tag " + tagName);
+    }
+
+    void syncReleaseFromPlan(GithubReleasePublishRequest request) throws IOException, InterruptedException {
+        String releaseVersion = RepoFiles.readManifestField(repoRoot, "releaseVersion");
+        String tagName = "v" + releaseVersion;
+        Path notesFile = resolvePath(request.releaseNotesFile);
+        new ReleaseNotesGenerator(repoRoot).writeReleaseNotes(tagName, notesFile);
+
+        out.println("Release version: " + releaseVersion);
+        out.println("Release tag: " + tagName);
+        out.println("Release notes file: " + notesFile);
+
+        Path githubOutputFile = resolveOptionalPath(request.githubOutputFile);
+        if (githubOutputFile != null) {
+            appendGithubOutputs(githubOutputFile, releaseVersion, tagName, notesFile);
+            out.println("GitHub output file: " + githubOutputFile);
+        }
+
+        if (!request.execute) {
+            out.println("Dry-run only. Use --execute true to create/update the GitHub Release.");
+            return;
+        }
+
+        boolean existed = runtime.releaseExists(tagName);
+        if (existed) {
+            runtime.updateRelease(tagName, notesFile);
+            out.println("Updated GitHub Release " + tagName);
+            return;
+        }
+
+        runtime.createRelease(tagName, notesFile);
+        out.println("Created GitHub Release " + tagName);
+    }
+
+    private void appendGithubOutputs(Path outputFile, String releaseVersion, String tagName, Path notesFile) throws IOException {
+        Path parent = outputFile.getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+        StringBuilder builder = new StringBuilder();
+        builder.append("release_version=").append(releaseVersion).append('\n');
+        builder.append("release_tag=").append(tagName).append('\n');
+        builder.append("release_notes_file=").append(notesFile.toString()).append('\n');
+        Files.write(outputFile, builder.toString().getBytes(StandardCharsets.UTF_8),
+            StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+    }
+
+    private Path resolvePath(String value) {
+        Path path = Paths.get(value);
+        return path.isAbsolute() ? path.normalize() : repoRoot.resolve(path).normalize();
+    }
+
+    private Path resolveOptionalPath(String value) {
+        String resolved = trimToNull(value);
+        return resolved == null ? null : resolvePath(resolved);
     }
 }

@@ -26,6 +26,7 @@ class JavaChangesCliTest {
         assertEquals(0, result.exitCode);
         assertTrue(result.stdout.contains("Usage: javachanges"));
         assertTrue(result.stdout.contains("github-release-plan"));
+        assertTrue(result.stdout.contains("github-release-from-plan"));
         assertTrue(result.stdout.contains("github-tag-from-plan"));
         assertTrue(result.stdout.contains("release-version-from-tag"));
         assertTrue(result.stdout.contains("gitlab-release-plan"));
@@ -216,6 +217,45 @@ class JavaChangesCliTest {
         assertEquals(0, result.exitCode);
         assertTrue(result.stdout.contains("Release tag: v1.2.0"));
         assertTrue(result.stdout.contains("Dry-run only."));
+    }
+
+    @Test
+    void githubReleaseFromPlanDryRunWritesNotesAndGithubOutputs(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, true);
+        Path githubOutputFile = tempDir.resolve("github-output.txt");
+        run(repoRoot, "git", "config", "user.name", "tester");
+        run(repoRoot, "git", "config", "user.email", "tester@example.com");
+        run(repoRoot, "git", "add", "pom.xml");
+        run(repoRoot, "git", "commit", "-qm", "init");
+        writeChangeset(repoRoot,
+            "minor-release.md",
+            "---\n" +
+                "\"fixture-app\": minor\n" +
+                "---\n" +
+                "\n" +
+                "sync github releases from the release manifest\n");
+        ExecutionResult planResult = execute("plan", "--directory", repoRoot.toString(), "--apply", "true");
+        assertEquals(0, planResult.exitCode);
+        run(repoRoot, "git", "add", "pom.xml", "CHANGELOG.md", ".changesets");
+        run(repoRoot, "git", "commit", "-qm", "release plan");
+        run(repoRoot, "git", "tag", "v1.2.0");
+
+        ExecutionResult result = execute(
+            "github-release-from-plan",
+            "--directory", repoRoot.toString(),
+            "--release-notes-file", "target/release-notes.md",
+            "--github-output-file", githubOutputFile.toString()
+        );
+
+        assertEquals(0, result.exitCode);
+        assertTrue(result.stdout.contains("Release version: 1.2.0"));
+        assertTrue(result.stdout.contains("Release tag: v1.2.0"));
+        assertTrue(result.stdout.contains("GitHub output file: " + githubOutputFile));
+        assertTrue(result.stdout.contains("Dry-run only."));
+        assertTrue(read(repoRoot.resolve("target").resolve("release-notes.md")).contains("## 1.2.0 - "));
+        assertTrue(read(githubOutputFile).contains("release_version=1.2.0"));
+        assertTrue(read(githubOutputFile).contains("release_tag=v1.2.0"));
+        assertTrue(read(githubOutputFile).contains("release_notes_file="));
     }
 
     @Test

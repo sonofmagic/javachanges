@@ -376,3 +376,25 @@ final class GithubTagRequest {
         );
     }
 }
+
+final class GithubReleasePublishRequest {
+    final String releaseNotesFile;
+    final String githubOutputFile;
+    final boolean execute;
+
+    private GithubReleasePublishRequest(String releaseNotesFile, String githubOutputFile, boolean execute) {
+        this.releaseNotesFile = releaseNotesFile;
+        this.githubOutputFile = githubOutputFile;
+        this.execute = execute;
+    }
+
+    static GithubReleasePublishRequest fromOptions(Map<String, String> options) {
+        return new GithubReleasePublishRequest(
+            trimToNull(options.get("release-notes-file")) == null
+                ? "target/release-notes.md"
+                : trimToNull(options.get("release-notes-file")),
+            firstNonBlank(trimToNull(options.get("github-output-file")), System.getenv("GITHUB_OUTPUT")),
+            isTrue(options.get("execute"))
+        );
+    }
+}

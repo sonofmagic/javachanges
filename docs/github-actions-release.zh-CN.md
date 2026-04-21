@@ -30,11 +30,10 @@ flowchart TD
   F --> G[创建或更新 release PR]
   G --> H[release PR 被合并]
   H --> I[触发 publish-release.yml]
-  I --> J[从 release-plan.json 读取 releaseVersion]
-  J --> K[执行 javachanges github-tag-from-plan --execute true]
-  K --> L[生成 release notes]
-  L --> M[发布到 Maven Central]
-  M --> N[创建 GitHub Release]
+  I --> J[执行 javachanges github-tag-from-plan --execute true]
+  J --> K[执行 javachanges github-release-from-plan]
+  K --> L[发布到 Maven Central]
+  L --> M[执行 javachanges github-release-from-plan --execute true]
 ```
 
 ## 2. 工作流组成
@@ -130,11 +129,10 @@ workflow 成功后，建议通过下面这些 snapshot 地址验证：
 它会依次做这些事：
 
 1. checkout release PR 的 merge commit
-2. 读取 `.changesets/release-plan.json` 中的 `releaseVersion`
-3. 执行 `github-tag-from-plan --execute true`
-4. 生成 `target/release-notes.md`
-5. 用 `central-publish` profile 发布到 Maven Central
-6. 创建 GitHub Release
+2. 执行 `github-tag-from-plan --execute true`
+3. 执行 `github-release-from-plan`，生成 `target/release-notes.md` 并导出 `releaseVersion`
+4. 用 `central-publish` profile 发布到 Maven Central
+5. 执行 `github-release-from-plan --execute true`，创建或更新 GitHub Release
 
 ## 6. 仓库必须配置的 Secrets
 

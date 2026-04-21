@@ -38,6 +38,7 @@ import java.nio.file.Path;
         PublishCommand.class,
         GithubReleasePlanCommand.class,
         GithubTagFromPlanCommand.class,
+        GithubReleaseFromPlanCommand.class,
         GitlabReleasePlanCommand.class,
         GitlabTagFromPlanCommand.class,
         ReleaseNotesCommand.class,

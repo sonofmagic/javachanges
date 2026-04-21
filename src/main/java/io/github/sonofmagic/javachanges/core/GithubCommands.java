@@ -52,3 +52,29 @@ final class GithubTagFromPlanCommand extends AbstractCliCommand {
         return success();
     }
 }
+
+@Command(name = "github-release-from-plan", mixinStandardHelpOptions = true,
+    description = "Generate release notes and optionally create or update a GitHub Release from the release plan manifest.")
+final class GithubReleaseFromPlanCommand extends AbstractCliCommand {
+    @Option(names = "--release-notes-file",
+        description = "Release notes output path. Relative paths resolve from the repository root.")
+    private String releaseNotesFile;
+
+    @Option(names = "--github-output-file",
+        description = "Optional GitHub Actions output file. Defaults to GITHUB_OUTPUT when available.")
+    private String githubOutputFile;
+
+    @Option(names = "--execute", arity = "0..1", fallbackValue = "true", defaultValue = "false",
+        description = "Create or update the GitHub Release through gh instead of a dry run.")
+    private boolean execute;
+
+    @Override
+    public Integer call() throws Exception {
+        Map<String, String> options = options();
+        putOption(options, "release-notes-file", releaseNotesFile);
+        putOption(options, "github-output-file", githubOutputFile);
+        putFlag(options, "execute", execute);
+        new GithubReleaseSupport(repoRoot(), out()).syncReleaseFromPlan(GithubReleasePublishRequest.fromOptions(options));
+        return success();
+    }
+}

@@ -288,12 +288,14 @@ mvn -q -DskipTests compile exec:java -Dexec.args="publish --directory /path/to/r
 | --- | --- |
 | `github-release-plan` | 创建或更新 GitHub release-plan pull request |
 | `github-tag-from-plan` | 根据已生成的 release plan 创建并推送正式 tag |
+| `github-release-from-plan` | 生成发布元数据，并可选创建或更新 GitHub Release |
 
 示例：
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="github-release-plan --directory /path/to/repo --github-repo owner/repo --execute true"
 mvn -q -DskipTests compile exec:java -Dexec.args="github-tag-from-plan --directory /path/to/repo --execute true"
+mvn -q -DskipTests compile exec:java -Dexec.args="github-release-from-plan --directory /path/to/repo --release-notes-file target/release-notes.md --execute true"
 ```
 
 ### 8.2 GitLab 发布命令

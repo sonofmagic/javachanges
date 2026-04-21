@@ -289,12 +289,14 @@ Important flags:
 | --- | --- |
 | `github-release-plan` | Create or update a GitHub release-plan pull request |
 | `github-tag-from-plan` | Create and push the final release tag from a generated release plan |
+| `github-release-from-plan` | Generate release metadata and optionally create or update the GitHub Release |
 
 Examples:
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="github-release-plan --directory /path/to/repo --github-repo owner/repo --execute true"
 mvn -q -DskipTests compile exec:java -Dexec.args="github-tag-from-plan --directory /path/to/repo --execute true"
+mvn -q -DskipTests compile exec:java -Dexec.args="github-release-from-plan --directory /path/to/repo --release-notes-file target/release-notes.md --execute true"
 ```
 
 ### 8.2 GitLab Release Commands

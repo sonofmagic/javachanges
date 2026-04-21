@@ -28,7 +28,7 @@ Recommended command mapping:
 | Check pending release state | `status` |
 | Create or update a GitHub release PR | `github-release-plan --execute true` |
 | Tag the merged release commit | `github-tag-from-plan --execute true` |
-| Read `releaseVersion` from the manifest | `manifest-field --field releaseVersion` |
+| Generate release metadata or sync the GitHub Release | `github-release-from-plan [--execute true]` |
 | Generate Maven settings from env vars | `write-settings --output .m2/settings.xml` |
 | Render required GitHub variables and secrets | `render-vars --env-file env/release.env.local --platform github` |
 | Check local/platform readiness | `doctor-local`, `doctor-platform` |
@@ -36,7 +36,7 @@ Recommended command mapping:
 | Audit remote GitHub Actions variables and secrets | `audit-vars --platform github` |
 | Validate a release publish locally or in CI | `preflight` |
 | Run the actual Maven deploy command | `publish --execute true` |
-| Generate release notes | `release-notes --tag vX.Y.Z --output target/release-notes.md` |
+| Generate release notes directly | `release-notes --tag vX.Y.Z --output target/release-notes.md` |
 
 ## 3. Recommended Repository Layout
 

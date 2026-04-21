@@ -30,11 +30,10 @@ flowchart TD
   F --> G[Open or update release PR]
   G --> H[Release PR merged]
   H --> I[publish-release.yml runs]
-  I --> J[Read releaseVersion from release-plan.json]
-  J --> K[javachanges github-tag-from-plan --execute true]
-  K --> L[Generate release notes]
-  L --> M[Publish to Maven Central]
-  M --> N[Create GitHub Release]
+  I --> J[javachanges github-tag-from-plan --execute true]
+  J --> K[javachanges github-release-from-plan]
+  K --> L[Publish to Maven Central]
+  L --> M[javachanges github-release-from-plan --execute true]
 ```
 
 ## 2. Workflows
@@ -130,11 +129,10 @@ The repository root itself is not directly browseable for hosted snapshots, so v
 It then:
 
 1. checks out the merged release commit
-2. reads `releaseVersion` from `.changesets/release-plan.json`
-3. runs `github-tag-from-plan --execute true`
-4. generates `target/release-notes.md`
-5. publishes to Maven Central with the `central-publish` profile
-6. creates a GitHub Release
+2. runs `github-tag-from-plan --execute true`
+3. runs `github-release-from-plan` to generate `target/release-notes.md` and export `releaseVersion`
+4. publishes to Maven Central with the `central-publish` profile
+5. runs `github-release-from-plan --execute true` to create or update the GitHub Release
 
 ## 6. Required repository secrets
 
