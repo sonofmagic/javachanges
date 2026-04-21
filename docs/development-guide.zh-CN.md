@@ -211,6 +211,7 @@ mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:ad
 ```bash
 pnpm snapshot:install
 pnpm snapshot:preflight
+pnpm snapshot:publish:local
 pnpm docs:deploy:local
 ```
 
@@ -220,6 +221,7 @@ pnpm docs:deploy:local
 | --- | --- |
 | `pnpm snapshot:install` | 把当前 `__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__` 安装进仓库内的 `.m2/repository` |
 | `pnpm snapshot:preflight` | 基于仓库内 Maven 缓存，对当前仓库执行一次带本地构建标识的 `preflight --snapshot` |
+| `pnpm snapshot:publish:local` | 通过 `central-publishing-maven-plugin` 从当前仓库发布一个唯一 snapshot 版本 |
 | `pnpm docs:deploy:local` | 重新生成 `website/dist`，再通过 Wrangler 在本地启动部署预览 |
 
 ## 6. 开发阶段最常用的运行示例

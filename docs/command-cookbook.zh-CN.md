@@ -235,6 +235,12 @@ mvn -Pcentral-publish -Dgpg.skip=true verify
 mvn -Pcentral-publish clean deploy
 ```
 
+### 9.3 通过 Central 发布当前仓库的本地 snapshot
+
+```bash
+pnpm snapshot:publish:local
+```
+
 如果你需要的不是 Sonatype Central 发布，而是通用 Maven 仓库发布，就看上面的 `preflight` / `publish` recipe。
 
 ## 10. 快速决策表

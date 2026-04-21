@@ -97,14 +97,16 @@ changeset-release/main
 
 作为构建标识，所以即使同一 commit 重跑，也能在 `snapshot` 分支上得到可区分的 snapshot 版本。
 
-snapshot 发布需要配置这些 GitHub Actions 值：
+snapshot 发布需要配置这些 GitHub Actions secrets：
 
 | 类型 | 名称 | 是否必需 |
 | --- | --- | --- |
-| Variable | `MAVEN_SNAPSHOT_REPOSITORY_URL` | 是 |
-| Variable | `MAVEN_SNAPSHOT_REPOSITORY_ID` | 否 |
-| Secret | `MAVEN_SNAPSHOT_REPOSITORY_USERNAME` 或 `MAVEN_REPOSITORY_USERNAME` | 是 |
-| Secret | `MAVEN_SNAPSHOT_REPOSITORY_PASSWORD` 或 `MAVEN_REPOSITORY_PASSWORD` | 是 |
+| Secret | `MAVEN_CENTRAL_USERNAME` | 是 |
+| Secret | `MAVEN_CENTRAL_PASSWORD` | 是 |
+| Secret | `MAVEN_GPG_PRIVATE_KEY` | 是 |
+| Secret | `MAVEN_GPG_PASSPHRASE` | 是 |
+
+当前仓库的 snapshot workflow 已切换为使用 `central-publishing-maven-plugin` 配合 `-SNAPSHOT` 版本直接上传，不再依赖单独的 `maven-snapshots` server id 和 `distributionManagement` 认证入口。
 
 ## 5. 正式发布工作流
 

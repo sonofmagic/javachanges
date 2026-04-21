@@ -254,6 +254,32 @@ mvn -Pcentral-publish \
 
 That uploads, validates, publishes, and waits until the deployment reaches `published`.
 
+## 9.1 Snapshot publishing with the Central plugin
+
+Sonatype Central also supports publishing `-SNAPSHOT` versions through `central-publishing-maven-plugin`.
+
+In this repository, that path is isolated behind:
+
+```bash
+-Pcentral-snapshot-publish
+```
+
+The profile keeps the same source, javadoc, flatten, and GPG packaging chain, but uses the Central plugin with the Central Portal token server id instead of a separate `maven-snapshots` Maven server id.
+
+Recommended local snapshot command:
+
+```bash
+pnpm snapshot:publish:local
+```
+
+That script:
+
+1. resolves the current project snapshot version
+2. appends a unique UTC timestamp plus `git rev-parse --short HEAD`
+3. publishes the resulting revision through `central-publishing-maven-plugin`
+
+If you want to override the generated build stamp, set `JAVACHANGES_SNAPSHOT_BUILD_STAMP` before running the command.
+
 ## 10. Recommended release sequence
 
 1. make sure the worktree is clean: `git status`

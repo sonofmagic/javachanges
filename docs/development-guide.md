@@ -203,6 +203,7 @@ This repository also ships small local shortcuts so you do not need to keep rety
 ```bash
 pnpm snapshot:install
 pnpm snapshot:preflight
+pnpm snapshot:publish:local
 pnpm docs:deploy:local
 ```
 
@@ -212,6 +213,7 @@ Use them like this:
 | --- | --- |
 | `pnpm snapshot:install` | Install the current `__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__` into the repository-local `.m2/repository` |
 | `pnpm snapshot:preflight` | Run `preflight --snapshot` against the current repository with a local build stamp and the repository-local Maven cache |
+| `pnpm snapshot:publish:local` | Publish a unique snapshot revision from this repository through `central-publishing-maven-plugin` |
 | `pnpm docs:deploy:local` | Rebuild `website/dist` and serve it locally through Wrangler |
 
 ## 6. Common development commands

@@ -237,6 +237,12 @@ mvn -Pcentral-publish -Dgpg.skip=true verify
 mvn -Pcentral-publish clean deploy
 ```
 
+### 9.3 Publish a repository-local snapshot through Central
+
+```bash
+pnpm snapshot:publish:local
+```
+
 If you only need the generic repository publish helper instead of Sonatype Central publishing, use the `preflight` and `publish` recipes above.
 
 ## 10. Quick decision map

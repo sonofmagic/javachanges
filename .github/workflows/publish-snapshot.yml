@@ -52,7 +52,7 @@ jobs:
             exit 1
           fi
 
-      - name: Set up Java 8, snapshot auth, and GPG
+      - name: Set up Java 8, Central token, and GPG
         uses: actions/setup-java@v5
         env:
           MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
@@ -63,13 +63,13 @@ jobs:
           java-version: '8'
           cache: maven
           cache-dependency-path: pom.xml
-          server-id: maven-snapshots
+          server-id: central
           server-username: MAVEN_CENTRAL_USERNAME
           server-password: MAVEN_CENTRAL_PASSWORD
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
-      - name: Debug snapshot Maven settings
+      - name: Debug Central token Maven settings
         run: |
           settings_path="$HOME/.m2/settings.xml"
           echo "settings_path=$settings_path"
@@ -140,9 +140,8 @@ jobs:
           resolved_revision="${base_revision}-${JAVACHANGES_SNAPSHOT_BUILD_STAMP}-SNAPSHOT"
           echo "value=${resolved_revision}" >> "$GITHUB_OUTPUT"
 
-      - name: Publish snapshot to Maven Central snapshots
+      - name: Publish snapshot with Central publishing plugin
         env:
-          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
           SNAPSHOT_REVISION: ${{ steps.snapshot_revision.outputs.value }}
         run: |
           mvn -B \

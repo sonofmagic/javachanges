@@ -97,14 +97,16 @@ In this repository, the workflow explicitly passes a build stamp based on:
 
 so reruns remain distinguishable even when they target the same root snapshot line on the `snapshot` branch.
 
-Configure these GitHub Actions values for snapshot publishing:
+Configure these GitHub Actions secrets for snapshot publishing:
 
 | Type | Name | Required |
 | --- | --- | --- |
-| Variable | `MAVEN_SNAPSHOT_REPOSITORY_URL` | Yes |
-| Variable | `MAVEN_SNAPSHOT_REPOSITORY_ID` | No |
-| Secret | `MAVEN_SNAPSHOT_REPOSITORY_USERNAME` or `MAVEN_REPOSITORY_USERNAME` | Yes |
-| Secret | `MAVEN_SNAPSHOT_REPOSITORY_PASSWORD` or `MAVEN_REPOSITORY_PASSWORD` | Yes |
+| Secret | `MAVEN_CENTRAL_USERNAME` | Yes |
+| Secret | `MAVEN_CENTRAL_PASSWORD` | Yes |
+| Secret | `MAVEN_GPG_PRIVATE_KEY` | Yes |
+| Secret | `MAVEN_GPG_PASSPHRASE` | Yes |
+
+The snapshot workflow in this repository now uses `central-publishing-maven-plugin` with a `-SNAPSHOT` revision and the same Central Portal token pair used for releases, instead of publishing through `distributionManagement` with a separate `maven-snapshots` server id.
 
 ## 5. Release publish workflow
 

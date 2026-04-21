@@ -83,6 +83,7 @@ mvn io.github.sonofmagic:javachanges:1.3.1-SNAPSHOT:manifest-field -Djavachanges
 ```bash
 pnpm snapshot:install
 pnpm snapshot:preflight
+pnpm snapshot:publish:local
 pnpm docs:deploy:local
 ```
 
@@ -90,6 +91,7 @@ pnpm docs:deploy:local
 
 - `snapshot:install` 把当前 `1.3.1-SNAPSHOT` 安装到本地 Maven 仓库
 - `snapshot:preflight` 用 `local.dev.001` 预演一次本地 snapshot 发布检查
+- `snapshot:publish:local` 通过 `central-publishing-maven-plugin` 发布一个唯一 snapshot 版本
 - `docs:deploy:local` 会重新构建 `website/dist`，再通过 Wrangler 在本地启动预览部署
 
 这两个 snapshot 脚本会把 Maven 本地仓库固定到当前仓库下的 `.m2/repository`，避免依赖可写的全局 `~/.m2`。

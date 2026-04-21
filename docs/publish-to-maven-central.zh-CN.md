@@ -258,6 +258,32 @@ mvn -Pcentral-publish \
 
 这会在上传并校验通过后自动发布，并等待到 `published` 状态。
 
+## 9.1 使用 Central plugin 发布 snapshot
+
+Sonatype Central 现在也支持通过 `central-publishing-maven-plugin` 发布 `-SNAPSHOT` 版本。
+
+在当前仓库里，这条链路被隔离在：
+
+```bash
+-Pcentral-snapshot-publish
+```
+
+这个 profile 会继续复用 sources、javadocs、flatten 和 GPG 的打包链路，但 snapshot 上传改为直接使用 Central plugin 和 Central Portal token，不再依赖单独的 `maven-snapshots` Maven server id。
+
+推荐的本地 snapshot 命令：
+
+```bash
+pnpm snapshot:publish:local
+```
+
+这个脚本会：
+
+1. 读取当前项目的 snapshot 版本
+2. 追加一段唯一的 UTC 时间戳和 `git rev-parse --short HEAD`
+3. 通过 `central-publishing-maven-plugin` 发布这个唯一 revision
+
+如果你想覆盖默认构建标识，可以在执行前设置 `JAVACHANGES_SNAPSHOT_BUILD_STAMP`。
+
 ## 10. 版本发布建议流程
 
 推荐按下面顺序做一次正式版发布：

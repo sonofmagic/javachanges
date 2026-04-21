@@ -39,6 +39,7 @@
         <picocli.version>4.7.7</picocli.version>
         <junit.jupiter.version>5.12.2</junit.jupiter.version>
         <central.publishing.serverId>central</central.publishing.serverId>
+        <central.publishing.snapshot.serverId>${central.publishing.serverId}</central.publishing.snapshot.serverId>
         <central.autoPublish>false</central.autoPublish>
         <central.waitUntil>validated</central.waitUntil>
         <maven.snapshot.repository.id>maven-snapshots</maven.snapshot.repository.id>
@@ -340,6 +341,17 @@
                                 </goals>
                             </execution>
                         </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>${central.publishing.plugin.version}</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>${central.publishing.snapshot.serverId}</publishingServerId>
+                            <centralSnapshotsUrl>${maven.snapshot.repository.url}</centralSnapshotsUrl>
+                            <deploymentName>${project.artifactId}-${project.version}</deploymentName>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>

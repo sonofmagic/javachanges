@@ -83,6 +83,7 @@ Repository-local shortcuts for working on `javachanges` itself:
 ```bash
 pnpm snapshot:install
 pnpm snapshot:preflight
+pnpm snapshot:publish:local
 pnpm docs:deploy:local
 ```
 
@@ -90,6 +91,7 @@ These map to the same phases used elsewhere in the docs:
 
 - `snapshot:install` installs the current `1.3.1-SNAPSHOT` into local Maven
 - `snapshot:preflight` previews a local snapshot publish with `local.dev.001`
+- `snapshot:publish:local` publishes a unique snapshot through `central-publishing-maven-plugin`
 - `docs:deploy:local` rebuilds `website/dist` and serves it through Wrangler locally
 
 The snapshot shortcuts pin Maven's local repository to `.m2/repository` inside this repository so local bootstrap does not depend on a writable global `~/.m2`.

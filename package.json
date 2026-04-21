@@ -14,7 +14,8 @@
     "docs:deploy:local": "pnpm run docs:build && env XDG_CONFIG_HOME=.wrangler XDG_CACHE_HOME=.wrangler XDG_STATE_HOME=.wrangler ./node_modules/.bin/wrangler dev",
     "docs:deploy": "pnpm run docs:build && pnpm exec wrangler deploy",
     "snapshot:install": "mvn -q -DskipTests -Dmaven.repo.local=.m2/repository install",
-    "snapshot:preflight": "mvn -B -DskipTests -Dmaven.repo.local=.m2/repository compile exec:java -Dexec.args=\"preflight --directory . --snapshot --snapshot-build-stamp local.dev.001\""
+    "snapshot:preflight": "mvn -B -DskipTests -Dmaven.repo.local=.m2/repository compile exec:java -Dexec.args=\"preflight --directory . --snapshot --snapshot-build-stamp local.dev.001\"",
+    "snapshot:publish:local": "./scripts/publish-local-snapshot.sh"
   },
   "devDependencies": {
     "@types/node": "^24.6.0",
