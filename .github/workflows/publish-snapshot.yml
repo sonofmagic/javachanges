@@ -29,6 +29,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Define Maven settings path
+        run: echo "MAVEN_CENTRAL_SETTINGS=$HOME/.m2/settings-central.xml" >> "$GITHUB_ENV"
+
       - name: Validate snapshot publishing secrets
         env:
           MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
@@ -52,26 +55,41 @@ jobs:
             exit 1
           fi
 
-      - name: Set up Java 8, Central token, and GPG
+      - name: Set up Java 8 and GPG
         uses: actions/setup-java@v5
         env:
-          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
-          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
         with:
           distribution: corretto
           java-version: '8'
           cache: maven
           cache-dependency-path: pom.xml
-          server-id: central
-          server-username: MAVEN_CENTRAL_USERNAME
-          server-password: MAVEN_CENTRAL_PASSWORD
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
+      - name: Write Central token Maven settings
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+        run: |
+          mkdir -p "$HOME/.m2"
+          cat > "$MAVEN_CENTRAL_SETTINGS" <<EOF
+          <settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                    xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+            <servers>
+              <server>
+                <id>central</id>
+                <username>${MAVEN_CENTRAL_USERNAME}</username>
+                <password>${MAVEN_CENTRAL_PASSWORD}</password>
+              </server>
+            </servers>
+          </settings>
+          EOF
+
       - name: Debug Central token Maven settings
         run: |
-          settings_path="$HOME/.m2/settings.xml"
+          settings_path="$MAVEN_CENTRAL_SETTINGS"
           echo "settings_path=$settings_path"
           if [ ! -f "$settings_path" ]; then
             echo "::error title=Missing Maven settings::actions/setup-java did not generate settings.xml"
@@ -146,6 +164,7 @@ jobs:
           SNAPSHOT_REVISION: ${{ steps.snapshot_revision.outputs.value }}
         run: |
           mvn -B \
+            -s "$MAVEN_CENTRAL_SETTINGS" \
             -Pcentral-snapshot-publish \
             -Drevision="${SNAPSHOT_REVISION}" \
             clean deploy
