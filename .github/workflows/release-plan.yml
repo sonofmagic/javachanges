@@ -29,55 +29,12 @@ jobs:
           cache: maven
           cache-dependency-path: pom.xml
 
-      - name: Configure git author
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
       - name: Build CLI
         run: mvn -B -DskipTests compile
 
-      - name: Apply release plan
-        run: mvn -B -DskipTests compile exec:java -Dexec.args="plan --directory $GITHUB_WORKSPACE --apply true"
-
-      - name: Read release version
-        if: hashFiles('.changesets/release-plan.json') != ''
-        id: release_version
-        run: |
-          value="$(mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory $GITHUB_WORKSPACE --field releaseVersion" | tail -n 1)"
-          echo "value=$value" >> "$GITHUB_OUTPUT"
-
       - name: Create or update release pull request
-        if: hashFiles('.changesets/release-plan.json') != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_VERSION: ${{ steps.release_version.outputs.value }}
-        run: |
-          branch="changeset-release/main"
-          title="chore(release): v${RELEASE_VERSION}"
-          git switch -C "$branch"
-          git add pom.xml CHANGELOG.md .changesets
-          if git diff --cached --quiet; then
-            echo "No release changes to commit."
-            exit 0
-          fi
-          git commit -m "chore(release): apply changesets for v${RELEASE_VERSION}"
-          git push --force-with-lease origin "HEAD:${branch}"
-
-          pr_number="$(gh pr list --base main --head "$branch" --json number --jq '.[0].number')"
-          if [ -z "$pr_number" ]; then
-            if ! gh pr create \
-              --base main \
-              --head "$branch" \
-              --title "$title" \
-              --body-file .changesets/release-plan.md; then
-              echo "Release branch pushed, but GitHub Actions could not create the PR automatically."
-              echo "Enable repository settings that allow GitHub Actions to create pull requests, then rerun this workflow."
-              echo "Or create the PR manually:"
-              echo "https://github.com/${GITHUB_REPOSITORY}/compare/main...${branch}?expand=1"
-            fi
-          else
-            gh pr edit "$pr_number" \
-              --title "$title" \
-              --body-file .changesets/release-plan.md
-          fi
+        run: >
+          mvn -B -DskipTests exec:java
+          -Dexec.args="github-release-plan --directory $GITHUB_WORKSPACE --execute true"

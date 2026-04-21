@@ -36,6 +36,8 @@ import java.nio.file.Path;
         AuditVarsCommand.class,
         PreflightCommand.class,
         PublishCommand.class,
+        GithubReleasePlanCommand.class,
+        GithubTagFromPlanCommand.class,
         GitlabReleasePlanCommand.class,
         GitlabTagFromPlanCommand.class,
         ReleaseNotesCommand.class,

@@ -97,13 +97,14 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory examples/basi
 
 ## 5. GitHub Actions 示例
 
-示例仓库里包含 3 份 GitHub Actions 模板：
+示例仓库里包含 4 份 GitHub Actions 模板：
 
 | 文件 | 作用 |
 | --- | --- |
 | `examples/basic-monorepo/.github/workflows/ci.yml` | 构建 Maven 仓库并执行 `status` |
-| `examples/basic-monorepo/.github/workflows/release-plan.yml` | 应用 plan 并创建 release PR |
-| `examples/basic-monorepo/.github/workflows/publish.yml` | release-plan PR 合并后自动发布，并回推 release tag |
+| `examples/basic-monorepo/.github/workflows/release-plan.yml` | 用 `github-release-plan` 创建或更新 release PR |
+| `examples/basic-monorepo/.github/workflows/tag-release.yml` | 用 `github-tag-from-plan` 给合并后的 release commit 打 tag |
+| `examples/basic-monorepo/.github/workflows/publish.yml` | 在 tag push 后用 `publish --execute true` 完成发布 |
 
 这些模板默认假设：
 

@@ -27,7 +27,7 @@
 - 基于环境变量的 Maven settings 生成
 - 发布前检查和发布辅助
 - GitHub / GitLab 环境变量审计
-- GitLab release MR 与 tag 自动化辅助
+- GitHub / GitLab release PR / MR 与 tag 自动化辅助
 
 ## 快速开始
 
@@ -233,6 +233,11 @@ summary: automate javachanges self-release publishing via GitHub Actions
 - `preflight`
 - `publish`
 - `release-notes`
+
+GitHub 相关辅助：
+
+- `github-release-plan`
+- `github-tag-from-plan`
 
 GitLab 相关辅助：
 

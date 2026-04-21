@@ -24,16 +24,17 @@ flowchart TD
   B --> S[触发 publish-snapshot.yml]
   S --> T[发布唯一 snapshot 版本]
   B --> C[触发 release-plan.yml]
-  C --> D[执行 javachanges plan --apply true]
+  C --> D[执行 javachanges github-release-plan --execute true]
   D --> E[更新 revision、changelog 和 release-plan 清单]
   E --> F[把变更提交到 changeset-release/main]
   F --> G[创建或更新 release PR]
   G --> H[release PR 被合并]
   H --> I[触发 publish-release.yml]
   I --> J[从 release-plan.json 读取 releaseVersion]
-  J --> K[生成 release notes 并创建 tag]
-  K --> L[发布到 Maven Central]
-  L --> M[推送 tag 并创建 GitHub Release]
+  J --> K[执行 javachanges github-tag-from-plan --execute true]
+  K --> L[生成 release notes]
+  L --> M[发布到 Maven Central]
+  M --> N[创建 GitHub Release]
 ```
 
 ## 2. 工作流组成
@@ -52,7 +53,7 @@ flowchart TD
 `release-plan.yml` 的核心逻辑是：
 
 ```bash
-mvn -B -DskipTests compile exec:java -Dexec.args="plan --directory $GITHUB_WORKSPACE --apply true"
+mvn -B -DskipTests exec:java -Dexec.args="github-release-plan --directory $GITHUB_WORKSPACE --execute true"
 ```
 
 它会：
@@ -130,11 +131,10 @@ workflow 成功后，建议通过下面这些 snapshot 地址验证：
 
 1. checkout release PR 的 merge commit
 2. 读取 `.changesets/release-plan.json` 中的 `releaseVersion`
-3. 创建本地 tag `vX.Y.Z`
+3. 执行 `github-tag-from-plan --execute true`
 4. 生成 `target/release-notes.md`
 5. 用 `central-publish` profile 发布到 Maven Central
-6. 推送 git tag
-7. 创建 GitHub Release
+6. 创建 GitHub Release
 
 ## 6. 仓库必须配置的 Secrets
 

@@ -58,7 +58,11 @@ final class ReleasePlanner {
         byte[] stderr = readAllBytes(process.getErrorStream());
         int exitCode = process.waitFor();
         if (exitCode != 0) {
-            throw new IllegalStateException("git tag failed: " + new String(stderr, StandardCharsets.UTF_8));
+            String error = new String(stderr, StandardCharsets.UTF_8).trim();
+            if (error.contains("not a git repository")) {
+                return null;
+            }
+            throw new IllegalStateException("git tag failed: " + error);
         }
         String output = new String(stdout, StandardCharsets.UTF_8).trim();
         if (output.isEmpty()) {

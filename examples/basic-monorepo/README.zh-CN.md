@@ -54,7 +54,8 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory examples/basi
 | --- | --- |
 | `.github/workflows/ci.yml` | 构建 Maven 仓库并打印待发布状态 |
 | `.github/workflows/release-plan.yml` | 生成可审阅的 release-plan Pull Request |
-| `.github/workflows/publish.yml` | release-plan PR 合并后自动发布，并回推 release tag |
+| `.github/workflows/tag-release.yml` | 用 `github-tag-from-plan` 给合并后的 release commit 打 tag 并推送 |
+| `.github/workflows/publish.yml` | 在 release tag push 后用 `publish --execute true` 完成发布 |
 | `.gitlab-ci.yml` | 校验、创建 release MR、按 plan 打 tag、再发布 |
 
 复制到真实仓库前，请先替换 `JAVACHANGES_VERSION`、仓库地址、认证凭据，以及示例 Maven 坐标。

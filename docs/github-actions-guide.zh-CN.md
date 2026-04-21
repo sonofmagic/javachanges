@@ -26,7 +26,8 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory $PWD"
 | 目标 | 命令 |
 | --- | --- |
 | 查看当前待发布状态 | `status` |
-| 应用 release plan | `plan --apply true` |
+| 创建或更新 GitHub release PR | `github-release-plan --execute true` |
+| 给合并后的 release commit 打 tag | `github-tag-from-plan --execute true` |
 | 从 manifest 读取 `releaseVersion` | `manifest-field --field releaseVersion` |
 | 根据环境变量生成 Maven settings | `write-settings --output .m2/settings.xml` |
 | 渲染 GitHub 需要的变量和 secrets | `render-vars --env-file env/release.env.local --platform github` |
@@ -194,36 +195,61 @@ jobs:
       - name: Build CLI
         run: mvn -B -DskipTests compile
 
-      - name: Apply release plan
-        run: mvn -B -DskipTests compile exec:java -Dexec.args="plan --directory $GITHUB_WORKSPACE --apply true"
-
-      - name: Read release version
-        if: hashFiles('.changesets/release-plan.json') != ''
-        id: release_version
-        run: |
-          value="$(mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory $GITHUB_WORKSPACE --field releaseVersion" | tail -n 1)"
-          echo "value=$value" >> "$GITHUB_OUTPUT"
-
-      - name: Commit release plan
-        if: hashFiles('.changesets/release-plan.json') != ''
+      - name: 创建或更新 release PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_VERSION: ${{ steps.release_version.outputs.value }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git switch -C changeset-release/main
-          git add pom.xml CHANGELOG.md .changesets
-          git commit -m "chore(release): apply changesets for v${RELEASE_VERSION}"
-          git push --force-with-lease origin HEAD:changeset-release/main
-          gh pr create \
-            --base main \
-            --head changeset-release/main \
-            --title "chore(release): v${RELEASE_VERSION}" \
-            --body-file .changesets/release-plan.md
+        run: >
+          mvn -B -DskipTests exec:java
+          -Dexec.args="github-release-plan --directory $GITHUB_WORKSPACE --execute true"
 ```
 
-### 5.3 使用 `javachanges publish` 发布 snapshot
+### 5.3 自动给 release commit 打 tag
+
+适用于 release PR 合并后，自动创建并推送最终 `vX.Y.Z` tag。
+
+```yaml
+name: Tag Release
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+
+jobs:
+  tag-release:
+    if: >
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'main' &&
+      github.event.pull_request.head.ref == 'changeset-release/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: corretto
+          java-version: '8'
+          cache: maven
+          cache-dependency-path: pom.xml
+
+      - name: Build CLI
+        run: mvn -B -DskipTests compile
+
+      - name: 给合并后的 release commit 打 tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          mvn -B -DskipTests exec:java
+          -Dexec.args="github-tag-from-plan --directory $GITHUB_WORKSPACE --execute true"
+```
+
+### 5.4 使用 `javachanges publish` 发布 snapshot
 
 适用于专门的 `snapshot` 分支每次变更都要发布一个唯一 snapshot 到你自己的 snapshot 仓库。
 
@@ -304,14 +330,14 @@ jobs:
 
 这样发布出去的会是类似 `1.2.3-123456789.1.abc1234-SNAPSHOT` 的唯一版本，而不是一遍遍重复部署裸的 `1.2.3-SNAPSHOT`。常见做法是把 `main` 留给正式版规划，把需要对外发布 snapshot 的变更合并到单独的 `snapshot` 分支。
 
-### 5.4 使用 `javachanges publish` 进行通用正式版发布
+### 5.5 使用 `javachanges publish` 进行通用正式版发布
 
-适用于你自己的 Maven release / snapshot 仓库，希望让 `javachanges` 负责：
+适用于 `github-tag-from-plan` 已经推送了正式 tag，而你希望在 tag pipeline 里让 `javachanges` 负责：
 
 1. 校验 tag 与版本状态
 2. 生成 `.m2/settings.xml`
 3. 输出最终 Maven `deploy` 命令
-4. 在确认后执行真实发布
+4. 在 tag pipeline 中执行真实发布
 
 ```yaml
 name: Publish Release
@@ -342,17 +368,6 @@ jobs:
 
       - name: Build CLI
         run: mvn -B -DskipTests compile
-
-      - name: Preflight
-        env:
-          MAVEN_RELEASE_REPOSITORY_URL: ${{ vars.MAVEN_RELEASE_REPOSITORY_URL }}
-          MAVEN_REPOSITORY_USERNAME: ${{ secrets.MAVEN_REPOSITORY_USERNAME }}
-          MAVEN_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_REPOSITORY_PASSWORD }}
-          MAVEN_RELEASE_REPOSITORY_USERNAME: ${{ secrets.MAVEN_RELEASE_REPOSITORY_USERNAME }}
-          MAVEN_RELEASE_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_RELEASE_REPOSITORY_PASSWORD }}
-        run: |
-          mvn -B -DskipTests compile exec:java \
-            -Dexec.args="preflight --directory $GITHUB_WORKSPACE --tag ${GITHUB_REF_NAME}"
 
       - name: Publish
         env:
@@ -410,7 +425,8 @@ jobs:
 4. 在 snapshot 发布前先执行 `javachanges preflight --snapshot`
 5. 只有在 snapshot workflow 中才执行 `javachanges publish --snapshot --execute true`
 6. 在正式发布前先执行 `javachanges preflight --tag ...`
-7. 只有在正式发布 workflow 中才执行 `javachanges publish --execute true`
+7. release PR 合并后执行 `javachanges github-tag-from-plan --execute true`
+8. 只有在 tag 驱动的正式发布 workflow 中才执行 `javachanges publish --execute true`
 
 ## 8. 常见错误
 
@@ -438,11 +454,12 @@ jobs:
 GitHub Actions 中比较实用的路径是：
 
 1. 在 CI 中使用 `status` 校验发布状态
-2. 使用 `plan --apply true` 自动生成可审阅 release PR
-3. 用 `render-vars`、`sync-vars`、`audit-vars` 管理 GitHub 变量和 secrets
-4. 用 `preflight --snapshot` 和 `publish --snapshot` 从单独的 `snapshot` 分支发布 snapshot
-5. 用 `preflight --tag ...` 和 `publish --tag ...` 发布正式版
-6. 只有当仓库确实发布到 Central 时，再切换到 Maven Central 专用流程
+2. 使用 `github-release-plan` 自动生成可审阅 release PR
+3. 用 `github-tag-from-plan` 推送最终 release tag
+4. 用 `render-vars`、`sync-vars`、`audit-vars` 管理 GitHub 变量和 secrets
+5. 用 `preflight --snapshot` 和 `publish --snapshot` 从单独的 `snapshot` 分支发布 snapshot
+6. 用 `publish --tag ...` 发布正式版
+7. 只有当仓库确实发布到 Central 时，再切换到 Maven Central 专用流程
 
 ## 11. 参考资料
 

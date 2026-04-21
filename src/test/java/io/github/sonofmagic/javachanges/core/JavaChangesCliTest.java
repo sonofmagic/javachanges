@@ -25,6 +25,8 @@ class JavaChangesCliTest {
 
         assertEquals(0, result.exitCode);
         assertTrue(result.stdout.contains("Usage: javachanges"));
+        assertTrue(result.stdout.contains("github-release-plan"));
+        assertTrue(result.stdout.contains("github-tag-from-plan"));
         assertTrue(result.stdout.contains("release-version-from-tag"));
         assertTrue(result.stdout.contains("gitlab-release-plan"));
     }
@@ -166,6 +168,54 @@ class JavaChangesCliTest {
         assertEquals(0, result.exitCode);
         assertTrue(result.stdout.contains("ship localized changeset docs safely"));
         assertFalse(result.stdout.contains("Invalid changeset frontmatter"));
+    }
+
+    @Test
+    void githubReleasePlanDryRunPrintsPlannedPullRequest(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+        writeChangeset(repoRoot,
+            "minor-release.md",
+            "---\n" +
+                "\"fixture-app\": minor\n" +
+                "---\n" +
+                "\n" +
+                "publish a reviewed github release plan\n");
+
+        ExecutionResult result = execute(
+            "github-release-plan",
+            "--directory", repoRoot.toString(),
+            "--github-repo", "owner/repo"
+        );
+
+        assertEquals(0, result.exitCode);
+        assertTrue(result.stdout.contains("GitHub repo: owner/repo"));
+        assertTrue(result.stdout.contains("Release branch: changeset-release/main"));
+        assertTrue(result.stdout.contains("Release version: 1.2.0"));
+        assertTrue(result.stdout.contains("Dry-run only."));
+    }
+
+    @Test
+    void githubTagFromPlanDryRunPrintsPlannedTag(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, true);
+        run(repoRoot, "git", "config", "user.name", "tester");
+        run(repoRoot, "git", "config", "user.email", "tester@example.com");
+        run(repoRoot, "git", "add", "pom.xml");
+        run(repoRoot, "git", "commit", "-qm", "init");
+        writeChangeset(repoRoot,
+            "minor-release.md",
+            "---\n" +
+                "\"fixture-app\": minor\n" +
+                "---\n" +
+                "\n" +
+                "tag a github release from the manifest\n");
+        ExecutionResult planResult = execute("plan", "--directory", repoRoot.toString(), "--apply", "true");
+        assertEquals(0, planResult.exitCode);
+
+        ExecutionResult result = execute("github-tag-from-plan", "--directory", repoRoot.toString());
+
+        assertEquals(0, result.exitCode);
+        assertTrue(result.stdout.contains("Release tag: v1.2.0"));
+        assertTrue(result.stdout.contains("Dry-run only."));
     }
 
     @Test

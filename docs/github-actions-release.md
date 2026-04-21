@@ -24,16 +24,17 @@ flowchart TD
   B --> C[release-plan.yml runs]
   B --> S[publish-snapshot.yml runs]
   S --> T[Publish unique snapshot revision]
-  C --> D[javachanges plan --apply true]
+  C --> D[javachanges github-release-plan --execute true]
   D --> E[Update revision, changelog, and release-plan manifest]
   E --> F[Commit changes to changeset-release/main]
   F --> G[Open or update release PR]
   G --> H[Release PR merged]
   H --> I[publish-release.yml runs]
   I --> J[Read releaseVersion from release-plan.json]
-  J --> K[Generate release notes and create tag]
-  K --> L[Publish to Maven Central]
-  L --> M[Push tag and create GitHub Release]
+  J --> K[javachanges github-tag-from-plan --execute true]
+  K --> L[Generate release notes]
+  L --> M[Publish to Maven Central]
+  M --> N[Create GitHub Release]
 ```
 
 ## 2. Workflows
@@ -52,7 +53,7 @@ The repository contains four workflows:
 The core command in `release-plan.yml` is:
 
 ```bash
-mvn -B -DskipTests compile exec:java -Dexec.args="plan --directory $GITHUB_WORKSPACE --apply true"
+mvn -B -DskipTests exec:java -Dexec.args="github-release-plan --directory $GITHUB_WORKSPACE --execute true"
 ```
 
 It:
@@ -130,11 +131,10 @@ It then:
 
 1. checks out the merged release commit
 2. reads `releaseVersion` from `.changesets/release-plan.json`
-3. creates a local tag `vX.Y.Z`
+3. runs `github-tag-from-plan --execute true`
 4. generates `target/release-notes.md`
 5. publishes to Maven Central with the `central-publish` profile
-6. pushes the git tag
-7. creates a GitHub Release
+6. creates a GitHub Release
 
 ## 6. Required repository secrets
 

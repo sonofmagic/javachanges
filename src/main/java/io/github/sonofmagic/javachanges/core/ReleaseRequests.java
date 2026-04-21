@@ -289,3 +289,90 @@ final class GitlabTagRequest {
         );
     }
 }
+
+final class GithubReleasePlanRequest {
+    final String githubRepo;
+    final String targetBranch;
+    final String releaseBranch;
+    final boolean execute;
+
+    private GithubReleasePlanRequest(String githubRepo, String targetBranch, String releaseBranch, boolean execute) {
+        this.githubRepo = githubRepo;
+        this.targetBranch = targetBranch;
+        this.releaseBranch = releaseBranch;
+        this.execute = execute;
+    }
+
+    static GithubReleasePlanRequest fromOptions(Map<String, String> options) {
+        String repoRootOption = trimToNull(options.get("directory"));
+        String targetBranch = firstNonBlank(trimToNull(options.get("target-branch")), System.getenv("GITHUB_BASE_REF"));
+        if (targetBranch == null) {
+            targetBranch = readConfiguredBaseBranch(repoRootOption);
+        }
+        String releaseBranch = trimToNull(options.get("release-branch"));
+        if (releaseBranch == null) {
+            releaseBranch = readConfiguredReleaseBranch(repoRootOption, targetBranch);
+        }
+        return new GithubReleasePlanRequest(
+            firstNonBlank(trimToNull(options.get("github-repo")), System.getenv("GITHUB_REPOSITORY")),
+            targetBranch,
+            releaseBranch,
+            isTrue(options.get("execute"))
+        );
+    }
+
+    private static String readConfiguredBaseBranch(String directoryOption) {
+        try {
+            return readConfiguredChangesetConfig(directoryOption).baseBranch();
+        } catch (Exception ignored) {
+            return "main";
+        }
+    }
+
+    private static String readConfiguredReleaseBranch(String directoryOption, String targetBranch) {
+        try {
+            ChangesetConfigSupport.ChangesetConfig config = readConfiguredChangesetConfig(directoryOption);
+            String configured = trimToNull(config.releaseBranch());
+            if (configured != null) {
+                return configured;
+            }
+        } catch (Exception ignored) {
+        }
+        return "changeset-release/" + targetBranch;
+    }
+
+    private static ChangesetConfigSupport.ChangesetConfig readConfiguredChangesetConfig(String directoryOption) throws IOException {
+        Path configuredRoot = resolveConfigRoot(directoryOption);
+        if (configuredRoot != null) {
+            try {
+                return RepoFiles.readChangesetConfig(configuredRoot);
+            } catch (Exception ignored) {
+            }
+        }
+        return RepoFiles.readChangesetConfig(RepoFiles.resolveRepoRoot(directoryOption));
+    }
+
+    private static Path resolveConfigRoot(String directoryOption) {
+        if (directoryOption == null) {
+            return null;
+        }
+        return ChangesetConfigSupport.resolveConfigRoot(Paths.get(directoryOption));
+    }
+}
+
+final class GithubTagRequest {
+    final String currentSha;
+    final boolean execute;
+
+    private GithubTagRequest(String currentSha, boolean execute) {
+        this.currentSha = currentSha;
+        this.execute = execute;
+    }
+
+    static GithubTagRequest fromOptions(Map<String, String> options) {
+        return new GithubTagRequest(
+            firstNonBlank(trimToNull(options.get("current-sha")), System.getenv("GITHUB_SHA")),
+            isTrue(options.get("execute"))
+        );
+    }
+}

@@ -280,7 +280,23 @@ mvn -q -DskipTests compile exec:java -Dexec.args="publish --directory /path/to/r
 | `--allow-dirty` | 允许工作区不干净 |
 | `--execute true` | 真正执行最终发布命令，而不是只打印 |
 
-## 8. GitLab 发布命令
+## 8. 平台发布命令
+
+### 8.1 GitHub 发布命令
+
+| 命令 | 作用 |
+| --- | --- |
+| `github-release-plan` | 创建或更新 GitHub release-plan pull request |
+| `github-tag-from-plan` | 根据已生成的 release plan 创建并推送正式 tag |
+
+示例：
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="github-release-plan --directory /path/to/repo --github-repo owner/repo --execute true"
+mvn -q -DskipTests compile exec:java -Dexec.args="github-tag-from-plan --directory /path/to/repo --execute true"
+```
+
+### 8.2 GitLab 发布命令
 
 | 命令 | 作用 |
 | --- | --- |

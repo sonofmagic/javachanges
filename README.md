@@ -27,7 +27,7 @@ The current codebase focuses on:
 - preparing Maven settings from environment variables
 - release preflight and publish helpers
 - GitHub and GitLab environment-variable auditing
-- GitLab release-MR and tag automation helpers
+- GitHub and GitLab release PR / MR and tag automation helpers
 
 ## Quick Start
 
@@ -233,6 +233,11 @@ High-value commands:
 - `preflight`
 - `publish`
 - `release-notes`
+
+GitHub-specific helpers:
+
+- `github-release-plan`
+- `github-tag-from-plan`
 
 GitLab-specific helpers:
 

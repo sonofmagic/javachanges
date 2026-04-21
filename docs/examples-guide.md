@@ -97,13 +97,14 @@ The release-plan snapshot corresponds to:
 
 ## 5. GitHub Actions example
 
-The example repository includes three GitHub Actions templates:
+The example repository includes four GitHub Actions templates:
 
 | File | Purpose |
 | --- | --- |
 | `examples/basic-monorepo/.github/workflows/ci.yml` | Builds the Maven repo and runs `status` |
-| `examples/basic-monorepo/.github/workflows/release-plan.yml` | Applies the plan and opens a release PR |
-| `examples/basic-monorepo/.github/workflows/publish.yml` | Publishes after a merged release-plan PR, then pushes the release tag |
+| `examples/basic-monorepo/.github/workflows/release-plan.yml` | Creates or updates a release PR with `github-release-plan` |
+| `examples/basic-monorepo/.github/workflows/tag-release.yml` | Tags the merged release commit with `github-tag-from-plan` |
+| `examples/basic-monorepo/.github/workflows/publish.yml` | Publishes from the pushed release tag with `publish --execute true` |
 
 These templates assume:
 

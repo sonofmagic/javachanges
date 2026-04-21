@@ -1,25 +1,28 @@
-name: Release Plan
+name: Tag Release
 
 on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+  pull_request:
+    types:
+      - closed
 
 permissions:
   contents: write
-  pull-requests: write
 
 env:
   JAVACHANGES_VERSION: "REPLACE_WITH_PUBLISHED_VERSION"
 
 jobs:
-  release-pr:
-    if: github.event_name == 'workflow_dispatch' || github.actor != 'github-actions[bot]'
+  tag:
+    if: >
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'main' &&
+      github.event.pull_request.head.ref == 'changeset-release/main'
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v5
         with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 0
 
       - uses: actions/setup-java@v5
@@ -35,9 +38,9 @@ jobs:
           -Dartifact=io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:jar
           -DoutputDirectory=.tools
 
-      - name: Create or update release pull request
+      - name: Create and push release tag
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >
           java -jar .tools/javachanges-${JAVACHANGES_VERSION}.jar
-          github-release-plan --directory "$GITHUB_WORKSPACE" --execute true
+          github-tag-from-plan --directory "$GITHUB_WORKSPACE" --execute true

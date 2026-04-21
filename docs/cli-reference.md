@@ -281,7 +281,23 @@ Important flags:
 | `--allow-dirty` | Allow a dirty working tree |
 | `--execute true` | Run the final publish command instead of only printing it |
 
-## 8. GitLab Release Commands
+## 8. Platform Release Commands
+
+### 8.1 GitHub Release Commands
+
+| Command | Purpose |
+| --- | --- |
+| `github-release-plan` | Create or update a GitHub release-plan pull request |
+| `github-tag-from-plan` | Create and push the final release tag from a generated release plan |
+
+Examples:
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="github-release-plan --directory /path/to/repo --github-repo owner/repo --execute true"
+mvn -q -DskipTests compile exec:java -Dexec.args="github-tag-from-plan --directory /path/to/repo --execute true"
+```
+
+### 8.2 GitLab Release Commands
 
 | Command | Purpose |
 | --- | --- |

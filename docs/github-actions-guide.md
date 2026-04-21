@@ -26,7 +26,8 @@ Recommended command mapping:
 | Goal | Command |
 | --- | --- |
 | Check pending release state | `status` |
-| Apply a release plan | `plan --apply true` |
+| Create or update a GitHub release PR | `github-release-plan --execute true` |
+| Tag the merged release commit | `github-tag-from-plan --execute true` |
 | Read `releaseVersion` from the manifest | `manifest-field --field releaseVersion` |
 | Generate Maven settings from env vars | `write-settings --output .m2/settings.xml` |
 | Render required GitHub variables and secrets | `render-vars --env-file env/release.env.local --platform github` |
@@ -194,36 +195,61 @@ jobs:
       - name: Build CLI
         run: mvn -B -DskipTests compile
 
-      - name: Apply release plan
-        run: mvn -B -DskipTests compile exec:java -Dexec.args="plan --directory $GITHUB_WORKSPACE --apply true"
-
-      - name: Read release version
-        if: hashFiles('.changesets/release-plan.json') != ''
-        id: release_version
-        run: |
-          value="$(mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory $GITHUB_WORKSPACE --field releaseVersion" | tail -n 1)"
-          echo "value=$value" >> "$GITHUB_OUTPUT"
-
-      - name: Commit release plan
-        if: hashFiles('.changesets/release-plan.json') != ''
+      - name: Create or update release PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_VERSION: ${{ steps.release_version.outputs.value }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git switch -C changeset-release/main
-          git add pom.xml CHANGELOG.md .changesets
-          git commit -m "chore(release): apply changesets for v${RELEASE_VERSION}"
-          git push --force-with-lease origin HEAD:changeset-release/main
-          gh pr create \
-            --base main \
-            --head changeset-release/main \
-            --title "chore(release): v${RELEASE_VERSION}" \
-            --body-file .changesets/release-plan.md
+        run: >
+          mvn -B -DskipTests exec:java
+          -Dexec.args="github-release-plan --directory $GITHUB_WORKSPACE --execute true"
 ```
 
-### 5.3 Snapshot publish with `javachanges publish`
+### 5.3 Release tag automation
+
+Use this when a merged release PR should create and push the final `vX.Y.Z` git tag automatically.
+
+```yaml
+name: Tag Release
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+
+jobs:
+  tag-release:
+    if: >
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'main' &&
+      github.event.pull_request.head.ref == 'changeset-release/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: corretto
+          java-version: '8'
+          cache: maven
+          cache-dependency-path: pom.xml
+
+      - name: Build CLI
+        run: mvn -B -DskipTests compile
+
+      - name: Tag merged release commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          mvn -B -DskipTests exec:java
+          -Dexec.args="github-tag-from-plan --directory $GITHUB_WORKSPACE --execute true"
+```
+
+### 5.4 Snapshot publish with `javachanges publish`
 
 Use this when pushes to a dedicated `snapshot` branch should publish unique snapshots into your own snapshot repository.
 
@@ -304,14 +330,14 @@ jobs:
 
 This publishes a unique revision such as `1.2.3-123456789.1.abc1234-SNAPSHOT`, instead of repeatedly deploying the raw `1.2.3-SNAPSHOT`. A common repository policy is to reserve `main` for release planning and merge development that should produce published snapshots into a separate `snapshot` branch.
 
-### 5.4 Generic release publish with `javachanges publish`
+### 5.5 Generic release publish with `javachanges publish`
 
-Use this when the target repository publishes tagged releases into your own release repository and you want `javachanges` to:
+Use this when the target repository publishes tagged releases into your own release repository after `github-tag-from-plan` has pushed the final tag, and you want `javachanges` to:
 
 1. validate the tag and version state
 2. generate `.m2/settings.xml`
 3. render the exact Maven `deploy` command
-4. optionally execute the real deploy
+4. execute the real deploy from the tag pipeline
 
 ```yaml
 name: Publish Release
@@ -342,17 +368,6 @@ jobs:
 
       - name: Build CLI
         run: mvn -B -DskipTests compile
-
-      - name: Preflight
-        env:
-          MAVEN_RELEASE_REPOSITORY_URL: ${{ vars.MAVEN_RELEASE_REPOSITORY_URL }}
-          MAVEN_REPOSITORY_USERNAME: ${{ secrets.MAVEN_REPOSITORY_USERNAME }}
-          MAVEN_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_REPOSITORY_PASSWORD }}
-          MAVEN_RELEASE_REPOSITORY_USERNAME: ${{ secrets.MAVEN_RELEASE_REPOSITORY_USERNAME }}
-          MAVEN_RELEASE_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_RELEASE_REPOSITORY_PASSWORD }}
-        run: |
-          mvn -B -DskipTests compile exec:java \
-            -Dexec.args="preflight --directory $GITHUB_WORKSPACE --tag ${GITHUB_REF_NAME}"
 
       - name: Publish
         env:
@@ -410,7 +425,8 @@ Use this order:
 4. `javachanges preflight --snapshot` before any snapshot deploy
 5. `javachanges publish --snapshot --execute true` only in a snapshot workflow
 6. `javachanges preflight --tag ...` before any release deploy
-7. `javachanges publish --execute true` only in a release workflow
+7. `javachanges github-tag-from-plan --execute true` when the reviewed release PR is merged
+8. `javachanges publish --execute true` only in a tag-driven release workflow
 
 ## 8. Common Mistakes
 
@@ -438,11 +454,12 @@ Use these docs together:
 The practical GitHub Actions path is:
 
 1. validate with `status` in CI
-2. generate a reviewed release PR with `plan --apply true`
-3. manage GitHub variables and secrets with `render-vars`, `sync-vars`, and `audit-vars`
-4. publish snapshots from a dedicated `snapshot` branch with `preflight --snapshot` and `publish --snapshot`
-5. publish tagged releases with `preflight --tag ...` and `publish --tag ...`
-6. use a Maven Central-specific workflow only when the repository really publishes releases to Central
+2. generate a reviewed release PR with `github-release-plan`
+3. push the final release tag with `github-tag-from-plan`
+4. manage GitHub variables and secrets with `render-vars`, `sync-vars`, and `audit-vars`
+5. publish snapshots from a dedicated `snapshot` branch with `preflight --snapshot` and `publish --snapshot`
+6. publish tagged releases with `publish --tag ...`
+7. use a Maven Central-specific workflow only when the repository really publishes releases to Central
 
 ## 11. References
 

@@ -54,7 +54,8 @@ The example coordinates are intentionally unique enough to be publish-safe, but 
 | --- | --- |
 | `.github/workflows/ci.yml` | Build the Maven repo and print pending release state |
 | `.github/workflows/release-plan.yml` | Generate a reviewed release-plan pull request |
-| `.github/workflows/publish.yml` | Publish after a merged release-plan PR, then push the release tag |
+| `.github/workflows/tag-release.yml` | Tag and push the merged release commit with `github-tag-from-plan` |
+| `.github/workflows/publish.yml` | Publish from the pushed release tag with `publish --execute true` |
 | `.gitlab-ci.yml` | Validate, create a release MR, tag from the plan, and publish |
 
 Replace `JAVACHANGES_VERSION`, repository URLs, credentials, and the example Maven coordinates before copying these templates into a real repository.
