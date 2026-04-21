@@ -78,6 +78,22 @@ mvn io.github.sonofmagic:javachanges:1.3.1-SNAPSHOT:add -Djavachanges.summary="a
 mvn io.github.sonofmagic:javachanges:1.3.1-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
 ```
 
+Repository-local shortcuts for working on `javachanges` itself:
+
+```bash
+pnpm snapshot:install
+pnpm snapshot:preflight
+pnpm docs:deploy:local
+```
+
+These map to the same phases used elsewhere in the docs:
+
+- `snapshot:install` installs the current `1.3.1-SNAPSHOT` into local Maven
+- `snapshot:preflight` previews a local snapshot publish with `local.dev.001`
+- `docs:deploy:local` rebuilds `website/dist` and serves it through Wrangler locally
+
+The snapshot shortcuts pin Maven's local repository to `.m2/repository` inside this repository so local bootstrap does not depend on a writable global `~/.m2`.
+
 Published package:
 
 - Maven Central page: `https://central.sonatype.com/artifact/io.github.sonofmagic/javachanges`

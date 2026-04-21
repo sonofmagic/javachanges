@@ -182,6 +182,12 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/yo
 mvn -q -DskipTests install
 ```
 
+等价的仓库快捷入口：
+
+```bash
+pnpm snapshot:install
+```
+
 然后执行独立的 plugin goals：
 
 ```bash
@@ -197,6 +203,24 @@ mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:ad
 - [src/main/java/io/github/sonofmagic/javachanges/core/cli/JavaChangesCli.java](https://github.com/sonofmagic/javachanges/blob/main/src/main/java/io/github/sonofmagic/javachanges/core/cli/JavaChangesCli.java)
 
 如果你使用 IntelliJ IDEA 或 VS Code，也可以直接以这个类作为运行入口进行调试。
+
+### 5.5 本地 snapshot 和文档部署快捷入口
+
+这个仓库也内置了几条本地快捷命令，避免你反复手写长命令：
+
+```bash
+pnpm snapshot:install
+pnpm snapshot:preflight
+pnpm docs:deploy:local
+```
+
+建议这样理解：
+
+| 命令 | 作用 |
+| --- | --- |
+| `pnpm snapshot:install` | 把当前 `__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__` 安装进仓库内的 `.m2/repository` |
+| `pnpm snapshot:preflight` | 基于仓库内 Maven 缓存，对当前仓库执行一次带本地构建标识的 `preflight --snapshot` |
+| `pnpm docs:deploy:local` | 重新生成 `website/dist`，再通过 Wrangler 在本地启动部署预览 |
 
 ## 6. 开发阶段最常用的运行示例
 

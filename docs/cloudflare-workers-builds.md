@@ -59,6 +59,14 @@ Notes:
 - the build runs from the repository root because both `package.json` and `wrangler.jsonc` live there
 - `pnpm docs:build` writes the VitePress output into `website/dist`, and Wrangler uploads that directory as static assets
 
+Local production-shaped preview:
+
+```bash
+pnpm docs:deploy:local
+```
+
+That command rebuilds `website/dist` first, then starts `wrangler dev` against the same asset directory used by Cloudflare deploys.
+
 ## 4. Custom domain
 
 This repository already expects the custom domain route below:
@@ -105,6 +113,7 @@ When Workers Builds is active:
 ## 7. Verification checklist
 
 - `pnpm docs:build` passes locally
+- `pnpm docs:deploy:local` starts and serves the built site locally
 - Cloudflare Build uses `main`
 - Worker name in Cloudflare matches `javachanges-docs`
 - Deploy command is `npx wrangler deploy`

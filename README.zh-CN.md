@@ -78,6 +78,22 @@ mvn io.github.sonofmagic:javachanges:1.3.1-SNAPSHOT:add -Djavachanges.summary="a
 mvn io.github.sonofmagic:javachanges:1.3.1-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
 ```
 
+如果你是在开发 `javachanges` 仓库本身，可以直接用这些本地快捷入口：
+
+```bash
+pnpm snapshot:install
+pnpm snapshot:preflight
+pnpm docs:deploy:local
+```
+
+这几个脚本和文档里的阶段语义保持一致：
+
+- `snapshot:install` 把当前 `1.3.1-SNAPSHOT` 安装到本地 Maven 仓库
+- `snapshot:preflight` 用 `local.dev.001` 预演一次本地 snapshot 发布检查
+- `docs:deploy:local` 会重新构建 `website/dist`，再通过 Wrangler 在本地启动预览部署
+
+这两个 snapshot 脚本会把 Maven 本地仓库固定到当前仓库下的 `.m2/repository`，避免依赖可写的全局 `~/.m2`。
+
 已发布包地址：
 
 - Maven Central 页面：`https://central.sonatype.com/artifact/io.github.sonofmagic/javachanges`

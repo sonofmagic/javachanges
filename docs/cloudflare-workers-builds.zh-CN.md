@@ -59,6 +59,14 @@
 - 这里的构建根目录必须是仓库根目录，因为 `package.json` 和 `wrangler.jsonc` 都在这里
 - `pnpm docs:build` 会把 VitePress 结果输出到 `website/dist`，然后 Wrangler 会把这个目录作为静态资源上传
 
+本地按接近生产的方式预览时，可以直接执行：
+
+```bash
+pnpm docs:deploy:local
+```
+
+这个命令会先重新构建 `website/dist`，再基于同一个静态资源目录启动 `wrangler dev`。
+
 ## 4. 自定义域名
 
 当前仓库已经把自定义域名 route 写进了 Wrangler 配置：
@@ -105,6 +113,7 @@
 ## 7. 检查清单
 
 - 本地 `pnpm docs:build` 能通过
+- 本地 `pnpm docs:deploy:local` 能启动并访问构建结果
 - Cloudflare Build 的生产分支是 `main`
 - Cloudflare 中的 Worker 名称与 `javachanges-docs` 一致
 - Deploy command 使用 `npx wrangler deploy`

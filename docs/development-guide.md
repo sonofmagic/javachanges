@@ -174,6 +174,12 @@ If you want to validate the developer-facing plugin UX itself, first install the
 mvn -q -DskipTests install
 ```
 
+Equivalent repository shortcut:
+
+```bash
+pnpm snapshot:install
+```
+
 Then run the dedicated plugin goals:
 
 ```bash
@@ -189,6 +195,24 @@ The current CLI entry class is:
 - [src/main/java/io/github/sonofmagic/javachanges/core/cli/JavaChangesCli.java](https://github.com/sonofmagic/javachanges/blob/main/src/main/java/io/github/sonofmagic/javachanges/core/cli/JavaChangesCli.java)
 
 You can also run or debug this class directly in IntelliJ IDEA or VS Code.
+
+### 5.5 Local snapshot and docs deployment shortcuts
+
+This repository also ships small local shortcuts so you do not need to keep retyping the longer commands:
+
+```bash
+pnpm snapshot:install
+pnpm snapshot:preflight
+pnpm docs:deploy:local
+```
+
+Use them like this:
+
+| Command | Purpose |
+| --- | --- |
+| `pnpm snapshot:install` | Install the current `__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__` into the repository-local `.m2/repository` |
+| `pnpm snapshot:preflight` | Run `preflight --snapshot` against the current repository with a local build stamp and the repository-local Maven cache |
+| `pnpm docs:deploy:local` | Rebuild `website/dist` and serve it locally through Wrangler |
 
 ## 6. Common development commands
 
