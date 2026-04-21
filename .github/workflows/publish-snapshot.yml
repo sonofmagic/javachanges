@@ -142,6 +142,7 @@ jobs:
 
       - name: Publish snapshot with Central publishing plugin
         env:
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
           SNAPSHOT_REVISION: ${{ steps.snapshot_revision.outputs.value }}
         run: |
           mvn -B \
