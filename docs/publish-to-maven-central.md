@@ -280,6 +280,20 @@ That script:
 
 If you want to override the generated build stamp, set `JAVACHANGES_SNAPSHOT_BUILD_STAMP` before running the command.
 
+After a successful snapshot publish, verify it through:
+
+| Type | Location |
+| --- | --- |
+| Snapshot repository root | `https://central.sonatype.com/repository/maven-snapshots/` |
+| Snapshot metadata | `https://central.sonatype.com/repository/maven-snapshots/io/github/sonofmagic/javachanges/<resolved-snapshot-version>/maven-metadata.xml` |
+| Snapshot artifact | `https://central.sonatype.com/repository/maven-snapshots/io/github/sonofmagic/javachanges/<resolved-snapshot-version>/javachanges-<timestamped-version>.jar` |
+
+Note:
+
+- Sonatype's hosted snapshot repository is not directly browseable at the repository root
+- the current browse endpoint for hosted snapshots is temporarily unavailable
+- in practice, verify snapshots by opening `maven-metadata.xml`, opening the exact artifact URL, or resolving the dependency from a clean Maven/Gradle consumer
+
 ## 10. Recommended release sequence
 
 1. make sure the worktree is clean: `git status`
@@ -299,6 +313,7 @@ After publishing, check:
 | --- | --- |
 | Central Portal | `https://central.sonatype.com` |
 | Maven Central artifact page | `https://central.sonatype.com/artifact/io.github.sonofmagic/javachanges` |
+| Snapshot repository root | `https://central.sonatype.com/repository/maven-snapshots/` |
 
 You can also verify dependency resolution in a small sample project:
 

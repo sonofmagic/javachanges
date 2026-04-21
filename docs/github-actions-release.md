@@ -108,6 +108,14 @@ Configure these GitHub Actions secrets for snapshot publishing:
 
 The snapshot workflow in this repository now uses `central-publishing-maven-plugin` with a `-SNAPSHOT` revision and the same Central Portal token pair used for releases, instead of publishing through `distributionManagement` with a separate `maven-snapshots` server id.
 
+After the workflow succeeds, the primary snapshot verification addresses are:
+
+- `https://central.sonatype.com/repository/maven-snapshots/`
+- `https://central.sonatype.com/repository/maven-snapshots/io/github/sonofmagic/javachanges/<resolved-snapshot-version>/maven-metadata.xml`
+- `https://central.sonatype.com/repository/maven-snapshots/io/github/sonofmagic/javachanges/<resolved-snapshot-version>/javachanges-<timestamped-version>.jar`
+
+The repository root itself is not directly browseable for hosted snapshots, so verification should rely on metadata URLs, concrete artifact URLs, or a real Maven/Gradle resolve.
+
 ## 5. Release publish workflow
 
 `publish-release.yml` only runs when all of these are true:

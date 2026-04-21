@@ -96,6 +96,14 @@ pnpm docs:deploy:local
 
 这两个 snapshot 脚本会把 Maven 本地仓库固定到当前仓库下的 `.m2/repository`，避免依赖可写的全局 `~/.m2`。
 
+snapshot 验证地址：
+
+- snapshot 仓库地址：`https://central.sonatype.com/repository/maven-snapshots/`
+- snapshot 元数据地址模式：`https://central.sonatype.com/repository/maven-snapshots/io/github/sonofmagic/javachanges/<resolved-snapshot-version>/maven-metadata.xml`
+- snapshot 产物地址模式：`https://central.sonatype.com/repository/maven-snapshots/io/github/sonofmagic/javachanges/<resolved-snapshot-version>/javachanges-<timestamped-version>.jar`
+
+Sonatype 当前对 hosted snapshot 没有可用的目录浏览界面，所以实际验证方式通常是直接打开 `maven-metadata.xml`、打开具体产物 URL，或者在 Maven / Gradle 里实际解析一次依赖。
+
 已发布包地址：
 
 - Maven Central 页面：`https://central.sonatype.com/artifact/io.github.sonofmagic/javachanges`
