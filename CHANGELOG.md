@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.4.0 - 2026-04-21
+
+### Minor Changes
+
+- simplify GitHub release metadata sync in Actions workflows (packages: javachanges) simplify GitHub release metadata sync in Actions workflows
+- add unique snapshot publish revisions and split GitHub Actions snapshot/release publishing flows, including snapshot branch publishing (packages: javachanges) add unique snapshot publish revisions and split GitHub Actions snapshot/release publishing flows, including snapshot branch publishing
+
 ## 1.3.1 - 2026-04-19
 
 ### Patch Changes
