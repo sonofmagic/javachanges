@@ -1,14 +1,21 @@
 {
-  "releaseVersion": "1.3.1",
-  "nextSnapshotVersion": "1.3.1-SNAPSHOT",
-  "releaseLevel": "patch",
-  "generatedAt": "2026-04-19T15:44:51.434Z",
+  "releaseVersion": "1.4.0",
+  "nextSnapshotVersion": "1.4.0-SNAPSHOT",
+  "releaseLevel": "minor",
+  "generatedAt": "2026-04-21T17:41:53.485Z",
   "changesets": [
     {
-      "file": "20260419-central-page-metadata-docs.md",
-      "release": "patch",
+      "file": "20260422-simplify-github-release-metadata-sync-in-actions.md",
+      "release": "minor",
       "type": "other",
-      "summary": "Clarify which Maven Central POM metadata fields improve the Sonatype Central artifact page.",
+      "summary": "simplify GitHub release metadata sync in Actions workflows",
+      "modules": ["javachanges"]
+    },
+    {
+      "file": "add-snapshot-publish-branch.md",
+      "release": "minor",
+      "type": "other",
+      "summary": "add unique snapshot publish revisions and split GitHub Actions snapshot/release publishing flows, including snapshot branch publishing",
       "modules": ["javachanges"]
     }
   ]
