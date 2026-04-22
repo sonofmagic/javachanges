@@ -12,12 +12,14 @@
 5. 在 tag pipeline 中执行 Maven 发布
 6. Maven 依赖缓存
 
-`javachanges` 目前有两个 GitLab 专用命令：
+`javachanges` 现在有四个 GitLab 专用命令：
 
 | 命令 | 作用 |
 | --- | --- |
 | `gitlab-release-plan` | 创建或更新 release 分支和 release merge request |
 | `gitlab-tag-from-plan` | 在 release plan 合入后创建并推送正式 tag |
+| `gitlab-release` | 为当前 CI tag 生成 release notes，并创建或更新 GitLab Release |
+| `init-gitlab-ci` | 生成最小可用的 GitLab CI 文件，串起 release-plan、tag、publish 和 GitLab Release job |
 
 ## 2. `javachanges` 在 GitLab CI/CD 中能做什么
 
@@ -36,6 +38,7 @@
 | 在 release plan 落地后创建并推送 tag | `gitlab-tag-from-plan --execute true` |
 | 做发布前检查 | `preflight` |
 | 执行真正的 Maven deploy | `publish --execute true` |
+| 在 tag pipeline 中创建或更新 GitLab Release | `gitlab-release --execute true` |
 
 ## 3. 变量模型
 
@@ -135,7 +138,21 @@ mvn -q -DskipTests compile exec:java -Dexec.args="audit-vars --env-file env/rele
 3. `tag`
 4. `publish`
 
-## 6. `.gitlab-ci.yml` 示例
+## 6. 最小 `.gitlab-ci.yml`
+
+如果你想直接拿到最短、最稳的配置，先让 `javachanges` 生成：
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="init-gitlab-ci --directory /path/to/repo --output .gitlab-ci.yml --force true"
+```
+
+如果业务仓库不想维护额外 runner POM，最短可执行 Maven 命令范式是：
+
+```bash
+mvn -B io.github.sonofmagic:javachanges:1.4.1:run -Djavachanges.args="gitlab-release-plan --directory $CI_PROJECT_DIR --execute true"
+```
+
+生成后的模板大致如下：
 
 ```yaml
 stages:
@@ -155,12 +172,15 @@ default:
 
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  JAVACHANGES_VERSION: "1.4.1"
 
 verify:
   stage: verify
   script:
     - mvn -B verify
-    - mvn -B -DskipTests compile exec:java -Dexec.args="status --directory $CI_PROJECT_DIR"
+    - >
+      mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run
+      -Djavachanges.args="status --directory $CI_PROJECT_DIR"
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
@@ -168,28 +188,39 @@ verify:
 release_plan_mr:
   stage: release-plan
   script:
-    - mvn -B -DskipTests compile
-    - mvn -B -DskipTests compile exec:java -Dexec.args="gitlab-release-plan --directory $CI_PROJECT_DIR --execute true"
+    - >
+      mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run
+      -Djavachanges.args="gitlab-release-plan --directory $CI_PROJECT_DIR --execute true"
   rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_BRANCH == "main"
 
 release_tag:
   stage: tag
   script:
-    - mvn -B -DskipTests compile
     - >
-      mvn -B -DskipTests compile exec:java
-      -Dexec.args="gitlab-tag-from-plan --directory $CI_PROJECT_DIR --before-sha $CI_COMMIT_BEFORE_SHA --current-sha $CI_COMMIT_SHA --execute true"
+      mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run
+      -Djavachanges.args="gitlab-tag-from-plan --directory $CI_PROJECT_DIR --execute true"
   rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_BRANCH == "main"
+
+publish_snapshot:
+  stage: publish
+  script:
+    - >
+      mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run
+      -Djavachanges.args="publish --directory $CI_PROJECT_DIR --execute true"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "snapshot"
 
 publish_release:
   stage: publish
   script:
-    - mvn -B -DskipTests compile
     - >
-      mvn -B -DskipTests compile exec:java
-      -Dexec.args="publish --directory $CI_PROJECT_DIR --tag $CI_COMMIT_TAG --execute true"
+      mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run
+      -Djavachanges.args="publish --directory $CI_PROJECT_DIR --execute true"
+    - >
+      mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run
+      -Djavachanges.args="gitlab-release --directory $CI_PROJECT_DIR --execute true"
   rules:
     - if: $CI_COMMIT_TAG
 ```
@@ -201,7 +232,8 @@ publish_release:
 | `verify` | 校验仓库并输出当前发布状态 |
 | `release_plan_mr` | 创建或更新 release 分支和 merge request |
 | `release_tag` | 在默认分支上的 release plan manifest 发生变化后创建正式 tag |
-| `publish_release` | 基于正式 Git tag 执行发布 |
+| `publish_snapshot` | 基于配置的 snapshot 分支执行发布，不需要业务仓库再写 shell 分支判断 |
+| `publish_release` | 基于正式 Git tag 执行发布，并创建或更新 GitLab Release |
 
 ## 7. GitLab CI 中更安全的 `script:` 写法
 
@@ -210,6 +242,7 @@ publish_release:
 - `script:` 里的每一项尽量只放一条命令。
 - 长命令用 YAML 折叠标量 `- >` 换行，不要把它写成内联 shell 小程序。
 - 优先直接执行 `mvn ...` 或 `java -jar ...`，不要在 `.gitlab-ci.yml` 里临时拼复杂脚本。
+- 业务仓库优先复用官方 Maven plugin 入口，不要继续维护自定义 shell wrapper 或 runner POM。
 - 如果 CI 里必须写文件，优先用 `printf`、`echo`，或者把逻辑放到仓库里的 `scripts/` 脚本。
 - 对 GitLab 变量保持显式引用，比如 `"$CI_PROJECT_DIR"`、`"$CI_COMMIT_TAG"`。
 
@@ -444,6 +477,7 @@ scanner scan \
 | release MR job 报 `stale info` | javachanges 解析完远端 SHA 之后，又有别的流程更新了同一个 `changeset-release/*` 分支 | 直接重跑 pipeline；如果这个分支名被多个自动流程共用，需要改成单一 owner |
 | release tag job 一直不打 tag | `release-plan.json` 没变化，或 `CI_COMMIT_BEFORE_SHA` 不可用 | 检查默认分支 pipeline 和 release plan 产物 |
 | pipeline 还没启动 job 就报 `could not find expected ':' while scanning a simple key` | heredoc 或其他多行 shell 内容破坏了 YAML 缩进语义 | 把 `script: - |` + heredoc 改成 `- >`、`printf`，或者仓库内脚本 |
+| snapshot publish job 看不到 Maven 凭据或 `GITLAB_RELEASE_TOKEN` | 变量是 protected，但配置的 `snapshotBranch` 不是 protected branch | 先把 `snapshotBranch` 设为 protected，再跑 `doctor-platform --platform gitlab` 和 pipeline |
 | hygiene / secret scan 命中了 `.gitlab-ci.yml` 或 `Makefile`，但仓库里并没有真实凭据 | 扫描器扫到了自己的规则字面量 | 把模式移到独立规则文件，并排除扫描器自有配置文件 |
 | `sync-vars` 没有任何效果 | env 文件里还是占位值 | 先把 `replace-me` 替换成真实值 |
 | `audit-vars` 报 `MISMATCH` | 本地 env 与远端项目变量已经不一致 | 重新同步，或明确选择以哪一边为准 |
@@ -467,7 +501,8 @@ GitLab CI/CD 中最实用的路径通常是：
 2. 用 `gitlab-release-plan` 生成或更新 release MR
 3. 用 `gitlab-tag-from-plan` 创建正式 tag
 4. 用 `sync-vars` 和 `audit-vars` 管理 GitLab 项目变量
-5. 在 tag pipeline 中用 `preflight` 和 `publish` 做正式发布
+5. 用同一条 `publish --execute true` 覆盖 snapshot pipeline 和 tag pipeline
+6. 在 tag pipeline 中再用 `gitlab-release` 创建或更新 GitLab Release
 
 ## 15. 参考资料
 

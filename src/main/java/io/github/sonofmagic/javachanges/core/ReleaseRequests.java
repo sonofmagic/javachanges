@@ -168,20 +168,26 @@ final class PublishRequest {
     final boolean execute;
     final String module;
     final String snapshotBuildStamp;
+    final OutputFormat format;
 
     private PublishRequest(boolean snapshot, String tag, boolean allowDirty, boolean execute, String module,
-                           String snapshotBuildStamp) {
+                           String snapshotBuildStamp, OutputFormat format) {
         this.snapshot = snapshot;
         this.tag = tag;
         this.allowDirty = allowDirty;
         this.execute = execute;
         this.module = module;
         this.snapshotBuildStamp = snapshotBuildStamp;
+        this.format = format;
     }
 
     static PublishRequest fromOptions(Map<String, String> options, boolean supportExecute) {
+        String directoryOption = trimToNull(options.get("directory"));
         boolean snapshot = isTrue(options.get("snapshot"));
-        String tag = trimToNull(options.get("tag"));
+        String tag = firstNonBlank(trimToNull(options.get("tag")), trimToNull(System.getenv("CI_COMMIT_TAG")));
+        if (!snapshot && tag == null && shouldDefaultToSnapshot(directoryOption)) {
+            snapshot = true;
+        }
         if (!snapshot && tag == null) {
             throw new IllegalArgumentException("必须指定 --snapshot true 或 --tag <value>");
         }
@@ -195,8 +201,41 @@ final class PublishRequest {
             supportExecute && isTrue(options.get("execute")),
             trimToNull(options.get("module")),
             firstNonBlank(trimToNull(options.get("snapshot-build-stamp")),
-                System.getenv("JAVACHANGES_SNAPSHOT_BUILD_STAMP"))
+                System.getenv("JAVACHANGES_SNAPSHOT_BUILD_STAMP")),
+            OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );
+    }
+
+    private static boolean shouldDefaultToSnapshot(String directoryOption) {
+        String currentBranch = firstNonBlank(trimToNull(System.getenv("CI_COMMIT_BRANCH")),
+            trimToNull(System.getenv("GITHUB_REF_NAME")));
+        if (currentBranch == null) {
+            return false;
+        }
+        try {
+            ChangesetConfigSupport.ChangesetConfig config = readConfiguredChangesetConfig(directoryOption);
+            return currentBranch.equals(config.snapshotBranch());
+        } catch (Exception ignored) {
+            return "snapshot".equals(currentBranch);
+        }
+    }
+
+    static ChangesetConfigSupport.ChangesetConfig readConfiguredChangesetConfig(String directoryOption) throws IOException {
+        Path configuredRoot = resolveConfigRoot(directoryOption);
+        if (configuredRoot != null) {
+            try {
+                return RepoFiles.readChangesetConfig(configuredRoot);
+            } catch (Exception ignored) {
+            }
+        }
+        return RepoFiles.readChangesetConfig(RepoFiles.resolveRepoRoot(directoryOption));
+    }
+
+    private static Path resolveConfigRoot(String directoryOption) {
+        if (directoryOption == null) {
+            return null;
+        }
+        return ChangesetConfigSupport.resolveConfigRoot(Paths.get(directoryOption));
     }
 }
 
@@ -205,12 +244,15 @@ final class GitlabReleasePlanRequest {
     final String targetBranch;
     final String releaseBranch;
     final boolean execute;
+    final OutputFormat format;
 
-    private GitlabReleasePlanRequest(String projectId, String targetBranch, String releaseBranch, boolean execute) {
+    private GitlabReleasePlanRequest(String projectId, String targetBranch, String releaseBranch,
+                                     boolean execute, OutputFormat format) {
         this.projectId = projectId;
         this.targetBranch = targetBranch;
         this.releaseBranch = releaseBranch;
         this.execute = execute;
+        this.format = format;
     }
 
     static GitlabReleasePlanRequest fromOptions(Map<String, String> options) {
@@ -227,7 +269,8 @@ final class GitlabReleasePlanRequest {
             firstNonBlank(trimToNull(options.get("project-id")), System.getenv("CI_PROJECT_ID")),
             targetBranch,
             releaseBranch,
-            isTrue(options.get("execute"))
+            isTrue(options.get("execute")),
+            OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );
     }
 
@@ -251,7 +294,7 @@ final class GitlabReleasePlanRequest {
         return "changeset-release/" + targetBranch;
     }
 
-    private static ChangesetConfigSupport.ChangesetConfig readConfiguredChangesetConfig(String directoryOption) throws IOException {
+    static ChangesetConfigSupport.ChangesetConfig readConfiguredChangesetConfig(String directoryOption) throws IOException {
         Path configuredRoot = resolveConfigRoot(directoryOption);
         if (configuredRoot != null) {
             try {
@@ -274,18 +317,72 @@ final class GitlabTagRequest {
     final String beforeSha;
     final String currentSha;
     final boolean execute;
+    final String baseBranch;
+    final String releaseBranch;
+    final String currentBranch;
+    final OutputFormat format;
 
-    private GitlabTagRequest(String beforeSha, String currentSha, boolean execute) {
+    private GitlabTagRequest(String beforeSha, String currentSha, boolean execute,
+                             String baseBranch, String releaseBranch, String currentBranch,
+                             OutputFormat format) {
         this.beforeSha = beforeSha;
         this.currentSha = currentSha;
         this.execute = execute;
+        this.baseBranch = baseBranch;
+        this.releaseBranch = releaseBranch;
+        this.currentBranch = currentBranch;
+        this.format = format;
     }
 
     static GitlabTagRequest fromOptions(Map<String, String> options) {
+        String repoRootOption = trimToNull(options.get("directory"));
+        ChangesetConfigSupport.ChangesetConfig config = readConfiguredChangesetConfigOrDefaults(repoRootOption);
         return new GitlabTagRequest(
             firstNonBlank(trimToNull(options.get("before-sha")), System.getenv("CI_COMMIT_BEFORE_SHA")),
             firstNonBlank(trimToNull(options.get("current-sha")), System.getenv("CI_COMMIT_SHA")),
-            isTrue(options.get("execute"))
+            isTrue(options.get("execute")),
+            config.baseBranch(),
+            config.releaseBranch(),
+            trimToNull(System.getenv("CI_COMMIT_BRANCH")),
+            OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
+        );
+    }
+
+    private static ChangesetConfigSupport.ChangesetConfig readConfiguredChangesetConfigOrDefaults(String directoryOption) {
+        try {
+            return GitlabReleasePlanRequest.readConfiguredChangesetConfig(directoryOption);
+        } catch (Exception ignored) {
+            return ChangesetConfigSupport.ChangesetConfig.defaults();
+        }
+    }
+}
+
+final class GitlabReleaseRequest {
+    final String tag;
+    final String projectId;
+    final String gitlabHost;
+    final String releaseNotesFile;
+    final boolean execute;
+    final OutputFormat format;
+
+    private GitlabReleaseRequest(String tag, String projectId, String gitlabHost, String releaseNotesFile,
+                                 boolean execute, OutputFormat format) {
+        this.tag = tag;
+        this.projectId = projectId;
+        this.gitlabHost = gitlabHost;
+        this.releaseNotesFile = releaseNotesFile;
+        this.execute = execute;
+        this.format = format;
+    }
+
+    static GitlabReleaseRequest fromOptions(Map<String, String> options) {
+        return new GitlabReleaseRequest(
+            firstNonBlank(trimToNull(options.get("tag")), trimToNull(System.getenv("CI_COMMIT_TAG"))),
+            firstNonBlank(trimToNull(options.get("project-id")), trimToNull(System.getenv("CI_PROJECT_ID"))),
+            firstNonBlank(trimToNull(options.get("gitlab-host")), trimToNull(System.getenv("CI_SERVER_HOST"))),
+            trimToNull(options.get("release-notes-file")),
+            isTrue(options.get("execute")),
+            OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );
     }
 }

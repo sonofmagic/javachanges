@@ -27,12 +27,17 @@ final class PublishSupport {
 
     void preflight(PublishRequest request) throws IOException, InterruptedException {
         PublishTarget publishTarget = resolvePublishTarget(request);
-        preflight(request, publishTarget);
+        AutomationJsonSupport.AutomationReport report = buildReport("preflight", request, publishTarget);
+        preflight(request, publishTarget, report);
+        if (request.format == OutputFormat.JSON) {
+            out.println(report.toJson());
+        }
     }
 
     void publish(PublishRequest request) throws IOException, InterruptedException {
         PublishTarget publishTarget = resolvePublishTarget(request);
-        preflight(request, publishTarget);
+        AutomationJsonSupport.AutomationReport report = buildReport("publish", request, publishTarget);
+        preflight(request, publishTarget, report);
 
         Files.createDirectories(repoRoot.resolve(".m2"));
         Path localMavenRepo = runtime.ensureLocalMavenRepositoryDirectory();
@@ -41,7 +46,9 @@ final class PublishSupport {
             request.snapshot ? MavenSettingsWriter.RepositoryMode.SNAPSHOT : MavenSettingsWriter.RepositoryMode.RELEASE);
 
         if (!request.snapshot && runtime.gitRefExists(request.tag)) {
-            releaseNotesGenerator.writeReleaseNotes(request.tag, repoRoot.resolve("target/release-notes.md"));
+            Path releaseNotesFile = repoRoot.resolve("target/release-notes.md");
+            releaseNotesGenerator.writeReleaseNotes(request.tag, releaseNotesFile);
+            report.releaseNotesFile = releaseNotesFile.toString();
         }
 
         MavenCommand mavenCommand = resolveMavenCommand(repoRoot);
@@ -77,41 +84,56 @@ final class PublishSupport {
         command.add("clean");
         command.add("deploy");
 
-        out.println();
-        out.println("== Dry Run 输出 ==");
-        out.println("已生成 .m2/settings.xml");
-        out.println("Maven 命令: " + mavenCommand.command + " (" + mavenCommand.source + ")");
-        if (localMavenRepo != null) {
-            out.println("本地 Maven 仓库: " + localMavenRepo);
+        if (request.format != OutputFormat.JSON) {
+            out.println();
+            out.println("== Dry Run 输出 ==");
+            out.println("已生成 .m2/settings.xml");
+            out.println("Maven 命令: " + mavenCommand.command + " (" + mavenCommand.source + ")");
+            if (localMavenRepo != null) {
+                out.println("本地 Maven 仓库: " + localMavenRepo);
+            }
+            if (publishTarget.publishVersion != null) {
+                out.println(request.snapshot
+                    ? "snapshot publish version: " + publishTarget.publishVersion
+                    : "publish version: " + publishTarget.publishVersion);
+            }
+            if (!request.snapshot && Files.exists(repoRoot.resolve("target/release-notes.md"))) {
+                out.println("已生成 target/release-notes.md");
+            }
+            out.println(publishTarget.resolvedModule == null ? "目标模块: all" : "目标模块: " + publishTarget.resolvedModule);
+            out.println();
+            out.println("将执行的命令:");
+            out.println(renderCommand(command));
         }
-        if (publishTarget.publishVersion != null) {
-            out.println(request.snapshot
-                ? "snapshot publish version: " + publishTarget.publishVersion
-                : "publish version: " + publishTarget.publishVersion);
-        }
-        if (!request.snapshot && Files.exists(repoRoot.resolve("target/release-notes.md"))) {
-            out.println("已生成 target/release-notes.md");
-        }
-        out.println(publishTarget.resolvedModule == null ? "目标模块: all" : "目标模块: " + publishTarget.resolvedModule);
-        out.println();
-        out.println("将执行的命令:");
-        out.println(renderCommand(command));
 
         if (!request.execute) {
-            out.println();
-            out.println("当前为 dry-run，未执行 Maven。传入 --execute true 才会真正发布。");
+            report.reason = "Dry-run only.";
+            if (request.format == OutputFormat.JSON) {
+                out.println(report.toJson());
+            } else {
+                out.println();
+                out.println("当前为 dry-run，未执行 Maven。传入 --execute true 才会真正发布。");
+            }
             return;
         }
 
-        out.println();
-        out.println("== 开始执行 ==");
+        if (request.format != OutputFormat.JSON) {
+            out.println();
+            out.println("== 开始执行 ==");
+        }
         int exitCode = runCommand(command, repoRoot);
         if (exitCode != 0) {
             throw new IllegalStateException("Maven deploy failed with exit code " + exitCode);
         }
+        report.action = request.snapshot ? "publish-snapshot" : "publish-release";
+        report.reason = "Publish completed.";
+        if (request.format == OutputFormat.JSON) {
+            out.println(report.toJson());
+        }
     }
 
-    private void preflight(PublishRequest request, PublishTarget publishTarget) throws IOException, InterruptedException {
+    private void preflight(PublishRequest request, PublishTarget publishTarget,
+                           AutomationJsonSupport.AutomationReport report) throws IOException, InterruptedException {
         if (request.module != null) {
             assertKnownModule(repoRoot, request.module);
         }
@@ -120,48 +142,79 @@ final class PublishSupport {
             throw new IllegalStateException("工作区存在未提交修改。若这是预期行为，可使用 --allow-dirty true 跳过检查。");
         }
 
-        out.println("== 版本检查 ==");
+        if (request.format != OutputFormat.JSON) {
+            out.println("== 版本检查 ==");
+        }
         String currentVersion = versionSupport.readRevision();
-        out.println("当前 revision: " + currentVersion);
-        out.println();
-        out.println("== 发布模式检查 ==");
-
-        if (request.snapshot) {
-            out.println("snapshot 校验通过");
-            out.println("snapshot publish version: " + publishTarget.publishVersion);
-        } else {
-            out.println("release tag: " + request.tag);
-            out.println("release version: " + publishTarget.publishVersion);
-        }
-
-        out.println(publishTarget.resolvedModule == null ? "target module: all" : "target module: " + publishTarget.resolvedModule);
-        out.println();
-        out.println("== 仓库变量检查 ==");
-        if (request.snapshot) {
-            out.println("MAVEN_SNAPSHOT_REPOSITORY_URL=" + requireEnv("MAVEN_SNAPSHOT_REPOSITORY_URL"));
-        } else {
-            out.println("MAVEN_RELEASE_REPOSITORY_URL=" + requireEnv("MAVEN_RELEASE_REPOSITORY_URL"));
-        }
-
-        out.println();
-        out.println("== 凭据检查 ==");
-        MavenSettingsWriter.write(Paths.get("/tmp/javachanges-preflight-settings.xml"),
-            request.snapshot ? MavenSettingsWriter.RepositoryMode.SNAPSHOT : MavenSettingsWriter.RepositoryMode.RELEASE);
-        out.println("Maven settings 生成校验通过");
-
-        if (!request.snapshot) {
+        if (request.format != OutputFormat.JSON) {
+            out.println("当前 revision: " + currentVersion);
             out.println();
-            out.println("== Release Notes 预检查 ==");
-            if (runtime.gitRefExists(request.tag)) {
-                releaseNotesGenerator.writeReleaseNotes(request.tag, Paths.get("/tmp/javachanges-release-notes.md"));
-                out.println("release notes 生成校验通过");
-            } else {
-                out.println("本地尚未找到 tag " + request.tag + "，跳过 release notes 生成检查");
+            out.println("== 发布模式检查 ==");
+        }
+
+        if (request.snapshot) {
+            if (request.format != OutputFormat.JSON) {
+                out.println("snapshot 校验通过");
+                out.println("snapshot publish version: " + publishTarget.publishVersion);
+            }
+        } else {
+            if (request.format != OutputFormat.JSON) {
+                out.println("release tag: " + request.tag);
+                out.println("release version: " + publishTarget.publishVersion);
             }
         }
 
-        out.println();
-        out.println("发布前检查通过");
+        if (request.format != OutputFormat.JSON) {
+            out.println(publishTarget.resolvedModule == null ? "target module: all" : "target module: " + publishTarget.resolvedModule);
+            out.println();
+            out.println("== 仓库变量检查 ==");
+        }
+        if (request.snapshot) {
+            String ignored = requireEnv("MAVEN_SNAPSHOT_REPOSITORY_URL");
+            if (request.format != OutputFormat.JSON) {
+                out.println("MAVEN_SNAPSHOT_REPOSITORY_URL=" + ignored);
+            }
+        } else {
+            String ignored = requireEnv("MAVEN_RELEASE_REPOSITORY_URL");
+            if (request.format != OutputFormat.JSON) {
+                out.println("MAVEN_RELEASE_REPOSITORY_URL=" + ignored);
+            }
+        }
+
+        if (request.format != OutputFormat.JSON) {
+            out.println();
+            out.println("== 凭据检查 ==");
+        }
+        MavenSettingsWriter.write(Paths.get("/tmp/javachanges-preflight-settings.xml"),
+            request.snapshot ? MavenSettingsWriter.RepositoryMode.SNAPSHOT : MavenSettingsWriter.RepositoryMode.RELEASE);
+        if (request.format != OutputFormat.JSON) {
+            out.println("Maven settings 生成校验通过");
+        }
+
+        if (!request.snapshot) {
+            if (request.format != OutputFormat.JSON) {
+                out.println();
+                out.println("== Release Notes 预检查 ==");
+            }
+            if (runtime.gitRefExists(request.tag)) {
+                Path releaseNotesFile = Paths.get("/tmp/javachanges-release-notes.md");
+                releaseNotesGenerator.writeReleaseNotes(request.tag, releaseNotesFile);
+                report.releaseNotesFile = releaseNotesFile.toString();
+                if (request.format != OutputFormat.JSON) {
+                    out.println("release notes 生成校验通过");
+                }
+            } else {
+                if (request.format != OutputFormat.JSON) {
+                    out.println("本地尚未找到 tag " + request.tag + "，跳过 release notes 生成检查");
+                }
+            }
+        }
+
+        report.reason = "Preflight checks passed.";
+        if (request.format != OutputFormat.JSON) {
+            out.println();
+            out.println("发布前检查通过");
+        }
     }
 
     private PublishTarget resolvePublishTarget(PublishRequest request) throws IOException, InterruptedException {
@@ -181,6 +234,17 @@ final class PublishSupport {
             throw new IllegalStateException("显式指定的模块 " + resolvedModule + " 与 tag 中的模块 " + tagModule + " 不一致");
         }
         return new PublishTarget(releaseVersion, resolvedModule);
+    }
+
+    private AutomationJsonSupport.AutomationReport buildReport(String command, PublishRequest request, PublishTarget publishTarget) {
+        AutomationJsonSupport.AutomationReport report = new AutomationJsonSupport.AutomationReport(command);
+        report.action = request.snapshot ? "publish-snapshot" : "publish-release";
+        report.execute = request.execute;
+        report.dryRun = !request.execute;
+        report.releaseVersion = publishTarget.publishVersion;
+        report.releaseModule = publishTarget.resolvedModule;
+        report.tag = request.tag;
+        return report;
     }
 
     private static final class PublishTarget {

@@ -30,6 +30,8 @@ class JavaChangesCliTest {
         assertTrue(result.stdout.contains("github-tag-from-plan"));
         assertTrue(result.stdout.contains("release-version-from-tag"));
         assertTrue(result.stdout.contains("gitlab-release-plan"));
+        assertTrue(result.stdout.contains("gitlab-release"));
+        assertTrue(result.stdout.contains("init-gitlab-ci"));
     }
 
     @Test
@@ -256,6 +258,34 @@ class JavaChangesCliTest {
         assertTrue(read(githubOutputFile).contains("release_version=1.2.0"));
         assertTrue(read(githubOutputFile).contains("release_tag=v1.2.0"));
         assertTrue(read(githubOutputFile).contains("release_notes_file="));
+    }
+
+    @Test
+    void initGitlabCiWritesMinimalTemplate(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+        Files.createDirectories(repoRoot.resolve(".changesets"));
+        Files.write(repoRoot.resolve(".changesets").resolve("config.json"), (
+            "{\n" +
+                "  \"baseBranch\": \"develop\",\n" +
+                "  \"snapshotBranch\": \"snapshot-dev\"\n" +
+                "}\n").getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = execute(
+            "init-gitlab-ci",
+            "--directory", repoRoot.toString(),
+            "--output", ".gitlab-ci.generated.yml",
+            "--javachanges-version", "1.4.1"
+        );
+
+        assertEquals(0, result.exitCode);
+        String yaml = read(repoRoot.resolve(".gitlab-ci.generated.yml"));
+        assertTrue(yaml.contains("JAVACHANGES_VERSION: \"1.4.1\""));
+        assertTrue(yaml.contains("gitlab-release-plan --directory $CI_PROJECT_DIR --execute true"));
+        assertTrue(yaml.contains("gitlab-tag-from-plan --directory $CI_PROJECT_DIR --execute true"));
+        assertTrue(yaml.contains("publish --directory $CI_PROJECT_DIR --execute true"));
+        assertTrue(yaml.contains("gitlab-release --directory $CI_PROJECT_DIR --execute true"));
+        assertTrue(yaml.contains("$CI_COMMIT_BRANCH == \"develop\""));
+        assertTrue(yaml.contains("$CI_COMMIT_BRANCH == \"snapshot-dev\""));
     }
 
     @Test

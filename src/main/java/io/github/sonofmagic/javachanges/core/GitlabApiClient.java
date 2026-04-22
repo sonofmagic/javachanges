@@ -24,6 +24,12 @@ interface GitlabMergeRequestClient {
     String authenticatedRemoteUrl();
 
     int requiredJsonInt(String json, String field);
+
+    boolean releaseExists(String projectId, String tagName) throws IOException;
+
+    void createRelease(String projectId, String tagName, String releaseName, String description) throws IOException;
+
+    void updateRelease(String projectId, String tagName, String releaseName, String description) throws IOException;
 }
 
 final class GitlabApiClient implements GitlabMergeRequestClient {
@@ -84,7 +90,47 @@ final class GitlabApiClient implements GitlabMergeRequestClient {
         return Integer.parseInt(matcher.group(1));
     }
 
+    public boolean releaseExists(String projectId, String tagName) throws IOException {
+        return requestAllowNotFound(
+            "GET",
+            "/projects/" + projectId + "/releases/" + urlEncode(tagName),
+            null
+        ) != null;
+    }
+
+    public void createRelease(String projectId, String tagName, String releaseName, String description) throws IOException {
+        request(
+            "POST",
+            "/projects/" + projectId + "/releases",
+            formBody(
+                "name", releaseName,
+                "tag_name", tagName,
+                "description", description,
+                "ref", tagName
+            )
+        );
+    }
+
+    public void updateRelease(String projectId, String tagName, String releaseName, String description) throws IOException {
+        request(
+            "PUT",
+            "/projects/" + projectId + "/releases/" + urlEncode(tagName),
+            formBody(
+                "name", releaseName,
+                "description", description
+            )
+        );
+    }
+
     private String request(String method, String path, String body) throws IOException {
+        String response = requestAllowNotFound(method, path, body);
+        if (response == null) {
+            throw new IllegalStateException("GitLab API " + method + " " + path + " failed: Not found");
+        }
+        return response;
+    }
+
+    private String requestAllowNotFound(String method, String path, String body) throws IOException {
         String serverUrl = firstNonBlank(System.getenv("CI_SERVER_URL"), "https://" + requireEnv("CI_SERVER_HOST"));
         URL url = new URL(serverUrl + "/api/v4" + path);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -104,6 +150,9 @@ final class GitlabApiClient implements GitlabMergeRequestClient {
             ? connection.getErrorStream()
             : connection.getInputStream());
         String response = new String(responseBytes, StandardCharsets.UTF_8);
+        if (connection.getResponseCode() == 404) {
+            return null;
+        }
         if (connection.getResponseCode() >= 400) {
             throw new IllegalStateException("GitLab API " + method + " " + path + " failed: " + response);
         }

@@ -129,12 +129,13 @@ This makes the example copy-friendly for a target repository that does not vendo
 3. `tag`
 4. `publish`
 
-The template downloads the `javachanges` jar in `before_script`, reuses the Maven dependency cache, and then runs:
+The checked-in template now uses the official Maven plugin entrypoint directly, reuses the Maven dependency cache, and keeps each job to one `javachanges` command:
 
 - `status` during validation
 - `gitlab-release-plan --execute true` on the default branch
 - `gitlab-tag-from-plan --execute true` after a release plan merge
-- `publish --execute true` for tag pipelines, with preflight and settings generation handled inside the command
+- `publish --execute true` for both snapshot and tag pipelines, with preflight, tag detection, snapshot-branch detection, and settings generation handled inside the command
+- `gitlab-release --execute true` to create or update the GitLab Release after a successful tag publish
 
 ## 7. How to adapt the example
 

@@ -16,12 +16,14 @@ This guide explains how to use `javachanges` in GitLab CI/CD for:
 5. Maven publishing in tag pipelines
 6. Maven dependency caching
 
-`javachanges` has two GitLab-specific commands:
+`javachanges` now has four GitLab-specific commands:
 
 | Command | Purpose |
 | --- | --- |
 | `gitlab-release-plan` | Create or update a release branch and release merge request |
 | `gitlab-tag-from-plan` | Create and push the final release tag after the release plan lands |
+| `gitlab-release` | Generate release notes and create or update the GitLab Release for the current CI tag |
+| `init-gitlab-ci` | Generate the minimal GitLab CI file that wires release-plan, tag, publish, and GitLab Release jobs |
 
 ## 2. What `javachanges` Can Do In GitLab CI/CD
 
@@ -40,6 +42,7 @@ Recommended command mapping:
 | Create and push a release tag after a release plan merge | `gitlab-tag-from-plan --execute true` |
 | Validate a publish | `preflight` |
 | Run the real Maven deploy command | `publish --execute true` |
+| Create or update a GitLab Release from the tag pipeline | `gitlab-release --execute true` |
 
 ## 3. Variable Model
 
@@ -139,7 +142,21 @@ Recommended stages:
 3. `tag`
 4. `publish`
 
-## 6. Example `.gitlab-ci.yml`
+## 6. Minimal `.gitlab-ci.yml`
+
+If you want the shortest stable setup, let `javachanges` generate it:
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="init-gitlab-ci --directory /path/to/repo --output .gitlab-ci.yml --force true"
+```
+
+If you prefer to call the released Maven plugin directly from a business repository, the shortest runnable form is:
+
+```bash
+mvn -B io.github.sonofmagic:javachanges:1.4.1:run -Djavachanges.args="gitlab-release-plan --directory $CI_PROJECT_DIR --execute true"
+```
+
+Generated template shape:
 
 ```yaml
 stages:
@@ -159,12 +176,15 @@ default:
 
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  JAVACHANGES_VERSION: "1.4.1"
 
 verify:
   stage: verify
   script:
     - mvn -B verify
-    - mvn -B -DskipTests compile exec:java -Dexec.args="status --directory $CI_PROJECT_DIR"
+    - >
+      mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run
+      -Djavachanges.args="status --directory $CI_PROJECT_DIR"
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
@@ -172,28 +192,39 @@ verify:
 release_plan_mr:
   stage: release-plan
   script:
-    - mvn -B -DskipTests compile
-    - mvn -B -DskipTests compile exec:java -Dexec.args="gitlab-release-plan --directory $CI_PROJECT_DIR --execute true"
+    - >
+      mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run
+      -Djavachanges.args="gitlab-release-plan --directory $CI_PROJECT_DIR --execute true"
   rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_BRANCH == "main"
 
 release_tag:
   stage: tag
   script:
-    - mvn -B -DskipTests compile
     - >
-      mvn -B -DskipTests compile exec:java
-      -Dexec.args="gitlab-tag-from-plan --directory $CI_PROJECT_DIR --before-sha $CI_COMMIT_BEFORE_SHA --current-sha $CI_COMMIT_SHA --execute true"
+      mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run
+      -Djavachanges.args="gitlab-tag-from-plan --directory $CI_PROJECT_DIR --execute true"
   rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_BRANCH == "main"
+
+publish_snapshot:
+  stage: publish
+  script:
+    - >
+      mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run
+      -Djavachanges.args="publish --directory $CI_PROJECT_DIR --execute true"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "snapshot"
 
 publish_release:
   stage: publish
   script:
-    - mvn -B -DskipTests compile
     - >
-      mvn -B -DskipTests compile exec:java
-      -Dexec.args="publish --directory $CI_PROJECT_DIR --tag $CI_COMMIT_TAG --execute true"
+      mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run
+      -Djavachanges.args="publish --directory $CI_PROJECT_DIR --execute true"
+    - >
+      mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run
+      -Djavachanges.args="gitlab-release --directory $CI_PROJECT_DIR --execute true"
   rules:
     - if: $CI_COMMIT_TAG
 ```
@@ -205,7 +236,8 @@ How the example works:
 | `verify` | Validates the repository and prints release state |
 | `release_plan_mr` | Creates or updates the release branch and merge request |
 | `release_tag` | Creates the final tag after the release plan manifest has changed on the default branch |
-| `publish_release` | Publishes from the final Git tag |
+| `publish_snapshot` | Publishes from the configured snapshot branch without extra shell branch parsing |
+| `publish_release` | Publishes from the final Git tag and creates or updates the GitLab Release |
 
 ## 7. Safe `script:` Patterns For GitLab CI
 
@@ -214,6 +246,7 @@ Recommended:
 - Keep each `script:` item to one command when possible.
 - Use YAML folded scalars like `- >` for long single commands that need line wrapping.
 - Prefer direct `mvn ...` or `java -jar ...` invocation over inline shell program generation.
+- Prefer the official Maven plugin entrypoint over custom shell wrappers or ad hoc runner POM files in business repositories.
 - If CI must write a file, prefer `printf`, `echo`, or a checked-in script under `scripts/`.
 - Quote GitLab variables explicitly, for example `"$CI_PROJECT_DIR"` and `"$CI_COMMIT_TAG"`.
 
@@ -447,6 +480,7 @@ Avoid:
 | Release MR job fails to push | `GITLAB_RELEASE_BOT_TOKEN` or `GITLAB_RELEASE_BOT_USERNAME` missing | add the bot credentials as project variables |
 | Release MR job fails with `stale info` | another process updated `changeset-release/*` after javachanges resolved the remote SHA | rerun the pipeline; if the branch is shared by other automation, stop sharing that branch name |
 | Release tag job never tags | `release-plan.json` did not change or `CI_COMMIT_BEFORE_SHA` is unusable | inspect the branch pipeline and the generated release plan |
+| Snapshot publish job cannot see Maven credentials or `GITLAB_RELEASE_TOKEN` | the variables are protected but the configured `snapshotBranch` is not a protected branch | protect the `snapshotBranch`, then rerun `doctor-platform --platform gitlab` and the pipeline |
 | GitLab rejects the pipeline before any job starts with `could not find expected ':' while scanning a simple key` | heredoc or other multiline shell content broke YAML indentation rules | replace `script: - |` heredoc blocks with `- >`, `printf`, or a checked-in shell script |
 | Hygiene or secret scan fails on `.gitlab-ci.yml` or `Makefile`, but no real credential was added | the scanner matched rule literals inside its own configuration | move patterns into a dedicated rules file and exclude scanner-owned files from scanning |
 | `sync-vars` does nothing | env file still contains placeholders | replace `replace-me` values first |
@@ -471,7 +505,8 @@ The practical GitLab CI/CD path is:
 2. create or update a release MR with `gitlab-release-plan`
 3. create the final tag with `gitlab-tag-from-plan`
 4. sync and audit GitLab variables with `sync-vars` and `audit-vars`
-5. publish from tags with `preflight` and `publish`
+5. publish snapshots and tags with the same `publish --execute true` command
+6. create or update the GitLab Release with `gitlab-release`
 
 ## 15. References
 

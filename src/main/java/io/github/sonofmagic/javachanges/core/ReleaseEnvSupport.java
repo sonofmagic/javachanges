@@ -2,6 +2,7 @@ package io.github.sonofmagic.javachanges.core;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,9 +20,13 @@ final class ReleaseEnvSupport {
     private final ReleaseEnvRuntime runtime;
 
     ReleaseEnvSupport(Path repoRoot, PrintStream out) {
+        this(repoRoot, out, new ReleaseEnvRuntime(repoRoot));
+    }
+
+    ReleaseEnvSupport(Path repoRoot, PrintStream out, ReleaseEnvRuntime runtime) {
         this.repoRoot = repoRoot;
         this.out = out;
-        this.runtime = new ReleaseEnvRuntime(repoRoot);
+        this.runtime = runtime;
     }
 
     void initEnv(InitEnvRequest request) throws IOException {
@@ -384,6 +389,7 @@ final class ReleaseEnvSupport {
         boolean textOutput = request.format != OutputFormat.JSON;
         LoadedEnv env = LoadedEnv.load(runtime.resolveEnvFile(request.envFile));
         boolean failed = false;
+        List<String> suggestions = new ArrayList<String>();
         List<ReleaseEnvJsonSupport.JsonSection> sections = new ArrayList<ReleaseEnvJsonSupport.JsonSection>();
         ReleaseEnvJsonSupport.JsonSection envSection = new ReleaseEnvJsonSupport.JsonSection("本地 env 检查");
         sections.add(envSection);
@@ -419,7 +425,7 @@ final class ReleaseEnvSupport {
                 if (request.format == OutputFormat.JSON) {
                     out.println(commandReportJson("doctor-platform", false, runtime.relativizePath(env.path),
                         request.platform.id, false, sections,
-                        Collections.<String>emptyList(), "gh auth status 失败，请先执行 make auth-help"));
+                        suggestions, "gh auth status 失败，请先执行 make auth-help"));
                     return false;
                 }
                 throw new IllegalStateException("gh auth status 失败，请先执行 make auth-help");
@@ -450,7 +456,7 @@ final class ReleaseEnvSupport {
                 if (request.format == OutputFormat.JSON) {
                     out.println(commandReportJson("doctor-platform", false, runtime.relativizePath(env.path),
                         request.platform.id, false, sections,
-                        Collections.<String>emptyList(), "glab auth status 失败，请先执行 make auth-help"));
+                        suggestions, "glab auth status 失败，请先执行 make auth-help"));
                     return false;
                 }
                 throw new IllegalStateException("glab auth status 失败，请先执行 make auth-help");
@@ -464,6 +470,21 @@ final class ReleaseEnvSupport {
                 failed = true;
             } else {
                 recordStatus(textOutput, gitlabSection, "GITLAB_REPO", request.gitlabRepo);
+                ChangesetConfigSupport.ChangesetConfig changesetConfig = RepoFiles.readChangesetConfig(repoRoot);
+                ReleaseEnvJsonSupport.JsonSection protectedVariablesSection =
+                    new ReleaseEnvJsonSupport.JsonSection("GitLab Protected Variables");
+                ReleaseEnvJsonSupport.JsonSection protectedBranchesSection =
+                    new ReleaseEnvJsonSupport.JsonSection("GitLab Protected Branches");
+                sections.add(protectedVariablesSection);
+                sections.add(protectedBranchesSection);
+                if (textOutput) {
+                    out.println();
+                    out.println("== GitLab Protected Variables ==");
+                }
+                GitlabProtectionCheck protectionCheck = inspectGitlabProtection(request.gitlabRepo, env, changesetConfig,
+                    protectedVariablesSection, protectedBranchesSection, textOutput);
+                failed = failed || protectionCheck.failed;
+                suggestions.addAll(protectionCheck.suggestions);
             }
         }
 
@@ -474,7 +495,7 @@ final class ReleaseEnvSupport {
             if (request.format == OutputFormat.JSON) {
                 out.println(commandReportJson("doctor-platform", false, runtime.relativizePath(env.path),
                     request.platform.id, false, sections,
-                    Collections.<String>emptyList(), "doctor 检查失败，请修正上面的 MISSING / PLACEHOLDER 项后重试"));
+                    suggestions, "doctor 检查失败，请修正上面的 MISSING / PLACEHOLDER 项后重试"));
                 return false;
             }
             throw new IllegalStateException("doctor 检查失败，请修正上面的 MISSING / PLACEHOLDER 项后重试");
@@ -484,7 +505,7 @@ final class ReleaseEnvSupport {
         }
         if (request.format == OutputFormat.JSON) {
             out.println(commandReportJson("doctor-platform", true, runtime.relativizePath(env.path),
-                request.platform.id, false, sections, Collections.<String>emptyList(), null));
+                request.platform.id, false, sections, suggestions, null));
         }
         return true;
     }
@@ -900,6 +921,180 @@ final class ReleaseEnvSupport {
         if (section != null) {
             section.add(label, outcome.message);
         }
+    }
+
+    private GitlabProtectionCheck inspectGitlabProtection(String gitlabRepo, LoadedEnv env,
+                                                          ChangesetConfigSupport.ChangesetConfig changesetConfig,
+                                                          ReleaseEnvJsonSupport.JsonSection protectedVariablesSection,
+                                                          ReleaseEnvJsonSupport.JsonSection protectedBranchesSection,
+                                                          boolean textOutput) throws IOException, InterruptedException {
+        GitlabProtectionCheck result = new GitlabProtectionCheck();
+        String projectRef = urlEncode(gitlabRepo);
+        String variablesJson = runtime.runAndCapture(Arrays.asList(
+            "glab", "api", "projects/" + projectRef + "/variables?per_page=100"
+        )).stdoutText();
+        Map<String, GitlabVariableMetadata> remoteVariables = parseGitlabVariableMetadata(variablesJson);
+        for (EnvEntry entry : ReleaseEnvCatalog.GITLAB_VARIABLES) {
+            if (!entry.protectedValue) {
+                continue;
+            }
+            EnvValue localValue = env.value(entry.name);
+            if (!localValue.isReal()) {
+                protectedVariablesSection.add(entry.name, "SKIPPED");
+                if (textOutput) {
+                    printStatus(entry.name, "SKIPPED");
+                }
+                continue;
+            }
+            GitlabVariableMetadata metadata = remoteVariables.get(entry.name);
+            String status;
+            if (metadata == null) {
+                status = "MISSING_REMOTE";
+                result.failed = true;
+                result.suggestions.add("在 GitLab 项目变量中创建 " + entry.name + "，并勾选 protected");
+            } else if (!metadata.protectedValue) {
+                status = "NOT_PROTECTED";
+                result.failed = true;
+                result.suggestions.add("把 GitLab 项目变量 " + entry.name + " 改为 protected");
+            } else {
+                status = "PROTECTED";
+            }
+            protectedVariablesSection.add(entry.name, status);
+            if (textOutput) {
+                printStatus(entry.name, status);
+            }
+        }
+
+        if (textOutput) {
+            out.println();
+            out.println("== GitLab Protected Branches ==");
+        }
+        boolean hasProtectedSecrets = remoteHasProtectedSecrets(remoteVariables);
+        if (changesetConfig.hasSnapshotBranch()) {
+            String snapshotBranch = changesetConfig.snapshotBranch();
+            String branchesJson = runtime.runAndCapture(Arrays.asList(
+                "glab", "api", "projects/" + projectRef + "/protected_branches?per_page=100"
+            )).stdoutText();
+            boolean protectedBranch = isProtectedBranch(parseProtectedBranchNames(branchesJson), snapshotBranch);
+            String status = protectedBranch ? "PROTECTED" : "UNPROTECTED";
+            if (hasProtectedSecrets && !protectedBranch) {
+                status = "UNPROTECTED_WITH_PROTECTED_VARIABLES";
+                result.failed = true;
+                result.suggestions.add("保护 GitLab 分支 " + snapshotBranch + "，否则 protected variables 不会注入该分支的 pipeline");
+                result.suggestions.add("或者取消相关 Maven / release 变量的 protected 标记，但这会降低安全性");
+            } else if (!protectedBranch) {
+                result.failed = true;
+                result.suggestions.add("保护 GitLab 分支 " + snapshotBranch + "，让 snapshot 发布与 protected variables 行为一致");
+            }
+            protectedBranchesSection.add(snapshotBranch, status);
+            if (textOutput) {
+                printStatus(snapshotBranch, status);
+            }
+        } else {
+            protectedBranchesSection.add("snapshotBranch", "SKIPPED");
+            if (textOutput) {
+                printStatus("snapshotBranch", "SKIPPED");
+            }
+        }
+        return result;
+    }
+
+    private boolean remoteHasProtectedSecrets(Map<String, GitlabVariableMetadata> remoteVariables) {
+        for (GitlabVariableMetadata metadata : remoteVariables.values()) {
+            if (metadata.protectedValue) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Map<String, GitlabVariableMetadata> parseGitlabVariableMetadata(String json) {
+        Map<String, GitlabVariableMetadata> result = new java.util.LinkedHashMap<String, GitlabVariableMetadata>();
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("\\{([^{}]*)\\}").matcher(json);
+        while (matcher.find()) {
+            String objectText = matcher.group(1);
+            String key = jsonStringField(objectText, "key");
+            if (key == null) {
+                continue;
+            }
+            result.put(key, new GitlabVariableMetadata(
+                key,
+                jsonBooleanField(objectText, "protected"),
+                jsonBooleanField(objectText, "masked")
+            ));
+        }
+        return result;
+    }
+
+    private List<String> parseProtectedBranchNames(String json) {
+        List<String> names = new ArrayList<String>();
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("\"name\"\\s*:\\s*\"((?:\\\\.|[^\"])*)\"").matcher(json);
+        while (matcher.find()) {
+            names.add(ReleaseJsonUtils.jsonUnescape(matcher.group(1)));
+        }
+        return names;
+    }
+
+    private boolean isProtectedBranch(List<String> protectedBranches, String branchName) {
+        for (String candidate : protectedBranches) {
+            if (branchMatches(candidate, branchName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean branchMatches(String pattern, String branchName) {
+        if (pattern.equals(branchName)) {
+            return true;
+        }
+        if (pattern.indexOf('*') >= 0) {
+            String regex = pattern.replace(".", "\\.").replace("*", ".*");
+            return branchName.matches(regex);
+        }
+        return false;
+    }
+
+    private String jsonStringField(String objectText, String field) {
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile(
+            "\"" + java.util.regex.Pattern.quote(field) + "\"\\s*:\\s*\"((?:\\\\.|[^\"])*)\""
+        ).matcher(objectText);
+        if (!matcher.find()) {
+            return null;
+        }
+        return ReleaseJsonUtils.jsonUnescape(matcher.group(1));
+    }
+
+    private boolean jsonBooleanField(String objectText, String field) {
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile(
+            "\"" + java.util.regex.Pattern.quote(field) + "\"\\s*:\\s*(true|false)"
+        ).matcher(objectText);
+        return matcher.find() && Boolean.parseBoolean(matcher.group(1));
+    }
+
+    private String urlEncode(String value) {
+        try {
+            return URLEncoder.encode(value, "UTF-8");
+        } catch (Exception exception) {
+            throw new IllegalStateException("Failed to encode GitLab project path", exception);
+        }
+    }
+
+    private static final class GitlabVariableMetadata {
+        private final String key;
+        private final boolean protectedValue;
+        private final boolean masked;
+
+        private GitlabVariableMetadata(String key, boolean protectedValue, boolean masked) {
+            this.key = key;
+            this.protectedValue = protectedValue;
+            this.masked = masked;
+        }
+    }
+
+    private static final class GitlabProtectionCheck {
+        private boolean failed;
+        private final List<String> suggestions = new ArrayList<String>();
     }
 
 }

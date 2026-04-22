@@ -32,6 +32,10 @@ Use it when you are:
 | `sync-vars` dry-run stdout | local operators | preview text only, not a stable API |
 | `audit-vars` stdout | local operators | human-oriented by default |
 | `audit-vars --format json` stdout | scripts and CI | machine-readable JSON contract |
+| `publish --format json` stdout | scripts and CI | machine-readable publish contract |
+| `gitlab-release-plan --format json` stdout | scripts and CI | machine-readable GitLab release-plan contract |
+| `gitlab-tag-from-plan --format json` stdout | scripts and CI | machine-readable GitLab tag contract |
+| `gitlab-release --format json` stdout | scripts and CI | machine-readable GitLab Release contract |
 
 Practical rule:
 
@@ -369,7 +373,50 @@ Current audit result words:
 - non-zero exit code means at least one audited item ended in `MISSING_REMOTE` or `MISMATCH`, or a platform precondition failed
 - the payload includes `platform`, `sections`, and optional final `error`
 
-## 10. Automation recommendations
+GitLab-specific additions:
+
+- `doctor-platform --platform gitlab --format json` now includes protected-variable and protected-branch sections
+- if protected variables exist but the configured `snapshotBranch` is not protected, the command fails explicitly instead of silently passing
+
+## 10. Publish And GitLab Release JSON
+
+`publish`, `gitlab-release-plan`, `gitlab-tag-from-plan`, and `gitlab-release` now expose a shared machine-readable top-level contract.
+
+Current common fields:
+
+| Field | Meaning |
+| --- | --- |
+| `ok` | whether the command succeeded |
+| `command` | command name |
+| `action` | action taken or planned |
+| `skipped` | whether the command intentionally skipped work |
+| `reason` | human-readable reason for skip, dry-run, or success summary |
+| `releaseVersion` | resolved release version without extra parsing |
+| `releaseModule` | resolved module or `null` for whole-repo work |
+| `tag` | release tag when relevant |
+| `releaseNotesFile` | generated or consumed notes file path when relevant |
+| `projectId` | GitLab project id when relevant |
+
+Example:
+
+```json
+{
+  "ok": true,
+  "command": "gitlab-release",
+  "action": "create-release",
+  "skipped": false,
+  "reason": "Created GitLab Release.",
+  "releaseVersion": "1.2.3",
+  "releaseModule": "core",
+  "tag": "core/v1.2.3",
+  "releaseNotesFile": "/path/to/repo/target/release-notes.md",
+  "projectId": "12345",
+  "execute": true,
+  "dryRun": false
+}
+```
+
+## 11. Automation recommendations
 
 For CI and scripting:
 
@@ -384,7 +431,7 @@ Avoid:
 - parsing localized headings like `== 本地 env 检查 ==`
 - depending on the exact prose of failure summaries
 
-## 11. Related guides
+## 12. Related guides
 
 | Need | Document |
 | --- | --- |

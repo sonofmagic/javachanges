@@ -10,6 +10,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ChangesetConfigSupportTest {
 
@@ -42,6 +44,9 @@ class ChangesetConfigSupportTest {
         assertEquals("develop", config.baseBranch());
         assertEquals("changeset-release/develop", config.releaseBranch());
         assertEquals("snapshot-dev", config.snapshotBranch());
+        assertTrue(config.hasBaseBranch());
+        assertTrue(config.hasReleaseBranch());
+        assertTrue(config.hasSnapshotBranch());
     }
 
     @Test
@@ -105,6 +110,18 @@ class ChangesetConfigSupportTest {
     }
 
     @Test
+    void defaultsReportNoExplicitBranchOverrides(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot.resolve(".changesets"));
+
+        ChangesetConfigSupport.ChangesetConfig config = ChangesetConfigSupport.load(repoRoot);
+
+        assertFalse(config.hasBaseBranch());
+        assertFalse(config.hasReleaseBranch());
+        assertFalse(config.hasSnapshotBranch());
+    }
+
+    @Test
     void gitlabReleasePlanRequestFallsBackToChangesetConfigFromNestedDirectory(@TempDir Path tempDir) throws Exception {
         Path repoRoot = tempDir.resolve("repo");
         Path changesetsDir = repoRoot.resolve(".changesets");
@@ -123,6 +140,26 @@ class ChangesetConfigSupportTest {
         GitlabReleasePlanRequest request = GitlabReleasePlanRequest.fromOptions(options);
 
         assertEquals("develop", request.targetBranch);
+        assertEquals("release/from-config", request.releaseBranch);
+    }
+
+    @Test
+    void gitlabTagRequestReadsBaseAndReleaseBranchFromChangesetConfig(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Path changesetsDir = repoRoot.resolve(".changesets");
+        Files.createDirectories(changesetsDir);
+        Files.write(changesetsDir.resolve("config.json"), (
+            "{\n" +
+                "  \"baseBranch\": \"develop\",\n" +
+                "  \"releaseBranch\": \"release/from-config\"\n" +
+                "}\n").getBytes(StandardCharsets.UTF_8));
+
+        Map<String, String> options = new LinkedHashMap<String, String>();
+        options.put("directory", repoRoot.toString());
+
+        GitlabTagRequest request = GitlabTagRequest.fromOptions(options);
+
+        assertEquals("develop", request.baseBranch);
         assertEquals("release/from-config", request.releaseBranch);
     }
 }

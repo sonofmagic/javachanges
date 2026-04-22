@@ -86,8 +86,10 @@ Improve CLI parsing and release planning.
 当前行为：
 
 - 当 CLI 参数和 CI 变量都没显式传入时，GitLab release-plan 默认值会从这个文件读取 `baseBranch` 和 `releaseBranch`
+- GitLab tag 命令也会读取这里的 `baseBranch` 和 `releaseBranch`，避免在 release branch 或其他非基线分支误打 tag
+- `preflight` 和 `publish` 会读取这里的 `snapshotBranch`，当前 CI 分支命中时自动进入 snapshot 模式
 - 本仓库里的 GitHub Actions 示例也遵循同一套分支命名约定
-- `snapshotBranch` 目前属于仓库约定字段，请让你的 workflow trigger 与它保持一致
+- `snapshotBranch` 不再只是文档约定字段，GitLab snapshot 发布链路会真正消费它
 
 ### 3.3 旧格式兼容
 
@@ -143,15 +145,26 @@ summary: automate javachanges self-release publishing via GitHub Actions
 | `--allow-dirty` | 跳过工作区脏检查 | `false` |
 | `--execute` | 真正执行发布命令，而不是只打印 | `false` |
 
+这些命令在 GitLab CI 中的默认行为：
+
+- 如果存在 `CI_COMMIT_TAG`，省略 `--tag` 时会自动使用它
+- 如果省略 `--snapshot`，并且当前分支命中 `.changesets/config.json` / `.changesets/config.jsonc` 的 `snapshotBranch`，会自动进入 snapshot 模式
+- 这意味着 GitLab job 可以直接执行 `publish --execute true`
+
 ### 4.4 GitLab 发布命令
 
 | 命令 | 参数 | 默认来源 |
 | --- | --- | --- |
 | `gitlab-release-plan` | `--project-id` | `CI_PROJECT_ID` |
 | `gitlab-release-plan` | `--target-branch` | `CI_DEFAULT_BRANCH`，再回退到 `main` |
-| `gitlab-release-plan` | `--release-branch` | `changeset-release/<target-branch>` |
+| `gitlab-release-plan` | `--release-branch` | `.changesets/config.*` 的 `releaseBranch`，再回退到 `changeset-release/<target-branch>` |
 | `gitlab-tag-from-plan` | `--before-sha` | `CI_COMMIT_BEFORE_SHA` |
 | `gitlab-tag-from-plan` | `--current-sha` | `CI_COMMIT_SHA` |
+| `gitlab-tag-from-plan` | 分支保护逻辑 | `.changesets/config.*` 的 `baseBranch` 和 `releaseBranch` |
+| `gitlab-release` | `--tag` | `CI_COMMIT_TAG` |
+| `gitlab-release` | `--project-id` | `CI_PROJECT_ID` |
+| `gitlab-release` | `--gitlab-host` | `CI_SERVER_HOST` |
+| `init-gitlab-ci` | 生成的分支规则 | `.changesets/config.*` 的 `baseBranch` 和 `snapshotBranch` |
 
 ## 5. `env/release.env.example`
 
@@ -235,6 +248,11 @@ summary: automate javachanges self-release publishing via GitHub Actions
 | `MAVEN_SNAPSHOT_REPOSITORY_USERNAME` | 是 | 是 |
 | `MAVEN_SNAPSHOT_REPOSITORY_PASSWORD` | 是 | 是 |
 | `GITLAB_RELEASE_TOKEN` | 是 | 是 |
+
+运维说明：
+
+- `doctor-platform --platform gitlab` 现在会同时检查远端 protected variables 和配置里的 `snapshotBranch`
+- 如果存在 protected variables，但 snapshot 分支没有被保护，命令会直接失败并给出修复建议，因为 GitLab 不会把 protected variables 注入到这个分支的 pipeline
 
 ### 7.2 GitLab CI 运行时额外依赖的变量
 

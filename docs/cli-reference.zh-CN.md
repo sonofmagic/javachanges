@@ -48,6 +48,11 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/re
 plugin 说明：
 
 - 所有独立 goal 和 `javachanges:run` 都会自动注入 `--directory ${project.basedir}`，除非你已经显式传了 `--directory`
+- 对业务仓库或 CI 来说，也可以直接调用已发布的官方 Maven plugin，不需要额外维护 runner POM：
+
+```bash
+mvn -B io.github.sonofmagic:javachanges:1.4.1:run -Djavachanges.args="gitlab-release-plan --directory $CI_PROJECT_DIR --execute true"
+```
 
 如果你已经在目标仓库的 `pom.xml` 里声明了 plugin，本地最短写法就是：
 
@@ -276,6 +281,10 @@ mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --directory /path
 | `doctor-local` | 失败时会包含分组检查结果、建议列表和最终错误信息 |
 | `doctor-platform` | 会带上 `platform` 以及 env / CLI 检查分组 |
 | `audit-vars` | 会带上 `platform`、审计分组结果，以及失败时的最终错误信息 |
+| `publish` | 会带上 tag、module、releaseVersion、releaseNotesFile 等发布元数据 |
+| `gitlab-release-plan` | 会带上 action、是否 skipped、releaseVersion、projectId |
+| `gitlab-tag-from-plan` | 会带上 action、是否 skipped、releaseVersion、releaseModule、tag |
+| `gitlab-release` | 会带上 action、projectId、tag、releaseModule、releaseVersion、releaseNotesFile |
 
 这些命令的常用参数：
 
@@ -341,6 +350,12 @@ mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory /path/to
 mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory /path/to/repo --tag v1.2.3"
 ```
 
+GitLab snapshot 分支默认值示例：
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory $CI_PROJECT_DIR"
+```
+
 ### 8.2 `publish`
 
 只输出发布命令：
@@ -356,6 +371,12 @@ mvn -q -DskipTests compile exec:java -Dexec.args="publish --directory /path/to/r
 ```
 
 快照发布会把根 `1.2.3-SNAPSHOT` 解析成唯一的实际发布版本，例如 `1.2.3-20260420.154500.abc1234-SNAPSHOT`，再通过 `-Drevision=` 注入给 Maven。你也可以通过 `--snapshot-build-stamp` 或环境变量 `JAVACHANGES_SNAPSHOT_BUILD_STAMP` 显式指定构建标识。
+
+GitLab CI 默认行为：
+
+- 如果存在 `CI_COMMIT_TAG`，`publish` 会自动使用它，因此 tag job 只需要执行 `publish --execute true`
+- 如果当前分支命中 `.changesets/config.json` / `.changesets/config.jsonc` 的 `snapshotBranch`，`publish` 和 `preflight` 会自动切到 snapshot 模式
+- 这样业务仓库就不需要再写 shell 分支来区分 tag 发布和 snapshot 发布
 
 关键参数：
 
@@ -392,12 +413,16 @@ mvn -q -DskipTests compile exec:java -Dexec.args="github-release-from-plan --dir
 | --- | --- |
 | `gitlab-release-plan` | 创建或更新 GitLab release-plan merge request |
 | `gitlab-tag-from-plan` | 根据已生成的 release plan 创建正式 tag |
+| `gitlab-release` | 生成 release notes，并为当前 tag 创建或更新 GitLab Release |
+| `init-gitlab-ci` | 生成最小可用的 GitLab CI 模板，串起 release-plan、tag、publish 和 GitLab Release job |
 
 示例：
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-release-plan --directory /path/to/repo --project-id 12345 --execute true"
 mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-tag-from-plan --directory /path/to/repo --execute true"
+mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-release --directory /path/to/repo --execute true"
+mvn -q -DskipTests compile exec:java -Dexec.args="init-gitlab-ci --directory /path/to/repo --output .gitlab-ci.yml --force true"
 ```
 
 ## 10. 帮助输出

@@ -66,6 +66,63 @@ class GitlabReleaseSupportTest {
         assertTrue(stdout.toString(StandardCharsets.UTF_8.name()).contains("Updated GitLab MR !7"));
     }
 
+    @Test
+    void syncReleaseWritesReleaseNotesAndCreatesGitlabRelease(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir);
+        run(repoRoot, "git", "init", "-q", "-b", "main");
+        run(repoRoot, "git", "config", "user.name", "tester");
+        run(repoRoot, "git", "config", "user.email", "tester@example.com");
+        run(repoRoot, "git", "add", "pom.xml", "CHANGELOG.md", ".changesets");
+        run(repoRoot, "git", "commit", "-qm", "init");
+        run(repoRoot, "git", "tag", "fixture-app/v1.1.1");
+        FakeGitlabApiClient api = new FakeGitlabApiClient();
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("project-id", "123");
+        options.put("tag", "fixture-app/v1.1.1");
+        options.put("execute", "true");
+
+        new GitlabReleaseSupport(repoRoot, new PrintStream(stdout, true), new RecordingRuntime(repoRoot), api)
+            .syncRelease(GitlabReleaseRequest.fromOptions(options));
+
+        assertEquals("123", api.releaseProjectId);
+        assertEquals("fixture-app/v1.1.1", api.releaseTag);
+        assertTrue(api.releaseDescription.contains("## 1.1.1 - "));
+        assertTrue(stdout.toString(StandardCharsets.UTF_8.name()).contains("Created GitLab Release fixture-app/v1.1.1"));
+        assertTrue(Files.exists(repoRoot.resolve("target").resolve("release-notes.md")));
+    }
+
+    @Test
+    void syncReleaseJsonIncludesMachineReadableFields(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir);
+        run(repoRoot, "git", "init", "-q", "-b", "main");
+        run(repoRoot, "git", "config", "user.name", "tester");
+        run(repoRoot, "git", "config", "user.email", "tester@example.com");
+        run(repoRoot, "git", "add", "pom.xml", "CHANGELOG.md", ".changesets");
+        run(repoRoot, "git", "commit", "-qm", "init");
+        run(repoRoot, "git", "tag", "fixture-app/v1.1.1");
+        FakeGitlabApiClient api = new FakeGitlabApiClient();
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("project-id", "123");
+        options.put("tag", "fixture-app/v1.1.1");
+        options.put("format", "json");
+
+        new GitlabReleaseSupport(repoRoot, new PrintStream(stdout, true), new RecordingRuntime(repoRoot), api)
+            .syncRelease(GitlabReleaseRequest.fromOptions(options));
+
+        String json = stdout.toString(StandardCharsets.UTF_8.name());
+        assertTrue(json.contains("\"ok\":true"));
+        assertTrue(json.contains("\"command\":\"gitlab-release\""));
+        assertTrue(json.contains("\"releaseVersion\":\"1.1.1\""));
+        assertTrue(json.contains("\"releaseModule\":\"fixture-app\""));
+        assertTrue(json.contains("\"tag\":\"fixture-app/v1.1.1\""));
+        assertTrue(json.contains("\"projectId\":\"123\""));
+        assertTrue(json.contains("\"releaseNotesFile\":"));
+    }
+
     private static Path createRepository(Path tempDir) throws IOException {
         Path repoRoot = tempDir.resolve("repo");
         Files.createDirectories(repoRoot.resolve(".changesets"));
@@ -105,6 +162,20 @@ class GitlabReleaseSupportTest {
         options.put("release-branch", "changeset-release/main");
         options.put("execute", "true");
         return GitlabReleasePlanRequest.fromOptions(options);
+    }
+
+    private static void run(Path workingDirectory, String... command) throws IOException, InterruptedException {
+        ProcessBuilder builder = new ProcessBuilder(command);
+        builder.directory(workingDirectory.toFile());
+        Process process = builder.start();
+        byte[] stdout = ReleaseUtils.readAllBytes(process.getInputStream());
+        byte[] stderr = ReleaseUtils.readAllBytes(process.getErrorStream());
+        int exitCode = process.waitFor();
+        if (exitCode != 0) {
+            throw new IllegalStateException("Command failed with exit code " + exitCode
+                + "\nstdout: " + new String(stdout, StandardCharsets.UTF_8)
+                + "\nstderr: " + new String(stderr, StandardCharsets.UTF_8));
+        }
     }
 
     private static final class RecordingRuntime extends GitlabReleaseRuntime {
@@ -168,6 +239,11 @@ class GitlabReleaseSupportTest {
         Integer updatedMergeRequestIid;
         String updatedTitle;
         String updatedDescription;
+        String releaseProjectId;
+        String releaseTag;
+        String releaseName;
+        String releaseDescription;
+        boolean releaseExists;
 
         @Override
         public Integer findOpenMergeRequestIid(String projectId, String sourceBranch, String targetBranch) {
@@ -199,6 +275,27 @@ class GitlabReleaseSupportTest {
         @Override
         public int requiredJsonInt(String json, String field) {
             return 42;
+        }
+
+        @Override
+        public boolean releaseExists(String projectId, String tagName) {
+            return releaseExists;
+        }
+
+        @Override
+        public void createRelease(String projectId, String tagName, String releaseName, String description) {
+            this.releaseProjectId = projectId;
+            this.releaseTag = tagName;
+            this.releaseName = releaseName;
+            this.releaseDescription = description;
+        }
+
+        @Override
+        public void updateRelease(String projectId, String tagName, String releaseName, String description) {
+            this.releaseProjectId = projectId;
+            this.releaseTag = tagName;
+            this.releaseName = releaseName;
+            this.releaseDescription = description;
         }
     }
 }

@@ -26,7 +26,10 @@ final class ChangesetConfigSupport {
         String baseBranch = field(json, "baseBranch");
         String releaseBranch = field(json, "releaseBranch");
         String snapshotBranch = field(json, "snapshotBranch");
-        return ChangesetConfig.fromValues(baseBranch, releaseBranch, snapshotBranch);
+        return ChangesetConfig.fromValues(baseBranch, releaseBranch, snapshotBranch,
+            trimToNull(baseBranch) != null,
+            trimToNull(releaseBranch) != null,
+            trimToNull(snapshotBranch) != null);
     }
 
     static Path resolveConfigRoot(Path start) {
@@ -119,18 +122,35 @@ final class ChangesetConfigSupport {
         private final String baseBranch;
         private final String releaseBranch;
         private final String snapshotBranch;
+        private final boolean explicitBaseBranch;
+        private final boolean explicitReleaseBranch;
+        private final boolean explicitSnapshotBranch;
 
-        private ChangesetConfig(String baseBranch, String releaseBranch, String snapshotBranch) {
+        private ChangesetConfig(String baseBranch, String releaseBranch, String snapshotBranch,
+                                boolean explicitBaseBranch, boolean explicitReleaseBranch,
+                                boolean explicitSnapshotBranch) {
             this.baseBranch = baseBranch;
             this.releaseBranch = releaseBranch;
             this.snapshotBranch = snapshotBranch;
+            this.explicitBaseBranch = explicitBaseBranch;
+            this.explicitReleaseBranch = explicitReleaseBranch;
+            this.explicitSnapshotBranch = explicitSnapshotBranch;
         }
 
         static ChangesetConfig defaults() {
-            return new ChangesetConfig("main", "changeset-release/main", "snapshot");
+            return new ChangesetConfig("main", "changeset-release/main", "snapshot", false, false, false);
         }
 
         static ChangesetConfig fromValues(String baseBranch, String releaseBranch, String snapshotBranch) {
+            return fromValues(baseBranch, releaseBranch, snapshotBranch,
+                trimToNull(baseBranch) != null,
+                trimToNull(releaseBranch) != null,
+                trimToNull(snapshotBranch) != null);
+        }
+
+        static ChangesetConfig fromValues(String baseBranch, String releaseBranch, String snapshotBranch,
+                                          boolean explicitBaseBranch, boolean explicitReleaseBranch,
+                                          boolean explicitSnapshotBranch) {
             String resolvedBaseBranch = trimToNull(baseBranch);
             if (resolvedBaseBranch == null) {
                 resolvedBaseBranch = "main";
@@ -146,7 +166,8 @@ final class ChangesetConfigSupport {
                 resolvedSnapshotBranch = "snapshot";
             }
 
-            return new ChangesetConfig(resolvedBaseBranch, resolvedReleaseBranch, resolvedSnapshotBranch);
+            return new ChangesetConfig(resolvedBaseBranch, resolvedReleaseBranch, resolvedSnapshotBranch,
+                explicitBaseBranch, explicitReleaseBranch, explicitSnapshotBranch);
         }
 
         String baseBranch() {
@@ -159,6 +180,18 @@ final class ChangesetConfigSupport {
 
         String snapshotBranch() {
             return snapshotBranch;
+        }
+
+        boolean hasBaseBranch() {
+            return explicitBaseBranch;
+        }
+
+        boolean hasReleaseBranch() {
+            return explicitReleaseBranch;
+        }
+
+        boolean hasSnapshotBranch() {
+            return explicitSnapshotBranch;
         }
     }
 }

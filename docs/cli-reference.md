@@ -49,6 +49,11 @@ Common parts:
 Plugin note:
 
 - all dedicated goals and `javachanges:run` inject `--directory ${project.basedir}` automatically unless you already passed `--directory` explicitly
+- for CI or external repositories, you can call the published plugin directly without a custom runner POM:
+
+```bash
+mvn -B io.github.sonofmagic:javachanges:1.4.1:run -Djavachanges.args="gitlab-release-plan --directory $CI_PROJECT_DIR --execute true"
+```
 
 If you declare the plugin in a target repository `pom.xml`, the shortest local form becomes:
 
@@ -277,6 +282,10 @@ Commands that currently support `--format json`:
 | `doctor-local` | Includes section summaries, suggestions, and final error text on failure |
 | `doctor-platform` | Includes `platform` and section summaries for env and CLI checks |
 | `audit-vars` | Includes `platform`, audit sections, and final error text on failure |
+| `publish` | Includes publish action metadata such as tag, module, release version, and release notes file |
+| `gitlab-release-plan` | Includes action, skip reason, release version, and project id |
+| `gitlab-tag-from-plan` | Includes action, skip reason, release version, module, and tag |
+| `gitlab-release` | Includes action, project id, tag, module, release version, and release notes file |
 
 Common flags for these commands:
 
@@ -342,6 +351,12 @@ Release example:
 mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory /path/to/repo --tag v1.2.3"
 ```
 
+GitLab snapshot branch example with config-driven defaults:
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory $CI_PROJECT_DIR"
+```
+
 ### 8.2 `publish`
 
 Render the real publish command:
@@ -357,6 +372,12 @@ mvn -q -DskipTests compile exec:java -Dexec.args="publish --directory /path/to/r
 ```
 
 Snapshot publishing resolves the root `1.2.3-SNAPSHOT` into a unique publish revision such as `1.2.3-20260420.154500.abc1234-SNAPSHOT`, then injects it through `-Drevision=`. You can override the generated build stamp with `--snapshot-build-stamp` or the `JAVACHANGES_SNAPSHOT_BUILD_STAMP` environment variable.
+
+GitLab CI defaults:
+
+- if `CI_COMMIT_TAG` is present, `publish` uses it automatically, so a tag job can just run `publish --execute true`
+- if the current branch matches `.changesets/config.json` or `.changesets/config.jsonc` `snapshotBranch`, `publish` and `preflight` default to snapshot mode
+- this removes the need for CI shell wrappers that manually branch on tags vs snapshot branches
 
 Important flags:
 
@@ -393,12 +414,16 @@ mvn -q -DskipTests compile exec:java -Dexec.args="github-release-from-plan --dir
 | --- | --- |
 | `gitlab-release-plan` | Create or update a GitLab release-plan merge request |
 | `gitlab-tag-from-plan` | Create the final release tag from a generated release plan |
+| `gitlab-release` | Generate release notes and create or update the GitLab Release for the current tag |
+| `init-gitlab-ci` | Write a minimal GitLab CI template that wires release-plan, tag, publish, and GitLab Release jobs |
 
 Examples:
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-release-plan --directory /path/to/repo --project-id 12345 --execute true"
 mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-tag-from-plan --directory /path/to/repo --execute true"
+mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-release --directory /path/to/repo --execute true"
+mvn -q -DskipTests compile exec:java -Dexec.args="init-gitlab-ci --directory /path/to/repo --output .gitlab-ci.yml --force true"
 ```
 
 ## 10. Help Output

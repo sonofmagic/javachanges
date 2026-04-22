@@ -125,12 +125,13 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory examples/basi
 3. `tag`
 4. `publish`
 
-模板在 `before_script` 里下载 `javachanges` jar，复用 Maven 依赖缓存，然后依次运行：
+现在示例模板直接复用官方 Maven plugin 入口，保留 Maven 依赖缓存，并把每个 job 压到一条 `javachanges` 命令：
 
 - 校验阶段执行 `status`
 - 默认分支执行 `gitlab-release-plan --execute true`
 - release plan 合并后执行 `gitlab-tag-from-plan --execute true`
-- tag pipeline 中直接执行 `publish --execute true`，由命令内部处理 preflight 和 settings 生成
+- snapshot pipeline 和 tag pipeline 都直接执行 `publish --execute true`，由命令内部处理 preflight、tag 判定、snapshotBranch 判定和 settings 生成
+- 正式版 tag 发布成功后，再执行 `gitlab-release --execute true` 创建或更新 GitLab Release
 
 ## 7. 如何改造成真实仓库
 

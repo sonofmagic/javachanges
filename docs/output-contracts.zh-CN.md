@@ -28,6 +28,10 @@
 | `sync-vars` dry-run 输出 | 本地操作者 | 只是预览文本，不是稳定 API |
 | `audit-vars` 标准输出 | 本地操作者 | 默认面向人 |
 | `audit-vars --format json` 标准输出 | 脚本和 CI | 机器可读 JSON 契约 |
+| `publish --format json` 标准输出 | 脚本和 CI | 机器可读发布契约 |
+| `gitlab-release-plan --format json` 标准输出 | 脚本和 CI | 机器可读 GitLab release-plan 契约 |
+| `gitlab-tag-from-plan --format json` 标准输出 | 脚本和 CI | 机器可读 GitLab tag 契约 |
+| `gitlab-release --format json` 标准输出 | 脚本和 CI | 机器可读 GitLab Release 契约 |
 
 实际建议：
 
@@ -365,7 +369,50 @@ gh auth status                           FAILED
 - 非 `0` 退出码表示至少一个审计项出现了 `MISSING_REMOTE` / `MISMATCH`，或者平台前置条件失败
 - 返回值会包含 `platform`、`sections`，失败时可能包含最终 `error`
 
-## 10. 自动化建议
+GitLab 额外增强：
+
+- `doctor-platform --platform gitlab --format json` 现在会额外返回 protected variables 和 protected branches 检查分组
+- 如果存在 protected variables，但配置的 `snapshotBranch` 没有被保护，命令会明确失败，而不是静默通过
+
+## 10. `publish` 和 GitLab 发布 JSON 契约
+
+`publish`、`gitlab-release-plan`、`gitlab-tag-from-plan`、`gitlab-release` 现在共享一组稳定的顶层字段。
+
+当前公共字段：
+
+| 字段 | 含义 |
+| --- | --- |
+| `ok` | 命令是否成功 |
+| `command` | 命令名 |
+| `action` | 实际执行或计划执行的动作 |
+| `skipped` | 是否明确跳过了工作 |
+| `reason` | 跳过原因、dry-run 提示或成功摘要 |
+| `releaseVersion` | 已解析好的发布版本 |
+| `releaseModule` | 已解析好的模块名，whole-repo 时为 `null` |
+| `tag` | 相关发布 tag |
+| `releaseNotesFile` | 相关 release notes 文件路径 |
+| `projectId` | 相关 GitLab project id |
+
+示例：
+
+```json
+{
+  "ok": true,
+  "command": "gitlab-release",
+  "action": "create-release",
+  "skipped": false,
+  "reason": "Created GitLab Release.",
+  "releaseVersion": "1.2.3",
+  "releaseModule": "core",
+  "tag": "core/v1.2.3",
+  "releaseNotesFile": "/path/to/repo/target/release-notes.md",
+  "projectId": "12345",
+  "execute": true,
+  "dryRun": false
+}
+```
+
+## 11. 自动化建议
 
 对 CI 和脚本来说：
 
@@ -380,7 +427,7 @@ gh auth status                           FAILED
 - 依赖 `== 本地 env 检查 ==` 这种标题文本
 - 依赖失败总结段落里的自然语言表述
 
-## 11. 相关阅读
+## 12. 相关阅读
 
 | 需求 | 文档 |
 | --- | --- |

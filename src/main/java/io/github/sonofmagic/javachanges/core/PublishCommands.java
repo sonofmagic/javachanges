@@ -26,6 +26,9 @@ final class PreflightCommand extends AbstractCliCommand {
         description = "Explicit snapshot build stamp used to derive the publish revision.")
     private String snapshotBuildStamp;
 
+    @Option(names = "--format", description = "Output format: text or json.")
+    private String format;
+
     @Override
     public Integer call() throws Exception {
         Map<String, String> options = options();
@@ -34,8 +37,18 @@ final class PreflightCommand extends AbstractCliCommand {
         putFlag(options, "allow-dirty", allowDirty);
         putOption(options, "module", module);
         putOption(options, "snapshot-build-stamp", snapshotBuildStamp);
-        new PublishSupport(repoRoot(), out()).preflight(PublishRequest.fromOptions(options, false));
-        return success();
+        putOption(options, "format", format);
+        PublishRequest request = PublishRequest.fromOptions(options, false);
+        try {
+            new PublishSupport(repoRoot(), out()).preflight(request);
+            return success();
+        } catch (Exception exception) {
+            if (request.format == OutputFormat.JSON) {
+                out().println(AutomationJsonSupport.errorJson("preflight", exception));
+                return 1;
+            }
+            throw exception;
+        }
     }
 }
 
@@ -64,6 +77,9 @@ final class PublishCommand extends AbstractCliCommand {
         description = "Explicit snapshot build stamp used to derive the publish revision.")
     private String snapshotBuildStamp;
 
+    @Option(names = "--format", description = "Output format: text or json.")
+    private String format;
+
     @Override
     public Integer call() throws Exception {
         Map<String, String> options = options();
@@ -73,7 +89,17 @@ final class PublishCommand extends AbstractCliCommand {
         putFlag(options, "execute", execute);
         putOption(options, "module", module);
         putOption(options, "snapshot-build-stamp", snapshotBuildStamp);
-        new PublishSupport(repoRoot(), out()).publish(PublishRequest.fromOptions(options, true));
-        return success();
+        putOption(options, "format", format);
+        PublishRequest request = PublishRequest.fromOptions(options, true);
+        try {
+            new PublishSupport(repoRoot(), out()).publish(request);
+            return success();
+        } catch (Exception exception) {
+            if (request.format == OutputFormat.JSON) {
+                out().println(AutomationJsonSupport.errorJson("publish", exception));
+                return 1;
+            }
+            throw exception;
+        }
     }
 }

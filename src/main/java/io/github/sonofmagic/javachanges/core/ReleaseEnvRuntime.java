@@ -11,7 +11,7 @@ import static io.github.sonofmagic.javachanges.core.ReleaseUtils.closeQuietly;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.isBlank;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.readAllBytes;
 
-final class ReleaseEnvRuntime {
+class ReleaseEnvRuntime {
     private final Path repoRoot;
 
     ReleaseEnvRuntime(Path repoRoot) {

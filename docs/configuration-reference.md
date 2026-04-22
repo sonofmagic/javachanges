@@ -90,8 +90,10 @@ Supported fields:
 Current behavior:
 
 - GitLab release-plan defaults read `baseBranch` and `releaseBranch` from this file when CLI flags and CI variables are absent
+- GitLab tag creation reads `baseBranch` and `releaseBranch` from this file to avoid tagging from the release branch and other non-base branches
+- `preflight` and `publish` read `snapshotBranch` from this file and default to snapshot mode when the current CI branch matches it
 - GitHub Actions examples in this repository follow the same branch naming model
-- `snapshotBranch` is currently a repository convention field; keep your workflow trigger aligned with it
+- `snapshotBranch` is no longer documentation-only; GitLab snapshot publish flows consume it directly
 
 ### 3.3 Legacy compatibility
 
@@ -147,15 +149,26 @@ Compatibility status:
 | `--allow-dirty` | Skip dirty worktree protection | `false` |
 | `--execute` | Run the final publish command instead of only printing it | `false` |
 
+GitLab CI defaults for these commands:
+
+- `CI_COMMIT_TAG` is used automatically as the publish tag when `--tag` is omitted
+- `.changesets/config.json` / `.changesets/config.jsonc` `snapshotBranch` is used automatically when `--snapshot` is omitted
+- this lets a GitLab job use `publish --execute true` directly for both tag and snapshot pipelines
+
 ### 4.4 GitLab release commands
 
 | Command | Flag | Default source |
 | --- | --- | --- |
 | `gitlab-release-plan` | `--project-id` | `CI_PROJECT_ID` |
 | `gitlab-release-plan` | `--target-branch` | `CI_DEFAULT_BRANCH`, then `main` |
-| `gitlab-release-plan` | `--release-branch` | `changeset-release/<target-branch>` |
+| `gitlab-release-plan` | `--release-branch` | `.changesets/config.*` `releaseBranch`, then `changeset-release/<target-branch>` |
 | `gitlab-tag-from-plan` | `--before-sha` | `CI_COMMIT_BEFORE_SHA` |
 | `gitlab-tag-from-plan` | `--current-sha` | `CI_COMMIT_SHA` |
+| `gitlab-tag-from-plan` | branch guard | `.changesets/config.*` `baseBranch` and `releaseBranch` |
+| `gitlab-release` | `--tag` | `CI_COMMIT_TAG` |
+| `gitlab-release` | `--project-id` | `CI_PROJECT_ID` |
+| `gitlab-release` | `--gitlab-host` | `CI_SERVER_HOST` |
+| `init-gitlab-ci` | generated branch rules | `.changesets/config.*` `baseBranch` and `snapshotBranch` |
 
 ## 5. `env/release.env.example`
 
@@ -239,6 +252,11 @@ When `sync-vars --platform gitlab` is used, these values are written as GitLab v
 | `MAVEN_SNAPSHOT_REPOSITORY_USERNAME` | Yes | Yes |
 | `MAVEN_SNAPSHOT_REPOSITORY_PASSWORD` | Yes | Yes |
 | `GITLAB_RELEASE_TOKEN` | Yes | Yes |
+
+Operational note:
+
+- `doctor-platform --platform gitlab` now checks both remote protected variables and the configured `snapshotBranch`
+- if protected variables exist but the snapshot branch is not protected, the command fails with a concrete remediation hint because GitLab will not expose protected variables to that branch
 
 ### 7.2 Extra GitLab CI runtime variables
 
