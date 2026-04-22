@@ -1,16 +1,33 @@
 ## Release Plan
 
-- Release type: `minor`
-- Affected packages: `javachanges`
-- Release version: `v1.5.0`
-- Next snapshot: `1.5.0-SNAPSHOT`
+| Field | Value |
+| --- | --- |
+| Release type | `minor` |
+| Affected packages | `javachanges` |
+| Release version | `v1.6.0` |
+| Tag strategy | `whole-repo` |
+| Planned tags | `v1.6.0` |
+| Next snapshot | `1.6.0-SNAPSHOT` |
 
 ## Included Changesets
 
-- `patch` `packages: javachanges` Add `--format json` support for `github-release-plan`, `github-tag-from-plan`, and `github-release-from-plan`.
-- `minor` `packages: javachanges` Commandize the GitLab CI/CD release flow so business repositories can keep `.gitlab-ci.yml` minimal.
-- `patch` `packages: javachanges` Harden machine-readable JSON handling by replacing more hand-written JSON formatting and parsing with Jackson-based structured serialization.
-- `patch` `packages: javachanges` Refactor release automation request parsing and process execution helpers to reduce duplicated CLI runtime code.
+### Minor Changes
+
+- **Add an optional `per-module` release tag strategy for release-plan automation.**
+  - Release: `minor`
+  - Packages: `javachanges`
+  - Notes: Add an optional `per-module` release tag strategy for release-plan automation.
+- **Add plain snapshot version mode so snapshot publishes can keep the original `-SNAPSHOT` revision while preserving the existing stamped default.**
+  - Release: `minor`
+  - Packages: `javachanges`
+  - Notes: Add plain snapshot version mode so snapshot publishes can keep the original `-SNAPSHOT` revision while preserving the existing stamped default.
+
+### Patch Changes
+
+- **Improve generated release PR Markdown layout.**
+  - Release: `patch`
+  - Packages: `javachanges`
+  - Notes: Improve generated release PR Markdown layout.
 
 This PR was generated automatically from `.changesets/*.md` files.
 Merging it will trigger an automatic tag push and then reuse the existing release workflows.
