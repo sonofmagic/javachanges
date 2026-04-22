@@ -227,6 +227,13 @@ Important behavior:
 | `--execute true` missing | Dry-run only |
 | Release plan produces no staged file changes | Skips MR update |
 | Open release MR already exists | Updates it instead of creating a new one |
+| Remote `changeset-release/*` branch already exists | Reuses the branch by resolving its current remote SHA, then pushes with an explicit `--force-with-lease` |
+
+Notes:
+
+- `gitlab-release-plan` treats `changeset-release/<target-branch>` as an automation-owned branch.
+- If the remote branch exists but no open MR matches it, the command still refreshes that branch and then creates a new MR.
+- This keeps repeated default-branch pipelines idempotent without requiring manual branch deletion.
 
 ### 7.2 `gitlab-tag-from-plan`
 
@@ -315,6 +322,7 @@ Important behavior:
 | Problem | Cause | Fix |
 | --- | --- | --- |
 | Release MR job fails to push | `GITLAB_RELEASE_BOT_TOKEN` or `GITLAB_RELEASE_BOT_USERNAME` missing | add the bot credentials as project variables |
+| Release MR job fails with `stale info` | another process updated `changeset-release/*` after javachanges resolved the remote SHA | rerun the pipeline; if the branch is shared by other automation, stop sharing that branch name |
 | Release tag job never tags | `release-plan.json` did not change or `CI_COMMIT_BEFORE_SHA` is unusable | inspect the branch pipeline and the generated release plan |
 | `sync-vars` does nothing | env file still contains placeholders | replace `replace-me` values first |
 | `audit-vars` fails with `MISMATCH` | local env and remote project variables diverged | resync or deliberately update one side |

@@ -12,13 +12,17 @@ final class GitlabReleaseSupport {
     private final Path repoRoot;
     private final PrintStream out;
     private final GitlabReleaseRuntime runtime;
-    private final GitlabApiClient apiClient;
+    private final GitlabMergeRequestClient apiClient;
 
     GitlabReleaseSupport(Path repoRoot, PrintStream out) {
+        this(repoRoot, out, new GitlabReleaseRuntime(repoRoot), new GitlabApiClient());
+    }
+
+    GitlabReleaseSupport(Path repoRoot, PrintStream out, GitlabReleaseRuntime runtime, GitlabMergeRequestClient apiClient) {
         this.repoRoot = repoRoot;
         this.out = out;
-        this.runtime = new GitlabReleaseRuntime(repoRoot);
-        this.apiClient = new GitlabApiClient();
+        this.runtime = runtime;
+        this.apiClient = apiClient;
     }
 
     void planMergeRequest(GitlabReleasePlanRequest request) throws IOException, InterruptedException {
@@ -61,9 +65,9 @@ final class GitlabReleaseSupport {
         }
         runtime.runGit("commit", "-m", commitMessage);
         String remoteUrl = apiClient.authenticatedRemoteUrl();
-        runtime.runGit("push", "--force-with-lease", remoteUrl, "HEAD:" + releaseBranch);
-
         Integer mergeRequestIid = apiClient.findOpenMergeRequestIid(request.projectId, releaseBranch, targetBranch);
+        String remoteBranchHead = runtime.remoteBranchHead(releaseBranch, remoteUrl);
+        runtime.pushReleaseBranch(remoteUrl, releaseBranch, remoteBranchHead);
         if (mergeRequestIid == null) {
             String response = apiClient.createMergeRequest(request.projectId, releaseBranch, targetBranch, title, description);
             out.println("Created GitLab MR !" + apiClient.requiredJsonInt(response, "iid"));

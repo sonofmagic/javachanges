@@ -159,6 +159,12 @@ Suggested order:
 | --- | --- | --- |
 | `gitlab-tag-from-plan` skips tagging | `.changesets/release-plan.json` did not change, or `CI_COMMIT_BEFORE_SHA` is unusable | inspect the default branch pipeline and confirm a new applied plan was committed |
 
+### 5.3 Release MR push fails with `stale info`
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| `release_plan_mr` fails with `failed to push some refs` and `stale info` | another writer updated the same `changeset-release/<default-branch>` branch after `gitlab-release-plan` resolved the current remote SHA | rerun the pipeline; if the branch is meant to be owned only by javachanges, remove the competing writer |
+
 ## 6. Publish and credentials problems
 
 ### 6.1 `preflight` or `publish` says credentials are missing

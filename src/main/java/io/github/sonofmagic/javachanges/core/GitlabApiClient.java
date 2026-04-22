@@ -13,8 +13,21 @@ import static io.github.sonofmagic.javachanges.core.ReleaseUtils.firstNonBlank;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.readAllBytes;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.requireEnv;
 
-final class GitlabApiClient {
-    Integer findOpenMergeRequestIid(String projectId, String sourceBranch, String targetBranch) throws IOException {
+interface GitlabMergeRequestClient {
+    Integer findOpenMergeRequestIid(String projectId, String sourceBranch, String targetBranch) throws IOException;
+
+    String createMergeRequest(String projectId, String sourceBranch, String targetBranch,
+                              String title, String description) throws IOException;
+
+    void updateMergeRequest(String projectId, int mergeRequestIid, String title, String description) throws IOException;
+
+    String authenticatedRemoteUrl();
+
+    int requiredJsonInt(String json, String field);
+}
+
+final class GitlabApiClient implements GitlabMergeRequestClient {
+    public Integer findOpenMergeRequestIid(String projectId, String sourceBranch, String targetBranch) throws IOException {
         String response = request(
             "GET",
             "/projects/" + projectId + "/merge_requests?state=opened&source_branch="
@@ -28,8 +41,8 @@ final class GitlabApiClient {
         return Integer.valueOf(matcher.group(1));
     }
 
-    String createMergeRequest(String projectId, String sourceBranch, String targetBranch,
-                              String title, String description) throws IOException {
+    public String createMergeRequest(String projectId, String sourceBranch, String targetBranch,
+                                     String title, String description) throws IOException {
         return request(
             "POST",
             "/projects/" + projectId + "/merge_requests",
@@ -43,7 +56,7 @@ final class GitlabApiClient {
         );
     }
 
-    void updateMergeRequest(String projectId, int mergeRequestIid, String title, String description) throws IOException {
+    public void updateMergeRequest(String projectId, int mergeRequestIid, String title, String description) throws IOException {
         request(
             "PUT",
             "/projects/" + projectId + "/merge_requests/" + mergeRequestIid,
@@ -55,7 +68,7 @@ final class GitlabApiClient {
         );
     }
 
-    String authenticatedRemoteUrl() {
+    public String authenticatedRemoteUrl() {
         String host = requireEnv("CI_SERVER_HOST");
         String projectPath = requireEnv("CI_PROJECT_PATH");
         return "https://" + urlEncode(requireEnv("GITLAB_RELEASE_BOT_USERNAME"))
@@ -63,7 +76,7 @@ final class GitlabApiClient {
             + "@" + host + "/" + projectPath + ".git";
     }
 
-    int requiredJsonInt(String json, String field) {
+    public int requiredJsonInt(String json, String field) {
         Matcher matcher = Pattern.compile("\"" + Pattern.quote(field) + "\"\\s*:\\s*(\\d+)").matcher(json);
         if (!matcher.find()) {
             throw new IllegalStateException("Missing `" + field + "` in GitLab response: " + json);

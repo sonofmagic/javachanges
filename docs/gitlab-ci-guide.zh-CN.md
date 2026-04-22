@@ -223,6 +223,13 @@ publish_release:
 | 没有传 `--execute true` | 只做 dry-run |
 | 生成 release plan 后没有任何 staged 变更 | 跳过 MR 更新 |
 | 已经存在打开中的 release MR | 更新它，而不是新建一个 |
+| 远端已经存在 `changeset-release/*` 分支 | 先解析远端当前 SHA，再用显式 `--force-with-lease` 复用并更新该分支 |
+
+补充说明：
+
+- `gitlab-release-plan` 会把 `changeset-release/<target-branch>` 视为自动化拥有的分支。
+- 如果远端分支还在，但当前没有匹配的 open MR，命令仍会刷新这个分支，然后重新创建 MR。
+- 这样默认分支上的重复 pipeline 可以保持幂等，不需要手工删除远端 release branch。
 
 ### 7.2 `gitlab-tag-from-plan`
 
@@ -311,6 +318,7 @@ variables:
 | 问题 | 原因 | 修复方式 |
 | --- | --- | --- |
 | release MR job 无法 push | 缺少 `GITLAB_RELEASE_BOT_TOKEN` 或 `GITLAB_RELEASE_BOT_USERNAME` | 把 bot 凭据加成项目变量 |
+| release MR job 报 `stale info` | javachanges 解析完远端 SHA 之后，又有别的流程更新了同一个 `changeset-release/*` 分支 | 直接重跑 pipeline；如果这个分支名被多个自动流程共用，需要改成单一 owner |
 | release tag job 一直不打 tag | `release-plan.json` 没变化，或 `CI_COMMIT_BEFORE_SHA` 不可用 | 检查默认分支 pipeline 和 release plan 产物 |
 | `sync-vars` 没有任何效果 | env 文件里还是占位值 | 先把 `replace-me` 替换成真实值 |
 | `audit-vars` 报 `MISMATCH` | 本地 env 与远端项目变量已经不一致 | 重新同步，或明确选择以哪一边为准 |

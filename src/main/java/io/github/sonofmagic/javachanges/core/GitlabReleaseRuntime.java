@@ -10,7 +10,7 @@ import static io.github.sonofmagic.javachanges.core.ReleaseUtils.readAllBytes;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.requireEnv;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
 
-final class GitlabReleaseRuntime {
+class GitlabReleaseRuntime {
     private final Path repoRoot;
 
     GitlabReleaseRuntime(Path repoRoot) {
@@ -35,6 +35,40 @@ final class GitlabReleaseRuntime {
     boolean remoteTagExists(String tagName, String remoteUrl) throws IOException, InterruptedException {
         CommandResult result = runGitCapture("ls-remote", "--tags", remoteUrl, "refs/tags/" + tagName);
         return result.exitCode == 0 && trimToNull(result.stdoutText()) != null;
+    }
+
+    String remoteBranchHead(String branchName, String remoteUrl) throws IOException, InterruptedException {
+        CommandResult result = runGitCapture("ls-remote", "--heads", remoteUrl, "refs/heads/" + branchName);
+        if (result.exitCode != 0) {
+            String error = trimToNull(result.stderrText());
+            throw new IllegalStateException(error == null
+                ? "git command failed: [ls-remote, --heads, " + remoteUrl + ", refs/heads/" + branchName + "]"
+                : error);
+        }
+        String stdout = trimToNull(result.stdoutText());
+        if (stdout == null) {
+            return null;
+        }
+        int tabIndex = stdout.indexOf('\t');
+        if (tabIndex <= 0) {
+            throw new IllegalStateException("Unexpected git ls-remote output: " + stdout);
+        }
+        return stdout.substring(0, tabIndex).trim();
+    }
+
+    void pushReleaseBranch(String remoteUrl, String releaseBranch, String expectedOldSha)
+        throws IOException, InterruptedException {
+        String destination = "HEAD:refs/heads/" + releaseBranch;
+        if (trimToNull(expectedOldSha) == null) {
+            runGit("push", remoteUrl, destination);
+            return;
+        }
+        runGit(
+            "push",
+            "--force-with-lease=refs/heads/" + releaseBranch + ":" + expectedOldSha,
+            remoteUrl,
+            destination
+        );
     }
 
     void runGit(String... args) throws IOException, InterruptedException {

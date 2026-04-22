@@ -159,6 +159,12 @@ JAVACHANGES_VERSION: "REPLACE_WITH_PUBLISHED_VERSION"
 | --- | --- | --- |
 | `gitlab-tag-from-plan` 跳过打 tag | `.changesets/release-plan.json` 没变化，或者 `CI_COMMIT_BEFORE_SHA` 不可用 | 检查默认分支 pipeline，确认新的 applied plan 已经被提交 |
 
+### 5.3 Release MR push 报 `stale info`
+
+| 现象 | 原因 | 修复方式 |
+| --- | --- | --- |
+| `release_plan_mr` 失败，并出现 `failed to push some refs` / `stale info` | `gitlab-release-plan` 刚解析完远端 `changeset-release/<default-branch>` 的 SHA，就有别的写入方更新了同一个分支 | 直接重跑 pipeline；如果这个分支应当只由 javachanges 持有，需要移除其他写入方 |
+
 ## 6. 发布和凭据问题
 
 ### 6.1 `preflight` 或 `publish` 提示缺少凭据
