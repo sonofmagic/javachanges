@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.4.1 - 2026-04-22
+
+### Patch Changes
+
+- Make `gitlab-release-plan --execute true` more idempotent when a stale remote (packages: javachanges) Make `gitlab-release-plan --execute true` more idempotent when a stale remote
+
 ## 1.4.0 - 2026-04-21
 
 ### Minor Changes
