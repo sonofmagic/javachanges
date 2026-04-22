@@ -207,9 +207,74 @@ How the example works:
 | `release_tag` | Creates the final tag after the release plan manifest has changed on the default branch |
 | `publish_release` | Publishes from the final Git tag |
 
-## 7. How The GitLab-specific Commands Behave
+## 7. Safe `script:` Patterns For GitLab CI
 
-### 7.1 `gitlab-release-plan`
+Recommended:
+
+- Keep each `script:` item to one command when possible.
+- Use YAML folded scalars like `- >` for long single commands that need line wrapping.
+- Prefer direct `mvn ...` or `java -jar ...` invocation over inline shell program generation.
+- If CI must write a file, prefer `printf`, `echo`, or a checked-in script under `scripts/`.
+- Quote GitLab variables explicitly, for example `"$CI_PROJECT_DIR"` and `"$CI_COMMIT_TAG"`.
+
+Not recommended:
+
+- `script: - |` blocks that contain shell heredoc such as `cat <<EOF`.
+- Heredoc bodies whose lines can be misread as YAML keys or list items after indentation changes.
+- Large inline shell programs embedded directly in `.gitlab-ci.yml` when the same logic can live in a repository script.
+
+Why this pitfall is common:
+
+- GitLab parses `.gitlab-ci.yml` as YAML before the shell runs.
+- Heredoc syntax needs indentation that remains valid for both YAML and the shell terminator.
+- A small reindent can make YAML treat heredoc content as a new mapping key, which causes errors such as `could not find expected ':' while scanning a simple key`.
+- This is easy to trigger when users copy a working shell snippet into `script: - |` and then adjust indentation by hand.
+
+Recommended pattern:
+
+```yaml
+release_tag:
+  stage: tag
+  script:
+    - mvn -B -DskipTests compile
+    - >
+      mvn -B -DskipTests compile exec:java
+      -Dexec.args="gitlab-tag-from-plan --directory $CI_PROJECT_DIR --before-sha $CI_COMMIT_BEFORE_SHA --current-sha $CI_COMMIT_SHA --execute true"
+```
+
+Avoid:
+
+```yaml
+release_tag:
+  stage: tag
+  script:
+    - |
+      cat <<EOF > release.env
+      CI_PROJECT_DIR=$CI_PROJECT_DIR
+      CI_COMMIT_SHA=$CI_COMMIT_SHA
+      EOF
+      mvn -B -DskipTests compile exec:java -Dexec.args="gitlab-tag-from-plan --directory $CI_PROJECT_DIR --execute true"
+```
+
+Safer file-generation pattern:
+
+```yaml
+write_env:
+  script:
+    - printf 'CI_PROJECT_DIR=%s\nCI_COMMIT_SHA=%s\n' "$CI_PROJECT_DIR" "$CI_COMMIT_SHA" > release.env
+```
+
+For longer setup flows, move the shell into a repository script:
+
+```yaml
+release_plan_mr:
+  script:
+    - ./scripts/gitlab-release-plan.sh
+```
+
+## 8. How The GitLab-specific Commands Behave
+
+### 8.1 `gitlab-release-plan`
 
 Default behavior:
 
@@ -235,7 +300,7 @@ Notes:
 - If the remote branch exists but no open MR matches it, the command still refreshes that branch and then creates a new MR.
 - This keeps repeated default-branch pipelines idempotent without requiring manual branch deletion.
 
-### 7.2 `gitlab-tag-from-plan`
+### 8.2 `gitlab-tag-from-plan`
 
 Important behavior:
 
@@ -246,7 +311,7 @@ Important behavior:
 | Tag already exists remotely | Skips tagging |
 | `--execute true` missing | Dry-run only |
 
-## 8. Generic Maven Publish In GitLab CI/CD
+## 9. Generic Maven Publish In GitLab CI/CD
 
 The generic `publish` helper uses:
 
@@ -279,7 +344,7 @@ publish_execute:
     - if: $CI_COMMIT_TAG
 ```
 
-## 9. Maven Cache Behavior In GitLab CI/CD
+## 10. Maven Cache Behavior In GitLab CI/CD
 
 Recommended cache:
 
@@ -317,18 +382,19 @@ Important behavior:
 | Different runners without shared cache | Cache reuse may be weak |
 | Shared/distributed GitLab cache configured | Cross-runner reuse improves |
 
-## 10. Common Mistakes
+## 11. Common Mistakes
 
 | Problem | Cause | Fix |
 | --- | --- | --- |
 | Release MR job fails to push | `GITLAB_RELEASE_BOT_TOKEN` or `GITLAB_RELEASE_BOT_USERNAME` missing | add the bot credentials as project variables |
 | Release MR job fails with `stale info` | another process updated `changeset-release/*` after javachanges resolved the remote SHA | rerun the pipeline; if the branch is shared by other automation, stop sharing that branch name |
 | Release tag job never tags | `release-plan.json` did not change or `CI_COMMIT_BEFORE_SHA` is unusable | inspect the branch pipeline and the generated release plan |
+| GitLab rejects the pipeline before any job starts with `could not find expected ':' while scanning a simple key` | heredoc or other multiline shell content broke YAML indentation rules | replace `script: - |` heredoc blocks with `- >`, `printf`, or a checked-in shell script |
 | `sync-vars` does nothing | env file still contains placeholders | replace `replace-me` values first |
 | `audit-vars` fails with `MISMATCH` | local env and remote project variables diverged | resync or deliberately update one side |
 | Publish job fails on missing Maven credentials | project variables were not configured | sync the variables with `glab`, then rerun |
 
-## 11. Recommended Documentation Split
+## 12. Recommended Documentation Split
 
 Use these docs together:
 
@@ -338,7 +404,7 @@ Use these docs together:
 | GitHub-based self-release flow in this repository | [GitHub Actions Release Flow](./github-actions-release.md) |
 | Maven Central-specific publishing | [Publish To Maven Central](./publish-to-maven-central.md) |
 
-## 12. Summary
+## 13. Summary
 
 The practical GitLab CI/CD path is:
 
@@ -348,7 +414,7 @@ The practical GitLab CI/CD path is:
 4. sync and audit GitLab variables with `sync-vars` and `audit-vars`
 5. publish from tags with `preflight` and `publish`
 
-## 13. References
+## 14. References
 
 - GitLab CI/CD YAML syntax: https://docs.gitlab.com/ci/yaml/
 - GitLab CI/CD caching: https://docs.gitlab.com/ci/caching/

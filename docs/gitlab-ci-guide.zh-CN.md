@@ -203,9 +203,74 @@ publish_release:
 | `release_tag` | 在默认分支上的 release plan manifest 发生变化后创建正式 tag |
 | `publish_release` | 基于正式 Git tag 执行发布 |
 
-## 7. GitLab 专用命令的行为说明
+## 7. GitLab CI 中更安全的 `script:` 写法
 
-### 7.1 `gitlab-release-plan`
+推荐：
+
+- `script:` 里的每一项尽量只放一条命令。
+- 长命令用 YAML 折叠标量 `- >` 换行，不要把它写成内联 shell 小程序。
+- 优先直接执行 `mvn ...` 或 `java -jar ...`，不要在 `.gitlab-ci.yml` 里临时拼复杂脚本。
+- 如果 CI 里必须写文件，优先用 `printf`、`echo`，或者把逻辑放到仓库里的 `scripts/` 脚本。
+- 对 GitLab 变量保持显式引用，比如 `"$CI_PROJECT_DIR"`、`"$CI_COMMIT_TAG"`。
+
+不推荐：
+
+- 在 `script: - |` 里再写 shell heredoc，例如 `cat <<EOF`。
+- heredoc 正文和 YAML key / list item 缩进接近，稍微重排就会被 YAML 误判。
+- 把大段 shell 直接塞进 `.gitlab-ci.yml`，而不是落到仓库脚本里。
+
+为什么这个坑在 GitLab CI 里高发：
+
+- GitLab 会先把 `.gitlab-ci.yml` 当 YAML 解析，之后才交给 shell。
+- heredoc 同时要求 YAML 缩进合法、shell 终止符位置也合法。
+- 只要缩进轻微漂移，YAML 就可能把 heredoc 正文当成新的 key，直接报 `could not find expected ':' while scanning a simple key`。
+- 用户经常把本地能跑的 shell 片段复制进 `script: - |`，再手动调整缩进，于是特别容易踩坑。
+
+推荐模式：
+
+```yaml
+release_tag:
+  stage: tag
+  script:
+    - mvn -B -DskipTests compile
+    - >
+      mvn -B -DskipTests compile exec:java
+      -Dexec.args="gitlab-tag-from-plan --directory $CI_PROJECT_DIR --before-sha $CI_COMMIT_BEFORE_SHA --current-sha $CI_COMMIT_SHA --execute true"
+```
+
+避免这样写：
+
+```yaml
+release_tag:
+  stage: tag
+  script:
+    - |
+      cat <<EOF > release.env
+      CI_PROJECT_DIR=$CI_PROJECT_DIR
+      CI_COMMIT_SHA=$CI_COMMIT_SHA
+      EOF
+      mvn -B -DskipTests compile exec:java -Dexec.args="gitlab-tag-from-plan --directory $CI_PROJECT_DIR --execute true"
+```
+
+更稳妥的写文件方式：
+
+```yaml
+write_env:
+  script:
+    - printf 'CI_PROJECT_DIR=%s\nCI_COMMIT_SHA=%s\n' "$CI_PROJECT_DIR" "$CI_COMMIT_SHA" > release.env
+```
+
+如果准备逻辑比较长，直接下沉到仓库脚本：
+
+```yaml
+release_plan_mr:
+  script:
+    - ./scripts/gitlab-release-plan.sh
+```
+
+## 8. GitLab 专用命令的行为说明
+
+### 8.1 `gitlab-release-plan`
 
 默认行为：
 
@@ -231,7 +296,7 @@ publish_release:
 - 如果远端分支还在，但当前没有匹配的 open MR，命令仍会刷新这个分支，然后重新创建 MR。
 - 这样默认分支上的重复 pipeline 可以保持幂等，不需要手工删除远端 release branch。
 
-### 7.2 `gitlab-tag-from-plan`
+### 8.2 `gitlab-tag-from-plan`
 
 关键行为：
 
@@ -242,7 +307,7 @@ publish_release:
 | 远端 tag 已经存在 | 跳过打 tag |
 | 没有传 `--execute true` | 只做 dry-run |
 
-## 8. 在 GitLab CI/CD 中做通用 Maven 发布
+## 9. 在 GitLab CI/CD 中做通用 Maven 发布
 
 通用 `publish` 辅助命令会负责：
 
@@ -275,7 +340,7 @@ publish_execute:
     - if: $CI_COMMIT_TAG
 ```
 
-## 9. GitLab CI/CD 中的 Maven Cache 行为
+## 10. GitLab CI/CD 中的 Maven Cache 行为
 
 推荐缓存配置：
 
@@ -313,18 +378,19 @@ variables:
 | 不同 runner 且没有共享 cache | 缓存复用会比较弱 |
 | GitLab 配置了共享 / 分布式 cache | 跨 runner 复用会更好 |
 
-## 10. 常见错误
+## 11. 常见错误
 
 | 问题 | 原因 | 修复方式 |
 | --- | --- | --- |
 | release MR job 无法 push | 缺少 `GITLAB_RELEASE_BOT_TOKEN` 或 `GITLAB_RELEASE_BOT_USERNAME` | 把 bot 凭据加成项目变量 |
 | release MR job 报 `stale info` | javachanges 解析完远端 SHA 之后，又有别的流程更新了同一个 `changeset-release/*` 分支 | 直接重跑 pipeline；如果这个分支名被多个自动流程共用，需要改成单一 owner |
 | release tag job 一直不打 tag | `release-plan.json` 没变化，或 `CI_COMMIT_BEFORE_SHA` 不可用 | 检查默认分支 pipeline 和 release plan 产物 |
+| pipeline 还没启动 job 就报 `could not find expected ':' while scanning a simple key` | heredoc 或其他多行 shell 内容破坏了 YAML 缩进语义 | 把 `script: - |` + heredoc 改成 `- >`、`printf`，或者仓库内脚本 |
 | `sync-vars` 没有任何效果 | env 文件里还是占位值 | 先把 `replace-me` 替换成真实值 |
 | `audit-vars` 报 `MISMATCH` | 本地 env 与远端项目变量已经不一致 | 重新同步，或明确选择以哪一边为准 |
 | publish job 提示 Maven 凭据缺失 | 项目变量没有配置完整 | 先用 `glab` 同步变量，再重跑 pipeline |
 
-## 11. 推荐与哪些文档配合阅读
+## 12. 推荐与哪些文档配合阅读
 
 建议把下面这些文档配合起来看：
 
@@ -334,7 +400,7 @@ variables:
 | 当前仓库自己的 GitHub release 流程 | [GitHub Actions Release Flow](./github-actions-release.md) |
 | Maven Central 专用发布 | [Publish To Maven Central](./publish-to-maven-central.md) |
 
-## 12. 总结
+## 13. 总结
 
 GitLab CI/CD 中最实用的路径通常是：
 
@@ -344,7 +410,7 @@ GitLab CI/CD 中最实用的路径通常是：
 4. 用 `sync-vars` 和 `audit-vars` 管理 GitLab 项目变量
 5. 在 tag pipeline 中用 `preflight` 和 `publish` 做正式发布
 
-## 13. 参考资料
+## 14. 参考资料
 
 - GitLab CI/CD YAML syntax: https://docs.gitlab.com/ci/yaml/
 - GitLab CI/CD caching: https://docs.gitlab.com/ci/caching/
