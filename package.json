@@ -18,11 +18,11 @@
     "snapshot:publish:local": "./scripts/publish-local-snapshot.sh"
   },
   "devDependencies": {
-    "@types/node": "^24.6.0",
+    "@types/node": "^25.6.0",
     "mermaid": "^11.14.0",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.3",
     "vitepress": "^1.6.4",
     "vitepress-plugin-llms": "^1.12.1",
-    "wrangler": "^4.13.2"
+    "wrangler": "^4.84.1"
   }
 }
