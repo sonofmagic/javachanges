@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.maxReleaseLevel;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.readAllBytes;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.stripSnapshot;
 
 final class ReleasePlanner {
@@ -51,20 +50,16 @@ final class ReleasePlanner {
     }
 
     private String latestWholeRepoTag() throws IOException, InterruptedException {
-        ProcessBuilder builder = new ProcessBuilder("git", "tag", "--list", "v*", "--sort=-v:refname");
-        builder.directory(repoRoot.toFile());
-        Process process = builder.start();
-        byte[] stdout = readAllBytes(process.getInputStream());
-        byte[] stderr = readAllBytes(process.getErrorStream());
-        int exitCode = process.waitFor();
+        CommandResult result = ReleaseProcessUtils.runCapture(repoRoot, "git", "tag", "--list", "v*", "--sort=-v:refname");
+        int exitCode = result.exitCode;
         if (exitCode != 0) {
-            String error = new String(stderr, StandardCharsets.UTF_8).trim();
+            String error = result.stderrText().trim();
             if (error.contains("not a git repository")) {
                 return null;
             }
             throw new IllegalStateException("git tag failed: " + error);
         }
-        String output = new String(stdout, StandardCharsets.UTF_8).trim();
+        String output = result.stdoutText().trim();
         if (output.isEmpty()) {
             return null;
         }

@@ -2,11 +2,8 @@ package io.github.sonofmagic.javachanges.core;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.readAllBytes;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
 
 final class GithubReleaseRuntime {
@@ -144,15 +141,9 @@ final class GithubReleaseRuntime {
     }
 
     private CommandResult runCapture(String executable, String... args) throws IOException, InterruptedException {
-        List<String> command = new ArrayList<String>();
-        command.add(executable);
-        command.addAll(Arrays.asList(args));
-        ProcessBuilder builder = new ProcessBuilder(command);
-        builder.directory(repoRoot.toFile());
-        Process process = builder.start();
-        byte[] stdout = readAllBytes(process.getInputStream());
-        byte[] stderr = readAllBytes(process.getErrorStream());
-        int exitCode = process.waitFor();
-        return new CommandResult(exitCode, stdout, stderr);
+        String[] command = new String[args.length + 1];
+        command[0] = executable;
+        System.arraycopy(args, 0, command, 1, args.length);
+        return ReleaseProcessUtils.runCapture(repoRoot, command);
     }
 }

@@ -11,7 +11,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.readAllBytes;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.releaseModuleFromTag;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.releaseVersionFromTag;
 
@@ -181,17 +180,12 @@ final class ReleaseNotesGenerator {
     }
 
     private String gitTextAllowEmpty(String... args) throws IOException, InterruptedException {
-        List<String> command = new ArrayList<String>();
-        command.add("git");
-        command.addAll(Arrays.asList(args));
-        ProcessBuilder builder = new ProcessBuilder(command);
-        builder.directory(repoRoot.toFile());
-        Process process = builder.start();
-        byte[] stdout = readAllBytes(process.getInputStream());
-        byte[] stderr = readAllBytes(process.getErrorStream());
-        int exitCode = process.waitFor();
-        if (exitCode != 0) {
-            String error = new String(stderr, StandardCharsets.UTF_8).trim();
+        String[] command = new String[args.length + 1];
+        command[0] = "git";
+        System.arraycopy(args, 0, command, 1, args.length);
+        CommandResult result = ReleaseProcessUtils.runCapture(repoRoot, command);
+        if (result.exitCode != 0) {
+            String error = result.stderrText().trim();
             if (error.isEmpty()) {
                 error = "git command failed";
             }
@@ -200,6 +194,6 @@ final class ReleaseNotesGenerator {
             }
             throw new IllegalStateException(error);
         }
-        return new String(stdout, StandardCharsets.UTF_8);
+        return result.stdoutText();
     }
 }

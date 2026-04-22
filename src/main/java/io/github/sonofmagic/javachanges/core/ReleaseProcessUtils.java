@@ -27,20 +27,16 @@ final class ReleaseProcessUtils {
         List<String> command = new ArrayList<String>();
         command.add("git");
         command.addAll(Arrays.asList(args));
-        ProcessBuilder builder = new ProcessBuilder(command);
-        builder.directory(repoRoot.toFile());
-        Process process = builder.start();
-        byte[] stdout = readAllBytes(process.getInputStream());
-        byte[] stderr = readAllBytes(process.getErrorStream());
-        int exitCode = process.waitFor();
+        CommandResult result = runCapture(repoRoot, command);
+        int exitCode = result.exitCode;
         if (exitCode != 0) {
-            String error = new String(stderr, StandardCharsets.UTF_8).trim();
+            String error = result.stderrText().trim();
             if (!error.isEmpty()) {
                 throw new IllegalStateException(error);
             }
             throw new IllegalStateException("git command failed");
         }
-        return new String(stdout, StandardCharsets.UTF_8);
+        return result.stdoutText();
     }
 
     static int runCommand(List<String> command, Path workingDirectory) throws IOException, InterruptedException {
@@ -49,6 +45,20 @@ final class ReleaseProcessUtils {
         builder.inheritIO();
         Process process = builder.start();
         return process.waitFor();
+    }
+
+    static CommandResult runCapture(Path workingDirectory, String... command) throws IOException, InterruptedException {
+        return runCapture(workingDirectory, Arrays.asList(command));
+    }
+
+    static CommandResult runCapture(Path workingDirectory, List<String> command) throws IOException, InterruptedException {
+        ProcessBuilder builder = new ProcessBuilder(command);
+        builder.directory(workingDirectory.toFile());
+        Process process = builder.start();
+        byte[] stdout = readAllBytes(process.getInputStream());
+        byte[] stderr = readAllBytes(process.getErrorStream());
+        int exitCode = process.waitFor();
+        return new CommandResult(exitCode, stdout, stderr);
     }
 
     static String mavenWrapperPath() {
@@ -64,12 +74,7 @@ final class ReleaseProcessUtils {
 
             @Override
             public boolean commandAvailable(Path workingDirectory, String... command) throws IOException, InterruptedException {
-                ProcessBuilder builder = new ProcessBuilder(Arrays.asList(command));
-                builder.directory(workingDirectory.toFile());
-                Process process = builder.start();
-                closeQuietly(process.getInputStream());
-                closeQuietly(process.getErrorStream());
-                return process.waitFor() == 0;
+                return runCapture(workingDirectory, command).exitCode == 0;
             }
         });
     }

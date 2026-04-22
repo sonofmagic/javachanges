@@ -8,13 +8,10 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.gitTextAllowEmpty;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.readAllBytes;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
 
 final class PublishRuntime {
@@ -31,13 +28,7 @@ final class PublishRuntime {
     }
 
     boolean gitRefExists(String ref) throws IOException, InterruptedException {
-        List<String> command = Arrays.asList("git", "rev-parse", ref);
-        ProcessBuilder builder = new ProcessBuilder(command);
-        builder.directory(repoRoot.toFile());
-        Process process = builder.start();
-        readAllBytes(process.getInputStream());
-        readAllBytes(process.getErrorStream());
-        return process.waitFor() == 0;
+        return ReleaseProcessUtils.runCapture(repoRoot, "git", "rev-parse", ref).exitCode == 0;
     }
 
     String snapshotBuildStamp() throws IOException, InterruptedException {
@@ -47,16 +38,11 @@ final class PublishRuntime {
     }
 
     private String gitHeadShortSha() throws IOException, InterruptedException {
-        List<String> command = Arrays.asList("git", "rev-parse", "--short", "HEAD");
-        ProcessBuilder builder = new ProcessBuilder(command);
-        builder.directory(repoRoot.toFile());
-        Process process = builder.start();
-        byte[] stdout = readAllBytes(process.getInputStream());
-        readAllBytes(process.getErrorStream());
-        if (process.waitFor() != 0) {
+        CommandResult result = ReleaseProcessUtils.runCapture(repoRoot, "git", "rev-parse", "--short", "HEAD");
+        if (result.exitCode != 0) {
             return "nogit";
         }
-        String value = trimToNull(new String(stdout, StandardCharsets.UTF_8));
+        String value = trimToNull(result.stdoutText());
         return value == null ? "nogit" : value;
     }
 

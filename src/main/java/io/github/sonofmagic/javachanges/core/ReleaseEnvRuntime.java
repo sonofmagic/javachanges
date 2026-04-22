@@ -9,7 +9,6 @@ import java.util.List;
 
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.closeQuietly;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.isBlank;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.readAllBytes;
 
 class ReleaseEnvRuntime {
     private final Path repoRoot;
@@ -75,13 +74,7 @@ class ReleaseEnvRuntime {
     }
 
     CommandResult runAndCapture(List<String> command) throws IOException, InterruptedException {
-        ProcessBuilder builder = new ProcessBuilder(command);
-        builder.directory(repoRoot.toFile());
-        Process process = builder.start();
-        byte[] stdout = readAllBytes(process.getInputStream());
-        byte[] stderr = readAllBytes(process.getErrorStream());
-        int exitCode = process.waitFor();
-        return new CommandResult(exitCode, stdout, stderr);
+        return ReleaseProcessUtils.runCapture(repoRoot, command);
     }
 
     String relativizePath(Path path) {
