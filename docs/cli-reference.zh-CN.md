@@ -282,6 +282,9 @@ mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --directory /path
 | `doctor-platform` | 会带上 `platform` 以及 env / CLI 检查分组 |
 | `audit-vars` | 会带上 `platform`、审计分组结果，以及失败时的最终错误信息 |
 | `publish` | 会带上 tag、module、releaseVersion、releaseNotesFile 等发布元数据 |
+| `github-release-plan` | 会带上 action、是否 skipped、releaseVersion |
+| `github-tag-from-plan` | 会带上 action、是否 skipped、releaseVersion、tag |
+| `github-release-from-plan` | 会带上 action、tag、releaseVersion、releaseNotesFile |
 | `gitlab-release-plan` | 会带上 action、是否 skipped、releaseVersion、projectId |
 | `gitlab-tag-from-plan` | 会带上 action、是否 skipped、releaseVersion、releaseModule、tag |
 | `gitlab-release` | 会带上 action、projectId、tag、releaseModule、releaseVersion、releaseNotesFile |
@@ -405,7 +408,10 @@ GitLab CI 默认行为：
 mvn -q -DskipTests compile exec:java -Dexec.args="github-release-plan --directory /path/to/repo --github-repo owner/repo --execute true"
 mvn -q -DskipTests compile exec:java -Dexec.args="github-tag-from-plan --directory /path/to/repo --execute true"
 mvn -q -DskipTests compile exec:java -Dexec.args="github-release-from-plan --directory /path/to/repo --release-notes-file target/release-notes.md --execute true"
+mvn -q -DskipTests compile exec:java -Dexec.args="github-release-from-plan --directory /path/to/repo --format json"
 ```
+
+这三个 GitHub 发布命令也都支持 `--format json`，方便在 CI 里直接消费机器可读输出。
 
 ### 9.2 GitLab 发布命令
 

@@ -33,6 +33,9 @@ Use it when you are:
 | `audit-vars` stdout | local operators | human-oriented by default |
 | `audit-vars --format json` stdout | scripts and CI | machine-readable JSON contract |
 | `publish --format json` stdout | scripts and CI | machine-readable publish contract |
+| `github-release-plan --format json` stdout | scripts and CI | machine-readable GitHub release-plan contract |
+| `github-tag-from-plan --format json` stdout | scripts and CI | machine-readable GitHub tag contract |
+| `github-release-from-plan --format json` stdout | scripts and CI | machine-readable GitHub Release contract |
 | `gitlab-release-plan --format json` stdout | scripts and CI | machine-readable GitLab release-plan contract |
 | `gitlab-tag-from-plan --format json` stdout | scripts and CI | machine-readable GitLab tag contract |
 | `gitlab-release --format json` stdout | scripts and CI | machine-readable GitLab Release contract |

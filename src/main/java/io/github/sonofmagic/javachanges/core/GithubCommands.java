@@ -21,16 +21,25 @@ final class GithubReleasePlanCommand extends AbstractCliCommand {
         description = "Call GitHub through gh instead of a dry run.")
     private boolean execute;
 
+    @Option(names = "--format", description = "Output format: text or json.")
+    private String format;
+
     @Override
     public Integer call() throws Exception {
         Map<String, String> options = options(
             option("github-repo", githubRepo),
             option("target-branch", targetBranch),
             option("release-branch", releaseBranch),
-            flag("execute", execute)
+            flag("execute", execute),
+            option("format", format)
         );
-        new GithubReleaseSupport(repoRoot(), out()).planPullRequest(GithubReleasePlanRequest.fromOptions(options));
-        return success();
+        GithubReleasePlanRequest request = GithubReleasePlanRequest.fromOptions(options);
+        return runAutomationCommand("github-release-plan", request.format, new ThrowingRunnable() {
+            @Override
+            public void run() throws Exception {
+                new GithubReleaseSupport(repoRoot(), out()).planPullRequest(request);
+            }
+        });
     }
 }
 
@@ -44,14 +53,23 @@ final class GithubTagFromPlanCommand extends AbstractCliCommand {
         description = "Push the release tag instead of a dry run.")
     private boolean execute;
 
+    @Option(names = "--format", description = "Output format: text or json.")
+    private String format;
+
     @Override
     public Integer call() throws Exception {
         Map<String, String> options = options(
             option("current-sha", currentSha),
-            flag("execute", execute)
+            flag("execute", execute),
+            option("format", format)
         );
-        new GithubReleaseSupport(repoRoot(), out()).tagFromReleasePlan(GithubTagRequest.fromOptions(options));
-        return success();
+        GithubTagRequest request = GithubTagRequest.fromOptions(options);
+        return runAutomationCommand("github-tag-from-plan", request.format, new ThrowingRunnable() {
+            @Override
+            public void run() throws Exception {
+                new GithubReleaseSupport(repoRoot(), out()).tagFromReleasePlan(request);
+            }
+        });
     }
 }
 
@@ -70,14 +88,23 @@ final class GithubReleaseFromPlanCommand extends AbstractCliCommand {
         description = "Create or update the GitHub Release through gh instead of a dry run.")
     private boolean execute;
 
+    @Option(names = "--format", description = "Output format: text or json.")
+    private String format;
+
     @Override
     public Integer call() throws Exception {
         Map<String, String> options = options(
             option("release-notes-file", releaseNotesFile),
             option("github-output-file", githubOutputFile),
-            flag("execute", execute)
+            flag("execute", execute),
+            option("format", format)
         );
-        new GithubReleaseSupport(repoRoot(), out()).syncReleaseFromPlan(GithubReleasePublishRequest.fromOptions(options));
-        return success();
+        GithubReleasePublishRequest request = GithubReleasePublishRequest.fromOptions(options);
+        return runAutomationCommand("github-release-from-plan", request.format, new ThrowingRunnable() {
+            @Override
+            public void run() throws Exception {
+                new GithubReleaseSupport(repoRoot(), out()).syncReleaseFromPlan(request);
+            }
+        });
     }
 }

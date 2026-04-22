@@ -283,6 +283,9 @@ Commands that currently support `--format json`:
 | `doctor-platform` | Includes `platform` and section summaries for env and CLI checks |
 | `audit-vars` | Includes `platform`, audit sections, and final error text on failure |
 | `publish` | Includes publish action metadata such as tag, module, release version, and release notes file |
+| `github-release-plan` | Includes action, skip reason, and release version |
+| `github-tag-from-plan` | Includes action, skip reason, release version, and tag |
+| `github-release-from-plan` | Includes action, tag, release version, and release notes file |
 | `gitlab-release-plan` | Includes action, skip reason, release version, and project id |
 | `gitlab-tag-from-plan` | Includes action, skip reason, release version, module, and tag |
 | `gitlab-release` | Includes action, project id, tag, module, release version, and release notes file |
@@ -406,7 +409,10 @@ Examples:
 mvn -q -DskipTests compile exec:java -Dexec.args="github-release-plan --directory /path/to/repo --github-repo owner/repo --execute true"
 mvn -q -DskipTests compile exec:java -Dexec.args="github-tag-from-plan --directory /path/to/repo --execute true"
 mvn -q -DskipTests compile exec:java -Dexec.args="github-release-from-plan --directory /path/to/repo --release-notes-file target/release-notes.md --execute true"
+mvn -q -DskipTests compile exec:java -Dexec.args="github-release-from-plan --directory /path/to/repo --format json"
 ```
+
+All three GitHub release commands also support `--format json` for CI-safe machine-readable output.
 
 ### 9.2 GitLab Release Commands
 

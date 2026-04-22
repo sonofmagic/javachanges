@@ -29,6 +29,9 @@
 | `audit-vars` 标准输出 | 本地操作者 | 默认面向人 |
 | `audit-vars --format json` 标准输出 | 脚本和 CI | 机器可读 JSON 契约 |
 | `publish --format json` 标准输出 | 脚本和 CI | 机器可读发布契约 |
+| `github-release-plan --format json` 标准输出 | 脚本和 CI | 机器可读 GitHub release-plan 契约 |
+| `github-tag-from-plan --format json` 标准输出 | 脚本和 CI | 机器可读 GitHub tag 契约 |
+| `github-release-from-plan --format json` 标准输出 | 脚本和 CI | 机器可读 GitHub Release 契约 |
 | `gitlab-release-plan --format json` 标准输出 | 脚本和 CI | 机器可读 GitLab release-plan 契约 |
 | `gitlab-tag-from-plan --format json` 标准输出 | 脚本和 CI | 机器可读 GitLab tag 契约 |
 | `gitlab-release --format json` 标准输出 | 脚本和 CI | 机器可读 GitLab Release 契约 |

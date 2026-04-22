@@ -98,6 +98,85 @@ class GithubReleaseSupportTest {
         assertTrue(stdout.toString(StandardCharsets.UTF_8.name()).contains("Updated GitHub Release v1.2.0"));
     }
 
+    @Test
+    void planPullRequestJsonIncludesMachineReadableFields(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir);
+        RecordingRuntime runtime = new RecordingRuntime(repoRoot);
+        runtime.noStagedChanges = false;
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("github-repo", "owner/repo");
+        options.put("target-branch", "main");
+        options.put("release-branch", "changeset-release/main");
+        options.put("format", "json");
+
+        new GithubReleaseSupport(repoRoot, new PrintStream(stdout, true), runtime)
+            .planPullRequest(GithubReleasePlanRequest.fromOptions(options));
+
+        String json = stdout.toString(StandardCharsets.UTF_8.name());
+        assertTrue(json.contains("\"ok\":true"));
+        assertTrue(json.contains("\"command\":\"github-release-plan\""));
+        assertTrue(json.contains("\"action\":\"plan-pull-request\""));
+        assertTrue(json.contains("\"reason\":\"Dry-run only.\""));
+        assertTrue(json.contains("\"releaseVersion\":\"1.2.0\""));
+    }
+
+    @Test
+    void tagFromReleasePlanJsonIncludesMachineReadableFields(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir);
+        Files.write(
+            repoRoot.resolve(".changesets").resolve("release-plan.json"),
+            "{\"releaseVersion\":\"1.2.0\"}\n".getBytes(StandardCharsets.UTF_8)
+        );
+        RecordingRuntime runtime = new RecordingRuntime(repoRoot);
+        runtime.headSha = "abc1234";
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("format", "json");
+
+        new GithubReleaseSupport(repoRoot, new PrintStream(stdout, true), runtime)
+            .tagFromReleasePlan(GithubTagRequest.fromOptions(options));
+
+        String json = stdout.toString(StandardCharsets.UTF_8.name());
+        assertTrue(json.contains("\"ok\":true"));
+        assertTrue(json.contains("\"command\":\"github-tag-from-plan\""));
+        assertTrue(json.contains("\"tag\":\"v1.2.0\""));
+        assertTrue(json.contains("\"releaseVersion\":\"1.2.0\""));
+        assertTrue(json.contains("\"reason\":\"Dry-run only.\""));
+    }
+
+    @Test
+    void syncReleaseFromPlanJsonIncludesMachineReadableFields(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir);
+        run(repoRoot, "git", "init", "-q", "-b", "main");
+        run(repoRoot, "git", "config", "user.name", "tester");
+        run(repoRoot, "git", "config", "user.email", "tester@example.com");
+        run(repoRoot, "git", "add", "pom.xml", "CHANGELOG.md", ".changesets");
+        run(repoRoot, "git", "commit", "-qm", "init");
+        Files.write(
+            repoRoot.resolve(".changesets").resolve("release-plan.json"),
+            "{\"releaseVersion\":\"1.2.0\"}\n".getBytes(StandardCharsets.UTF_8)
+        );
+        run(repoRoot, "git", "tag", "v1.2.0");
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("format", "json");
+
+        new GithubReleaseSupport(repoRoot, new PrintStream(stdout, true), new RecordingRuntime(repoRoot))
+            .syncReleaseFromPlan(GithubReleasePublishRequest.fromOptions(options));
+
+        String json = stdout.toString(StandardCharsets.UTF_8.name());
+        assertTrue(json.contains("\"ok\":true"));
+        assertTrue(json.contains("\"command\":\"github-release-from-plan\""));
+        assertTrue(json.contains("\"tag\":\"v1.2.0\""));
+        assertTrue(json.contains("\"releaseVersion\":\"1.2.0\""));
+        assertTrue(json.contains("\"releaseNotesFile\":"));
+        assertTrue(json.contains("\"reason\":\"Dry-run only.\""));
+    }
+
     private static Path createRepository(Path tempDir) throws IOException {
         Path repoRoot = tempDir.resolve("repo");
         Files.createDirectories(repoRoot.resolve(".changesets"));
