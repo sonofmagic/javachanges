@@ -32,6 +32,13 @@ jobs:
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_commit_sha || github.event.pull_request.merge_commit_sha }}
           fetch-depth: 0
 
+      - name: Checkout workflow tools
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          path: .workflow-tools
+          fetch-depth: 1
+
       - name: Validate publishing secrets
         env:
           MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
@@ -72,13 +79,18 @@ jobs:
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
-      - name: Build CLI
+      - name: Build workflow tools CLI
+        working-directory: .workflow-tools
         run: mvn -B -DskipTests compile
 
       - name: Ensure signing public key is discoverable
+        working-directory: .workflow-tools
         run: >
           mvn -B -DskipTests exec:java
           -Dexec.args="ensure-gpg-public-key --directory $GITHUB_WORKSPACE"
+
+      - name: Build CLI
+        run: mvn -B -DskipTests compile
 
       - name: Create and push release tag
         env:
