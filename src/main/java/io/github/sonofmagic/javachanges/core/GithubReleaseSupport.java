@@ -14,6 +14,7 @@ final class GithubReleaseSupport {
     private final PrintStream out;
     private final GithubReleaseRuntime runtime;
     private final ReleaseArtifactSupport artifactSupport;
+    private final ReleaseAutomationSupport automationSupport;
 
     GithubReleaseSupport(Path repoRoot, PrintStream out) {
         this(repoRoot, out, new GithubReleaseRuntime(repoRoot));
@@ -24,6 +25,7 @@ final class GithubReleaseSupport {
         this.out = out;
         this.runtime = runtime;
         this.artifactSupport = new ReleaseArtifactSupport(repoRoot);
+        this.automationSupport = new ReleaseAutomationSupport(repoRoot);
     }
 
     void planPullRequest(GithubReleasePlanRequest request) throws IOException, InterruptedException {
@@ -31,7 +33,7 @@ final class GithubReleaseSupport {
             throw new IllegalArgumentException("Missing GitHub repo. Pass --github-repo or set GITHUB_REPOSITORY.");
         }
 
-        ReleasePlan plan = new ReleasePlanner(repoRoot).plan();
+        ReleasePlan plan = automationSupport.plan();
         if (!plan.hasPendingChangesets()) {
             out.println("No pending changesets. Skip release PR.");
             return;
@@ -67,20 +69,19 @@ final class GithubReleaseSupport {
         String prNumber = runtime.findOpenPullRequestNumber(request.githubRepo, releaseBranch, targetBranch);
         if (trimToNull(prNumber) == null) {
             runtime.createPullRequest(request.githubRepo, releaseBranch, targetBranch, title,
-                repoRoot.resolve(CHANGESETS_DIR).resolve(RELEASE_PLAN_MD));
+                automationSupport.releasePlanMarkdownFile());
             out.println("Created GitHub PR for " + title);
             return;
         }
 
         runtime.updatePullRequest(request.githubRepo, prNumber, title,
-            repoRoot.resolve(CHANGESETS_DIR).resolve(RELEASE_PLAN_MD));
+            automationSupport.releasePlanMarkdownFile());
         out.println("Updated GitHub PR #" + prNumber);
     }
 
     void tagFromReleasePlan(GithubTagRequest request) throws IOException, InterruptedException {
-        String releaseVersion = RepoFiles.readManifestField(repoRoot, "releaseVersion");
         String currentSha = firstNonBlank(trimToNull(request.currentSha), runtime.headSha());
-        String tagName = "v" + releaseVersion;
+        String tagName = automationSupport.wholeRepoTagFromManifest();
 
         out.println("Release tag: " + tagName);
         out.println("Target commit: " + currentSha);
@@ -101,8 +102,8 @@ final class GithubReleaseSupport {
     }
 
     void syncReleaseFromPlan(GithubReleasePublishRequest request) throws IOException, InterruptedException {
-        String releaseVersion = RepoFiles.readManifestField(repoRoot, "releaseVersion");
-        String tagName = "v" + releaseVersion;
+        String releaseVersion = automationSupport.releaseVersionFromManifest();
+        String tagName = automationSupport.wholeRepoTagFromManifest();
         Path notesFile = artifactSupport.resolveReleaseNotesFile(request.releaseNotesFile);
         new ReleaseNotesGenerator(repoRoot).writeReleaseNotes(tagName, notesFile);
 

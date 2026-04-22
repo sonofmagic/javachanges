@@ -14,6 +14,7 @@ final class GitlabReleaseSupport {
     private final GitlabReleaseRuntime runtime;
     private final GitlabMergeRequestClient apiClient;
     private final ReleaseArtifactSupport artifactSupport;
+    private final ReleaseAutomationSupport automationSupport;
 
     GitlabReleaseSupport(Path repoRoot, PrintStream out) {
         this(repoRoot, out, new GitlabReleaseRuntime(repoRoot), new GitlabApiClient());
@@ -25,6 +26,7 @@ final class GitlabReleaseSupport {
         this.runtime = runtime;
         this.apiClient = apiClient;
         this.artifactSupport = new ReleaseArtifactSupport(repoRoot);
+        this.automationSupport = new ReleaseAutomationSupport(repoRoot);
     }
 
     void planMergeRequest(GitlabReleasePlanRequest request) throws IOException, InterruptedException {
@@ -38,7 +40,7 @@ final class GitlabReleaseSupport {
             throw new IllegalArgumentException("Missing GitLab project id. Pass --project-id or set CI_PROJECT_ID.");
         }
 
-        ReleasePlan plan = new ReleasePlanner(repoRoot).plan();
+        ReleasePlan plan = automationSupport.plan();
         report.releaseVersion = plan.getReleaseVersion();
         if (!plan.hasPendingChangesets()) {
             report.skipped = true;
@@ -77,7 +79,7 @@ final class GitlabReleaseSupport {
         runtime.runGit("checkout", "-B", releaseBranch);
         RepoFiles.applyPlan(repoRoot, plan);
         String description = new String(
-            Files.readAllBytes(repoRoot.resolve(CHANGESETS_DIR).resolve(RELEASE_PLAN_MD)),
+            Files.readAllBytes(automationSupport.releasePlanMarkdownFile()),
             StandardCharsets.UTF_8
         );
         runtime.runGit("add", "pom.xml", "CHANGELOG.md", CHANGESETS_DIR);
@@ -171,8 +173,8 @@ final class GitlabReleaseSupport {
             return;
         }
 
-        String releaseVersion = RepoFiles.readManifestField(repoRoot, "releaseVersion");
-        String tagName = "v" + releaseVersion;
+        String releaseVersion = automationSupport.releaseVersionFromManifest();
+        String tagName = automationSupport.wholeRepoTagFromManifest();
         report.releaseVersion = releaseVersion;
         report.tag = tagName;
         if (textOutput) {
