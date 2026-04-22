@@ -53,6 +53,7 @@ class GithubReleaseSupportTest {
         ByteArrayOutputStream stdout = new ByteArrayOutputStream();
 
         Map<String, String> options = new HashMap<String, String>();
+        options.put("current-sha", "abc1234");
         options.put("execute", "true");
 
         new GithubReleaseSupport(repoRoot, new PrintStream(stdout, true), runtime)
