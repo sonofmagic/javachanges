@@ -1,31 +1,31 @@
 {
-  "releaseVersion" : "1.5.0",
-  "nextSnapshotVersion" : "1.5.0-SNAPSHOT",
+  "releaseVersion" : "1.6.0",
+  "nextSnapshotVersion" : "1.6.0-SNAPSHOT",
   "releaseLevel" : "minor",
-  "generatedAt" : "2026-04-22T07:01:06.148Z",
+  "tagStrategy" : "whole-repo",
+  "tags" : [ "v1.6.0" ],
+  "releaseTargets" : [ {
+    "module" : null,
+    "tag" : "v1.6.0"
+  } ],
+  "generatedAt" : "2026-04-22T08:15:36.165Z",
   "changesets" : [ {
-    "file" : "github-json-output.md",
-    "release" : "patch",
-    "type" : "other",
-    "summary" : "Add `--format json` support for `github-release-plan`, `github-tag-from-plan`, and `github-release-from-plan`.",
-    "modules" : [ "javachanges" ]
-  }, {
-    "file" : "gitlab-ci-commandize.md",
+    "file" : "per-module-tag-strategy.md",
     "release" : "minor",
     "type" : "other",
-    "summary" : "Commandize the GitLab CI/CD release flow so business repositories can keep `.gitlab-ci.yml` minimal.",
+    "summary" : "Add an optional `per-module` release tag strategy for release-plan automation.",
     "modules" : [ "javachanges" ]
   }, {
-    "file" : "json-structure-hardening.md",
-    "release" : "patch",
+    "file" : "plain-snapshot-version-mode.md",
+    "release" : "minor",
     "type" : "other",
-    "summary" : "Harden machine-readable JSON handling by replacing more hand-written JSON formatting and parsing with Jackson-based structured serialization.",
+    "summary" : "Add plain snapshot version mode so snapshot publishes can keep the original `-SNAPSHOT` revision while preserving the existing stamped default.",
     "modules" : [ "javachanges" ]
   }, {
-    "file" : "runtime-support-cleanup.md",
+    "file" : "release-pr-markdown-layout.md",
     "release" : "patch",
     "type" : "other",
-    "summary" : "Refactor release automation request parsing and process execution helpers to reduce duplicated CLI runtime code.",
+    "summary" : "Improve generated release PR Markdown layout.",
     "modules" : [ "javachanges" ]
   } ]
 }

@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.6.0 - 2026-04-22
+
+### Minor Changes
+
+- Add an optional `per-module` release tag strategy for release-plan automation. (packages: javachanges) Add an optional `per-module` release tag strategy for release-plan automation.
+- Add plain snapshot version mode so snapshot publishes can keep the original `-SNAPSHOT` revision while preserving the existing stamped default. (packages: javachanges) Add plain snapshot version mode so snapshot publishes can keep the original `-SNAPSHOT` revision while preserving the existing stamped default.
+
+### Patch Changes
+
+- Improve generated release PR Markdown layout. (packages: javachanges) Improve generated release PR Markdown layout.
+
 ## 1.5.0 - 2026-04-22
 
 ### Minor Changes
