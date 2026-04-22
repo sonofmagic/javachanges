@@ -48,6 +48,31 @@ class ReleaseEnvSupportTest {
         assertTrue(json.contains("MAVEN_REPOSITORY_USERNAME"));
     }
 
+    @Test
+    void renderVarsJsonIncludesGitlabAndGithubSections(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot.resolve("env"));
+        Files.write(repoRoot.resolve("env").resolve("release.env.local"), envFile().getBytes(StandardCharsets.UTF_8));
+
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        ReleaseEnvSupport support = new ReleaseEnvSupport(repoRoot, new PrintStream(stdout, true));
+        Map<String, String> options = new LinkedHashMap<String, String>();
+        options.put("env-file", "env/release.env.local");
+        options.put("platform", "all");
+        options.put("format", "json");
+
+        boolean ok = support.renderVars(PlatformEnvRequest.fromOptions(options));
+        String json = stdout.toString(StandardCharsets.UTF_8.name());
+
+        assertTrue(ok);
+        assertTrue(json.contains("\"ok\":true"));
+        assertTrue(json.contains("\"command\":\"render-vars\""));
+        assertTrue(json.contains("GitHub Actions Variables"));
+        assertTrue(json.contains("GitHub Actions Secrets"));
+        assertTrue(json.contains("GitLab CI/CD Variables"));
+        assertTrue(json.contains("OPTIONAL (fallback: CI_JOB_TOKEN)"));
+    }
+
     private static String envFile() {
         return ""
             + "MAVEN_RELEASE_REPOSITORY_URL=https://repo.example.com/releases\n"

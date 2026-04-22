@@ -18,6 +18,7 @@ final class ReleaseEnvSupport {
     private final PrintStream out;
     private final ReleaseEnvRuntime runtime;
     private final GitlabProtectionSupport gitlabProtectionSupport;
+    private final ReleaseEnvRenderSupport renderSupport;
 
     ReleaseEnvSupport(Path repoRoot, PrintStream out) {
         this(repoRoot, out, new ReleaseEnvRuntime(repoRoot));
@@ -28,6 +29,7 @@ final class ReleaseEnvSupport {
         this.out = out;
         this.runtime = runtime;
         this.gitlabProtectionSupport = new GitlabProtectionSupport(runtime, out);
+        this.renderSupport = new ReleaseEnvRenderSupport(out);
     }
 
     void initEnv(InitEnvRequest request) throws IOException {
@@ -139,39 +141,7 @@ final class ReleaseEnvSupport {
 
     boolean renderVars(PlatformEnvRequest request) throws IOException {
         LoadedEnv env = LoadedEnv.load(runtime.resolveEnvFile(request.envFile));
-        if (request.format == OutputFormat.JSON) {
-            out.println(renderVarsJson(env, request));
-            return true;
-        }
-        out.println("使用 env 文件: " + runtime.relativizePath(env.path));
-        if (!request.showSecrets) {
-            out.println("敏感值默认已打码。传入 --show-secrets true 可显示原值。");
-        }
-
-        if (request.platform.includesGithub()) {
-            out.println();
-            out.println("== GitHub Actions Variables ==");
-            printEnvEntries(env, ReleaseEnvCatalog.GITHUB_ACTIONS_VARIABLES, request.showSecrets);
-            out.println();
-            out.println("== GitHub Actions Secrets ==");
-            printEnvEntries(env, ReleaseEnvCatalog.GITHUB_ACTIONS_SECRETS, request.showSecrets);
-        }
-
-        if (request.platform.includesGitlab()) {
-            out.println();
-            out.println("== GitLab CI/CD Variables ==");
-            out.println("GITLAB_RELEASE_TOKEN                     OPTIONAL (fallback: CI_JOB_TOKEN)");
-            for (EnvEntry entry : ReleaseEnvCatalog.GITLAB_VARIABLES) {
-                if ("GITLAB_RELEASE_TOKEN".equals(entry.name)) {
-                    continue;
-                }
-                EnvValue value = env.value(entry.name);
-                String rendered = entry.secret ? value.renderMasked(request.showSecrets) : value.statusOrRaw();
-                printStatus(entry.name, rendered);
-            }
-            printStatus("GITLAB_RELEASE_TOKEN", env.value("GITLAB_RELEASE_TOKEN").renderMasked(request.showSecrets));
-        }
-        return true;
+        return renderSupport.renderVars(env, request, runtime.relativizePath(env.path));
     }
 
     boolean doctorLocal(LocalDoctorRequest request) throws IOException, InterruptedException {
@@ -703,14 +673,6 @@ final class ReleaseEnvSupport {
         return true;
     }
 
-    private void printEnvEntries(LoadedEnv env, List<EnvEntry> entries, boolean showSecrets) {
-        for (EnvEntry entry : entries) {
-            EnvValue value = env.value(entry.name);
-            String rendered = entry.secret ? value.renderMasked(showSecrets) : value.statusOrRaw();
-            printStatus(entry.name, rendered);
-        }
-    }
-
     private void printStatus(String label, String value) {
         out.printf("%-40s %s%n", label, value);
     }
@@ -746,41 +708,6 @@ final class ReleaseEnvSupport {
 
     static String errorJson(String command, Exception exception) {
         return ReleaseEnvJsonSupport.errorJson(command, exception);
-    }
-
-    private String renderVarsJson(LoadedEnv env, PlatformEnvRequest request) {
-        List<ReleaseEnvJsonSupport.JsonSection> sections = new ArrayList<ReleaseEnvJsonSupport.JsonSection>();
-        if (request.platform.includesGithub()) {
-            ReleaseEnvJsonSupport.JsonSection variables = new ReleaseEnvJsonSupport.JsonSection("GitHub Actions Variables");
-            for (EnvEntry entry : ReleaseEnvCatalog.GITHUB_ACTIONS_VARIABLES) {
-                EnvValue value = env.value(entry.name);
-                variables.add(entry.name, entry.secret ? value.renderMasked(request.showSecrets) : value.statusOrRaw());
-            }
-            sections.add(variables);
-
-            ReleaseEnvJsonSupport.JsonSection secrets = new ReleaseEnvJsonSupport.JsonSection("GitHub Actions Secrets");
-            for (EnvEntry entry : ReleaseEnvCatalog.GITHUB_ACTIONS_SECRETS) {
-                EnvValue value = env.value(entry.name);
-                secrets.add(entry.name, entry.secret ? value.renderMasked(request.showSecrets) : value.statusOrRaw());
-            }
-            sections.add(secrets);
-        }
-
-        if (request.platform.includesGitlab()) {
-            ReleaseEnvJsonSupport.JsonSection gitlab = new ReleaseEnvJsonSupport.JsonSection("GitLab CI/CD Variables");
-            gitlab.add("GITLAB_RELEASE_TOKEN", "OPTIONAL (fallback: CI_JOB_TOKEN)");
-            for (EnvEntry entry : ReleaseEnvCatalog.GITLAB_VARIABLES) {
-                if ("GITLAB_RELEASE_TOKEN".equals(entry.name)) {
-                    continue;
-                }
-                EnvValue value = env.value(entry.name);
-                gitlab.add(entry.name, entry.secret ? value.renderMasked(request.showSecrets) : value.statusOrRaw());
-            }
-            gitlab.add("GITLAB_RELEASE_TOKEN", env.value("GITLAB_RELEASE_TOKEN").renderMasked(request.showSecrets));
-            sections.add(gitlab);
-        }
-        return commandReportJson("render-vars", true, runtime.relativizePath(env.path), request.platform.id, request.showSecrets,
-            sections, Collections.<String>emptyList(), null);
     }
 
     private String commandReportJson(String command, boolean ok, String envFile, String platform,
