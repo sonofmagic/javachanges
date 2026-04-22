@@ -282,6 +282,7 @@ Commands that currently support `--format json`:
 | `doctor-local` | Includes section summaries, suggestions, and final error text on failure |
 | `doctor-platform` | Includes `platform` and section summaries for env and CLI checks |
 | `audit-vars` | Includes `platform`, audit sections, and final error text on failure |
+| `preflight` | Includes publish action metadata plus snapshot mode fields such as `snapshotVersionMode`, `effectiveVersion`, and `snapshotBuildStampApplied` |
 | `publish` | Includes publish action metadata such as tag, module, release version, and release notes file |
 | `github-release-plan` | Includes action, skip reason, and release version |
 | `github-tag-from-plan` | Includes action, skip reason, release version, and tag |
@@ -342,6 +343,12 @@ Snapshot example:
 mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory /path/to/repo --snapshot"
 ```
 
+Plain snapshot example:
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory /path/to/repo --snapshot --snapshot-version-mode plain"
+```
+
 Explicit snapshot build stamp:
 
 ```bash
@@ -360,6 +367,8 @@ GitLab snapshot branch example with config-driven defaults:
 mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory $CI_PROJECT_DIR"
 ```
 
+In plain snapshot mode, `preflight` prints that it is using `plain snapshot` mode and keeps the effective publish version at the original `pom.xml` revision such as `1.2.3-SNAPSHOT`.
+
 ### 8.2 `publish`
 
 Render the real publish command:
@@ -376,10 +385,19 @@ mvn -q -DskipTests compile exec:java -Dexec.args="publish --directory /path/to/r
 
 Snapshot publishing resolves the root `1.2.3-SNAPSHOT` into a unique publish revision such as `1.2.3-20260420.154500.abc1234-SNAPSHOT`, then injects it through `-Drevision=`. You can override the generated build stamp with `--snapshot-build-stamp` or the `JAVACHANGES_SNAPSHOT_BUILD_STAMP` environment variable.
 
+If you pass `--snapshot-version-mode plain`, `publish` keeps the effective Maven version at the original snapshot revision such as `1.2.3-SNAPSHOT` instead of rewriting it to a stamped value. `preflight` and `publish` both print the active snapshot mode so CI logs show whether the run is `plain` or `stamped`.
+
+Important Maven repository note:
+
+- plain mode means the project version stays `1.2.3-SNAPSHOT`
+- Maven and Nexus snapshot repositories still usually expand uploaded artifact filenames to timestamped snapshot files
+- that timestamped filename expansion is standard Maven snapshot repository behavior, not a second rewrite by `javachanges`
+
 GitLab CI defaults:
 
 - if `CI_COMMIT_TAG` is present, `publish` uses it automatically, so a tag job can just run `publish --execute true`
 - if the current branch matches `.changesets/config.json` or `.changesets/config.jsonc` `snapshotBranch`, `publish` and `preflight` default to snapshot mode
+- if the repository config also sets `"snapshotVersionMode": "plain"`, the same GitLab snapshot-branch flow automatically uses plain snapshot mode
 - this removes the need for CI shell wrappers that manually branch on tags vs snapshot branches
 
 Important flags:
@@ -387,6 +405,7 @@ Important flags:
 | Flag | Meaning |
 | --- | --- |
 | `--snapshot` | Publish the current snapshot instead of a release tag |
+| `--snapshot-version-mode` | Snapshot version strategy: `stamped` or `plain` |
 | `--snapshot-build-stamp` | Explicit snapshot publish stamp, overriding the default UTC timestamp + git short sha |
 | `--tag` | Target release tag |
 | `--module` | Restrict to one Maven artifactId |

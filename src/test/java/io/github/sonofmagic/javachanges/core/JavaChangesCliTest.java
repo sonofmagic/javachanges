@@ -289,6 +289,15 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void preflightHelpListsSnapshotVersionModeFlag() {
+        ExecutionResult result = execute("preflight", "--help");
+
+        assertEquals(0, result.exitCode);
+        assertTrue(result.stdout.contains("--snapshot-version-mode"));
+        assertTrue(result.stdout.contains("plain or stamped"));
+    }
+
+    @Test
     void doctorLocalFallsBackToSystemMavenWhenWrapperMissing(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, false);
         Path envDir = repoRoot.resolve("env");

@@ -51,12 +51,15 @@ final class AutomationJsonSupport {
         boolean skipped;
         String reason;
         String releaseVersion;
+        String effectiveVersion;
         String releaseModule;
         String tag;
         String releaseNotesFile;
         String projectId;
         boolean execute;
         boolean dryRun;
+        String snapshotVersionMode;
+        boolean snapshotBuildStampApplied;
 
         AutomationReport(String command) {
             this.command = command;
@@ -70,12 +73,15 @@ final class AutomationJsonSupport {
             payload.put("skipped", Boolean.valueOf(skipped));
             payload.put("reason", reason);
             payload.put("releaseVersion", releaseVersion);
+            payload.put("effectiveVersion", effectiveVersion);
             payload.put("releaseModule", releaseModule);
             payload.put("tag", tag);
             payload.put("releaseNotesFile", releaseNotesFile);
             payload.put("projectId", projectId);
             payload.put("execute", Boolean.valueOf(execute));
             payload.put("dryRun", Boolean.valueOf(dryRun));
+            payload.put("snapshotVersionMode", snapshotVersionMode);
+            payload.put("snapshotBuildStampApplied", Boolean.valueOf(snapshotBuildStampApplied));
             return ReleaseJsonUtils.toJson(payload);
         }
     }

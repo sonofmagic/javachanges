@@ -28,6 +28,7 @@
 | `sync-vars` dry-run 输出 | 本地操作者 | 只是预览文本，不是稳定 API |
 | `audit-vars` 标准输出 | 本地操作者 | 默认面向人 |
 | `audit-vars --format json` 标准输出 | 脚本和 CI | 机器可读 JSON 契约 |
+| `preflight --format json` 标准输出 | 脚本和 CI | 机器可读发布预检查契约 |
 | `publish --format json` 标准输出 | 脚本和 CI | 机器可读发布契约 |
 | `github-release-plan --format json` 标准输出 | 脚本和 CI | 机器可读 GitHub release-plan 契约 |
 | `github-tag-from-plan --format json` 标准输出 | 脚本和 CI | 机器可读 GitHub tag 契约 |
@@ -379,7 +380,7 @@ GitLab 额外增强：
 
 ## 10. `publish` 和 GitLab 发布 JSON 契约
 
-`publish`、`gitlab-release-plan`、`gitlab-tag-from-plan`、`gitlab-release` 现在共享一组稳定的顶层字段。
+`preflight`、`publish`、`gitlab-release-plan`、`gitlab-tag-from-plan`、`gitlab-release` 现在共享一组稳定的顶层字段。
 
 当前公共字段：
 
@@ -391,10 +392,13 @@ GitLab 额外增强：
 | `skipped` | 是否明确跳过了工作 |
 | `reason` | 跳过原因、dry-run 提示或成功摘要 |
 | `releaseVersion` | 已解析好的发布版本 |
+| `effectiveVersion` | 实际传给发布链路的版本，已经包含 snapshot mode 的决策结果 |
 | `releaseModule` | 已解析好的模块名，whole-repo 时为 `null` |
 | `tag` | 相关发布 tag |
 | `releaseNotesFile` | 相关 release notes 文件路径 |
 | `projectId` | 相关 GitLab project id |
+| `snapshotVersionMode` | 当前命令在处理 snapshot 时所用的版本模式 |
+| `snapshotBuildStampApplied` | `javachanges` 是否真的应用了 snapshot build stamp |
 
 示例：
 
@@ -406,12 +410,37 @@ GitLab 额外增强：
   "skipped": false,
   "reason": "Created GitLab Release.",
   "releaseVersion": "1.2.3",
+  "effectiveVersion": "1.2.3",
   "releaseModule": "core",
   "tag": "core/v1.2.3",
   "releaseNotesFile": "/path/to/repo/target/release-notes.md",
   "projectId": "12345",
   "execute": true,
-  "dryRun": false
+  "dryRun": false,
+  "snapshotVersionMode": null,
+  "snapshotBuildStampApplied": false
+}
+```
+
+snapshot 专用示例：
+
+```json
+{
+  "ok": true,
+  "command": "preflight",
+  "action": "publish-snapshot",
+  "skipped": false,
+  "reason": "Preflight checks passed.",
+  "releaseVersion": "1.2.3-SNAPSHOT",
+  "effectiveVersion": "1.2.3-SNAPSHOT",
+  "releaseModule": null,
+  "tag": null,
+  "releaseNotesFile": null,
+  "projectId": null,
+  "execute": false,
+  "dryRun": true,
+  "snapshotVersionMode": "plain",
+  "snapshotBuildStampApplied": false
 }
 ```
 

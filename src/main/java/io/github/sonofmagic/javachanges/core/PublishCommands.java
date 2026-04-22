@@ -26,6 +26,10 @@ final class PreflightCommand extends AbstractCliCommand {
         description = "Explicit snapshot build stamp used to derive the publish revision.")
     private String snapshotBuildStamp;
 
+    @Option(names = "--snapshot-version-mode",
+        description = "Snapshot version mode: plain or stamped.")
+    private String snapshotVersionMode;
+
     @Option(names = "--format", description = "Output format: text or json.")
     private String format;
 
@@ -37,6 +41,7 @@ final class PreflightCommand extends AbstractCliCommand {
             flag("allow-dirty", allowDirty),
             option("module", module),
             option("snapshot-build-stamp", snapshotBuildStamp),
+            option("snapshot-version-mode", snapshotVersionMode),
             option("format", format)
         );
         PublishRequest request = PublishRequest.fromOptions(options, false);
@@ -74,6 +79,10 @@ final class PublishCommand extends AbstractCliCommand {
         description = "Explicit snapshot build stamp used to derive the publish revision.")
     private String snapshotBuildStamp;
 
+    @Option(names = "--snapshot-version-mode",
+        description = "Snapshot version mode: plain or stamped.")
+    private String snapshotVersionMode;
+
     @Option(names = "--format", description = "Output format: text or json.")
     private String format;
 
@@ -86,6 +95,7 @@ final class PublishCommand extends AbstractCliCommand {
             flag("execute", execute),
             option("module", module),
             option("snapshot-build-stamp", snapshotBuildStamp),
+            option("snapshot-version-mode", snapshotVersionMode),
             option("format", format)
         );
         PublishRequest request = PublishRequest.fromOptions(options, true);

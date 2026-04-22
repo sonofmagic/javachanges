@@ -44,6 +44,15 @@ class VersionSupportTest {
         assertEquals("snapshot build stamp 只允许字母、数字和点号: 2026-04-20 sha", error.getMessage());
     }
 
+    @Test
+    void snapshotRevisionReturnsOriginalSnapshotVersion(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, "1.2.3-SNAPSHOT");
+
+        VersionSupport support = new VersionSupport(repoRoot);
+
+        assertEquals("1.2.3-SNAPSHOT", support.snapshotRevision());
+    }
+
     private static Path createRepository(Path tempDir, String revision) throws Exception {
         Path repoRoot = tempDir.resolve("repo");
         Files.createDirectories(repoRoot);

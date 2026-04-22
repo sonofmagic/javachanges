@@ -65,7 +65,8 @@ Improve CLI parsing and release planning.
 {
   "baseBranch": "main",
   "releaseBranch": "changeset-release/main",
-  "snapshotBranch": "snapshot"
+  "snapshotBranch": "snapshot",
+  "snapshotVersionMode": "plain"
 }
 ```
 
@@ -82,12 +83,15 @@ Improve CLI parsing and release planning.
 | `baseBranch` | release-plan 自动化默认基线分支 | `main` |
 | `releaseBranch` | 默认生成的 release 分支名 | `changeset-release/<baseBranch>` |
 | `snapshotBranch` | 约定用于 snapshot 发布的分支名 | `snapshot` |
+| `snapshotVersionMode` | snapshot 发布策略：`stamped` 或 `plain` | `stamped` |
 
 当前行为：
 
 - 当 CLI 参数和 CI 变量都没显式传入时，GitLab release-plan 默认值会从这个文件读取 `baseBranch` 和 `releaseBranch`
 - GitLab tag 命令也会读取这里的 `baseBranch` 和 `releaseBranch`，避免在 release branch 或其他非基线分支误打 tag
 - `preflight` 和 `publish` 会读取这里的 `snapshotBranch`，当前 CI 分支命中时自动进入 snapshot 模式
+- `preflight` 和 `publish` 也会读取这里的 `snapshotVersionMode`；如果 CLI 显式传了 `--snapshot-version-mode`，则以 CLI 为准
+- 当当前分支命中 `snapshotBranch`，并且 `snapshotVersionMode` 配成 `plain` 时，GitLab snapshot 发布 job 可以继续直接执行 `publish --execute true`
 - 本仓库里的 GitHub Actions 示例也遵循同一套分支命名约定
 - `snapshotBranch` 不再只是文档约定字段，GitLab snapshot 发布链路会真正消费它
 
@@ -139,6 +143,7 @@ summary: automate javachanges self-release publishing via GitHub Actions
 | 参数 | 作用 | 默认值 |
 | --- | --- | --- |
 | `--snapshot` | 发布当前 snapshot 版本 | `false` |
+| `--snapshot-version-mode` | snapshot 版本策略：`stamped` 或 `plain` | 配置文件值，再回退到 `stamped` |
 | `--snapshot-build-stamp` | 显式指定 snapshot 发布标识 | 自动生成 |
 | `--tag` | 发布正式 tag，例如 `v1.2.3` | 无 |
 | `--module` | 把发布限制到单个 Maven artifactId | 所有 package |
@@ -149,6 +154,7 @@ summary: automate javachanges self-release publishing via GitHub Actions
 
 - 如果存在 `CI_COMMIT_TAG`，省略 `--tag` 时会自动使用它
 - 如果省略 `--snapshot`，并且当前分支命中 `.changesets/config.json` / `.changesets/config.jsonc` 的 `snapshotBranch`，会自动进入 snapshot 模式
+- 如果省略 `--snapshot-version-mode`，会继续读取 `.changesets/config.json` / `.changesets/config.jsonc` 里的 `snapshotVersionMode`
 - 这意味着 GitLab job 可以直接执行 `publish --execute true`
 
 ### 4.4 GitLab 发布命令
@@ -301,6 +307,21 @@ export MAVEN_OPTS="-Dmaven.repo.local=.m2/repository"
 | 没有 `MAVEN_OPTS` 覆盖 | 使用目标仓库内部的 `.m2/repository` |
 | `maven.repo.local` 是相对路径 | 相对目标仓库解析 |
 | `maven.repo.local` 是绝对路径 | 直接使用该路径 |
+
+### 8.3 snapshot 版本模式
+
+`javachanges` 现在支持两种 snapshot 发布模式：
+
+| 模式 | 行为 |
+| --- | --- |
+| `stamped` | 会先把 `1.2.3-SNAPSHOT` 改写成 `1.2.3-20260420.154500.abc1234-SNAPSHOT` 这类唯一版本，再执行 deploy |
+| `plain` | 保持 Maven 实际使用的版本仍然是原始 revision，例如 `1.2.3-SNAPSHOT` |
+
+需要注意：
+
+- plain 模式只表示 Maven 项目版本号不再被 `javachanges` 改写
+- Maven / Nexus snapshot 仓库通常仍然会把最终保存的 snapshot 产物文件名展开成带时间戳的形式
+- 这属于仓库端的标准 snapshot 行为，不是 `javachanges` 的二次改写
 
 ## 9. 不同场景下的推荐默认值
 

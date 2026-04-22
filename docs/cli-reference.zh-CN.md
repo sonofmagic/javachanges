@@ -281,6 +281,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --directory /path
 | `doctor-local` | 失败时会包含分组检查结果、建议列表和最终错误信息 |
 | `doctor-platform` | 会带上 `platform` 以及 env / CLI 检查分组 |
 | `audit-vars` | 会带上 `platform`、审计分组结果，以及失败时的最终错误信息 |
+| `preflight` | 会带上发布动作元数据，以及 `snapshotVersionMode`、`effectiveVersion`、`snapshotBuildStampApplied` 等 snapshot 模式字段 |
 | `publish` | 会带上 tag、module、releaseVersion、releaseNotesFile 等发布元数据 |
 | `github-release-plan` | 会带上 action、是否 skipped、releaseVersion |
 | `github-tag-from-plan` | 会带上 action、是否 skipped、releaseVersion、tag |
@@ -341,6 +342,12 @@ JSON 模式约定：
 mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory /path/to/repo --snapshot"
 ```
 
+plain snapshot 示例：
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory /path/to/repo --snapshot --snapshot-version-mode plain"
+```
+
 指定快照构建标识：
 
 ```bash
@@ -359,6 +366,8 @@ GitLab snapshot 分支默认值示例：
 mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory $CI_PROJECT_DIR"
 ```
 
+在 plain snapshot 模式下，`preflight` 会明确输出当前使用的是 `plain snapshot`，并保持实际发布版本仍然是 `pom.xml` 里的原始值，例如 `1.2.3-SNAPSHOT`。
+
 ### 8.2 `publish`
 
 只输出发布命令：
@@ -375,10 +384,19 @@ mvn -q -DskipTests compile exec:java -Dexec.args="publish --directory /path/to/r
 
 快照发布会把根 `1.2.3-SNAPSHOT` 解析成唯一的实际发布版本，例如 `1.2.3-20260420.154500.abc1234-SNAPSHOT`，再通过 `-Drevision=` 注入给 Maven。你也可以通过 `--snapshot-build-stamp` 或环境变量 `JAVACHANGES_SNAPSHOT_BUILD_STAMP` 显式指定构建标识。
 
+如果传入 `--snapshot-version-mode plain`，`publish` 会保持 Maven 实际使用的版本仍然是原始 snapshot revision，例如 `1.2.3-SNAPSHOT`，而不是改写成带 stamp 的版本。`preflight` 和 `publish` 都会打印当前 snapshot mode，方便你在 CI 日志里直接确认这次发布走的是 `plain` 还是 `stamped`。
+
+关于 Maven snapshot 仓库有一个容易混淆的点：
+
+- plain 模式表示项目版本号保持 `1.2.3-SNAPSHOT`
+- Maven / Nexus snapshot 仓库通常仍然会把上传后的产物文件名展开成带时间戳和 build number 的 snapshot 文件名
+- 这是 Maven snapshot 仓库的标准行为，不是 `javachanges` 又对版本号做了一次改写
+
 GitLab CI 默认行为：
 
 - 如果存在 `CI_COMMIT_TAG`，`publish` 会自动使用它，因此 tag job 只需要执行 `publish --execute true`
 - 如果当前分支命中 `.changesets/config.json` / `.changesets/config.jsonc` 的 `snapshotBranch`，`publish` 和 `preflight` 会自动切到 snapshot 模式
+- 如果仓库配置里同时设置了 `"snapshotVersionMode": "plain"`，同一条 GitLab snapshot branch 发布链路会自动进入 plain snapshot 模式
 - 这样业务仓库就不需要再写 shell 分支来区分 tag 发布和 snapshot 发布
 
 关键参数：
@@ -386,6 +404,7 @@ GitLab CI 默认行为：
 | 参数 | 说明 |
 | --- | --- |
 | `--snapshot` | 发布当前 snapshot，而不是正式 tag |
+| `--snapshot-version-mode` | snapshot 版本策略：`stamped` 或 `plain` |
 | `--snapshot-build-stamp` | 显式指定 snapshot 发布标识，覆盖默认的 UTC 时间戳 + git short sha |
 | `--tag` | 目标发布 tag |
 | `--module` | 限制到单个 Maven artifactId |

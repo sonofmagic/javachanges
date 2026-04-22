@@ -221,7 +221,18 @@ JAVACHANGES_VERSION: "REPLACE_WITH_PUBLISHED_VERSION"
 mvn -Pcentral-publish -Dgpg.skip=true verify
 ```
 
-### 6.4 Maven Central 因为无法发现公钥指纹而拒绝签名
+### 6.4 plain snapshot 模式下仓库里仍然出现带时间戳的文件名
+
+| 现象 | 原因 | 修复方式 |
+| --- | --- | --- |
+| `publish --snapshot --snapshot-version-mode plain` 已经保持了项目版本号为 `1.2.3-SNAPSHOT`，但仓库里看到的产物文件名仍然像 `1.2.3-20260420.154500-1.jar` | Maven snapshot 仓库会在服务端对 snapshot 产物文件名做标准展开 | 这是预期行为；要确认实际项目版本，请看 `preflight` / `publish` 的输出或 JSON 字段，而不是只看仓库里的最终文件名 |
+
+需要区分两件事：
+
+- plain 模式表示 `javachanges` 不再把 Maven 项目版本改写成 `1.2.3-<stamp>-SNAPSHOT`
+- 仓库端把 snapshot 文件名展开成带时间戳格式，仍然是 Maven snapshot 的标准行为
+
+### 6.5 Maven Central 因为无法发现公钥指纹而拒绝签名
 
 | 现象 | 原因 | 修复方式 |
 | --- | --- | --- |
@@ -238,7 +249,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="ensure-gpg-public-key --direct
 - `hkps://keyserver.ubuntu.com`
 - `hkps://keys.openpgp.org`
 
-### 6.5 手动重试正式发布时用了错误的 commit 或 release version
+### 6.6 手动重试正式发布时用了错误的 commit 或 release version
 
 | 现象 | 原因 | 修复方式 |
 | --- | --- | --- |

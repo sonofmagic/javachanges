@@ -69,7 +69,8 @@ Rules:
 {
   "baseBranch": "main",
   "releaseBranch": "changeset-release/main",
-  "snapshotBranch": "snapshot"
+  "snapshotBranch": "snapshot",
+  "snapshotVersionMode": "plain"
 }
 ```
 
@@ -86,12 +87,15 @@ Supported fields:
 | `baseBranch` | Default base branch for release-plan automation | `main` |
 | `releaseBranch` | Default generated release branch name | `changeset-release/<baseBranch>` |
 | `snapshotBranch` | Conventional branch used for snapshot publishing | `snapshot` |
+| `snapshotVersionMode` | Snapshot publish strategy: `stamped` or `plain` | `stamped` |
 
 Current behavior:
 
 - GitLab release-plan defaults read `baseBranch` and `releaseBranch` from this file when CLI flags and CI variables are absent
 - GitLab tag creation reads `baseBranch` and `releaseBranch` from this file to avoid tagging from the release branch and other non-base branches
 - `preflight` and `publish` read `snapshotBranch` from this file and default to snapshot mode when the current CI branch matches it
+- `preflight` and `publish` also read `snapshotVersionMode`; CLI `--snapshot-version-mode` overrides the config file
+- when `snapshotBranch` matches and `snapshotVersionMode` is `plain`, GitLab snapshot-branch jobs can keep using `publish --execute true` without extra shell branching
 - GitHub Actions examples in this repository follow the same branch naming model
 - `snapshotBranch` is no longer documentation-only; GitLab snapshot publish flows consume it directly
 
@@ -143,6 +147,7 @@ Compatibility status:
 | Flag | Meaning | Default |
 | --- | --- | --- |
 | `--snapshot` | Publish the current snapshot version | `false` |
+| `--snapshot-version-mode` | Snapshot version strategy: `stamped` or `plain` | config value, then `stamped` |
 | `--snapshot-build-stamp` | Explicit snapshot publish stamp | auto-generated |
 | `--tag` | Publish a release tag like `v1.2.3` | none |
 | `--module` | Restrict publish to one Maven artifactId | all packages |
@@ -153,6 +158,7 @@ GitLab CI defaults for these commands:
 
 - `CI_COMMIT_TAG` is used automatically as the publish tag when `--tag` is omitted
 - `.changesets/config.json` / `.changesets/config.jsonc` `snapshotBranch` is used automatically when `--snapshot` is omitted
+- `.changesets/config.json` / `.changesets/config.jsonc` `snapshotVersionMode` is used automatically when `--snapshot-version-mode` is omitted
 - this lets a GitLab job use `publish --execute true` directly for both tag and snapshot pipelines
 
 ### 4.4 GitLab release commands
@@ -305,6 +311,21 @@ Effect:
 | no `MAVEN_OPTS` override | uses `.m2/repository` inside the target repo |
 | relative `maven.repo.local` | resolved relative to the target repo |
 | absolute `maven.repo.local` | used as-is |
+
+### 8.3 Snapshot version modes
+
+`javachanges` supports two snapshot publish modes:
+
+| Mode | Behavior |
+| --- | --- |
+| `stamped` | rewrites `1.2.3-SNAPSHOT` to a unique value like `1.2.3-20260420.154500.abc1234-SNAPSHOT` before deploy |
+| `plain` | keeps the effective Maven version at the original revision such as `1.2.3-SNAPSHOT` |
+
+Important note:
+
+- plain mode preserves the Maven project version only
+- Maven or Nexus snapshot repositories still typically store expanded timestamped filenames for uploaded snapshot artifacts
+- that filename expansion is standard repository behavior, not an extra rewrite by `javachanges`
 
 ## 9. Recommended Defaults By Scenario
 

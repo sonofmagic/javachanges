@@ -32,6 +32,7 @@ Use it when you are:
 | `sync-vars` dry-run stdout | local operators | preview text only, not a stable API |
 | `audit-vars` stdout | local operators | human-oriented by default |
 | `audit-vars --format json` stdout | scripts and CI | machine-readable JSON contract |
+| `preflight --format json` stdout | scripts and CI | machine-readable publish-preflight contract |
 | `publish --format json` stdout | scripts and CI | machine-readable publish contract |
 | `github-release-plan --format json` stdout | scripts and CI | machine-readable GitHub release-plan contract |
 | `github-tag-from-plan --format json` stdout | scripts and CI | machine-readable GitHub tag contract |
@@ -383,7 +384,7 @@ GitLab-specific additions:
 
 ## 10. Publish And GitLab Release JSON
 
-`publish`, `gitlab-release-plan`, `gitlab-tag-from-plan`, and `gitlab-release` now expose a shared machine-readable top-level contract.
+`preflight`, `publish`, `gitlab-release-plan`, `gitlab-tag-from-plan`, and `gitlab-release` now expose a shared machine-readable top-level contract.
 
 Current common fields:
 
@@ -395,10 +396,13 @@ Current common fields:
 | `skipped` | whether the command intentionally skipped work |
 | `reason` | human-readable reason for skip, dry-run, or success summary |
 | `releaseVersion` | resolved release version without extra parsing |
+| `effectiveVersion` | actual version passed into the publish flow, including snapshot mode decisions |
 | `releaseModule` | resolved module or `null` for whole-repo work |
 | `tag` | release tag when relevant |
 | `releaseNotesFile` | generated or consumed notes file path when relevant |
 | `projectId` | GitLab project id when relevant |
+| `snapshotVersionMode` | snapshot version mode when the command is operating on a snapshot |
+| `snapshotBuildStampApplied` | whether javachanges applied a stamped snapshot build suffix |
 
 Example:
 
@@ -410,12 +414,37 @@ Example:
   "skipped": false,
   "reason": "Created GitLab Release.",
   "releaseVersion": "1.2.3",
+  "effectiveVersion": "1.2.3",
   "releaseModule": "core",
   "tag": "core/v1.2.3",
   "releaseNotesFile": "/path/to/repo/target/release-notes.md",
   "projectId": "12345",
   "execute": true,
-  "dryRun": false
+  "dryRun": false,
+  "snapshotVersionMode": null,
+  "snapshotBuildStampApplied": false
+}
+```
+
+Snapshot-specific example:
+
+```json
+{
+  "ok": true,
+  "command": "preflight",
+  "action": "publish-snapshot",
+  "skipped": false,
+  "reason": "Preflight checks passed.",
+  "releaseVersion": "1.2.3-SNAPSHOT",
+  "effectiveVersion": "1.2.3-SNAPSHOT",
+  "releaseModule": null,
+  "tag": null,
+  "releaseNotesFile": null,
+  "projectId": null,
+  "execute": false,
+  "dryRun": true,
+  "snapshotVersionMode": "plain",
+  "snapshotBuildStampApplied": false
 }
 ```
 

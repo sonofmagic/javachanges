@@ -24,10 +24,12 @@ final class ChangesetConfigSupport {
         String baseBranch = field(json, "baseBranch");
         String releaseBranch = field(json, "releaseBranch");
         String snapshotBranch = field(json, "snapshotBranch");
-        return ChangesetConfig.fromValues(baseBranch, releaseBranch, snapshotBranch,
+        String snapshotVersionMode = field(json, "snapshotVersionMode");
+        return ChangesetConfig.fromValues(baseBranch, releaseBranch, snapshotBranch, snapshotVersionMode,
             trimToNull(baseBranch) != null,
             trimToNull(releaseBranch) != null,
-            trimToNull(snapshotBranch) != null);
+            trimToNull(snapshotBranch) != null,
+            trimToNull(snapshotVersionMode) != null);
     }
 
     static Path resolveConfigRoot(Path start) {
@@ -121,35 +123,43 @@ final class ChangesetConfigSupport {
         private final String baseBranch;
         private final String releaseBranch;
         private final String snapshotBranch;
+        private final SnapshotVersionMode snapshotVersionMode;
         private final boolean explicitBaseBranch;
         private final boolean explicitReleaseBranch;
         private final boolean explicitSnapshotBranch;
+        private final boolean explicitSnapshotVersionMode;
 
         private ChangesetConfig(String baseBranch, String releaseBranch, String snapshotBranch,
+                                SnapshotVersionMode snapshotVersionMode,
                                 boolean explicitBaseBranch, boolean explicitReleaseBranch,
-                                boolean explicitSnapshotBranch) {
+                                boolean explicitSnapshotBranch, boolean explicitSnapshotVersionMode) {
             this.baseBranch = baseBranch;
             this.releaseBranch = releaseBranch;
             this.snapshotBranch = snapshotBranch;
+            this.snapshotVersionMode = snapshotVersionMode;
             this.explicitBaseBranch = explicitBaseBranch;
             this.explicitReleaseBranch = explicitReleaseBranch;
             this.explicitSnapshotBranch = explicitSnapshotBranch;
+            this.explicitSnapshotVersionMode = explicitSnapshotVersionMode;
         }
 
         static ChangesetConfig defaults() {
-            return new ChangesetConfig("main", "changeset-release/main", "snapshot", false, false, false);
+            return new ChangesetConfig("main", "changeset-release/main", "snapshot", SnapshotVersionMode.STAMPED,
+                false, false, false, false);
         }
 
         static ChangesetConfig fromValues(String baseBranch, String releaseBranch, String snapshotBranch) {
-            return fromValues(baseBranch, releaseBranch, snapshotBranch,
+            return fromValues(baseBranch, releaseBranch, snapshotBranch, null,
                 trimToNull(baseBranch) != null,
                 trimToNull(releaseBranch) != null,
-                trimToNull(snapshotBranch) != null);
+                trimToNull(snapshotBranch) != null,
+                false);
         }
 
         static ChangesetConfig fromValues(String baseBranch, String releaseBranch, String snapshotBranch,
+                                          String snapshotVersionMode,
                                           boolean explicitBaseBranch, boolean explicitReleaseBranch,
-                                          boolean explicitSnapshotBranch) {
+                                          boolean explicitSnapshotBranch, boolean explicitSnapshotVersionMode) {
             String resolvedBaseBranch = trimToNull(baseBranch);
             if (resolvedBaseBranch == null) {
                 resolvedBaseBranch = "main";
@@ -165,8 +175,12 @@ final class ChangesetConfigSupport {
                 resolvedSnapshotBranch = "snapshot";
             }
 
+            SnapshotVersionMode resolvedSnapshotVersionMode =
+                SnapshotVersionMode.parse(snapshotVersionMode, SnapshotVersionMode.STAMPED);
+
             return new ChangesetConfig(resolvedBaseBranch, resolvedReleaseBranch, resolvedSnapshotBranch,
-                explicitBaseBranch, explicitReleaseBranch, explicitSnapshotBranch);
+                resolvedSnapshotVersionMode, explicitBaseBranch, explicitReleaseBranch, explicitSnapshotBranch,
+                explicitSnapshotVersionMode);
         }
 
         String baseBranch() {
@@ -181,6 +195,10 @@ final class ChangesetConfigSupport {
             return snapshotBranch;
         }
 
+        SnapshotVersionMode snapshotVersionMode() {
+            return snapshotVersionMode;
+        }
+
         boolean hasBaseBranch() {
             return explicitBaseBranch;
         }
@@ -191,6 +209,10 @@ final class ChangesetConfigSupport {
 
         boolean hasSnapshotBranch() {
             return explicitSnapshotBranch;
+        }
+
+        boolean hasSnapshotVersionMode() {
+            return explicitSnapshotVersionMode;
         }
     }
 }

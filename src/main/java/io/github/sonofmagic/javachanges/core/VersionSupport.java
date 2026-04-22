@@ -45,6 +45,14 @@ final class VersionSupport {
         return stripSnapshot(version) + "-" + normalizedBuildStamp + "-SNAPSHOT";
     }
 
+    String snapshotRevision() throws IOException {
+        String version = readRevision();
+        if (!version.endsWith("-SNAPSHOT")) {
+            throw new IllegalStateException("当前项目版本不是 SNAPSHOT: " + version);
+        }
+        return version;
+    }
+
     private String normalizeSnapshotBuildStamp(String buildStamp) {
         String normalized = buildStamp == null ? "" : buildStamp.trim();
         if (normalized.isEmpty()) {

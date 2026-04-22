@@ -72,6 +72,10 @@ final class PublishSupport {
                     ? "snapshot publish version: " + publishTarget.publishVersion
                     : "publish version: " + publishTarget.publishVersion);
             }
+            if (request.snapshot) {
+                out.println("snapshot version mode: " + publishTarget.snapshotVersionMode.id);
+                out.println("snapshot build stamp applied: " + publishTarget.snapshotBuildStampApplied);
+            }
             if (!request.snapshot && Files.exists(repoRoot.resolve("target/release-notes.md"))) {
                 out.println("已生成 target/release-notes.md");
             }
@@ -130,6 +134,10 @@ final class PublishSupport {
         if (request.snapshot) {
             if (request.format != OutputFormat.JSON) {
                 out.println("snapshot 校验通过");
+                out.println("snapshot version mode: " + publishTarget.snapshotVersionMode.id);
+                out.println(publishTarget.snapshotVersionMode == SnapshotVersionMode.PLAIN
+                    ? "plain snapshot: 项目版本号保持 pom.xml 中的原始 -SNAPSHOT revision"
+                    : "stamped snapshot: 项目版本号会追加 build stamp 后再发布");
                 out.println("snapshot publish version: " + publishTarget.publishVersion);
             }
         } else {

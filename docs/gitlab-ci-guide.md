@@ -239,6 +239,17 @@ How the example works:
 | `publish_snapshot` | Publishes from the configured snapshot branch without extra shell branch parsing |
 | `publish_release` | Publishes from the final Git tag and creates or updates the GitLab Release |
 
+If `.changesets/config.json` or `.changesets/config.jsonc` contains:
+
+```jsonc
+{
+  "snapshotBranch": "snapshot",
+  "snapshotVersionMode": "plain"
+}
+```
+
+then the same `publish --directory $CI_PROJECT_DIR --execute true` snapshot job automatically switches to plain snapshot mode on that branch. No extra `if` block or custom `mvn deploy` split is required in the business repository.
+
 ## 7. Safe `script:` Patterns For GitLab CI
 
 Recommended:
@@ -352,6 +363,13 @@ The generic `publish` helper uses:
 2. `write-settings` logic to generate `.m2/settings.xml`
 3. repository variables such as `MAVEN_RELEASE_REPOSITORY_URL`
 4. credentials from your GitLab CI/CD variables
+
+Snapshot mode behavior:
+
+- default behavior stays `stamped`, which rewrites `1.2.3-SNAPSHOT` to a unique stamped revision before deploy
+- if the configured `snapshotBranch` matches the current branch and `snapshotVersionMode` is `plain`, `publish --execute true` keeps the effective version at the original `1.2.3-SNAPSHOT`
+- `preflight` and `publish` logs now print the resolved snapshot mode so pipeline logs make the choice explicit
+- even in plain mode, Maven snapshot repositories still normally produce timestamped artifact filenames on the server side; that is repository-standard snapshot expansion, not a second rewrite by `javachanges`
 
 Typical tag-pipeline split:
 

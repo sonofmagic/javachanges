@@ -61,6 +61,30 @@ enum OutputFormat {
     }
 }
 
+enum SnapshotVersionMode {
+    STAMPED("stamped"),
+    PLAIN("plain");
+
+    final String id;
+
+    SnapshotVersionMode(String id) {
+        this.id = id;
+    }
+
+    static SnapshotVersionMode parse(String value, SnapshotVersionMode defaultValue) {
+        String normalized = trimToNull(value);
+        if (normalized == null) {
+            return defaultValue;
+        }
+        for (SnapshotVersionMode mode : values()) {
+            if (mode.id.equalsIgnoreCase(normalized)) {
+                return mode;
+            }
+        }
+        throw new IllegalArgumentException("不支持的 snapshot version mode: " + value + "，可选值: plain, stamped");
+    }
+}
+
 enum ReleaseLevel {
     PATCH("patch", 1),
     MINOR("minor", 2),

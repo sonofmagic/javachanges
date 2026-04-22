@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PublishPlanSupportTest {
@@ -66,6 +67,50 @@ class PublishPlanSupportTest {
         assertTrue(command.contains("-Dmaven.snapshot.repository.url=https://repo.example.com/snapshots"));
         assertTrue(command.contains("clean"));
         assertTrue(command.contains("deploy"));
+    }
+
+    @Test
+    void resolvePublishTargetKeepsOriginalRevisionInPlainSnapshotMode(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, "fixture-app", "1.2.3-SNAPSHOT");
+        PublishPlanSupport support = new PublishPlanSupport(
+            repoRoot,
+            new PublishRuntime(repoRoot),
+            new VersionSupport(repoRoot)
+        );
+
+        Map<String, String> options = new LinkedHashMap<String, String>();
+        options.put("snapshot", "true");
+        options.put("snapshot-version-mode", "plain");
+        PublishRequest request = PublishRequest.fromOptions(options, true);
+
+        PublishPlanSupport.PublishTarget target = support.resolvePublishTarget(request);
+
+        assertEquals("1.2.3-SNAPSHOT", target.publishVersion);
+        assertEquals(SnapshotVersionMode.PLAIN, target.snapshotVersionMode);
+        assertFalse(target.snapshotBuildStampApplied);
+    }
+
+    @Test
+    void buildReportIncludesSnapshotModeMetadata(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, "fixture-app", "1.2.3-SNAPSHOT");
+        PublishPlanSupport support = new PublishPlanSupport(
+            repoRoot,
+            new PublishRuntime(repoRoot),
+            new VersionSupport(repoRoot)
+        );
+
+        Map<String, String> options = new LinkedHashMap<String, String>();
+        options.put("snapshot", "true");
+        options.put("snapshot-version-mode", "plain");
+        PublishRequest request = PublishRequest.fromOptions(options, true);
+
+        PublishPlanSupport.PublishTarget target = support.resolvePublishTarget(request);
+        AutomationJsonSupport.AutomationReport report = support.buildReport("publish", request, target);
+
+        assertEquals("1.2.3-SNAPSHOT", report.releaseVersion);
+        assertEquals("1.2.3-SNAPSHOT", report.effectiveVersion);
+        assertEquals("plain", report.snapshotVersionMode);
+        assertFalse(report.snapshotBuildStampApplied);
     }
 
     private static Path createRepository(Path tempDir, String artifactId, String revision) throws IOException {

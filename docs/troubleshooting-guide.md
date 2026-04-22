@@ -221,7 +221,18 @@ Verification command:
 mvn -Pcentral-publish -Dgpg.skip=true verify
 ```
 
-### 6.4 Maven Central rejects signatures because the public key fingerprint is not discoverable
+### 6.4 Plain snapshot mode still produces timestamped filenames in Nexus or other snapshot repositories
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| `publish --snapshot --snapshot-version-mode plain` kept the project version at `1.2.3-SNAPSHOT`, but the repository shows files like `1.2.3-20260420.154500-1.jar` | Maven snapshot repositories expand snapshot artifact filenames on the server side | this is expected; verify the effective project version from `preflight` / `publish` output or JSON, not from the stored snapshot filename |
+
+Important distinction:
+
+- plain mode means `javachanges` no longer rewrites the Maven project version to `1.2.3-<stamp>-SNAPSHOT`
+- repository-side timestamped filenames are still normal Maven snapshot behavior
+
+### 6.5 Maven Central rejects signatures because the public key fingerprint is not discoverable
 
 | Symptom | Cause | Fix |
 | --- | --- | --- |
@@ -238,7 +249,7 @@ This command currently publishes to and verifies discovery from:
 - `hkps://keyserver.ubuntu.com`
 - `hkps://keys.openpgp.org`
 
-### 6.5 Manual publish retry uses the wrong commit or release version
+### 6.6 Manual publish retry uses the wrong commit or release version
 
 | Symptom | Cause | Fix |
 | --- | --- | --- |

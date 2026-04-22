@@ -235,6 +235,17 @@ publish_release:
 | `publish_snapshot` | 基于配置的 snapshot 分支执行发布，不需要业务仓库再写 shell 分支判断 |
 | `publish_release` | 基于正式 Git tag 执行发布，并创建或更新 GitLab Release |
 
+如果 `.changesets/config.json` 或 `.changesets/config.jsonc` 配成这样：
+
+```jsonc
+{
+  "snapshotBranch": "snapshot",
+  "snapshotVersionMode": "plain"
+}
+```
+
+那么同一条 `publish --directory $CI_PROJECT_DIR --execute true` snapshot job，在命中该分支时就会自动切到 plain snapshot 模式。业务仓库不需要再额外拆成自定义 `mvn deploy` 或 shell 条件判断。
+
 ## 7. GitLab CI 中更安全的 `script:` 写法
 
 推荐：
@@ -348,6 +359,13 @@ release_plan_mr:
 2. 生成 `.m2/settings.xml`
 3. 读取 release / snapshot 仓库地址
 4. 用 CI/CD variables 中的凭据执行 Maven deploy
+
+snapshot 模式的行为说明：
+
+- 默认仍然是 `stamped`，也就是把 `1.2.3-SNAPSHOT` 改写成唯一的带 stamp 版本再发布
+- 如果当前分支命中配置里的 `snapshotBranch`，并且 `snapshotVersionMode` 为 `plain`，那么 `publish --execute true` 会保持实际发布版本仍然是原始 `1.2.3-SNAPSHOT`
+- `preflight` 和 `publish` 日志会明确打印当前解析出的 snapshot mode，方便直接在 pipeline 日志里核对
+- 即使是 plain 模式，Maven snapshot 仓库通常仍然会在服务端生成带时间戳的产物文件名；那是仓库标准行为，不是 `javachanges` 再次改写版本号
 
 典型的 tag pipeline 拆分方式：
 

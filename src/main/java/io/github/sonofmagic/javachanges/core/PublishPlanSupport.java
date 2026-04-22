@@ -25,8 +25,13 @@ final class PublishPlanSupport {
         String resolvedModule = request.module;
         if (request.snapshot) {
             versionSupport.assertSnapshot();
+            if (request.snapshotVersionMode == SnapshotVersionMode.PLAIN) {
+                return new PublishTarget(versionSupport.snapshotRevision(), resolvedModule,
+                    SnapshotVersionMode.PLAIN, false);
+            }
             String buildStamp = firstNonBlank(request.snapshotBuildStamp, runtime.snapshotBuildStamp());
-            return new PublishTarget(versionSupport.resolveSnapshotPublishVersion(buildStamp), resolvedModule);
+            return new PublishTarget(versionSupport.resolveSnapshotPublishVersion(buildStamp), resolvedModule,
+                SnapshotVersionMode.STAMPED, true);
         }
 
         versionSupport.assertReleaseTag(request.tag);
@@ -37,7 +42,7 @@ final class PublishPlanSupport {
         } else if (tagModule != null && !resolvedModule.equals(tagModule)) {
             throw new IllegalStateException("显式指定的模块 " + resolvedModule + " 与 tag 中的模块 " + tagModule + " 不一致");
         }
-        return new PublishTarget(releaseVersion, resolvedModule);
+        return new PublishTarget(releaseVersion, resolvedModule, null, false);
     }
 
     AutomationJsonSupport.AutomationReport buildReport(String command, PublishRequest request, PublishTarget publishTarget) {
@@ -46,7 +51,10 @@ final class PublishPlanSupport {
         report.execute = request.execute;
         report.dryRun = !request.execute;
         report.releaseVersion = publishTarget.publishVersion;
+        report.effectiveVersion = publishTarget.publishVersion;
         report.releaseModule = publishTarget.resolvedModule;
+        report.snapshotVersionMode = publishTarget.snapshotVersionMode == null ? null : publishTarget.snapshotVersionMode.id;
+        report.snapshotBuildStampApplied = publishTarget.snapshotBuildStampApplied;
         report.tag = request.tag;
         return report;
     }
@@ -98,10 +106,15 @@ final class PublishPlanSupport {
     static final class PublishTarget {
         final String publishVersion;
         final String resolvedModule;
+        final SnapshotVersionMode snapshotVersionMode;
+        final boolean snapshotBuildStampApplied;
 
-        PublishTarget(String publishVersion, String resolvedModule) {
+        PublishTarget(String publishVersion, String resolvedModule, SnapshotVersionMode snapshotVersionMode,
+                      boolean snapshotBuildStampApplied) {
             this.publishVersion = publishVersion;
             this.resolvedModule = resolvedModule;
+            this.snapshotVersionMode = snapshotVersionMode;
+            this.snapshotBuildStampApplied = snapshotBuildStampApplied;
         }
     }
 }
