@@ -1,6 +1,8 @@
 package io.github.sonofmagic.javachanges.core;
 
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.jsonEscape;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
 
 final class AutomationJsonSupport {
@@ -39,31 +41,20 @@ final class AutomationJsonSupport {
         }
 
         String toJson() {
-            StringBuilder builder = new StringBuilder();
-            builder.append("{");
-            builder.append("\"ok\":").append(ok);
-            builder.append(",\"command\":\"").append(jsonEscape(command)).append("\"");
-            appendString(builder, "action", action);
-            builder.append(",\"skipped\":").append(skipped);
-            appendString(builder, "reason", reason);
-            appendString(builder, "releaseVersion", releaseVersion);
-            appendString(builder, "releaseModule", releaseModule);
-            appendString(builder, "tag", tag);
-            appendString(builder, "releaseNotesFile", releaseNotesFile);
-            appendString(builder, "projectId", projectId);
-            builder.append(",\"execute\":").append(execute);
-            builder.append(",\"dryRun\":").append(dryRun);
-            builder.append("}");
-            return builder.toString();
-        }
-
-        private void appendString(StringBuilder builder, String name, String value) {
-            builder.append(",\"").append(name).append("\":");
-            if (value == null) {
-                builder.append("null");
-                return;
-            }
-            builder.append("\"").append(jsonEscape(value)).append("\"");
+            Map<String, Object> payload = new LinkedHashMap<String, Object>();
+            payload.put("ok", Boolean.valueOf(ok));
+            payload.put("command", command);
+            payload.put("action", action);
+            payload.put("skipped", Boolean.valueOf(skipped));
+            payload.put("reason", reason);
+            payload.put("releaseVersion", releaseVersion);
+            payload.put("releaseModule", releaseModule);
+            payload.put("tag", tag);
+            payload.put("releaseNotesFile", releaseNotesFile);
+            payload.put("projectId", projectId);
+            payload.put("execute", Boolean.valueOf(execute));
+            payload.put("dryRun", Boolean.valueOf(dryRun));
+            return ReleaseJsonUtils.toJson(payload);
         }
     }
 }

@@ -1,5 +1,7 @@
 package io.github.sonofmagic.javachanges.core;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URLEncoder;
@@ -1010,17 +1012,19 @@ final class ReleaseEnvSupport {
 
     private Map<String, GitlabVariableMetadata> parseGitlabVariableMetadata(String json) {
         Map<String, GitlabVariableMetadata> result = new java.util.LinkedHashMap<String, GitlabVariableMetadata>();
-        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("\\{([^{}]*)\\}").matcher(json);
-        while (matcher.find()) {
-            String objectText = matcher.group(1);
-            String key = jsonStringField(objectText, "key");
+        JsonNode root = ReleaseJsonUtils.readTree(json);
+        if (!root.isArray()) {
+            return result;
+        }
+        for (JsonNode node : root) {
+            String key = jsonText(node, "key");
             if (key == null) {
                 continue;
             }
             result.put(key, new GitlabVariableMetadata(
                 key,
-                jsonBooleanField(objectText, "protected"),
-                jsonBooleanField(objectText, "masked")
+                jsonBoolean(node, "protected"),
+                jsonBoolean(node, "masked")
             ));
         }
         return result;
@@ -1028,9 +1032,15 @@ final class ReleaseEnvSupport {
 
     private List<String> parseProtectedBranchNames(String json) {
         List<String> names = new ArrayList<String>();
-        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("\"name\"\\s*:\\s*\"((?:\\\\.|[^\"])*)\"").matcher(json);
-        while (matcher.find()) {
-            names.add(ReleaseJsonUtils.jsonUnescape(matcher.group(1)));
+        JsonNode root = ReleaseJsonUtils.readTree(json);
+        if (!root.isArray()) {
+            return names;
+        }
+        for (JsonNode node : root) {
+            String name = jsonText(node, "name");
+            if (name != null) {
+                names.add(name);
+            }
         }
         return names;
     }
@@ -1055,21 +1065,17 @@ final class ReleaseEnvSupport {
         return false;
     }
 
-    private String jsonStringField(String objectText, String field) {
-        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile(
-            "\"" + java.util.regex.Pattern.quote(field) + "\"\\s*:\\s*\"((?:\\\\.|[^\"])*)\""
-        ).matcher(objectText);
-        if (!matcher.find()) {
+    private String jsonText(JsonNode node, String field) {
+        JsonNode value = node.get(field);
+        if (value == null || value.isNull()) {
             return null;
         }
-        return ReleaseJsonUtils.jsonUnescape(matcher.group(1));
+        return value.asText();
     }
 
-    private boolean jsonBooleanField(String objectText, String field) {
-        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile(
-            "\"" + java.util.regex.Pattern.quote(field) + "\"\\s*:\\s*(true|false)"
-        ).matcher(objectText);
-        return matcher.find() && Boolean.parseBoolean(matcher.group(1));
+    private boolean jsonBoolean(JsonNode node, String field) {
+        JsonNode value = node.get(field);
+        return value != null && !value.isNull() && value.asBoolean(false);
     }
 
     private String urlEncode(String value) {

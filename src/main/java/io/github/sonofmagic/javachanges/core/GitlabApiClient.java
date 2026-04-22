@@ -1,13 +1,16 @@
 package io.github.sonofmagic.javachanges.core;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.firstNonBlank;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.readAllBytes;
@@ -40,11 +43,12 @@ final class GitlabApiClient implements GitlabMergeRequestClient {
                 + urlEncode(sourceBranch) + "&target_branch=" + urlEncode(targetBranch),
             null
         );
-        Matcher matcher = Pattern.compile("\"iid\"\\s*:\\s*(\\d+)").matcher(response);
-        if (!matcher.find()) {
+        JsonNode root = ReleaseJsonUtils.readTree(response);
+        if (!root.isArray() || root.size() == 0) {
             return null;
         }
-        return Integer.valueOf(matcher.group(1));
+        JsonNode first = root.get(0);
+        return first != null && first.hasNonNull("iid") ? Integer.valueOf(first.get("iid").asInt()) : null;
     }
 
     public String createMergeRequest(String projectId, String sourceBranch, String targetBranch,
@@ -52,13 +56,13 @@ final class GitlabApiClient implements GitlabMergeRequestClient {
         return request(
             "POST",
             "/projects/" + projectId + "/merge_requests",
-            formBody(
+            formBody(orderedMap(
                 "source_branch", sourceBranch,
                 "target_branch", targetBranch,
                 "title", title,
                 "description", description,
                 "remove_source_branch", "true"
-            )
+            ))
         );
     }
 
@@ -66,11 +70,11 @@ final class GitlabApiClient implements GitlabMergeRequestClient {
         request(
             "PUT",
             "/projects/" + projectId + "/merge_requests/" + mergeRequestIid,
-            formBody(
+            formBody(orderedMap(
                 "title", title,
                 "description", description,
                 "remove_source_branch", "true"
-            )
+            ))
         );
     }
 
@@ -83,11 +87,12 @@ final class GitlabApiClient implements GitlabMergeRequestClient {
     }
 
     public int requiredJsonInt(String json, String field) {
-        Matcher matcher = Pattern.compile("\"" + Pattern.quote(field) + "\"\\s*:\\s*(\\d+)").matcher(json);
-        if (!matcher.find()) {
+        JsonNode root = ReleaseJsonUtils.readTree(json);
+        JsonNode value = root.get(field);
+        if (value == null || value.isNull() || !value.canConvertToInt()) {
             throw new IllegalStateException("Missing `" + field + "` in GitLab response: " + json);
         }
-        return Integer.parseInt(matcher.group(1));
+        return value.asInt();
     }
 
     public boolean releaseExists(String projectId, String tagName) throws IOException {
@@ -102,12 +107,12 @@ final class GitlabApiClient implements GitlabMergeRequestClient {
         request(
             "POST",
             "/projects/" + projectId + "/releases",
-            formBody(
+            formBody(orderedMap(
                 "name", releaseName,
                 "tag_name", tagName,
                 "description", description,
                 "ref", tagName
-            )
+            ))
         );
     }
 
@@ -115,10 +120,10 @@ final class GitlabApiClient implements GitlabMergeRequestClient {
         request(
             "PUT",
             "/projects/" + projectId + "/releases/" + urlEncode(tagName),
-            formBody(
+            formBody(orderedMap(
                 "name", releaseName,
                 "description", description
-            )
+            ))
         );
     }
 
@@ -159,15 +164,25 @@ final class GitlabApiClient implements GitlabMergeRequestClient {
         return response;
     }
 
-    private String formBody(String... keyValues) {
+    private String formBody(Map<String, String> fields) {
         StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < keyValues.length; i += 2) {
+        Iterator<Map.Entry<String, String>> iterator = fields.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, String> entry = iterator.next();
             if (builder.length() > 0) {
                 builder.append('&');
             }
-            builder.append(urlEncode(keyValues[i])).append('=').append(urlEncode(keyValues[i + 1]));
+            builder.append(urlEncode(entry.getKey())).append('=').append(urlEncode(entry.getValue()));
         }
         return builder.toString();
+    }
+
+    private Map<String, String> orderedMap(String... keyValues) {
+        Map<String, String> result = new LinkedHashMap<String, String>();
+        for (int i = 0; i < keyValues.length; i += 2) {
+            result.put(keyValues[i], keyValues[i + 1]);
+        }
+        return result;
     }
 
     private String urlEncode(String value) {

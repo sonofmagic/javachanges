@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -13,7 +14,6 @@ import java.util.Set;
 
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.firstBodyLine;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.joinModules;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.jsonEscape;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.releaseLevelHeading;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.renderVisibleType;
 
@@ -143,36 +143,22 @@ final class ReleasePlan {
     }
 
     String toJson() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("{\n");
-        builder.append("  \"releaseVersion\": \"").append(jsonEscape(releaseVersion)).append("\",\n");
-        builder.append("  \"nextSnapshotVersion\": \"").append(jsonEscape(nextSnapshotVersion)).append("\",\n");
-        builder.append("  \"releaseLevel\": \"").append(jsonEscape(releaseLevel.id)).append("\",\n");
-        builder.append("  \"generatedAt\": \"").append(jsonEscape(OffsetDateTime.now().toString())).append("\",\n");
-        builder.append("  \"changesets\": [\n");
-        for (int i = 0; i < changesets.size(); i++) {
-            Changeset changeset = changesets.get(i);
-            builder.append("    {\n");
-            builder.append("      \"file\": \"").append(jsonEscape(changeset.fileName)).append("\",\n");
-            builder.append("      \"release\": \"").append(jsonEscape(changeset.release.id)).append("\",\n");
-            builder.append("      \"type\": \"").append(jsonEscape(changeset.type)).append("\",\n");
-            builder.append("      \"summary\": \"").append(jsonEscape(changeset.summary)).append("\",\n");
-            builder.append("      \"modules\": [");
-            for (int moduleIndex = 0; moduleIndex < changeset.modules.size(); moduleIndex++) {
-                if (moduleIndex > 0) {
-                    builder.append(", ");
-                }
-                builder.append("\"").append(jsonEscape(changeset.modules.get(moduleIndex))).append("\"");
-            }
-            builder.append("]\n");
-            builder.append("    }");
-            if (i + 1 < changesets.size()) {
-                builder.append(",");
-            }
-            builder.append("\n");
+        Map<String, Object> payload = new LinkedHashMap<String, Object>();
+        payload.put("releaseVersion", releaseVersion);
+        payload.put("nextSnapshotVersion", nextSnapshotVersion);
+        payload.put("releaseLevel", releaseLevel.id);
+        payload.put("generatedAt", OffsetDateTime.now().toString());
+        List<Map<String, Object>> renderedChangesets = new ArrayList<Map<String, Object>>();
+        for (Changeset changeset : changesets) {
+            Map<String, Object> entry = new LinkedHashMap<String, Object>();
+            entry.put("file", changeset.fileName);
+            entry.put("release", changeset.release.id);
+            entry.put("type", changeset.type);
+            entry.put("summary", changeset.summary);
+            entry.put("modules", Collections.unmodifiableList(new ArrayList<String>(changeset.modules)));
+            renderedChangesets.add(entry);
         }
-        builder.append("  ]\n");
-        builder.append("}\n");
-        return builder.toString();
+        payload.put("changesets", renderedChangesets);
+        return ReleaseJsonUtils.toPrettyJson(payload) + "\n";
     }
 }

@@ -12,8 +12,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.CHANGESETS_DIR;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.CHANGESETS_README;
@@ -90,12 +88,12 @@ final class ChangesetFileSupport {
             throw new IllegalStateException("Missing release plan manifest: " + manifest);
         }
         String content = new String(Files.readAllBytes(manifest), StandardCharsets.UTF_8);
-        Pattern pattern = Pattern.compile("\"" + Pattern.quote(field) + "\"\\s*:\\s*\"([^\"]+)\"");
-        Matcher matcher = pattern.matcher(content);
-        if (!matcher.find()) {
+        com.fasterxml.jackson.databind.JsonNode root = ReleaseJsonUtils.readTree(content);
+        com.fasterxml.jackson.databind.JsonNode value = root.get(field);
+        if (value == null || value.isNull()) {
             throw new IllegalStateException("Missing field `" + field + "` in " + manifest);
         }
-        return matcher.group(1);
+        return value.asText();
     }
 
     private static boolean isChangesetReadme(String fileName) {

@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.CHANGESETS_DIR;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
@@ -57,11 +55,12 @@ final class ChangesetConfigSupport {
     }
 
     private static String field(String json, String name) {
-        Matcher matcher = Pattern.compile("\"" + Pattern.quote(name) + "\"\\s*:\\s*\"((?:\\\\.|[^\"])*)\"").matcher(json);
-        if (!matcher.find()) {
+        com.fasterxml.jackson.databind.JsonNode root = ReleaseJsonUtils.readTree(json);
+        com.fasterxml.jackson.databind.JsonNode value = root.get(name);
+        if (value == null || value.isNull()) {
             return null;
         }
-        return ReleaseJsonUtils.jsonUnescape(matcher.group(1));
+        return value.asText();
     }
 
     private static String stripJsonComments(String text) {

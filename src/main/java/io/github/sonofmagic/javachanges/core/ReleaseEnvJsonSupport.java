@@ -5,7 +5,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.jsonEscape;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
 
 final class ReleaseEnvJsonSupport {
@@ -17,47 +16,38 @@ final class ReleaseEnvJsonSupport {
         if (message == null) {
             message = exception.getClass().getSimpleName();
         }
-        return "{\"ok\":false,\"command\":\"" + jsonEscape(command) + "\",\"error\":\""
-            + jsonEscape(message) + "\"}";
+        Map<String, Object> payload = new LinkedHashMap<String, Object>();
+        payload.put("ok", Boolean.FALSE);
+        payload.put("command", command);
+        payload.put("error", message);
+        return ReleaseJsonUtils.toJson(payload);
     }
 
     static String commandReportJson(String command, boolean ok, String envFile, String platform,
                                     boolean showSecrets, List<JsonSection> sections,
                                     List<String> suggestions, String error) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("{");
-        builder.append("\"ok\":").append(ok);
-        builder.append(",\"command\":\"").append(jsonEscape(command)).append("\"");
+        Map<String, Object> payload = new LinkedHashMap<String, Object>();
+        payload.put("ok", Boolean.valueOf(ok));
+        payload.put("command", command);
         if (envFile != null) {
-            builder.append(",\"envFile\":\"").append(jsonEscape(envFile)).append("\"");
+            payload.put("envFile", envFile);
         }
         if (platform != null) {
-            builder.append(",\"platform\":\"").append(jsonEscape(platform)).append("\"");
+            payload.put("platform", platform);
         }
-        builder.append(",\"showSecrets\":").append(showSecrets);
-        builder.append(",\"sections\":[");
-        for (int i = 0; i < sections.size(); i++) {
-            if (i > 0) {
-                builder.append(",");
-            }
-            builder.append(sections.get(i).toJson());
+        payload.put("showSecrets", Boolean.valueOf(showSecrets));
+        List<Map<String, Object>> renderedSections = new ArrayList<Map<String, Object>>();
+        for (JsonSection section : sections) {
+            renderedSections.add(section.toMap());
         }
-        builder.append("]");
+        payload.put("sections", renderedSections);
         if (!suggestions.isEmpty()) {
-            builder.append(",\"suggestions\":[");
-            for (int i = 0; i < suggestions.size(); i++) {
-                if (i > 0) {
-                    builder.append(",");
-                }
-                builder.append("\"").append(jsonEscape(suggestions.get(i))).append("\"");
-            }
-            builder.append("]");
+            payload.put("suggestions", new ArrayList<String>(suggestions));
         }
         if (error != null) {
-            builder.append(",\"error\":\"").append(jsonEscape(error)).append("\"");
+            payload.put("error", error);
         }
-        builder.append("}");
-        return builder.toString();
+        return ReleaseJsonUtils.toJson(payload);
     }
 
     static final class JsonSection {
@@ -75,19 +65,11 @@ final class ReleaseEnvJsonSupport {
             entries.add(entry);
         }
 
-        String toJson() {
-            StringBuilder builder = new StringBuilder();
-            builder.append("{\"title\":\"").append(jsonEscape(title)).append("\",\"entries\":[");
-            for (int i = 0; i < entries.size(); i++) {
-                if (i > 0) {
-                    builder.append(",");
-                }
-                Map<String, String> entry = entries.get(i);
-                builder.append("{\"label\":\"").append(jsonEscape(entry.get("label"))).append("\",");
-                builder.append("\"value\":\"").append(jsonEscape(entry.get("value"))).append("\"}");
-            }
-            builder.append("]}");
-            return builder.toString();
+        Map<String, Object> toMap() {
+            Map<String, Object> result = new LinkedHashMap<String, Object>();
+            result.put("title", title);
+            result.put("entries", new ArrayList<Map<String, String>>(entries));
+            return result;
         }
     }
 }
