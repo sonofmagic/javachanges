@@ -39,16 +39,12 @@ final class PreflightCommand extends AbstractCliCommand {
         putOption(options, "snapshot-build-stamp", snapshotBuildStamp);
         putOption(options, "format", format);
         PublishRequest request = PublishRequest.fromOptions(options, false);
-        try {
-            new PublishSupport(repoRoot(), out()).preflight(request);
-            return success();
-        } catch (Exception exception) {
-            if (request.format == OutputFormat.JSON) {
-                out().println(AutomationJsonSupport.errorJson("preflight", exception));
-                return 1;
+        return runAutomationCommand("preflight", request.format, new ThrowingRunnable() {
+            @Override
+            public void run() throws Exception {
+                new PublishSupport(repoRoot(), out()).preflight(request);
             }
-            throw exception;
-        }
+        });
     }
 }
 
@@ -91,15 +87,11 @@ final class PublishCommand extends AbstractCliCommand {
         putOption(options, "snapshot-build-stamp", snapshotBuildStamp);
         putOption(options, "format", format);
         PublishRequest request = PublishRequest.fromOptions(options, true);
-        try {
-            new PublishSupport(repoRoot(), out()).publish(request);
-            return success();
-        } catch (Exception exception) {
-            if (request.format == OutputFormat.JSON) {
-                out().println(AutomationJsonSupport.errorJson("publish", exception));
-                return 1;
+        return runAutomationCommand("publish", request.format, new ThrowingRunnable() {
+            @Override
+            public void run() throws Exception {
+                new PublishSupport(repoRoot(), out()).publish(request);
             }
-            throw exception;
-        }
+        });
     }
 }

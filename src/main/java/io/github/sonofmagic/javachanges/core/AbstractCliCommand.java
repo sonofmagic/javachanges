@@ -11,6 +11,11 @@ import java.util.concurrent.Callable;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
 
 abstract class AbstractCliCommand implements Callable<Integer> {
+    @FunctionalInterface
+    interface ThrowingRunnable {
+        void run() throws Exception;
+    }
+
     @ParentCommand
     private JavaChangesCommand root;
 
@@ -44,5 +49,18 @@ abstract class AbstractCliCommand implements Callable<Integer> {
 
     final int success() {
         return 0;
+    }
+
+    final int runAutomationCommand(String command, OutputFormat format, ThrowingRunnable action) throws Exception {
+        try {
+            action.run();
+            return success();
+        } catch (Exception exception) {
+            if (format == OutputFormat.JSON) {
+                out().println(AutomationJsonSupport.errorJson(command, exception));
+                return 1;
+            }
+            throw exception;
+        }
     }
 }

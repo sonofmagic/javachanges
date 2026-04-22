@@ -36,16 +36,12 @@ final class GitlabReleasePlanCommand extends AbstractCliCommand {
         putFlag(options, "execute", execute);
         putOption(options, "format", format);
         GitlabReleasePlanRequest request = GitlabReleasePlanRequest.fromOptions(options);
-        try {
-            new GitlabReleaseSupport(repoRoot(), out()).planMergeRequest(request);
-            return success();
-        } catch (Exception exception) {
-            if (request.format == OutputFormat.JSON) {
-                out().println(AutomationJsonSupport.errorJson("gitlab-release-plan", exception));
-                return 1;
+        return runAutomationCommand("gitlab-release-plan", request.format, new ThrowingRunnable() {
+            @Override
+            public void run() throws Exception {
+                new GitlabReleaseSupport(repoRoot(), out()).planMergeRequest(request);
             }
-            throw exception;
-        }
+        });
     }
 }
 
@@ -73,16 +69,12 @@ final class GitlabTagFromPlanCommand extends AbstractCliCommand {
         putFlag(options, "execute", execute);
         putOption(options, "format", format);
         GitlabTagRequest request = GitlabTagRequest.fromOptions(options);
-        try {
-            new GitlabReleaseSupport(repoRoot(), out()).tagFromReleasePlan(request);
-            return success();
-        } catch (Exception exception) {
-            if (request.format == OutputFormat.JSON) {
-                out().println(AutomationJsonSupport.errorJson("gitlab-tag-from-plan", exception));
-                return 1;
+        return runAutomationCommand("gitlab-tag-from-plan", request.format, new ThrowingRunnable() {
+            @Override
+            public void run() throws Exception {
+                new GitlabReleaseSupport(repoRoot(), out()).tagFromReleasePlan(request);
             }
-            throw exception;
-        }
+        });
     }
 }
 
@@ -119,16 +111,12 @@ final class GitlabReleaseCommand extends AbstractCliCommand {
         putFlag(options, "execute", execute);
         putOption(options, "format", format);
         GitlabReleaseRequest request = GitlabReleaseRequest.fromOptions(options);
-        try {
-            new GitlabReleaseSupport(repoRoot(), out()).syncRelease(request);
-            return success();
-        } catch (Exception exception) {
-            if (request.format == OutputFormat.JSON) {
-                out().println(AutomationJsonSupport.errorJson("gitlab-release", exception));
-                return 1;
+        return runAutomationCommand("gitlab-release", request.format, new ThrowingRunnable() {
+            @Override
+            public void run() throws Exception {
+                new GitlabReleaseSupport(repoRoot(), out()).syncRelease(request);
             }
-            throw exception;
-        }
+        });
     }
 }
 
