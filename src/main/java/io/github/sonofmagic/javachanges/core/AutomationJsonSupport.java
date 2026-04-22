@@ -1,5 +1,6 @@
 package io.github.sonofmagic.javachanges.core;
 
+import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -20,6 +21,27 @@ final class AutomationJsonSupport {
         report.reason = message;
         report.action = "error";
         return report.toJson();
+    }
+
+    static boolean isText(OutputFormat format) {
+        return format != OutputFormat.JSON;
+    }
+
+    static void print(PrintStream out, boolean textOutput, AutomationReport report, String textMessage) {
+        if (textOutput) {
+            out.println(textMessage);
+        } else {
+            out.println(report.toJson());
+        }
+    }
+
+    static void printLines(PrintStream out, boolean textOutput, String... lines) {
+        if (!textOutput) {
+            return;
+        }
+        for (int i = 0; i < lines.length; i++) {
+            out.println(lines[i]);
+        }
     }
 
     static final class AutomationReport {
