@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
 
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.*;
 
@@ -106,20 +107,24 @@ final class GithubReleaseSupport {
         report.dryRun = !request.execute;
         String currentSha = firstNonBlank(trimToNull(request.currentSha), runtime.headSha());
         ReleaseAutomationSupport.ReleaseDescriptor release = automationSupport.descriptorFromManifest();
-        String tagName = release.wholeRepoTagName();
         report.releaseVersion = release.releaseVersion;
-        report.tag = tagName;
+        report.tagStrategy = release.tagStrategy.id;
+        report.tags = release.tagNames();
+        report.tag = release.releaseTargets.size() == 1 ? release.tagNames().get(0) : null;
+        List<String> tagNames = release.tagNames();
 
         AutomationJsonSupport.printLines(out, textOutput,
-            "Release tag: " + tagName,
+            "Release tags: " + tagNames,
             "Target commit: " + currentSha
         );
 
-        if (runtime.remoteTagExists(tagName, "origin")) {
-            report.skipped = true;
-            report.reason = "Tag already exists remotely.";
-            AutomationJsonSupport.print(out, textOutput, report, "Tag already exists remotely. Skip.");
-            return;
+        for (String tagName : tagNames) {
+            if (runtime.remoteTagExists(tagName, "origin")) {
+                report.skipped = true;
+                report.reason = "Tag already exists remotely: " + tagName;
+                AutomationJsonSupport.print(out, textOutput, report, "Tag already exists remotely. Skip.");
+                return;
+            }
         }
 
         if (!request.execute) {
@@ -129,11 +134,13 @@ final class GithubReleaseSupport {
             return;
         }
 
-        runtime.createOrUpdateTag(tagName, currentSha);
-        runtime.runGit("push", "origin", "refs/tags/" + tagName);
+        for (String tagName : tagNames) {
+            runtime.createOrUpdateTag(tagName, currentSha);
+            runtime.runGit("push", "origin", "refs/tags/" + tagName);
+        }
         report.action = "create-tag";
         report.reason = "Created and pushed tag.";
-        AutomationJsonSupport.print(out, textOutput, report, "Created and pushed tag " + tagName);
+        AutomationJsonSupport.print(out, textOutput, report, "Created and pushed tag(s) " + tagNames);
     }
 
     void syncReleaseFromPlan(GithubReleasePublishRequest request) throws IOException, InterruptedException {
@@ -144,9 +151,11 @@ final class GithubReleaseSupport {
         report.dryRun = !request.execute;
         ReleaseAutomationSupport.ReleaseDescriptor release = automationSupport.descriptorFromManifest();
         String releaseVersion = release.releaseVersion;
-        String tagName = release.wholeRepoTagName();
+        String tagName = release.primaryTagName();
         report.releaseVersion = releaseVersion;
         report.tag = tagName;
+        report.tagStrategy = release.tagStrategy.id;
+        report.tags = release.tagNames();
         Path notesFile = artifactSupport.resolveReleaseNotesFile(request.releaseNotesFile);
         report.releaseNotesFile = notesFile.toString();
         new ReleaseNotesGenerator(repoRoot).writeReleaseNotes(tagName, notesFile);

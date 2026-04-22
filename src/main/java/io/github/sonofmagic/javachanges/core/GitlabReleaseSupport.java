@@ -5,6 +5,7 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.*;
 
@@ -144,17 +145,21 @@ final class GitlabReleaseSupport {
         }
 
         ReleaseAutomationSupport.ReleaseDescriptor release = automationSupport.descriptorFromManifest();
-        String tagName = release.wholeRepoTagName();
         report.releaseVersion = release.releaseVersion;
-        report.tag = tagName;
-        AutomationJsonSupport.printLines(out, textOutput, "Release tag: " + tagName);
+        report.tagStrategy = release.tagStrategy.id;
+        report.tags = release.tagNames();
+        report.tag = release.releaseTargets.size() == 1 ? release.tagNames().get(0) : null;
+        List<String> tagNames = release.tagNames();
+        AutomationJsonSupport.printLines(out, textOutput, "Release tags: " + tagNames);
 
         String remoteUrl = apiClient.authenticatedRemoteUrl();
-        if (runtime.remoteTagExists(tagName, remoteUrl)) {
-            report.skipped = true;
-            report.reason = "Tag already exists remotely.";
-            AutomationJsonSupport.print(out, textOutput, report, "Tag already exists remotely. Skip.");
-            return;
+        for (String tagName : tagNames) {
+            if (runtime.remoteTagExists(tagName, remoteUrl)) {
+                report.skipped = true;
+                report.reason = "Tag already exists remotely: " + tagName;
+                AutomationJsonSupport.print(out, textOutput, report, "Tag already exists remotely. Skip.");
+                return;
+            }
         }
 
         if (!request.execute) {
@@ -164,11 +169,13 @@ final class GitlabReleaseSupport {
             return;
         }
 
-        runtime.runGit("tag", tagName, currentSha);
-        runtime.runGit("push", remoteUrl, "refs/tags/" + tagName);
+        for (String tagName : tagNames) {
+            runtime.runGit("tag", tagName, currentSha);
+            runtime.runGit("push", remoteUrl, "refs/tags/" + tagName);
+        }
         report.action = "create-tag";
         report.reason = "Created and pushed tag.";
-        AutomationJsonSupport.print(out, textOutput, report, "Created and pushed tag " + tagName);
+        AutomationJsonSupport.print(out, textOutput, report, "Created and pushed tag(s) " + tagNames);
     }
 
     void syncRelease(GitlabReleaseRequest request) throws IOException, InterruptedException {

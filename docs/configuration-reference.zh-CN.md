@@ -66,7 +66,8 @@ Improve CLI parsing and release planning.
   "baseBranch": "main",
   "releaseBranch": "changeset-release/main",
   "snapshotBranch": "snapshot",
-  "snapshotVersionMode": "plain"
+  "snapshotVersionMode": "plain",
+  "tagStrategy": "whole-repo"
 }
 ```
 
@@ -84,6 +85,7 @@ Improve CLI parsing and release planning.
 | `releaseBranch` | 默认生成的 release 分支名 | `changeset-release/<baseBranch>` |
 | `snapshotBranch` | 约定用于 snapshot 发布的分支名 | `snapshot` |
 | `snapshotVersionMode` | snapshot 发布策略：`stamped` 或 `plain` | `stamped` |
+| `tagStrategy` | release tag 策略：`whole-repo` 或 `per-module` | `whole-repo` |
 
 当前行为：
 
@@ -92,6 +94,7 @@ Improve CLI parsing and release planning.
 - `preflight` 和 `publish` 会读取这里的 `snapshotBranch`，当前 CI 分支命中时自动进入 snapshot 模式
 - `preflight` 和 `publish` 也会读取这里的 `snapshotVersionMode`；如果 CLI 显式传了 `--snapshot-version-mode`，则以 CLI 为准
 - 当当前分支命中 `snapshotBranch`，并且 `snapshotVersionMode` 配成 `plain` 时，GitLab snapshot 发布 job 可以继续直接执行 `publish --execute true`
+- `plan`、`github-tag-from-plan` 和 `gitlab-tag-from-plan` 也会读取 `tagStrategy`；如果配置成 `per-module`，会按本次受影响模块分别创建 `artifactId/vX.Y.Z` tag
 - 本仓库里的 GitHub Actions 示例也遵循同一套分支命名约定
 - `snapshotBranch` 不再只是文档约定字段，GitLab snapshot 发布链路会真正消费它
 
@@ -342,6 +345,31 @@ export MAVEN_OPTS="-Dmaven.repo.local=.m2/repository"
 | `--modules` | 在 `add` 时显式传 artifactId |
 | release tag | 默认 whole-repo `v1.2.3`，除非你有意使用 module tag |
 | publish 目标 | 默认所有 package，需要时再用 `--module` 限制 |
+
+### 9.3 为什么 Maven monorepo 默认推荐 whole-repo tag
+
+`javachanges` 对 Maven monorepo 默认采用 `v1.2.3` 这种 whole-repo tag，这是有意的设计。
+
+原因主要有这些：
+
+- 很多 Maven monorepo 实际上是在发一趟统一版本的 release train，多个 artifact 会一起升到同一个版本
+- release PR、changelog、release notes、签名和 Maven Central 发布，通常也是一次仓库级发布动作
+- Java 使用者更常按“这一版仓库 / 这一版平台是否兼容”来理解版本，而不只是看某个单独包
+
+这和 npm monorepo 里常见的 Changesets 工作流不太一样。Changesets 更常见的是给每个实际发布的包打自己的 tag，例如 `pkg-a@1.2.3`，因为这些包往往是独立发布、独立消费的。
+
+实际使用时可以这样理解：
+
+- 如果你的 Maven 模块通常一起升级、一起发布，就优先使用 `v1.2.3` 这种 whole-repo tag
+- 只有当你的仓库明确把模块当成独立 release 单元时，再考虑 module tag
+
+`javachanges` 仍然可以解析像 `demo-app/v2.0.0` 这样的 module tag，用于后续 release 和 release notes 流程；但 release-plan 自动化默认只会创建一个 whole-repo tag。
+
+如果你显式启用了 `per-module`：
+
+- `plan --apply true` 仍然只会计算一个共享的 `releaseVersion`
+- `github-tag-from-plan` 和 `gitlab-tag-from-plan` 会按受影响模块分别创建 tag，例如 `core/v1.2.3`
+- `github-release-from-plan` 只适用于最终只解析出单个 tag 的场景；如果一个 plan 会产出多个 module tag，就应改用显式 tag 的 release 命令
 
 ## 10. 相关文档
 

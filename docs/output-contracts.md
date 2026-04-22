@@ -399,6 +399,8 @@ Current common fields:
 | `effectiveVersion` | actual version passed into the publish flow, including snapshot mode decisions |
 | `releaseModule` | resolved module or `null` for whole-repo work |
 | `tag` | release tag when relevant |
+| `tagStrategy` | resolved tag strategy when relevant |
+| `tags` | resolved release tag list when relevant |
 | `releaseNotesFile` | generated or consumed notes file path when relevant |
 | `projectId` | GitLab project id when relevant |
 | `snapshotVersionMode` | snapshot version mode when the command is operating on a snapshot |
@@ -417,6 +419,8 @@ Example:
   "effectiveVersion": "1.2.3",
   "releaseModule": "core",
   "tag": "core/v1.2.3",
+  "tagStrategy": null,
+  "tags": null,
   "releaseNotesFile": "/path/to/repo/target/release-notes.md",
   "projectId": "12345",
   "execute": true,

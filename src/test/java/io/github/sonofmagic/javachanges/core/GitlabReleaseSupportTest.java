@@ -9,7 +9,9 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -123,6 +125,39 @@ class GitlabReleaseSupportTest {
         assertTrue(json.contains("\"releaseNotesFile\":"));
     }
 
+    @Test
+    void tagFromReleasePlanCreatesPerModuleTags(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir);
+        Files.write(
+            repoRoot.resolve(".changesets").resolve("release-plan.json"),
+            ("{\n" +
+                "  \"releaseVersion\": \"1.2.0\",\n" +
+                "  \"tagStrategy\": \"per-module\",\n" +
+                "  \"releaseTargets\": [\n" +
+                "    {\"module\": \"fixture-app\", \"tag\": \"fixture-app/v1.2.0\"},\n" +
+                "    {\"module\": \"fixture-starter\", \"tag\": \"fixture-starter/v1.2.0\"}\n" +
+                "  ]\n" +
+                "}\n").getBytes(StandardCharsets.UTF_8)
+        );
+        RecordingRuntime runtime = new RecordingRuntime(repoRoot);
+        FakeGitlabApiClient api = new FakeGitlabApiClient();
+        api.remoteUrl = "https://bot:token@example.com/group/repo.git";
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("before-sha", "abc111");
+        options.put("current-sha", "abc222");
+        options.put("execute", "true");
+
+        new GitlabReleaseSupport(repoRoot, new PrintStream(stdout, true), runtime, api)
+            .tagFromReleasePlan(GitlabTagRequest.fromOptions(options));
+
+        assertEquals(2, runtime.createdTags.size());
+        assertEquals("tag fixture-app/v1.2.0 abc222", runtime.createdTags.get(0));
+        assertEquals("push https://bot:token@example.com/group/repo.git refs/tags/fixture-app/v1.2.0", runtime.pushes.get(0));
+        assertTrue(stdout.toString(StandardCharsets.UTF_8.name()).contains("fixture-starter/v1.2.0"));
+    }
+
     private static Path createRepository(Path tempDir) throws IOException {
         Path repoRoot = tempDir.resolve("repo");
         Files.createDirectories(repoRoot.resolve(".changesets"));
@@ -187,6 +222,8 @@ class GitlabReleaseSupportTest {
         String commitMessage;
         String remoteBranchHeadBranch;
         String pushExpectedOldSha;
+        List<String> createdTags = new ArrayList<String>();
+        List<String> pushes = new ArrayList<String>();
 
         RecordingRuntime(Path repoRoot) {
             super(repoRoot);
@@ -214,6 +251,14 @@ class GitlabReleaseSupportTest {
             }
             if (args.length >= 3 && "commit".equals(args[0]) && "-m".equals(args[1])) {
                 commitMessage = args[2];
+                return;
+            }
+            if (args.length >= 3 && "tag".equals(args[0])) {
+                createdTags.add(args[0] + " " + args[1] + " " + args[2]);
+                return;
+            }
+            if (args.length >= 3 && "push".equals(args[0])) {
+                pushes.add(args[0] + " " + args[1] + " " + args[2]);
             }
         }
 

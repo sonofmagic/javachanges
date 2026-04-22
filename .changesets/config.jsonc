@@ -6,5 +6,8 @@
   "releaseBranch": "changeset-release/main",
 
   // Dedicated branch used for publishing snapshots.
-  "snapshotBranch": "snapshot"
+  "snapshotBranch": "snapshot",
+
+  // Release tag strategy: whole-repo or per-module.
+  "tagStrategy": "whole-repo"
 }

@@ -25,11 +25,13 @@ final class ChangesetConfigSupport {
         String releaseBranch = field(json, "releaseBranch");
         String snapshotBranch = field(json, "snapshotBranch");
         String snapshotVersionMode = field(json, "snapshotVersionMode");
-        return ChangesetConfig.fromValues(baseBranch, releaseBranch, snapshotBranch, snapshotVersionMode,
+        String tagStrategy = field(json, "tagStrategy");
+        return ChangesetConfig.fromValues(baseBranch, releaseBranch, snapshotBranch, snapshotVersionMode, tagStrategy,
             trimToNull(baseBranch) != null,
             trimToNull(releaseBranch) != null,
             trimToNull(snapshotBranch) != null,
-            trimToNull(snapshotVersionMode) != null);
+            trimToNull(snapshotVersionMode) != null,
+            trimToNull(tagStrategy) != null);
     }
 
     static Path resolveConfigRoot(Path start) {
@@ -124,42 +126,49 @@ final class ChangesetConfigSupport {
         private final String releaseBranch;
         private final String snapshotBranch;
         private final SnapshotVersionMode snapshotVersionMode;
+        private final ReleaseTagStrategy tagStrategy;
         private final boolean explicitBaseBranch;
         private final boolean explicitReleaseBranch;
         private final boolean explicitSnapshotBranch;
         private final boolean explicitSnapshotVersionMode;
+        private final boolean explicitTagStrategy;
 
         private ChangesetConfig(String baseBranch, String releaseBranch, String snapshotBranch,
-                                SnapshotVersionMode snapshotVersionMode,
+                                SnapshotVersionMode snapshotVersionMode, ReleaseTagStrategy tagStrategy,
                                 boolean explicitBaseBranch, boolean explicitReleaseBranch,
-                                boolean explicitSnapshotBranch, boolean explicitSnapshotVersionMode) {
+                                boolean explicitSnapshotBranch, boolean explicitSnapshotVersionMode,
+                                boolean explicitTagStrategy) {
             this.baseBranch = baseBranch;
             this.releaseBranch = releaseBranch;
             this.snapshotBranch = snapshotBranch;
             this.snapshotVersionMode = snapshotVersionMode;
+            this.tagStrategy = tagStrategy;
             this.explicitBaseBranch = explicitBaseBranch;
             this.explicitReleaseBranch = explicitReleaseBranch;
             this.explicitSnapshotBranch = explicitSnapshotBranch;
             this.explicitSnapshotVersionMode = explicitSnapshotVersionMode;
+            this.explicitTagStrategy = explicitTagStrategy;
         }
 
         static ChangesetConfig defaults() {
             return new ChangesetConfig("main", "changeset-release/main", "snapshot", SnapshotVersionMode.STAMPED,
-                false, false, false, false);
+                ReleaseTagStrategy.WHOLE_REPO, false, false, false, false, false);
         }
 
         static ChangesetConfig fromValues(String baseBranch, String releaseBranch, String snapshotBranch) {
-            return fromValues(baseBranch, releaseBranch, snapshotBranch, null,
+            return fromValues(baseBranch, releaseBranch, snapshotBranch, null, null,
                 trimToNull(baseBranch) != null,
                 trimToNull(releaseBranch) != null,
                 trimToNull(snapshotBranch) != null,
+                false,
                 false);
         }
 
         static ChangesetConfig fromValues(String baseBranch, String releaseBranch, String snapshotBranch,
-                                          String snapshotVersionMode,
+                                          String snapshotVersionMode, String tagStrategy,
                                           boolean explicitBaseBranch, boolean explicitReleaseBranch,
-                                          boolean explicitSnapshotBranch, boolean explicitSnapshotVersionMode) {
+                                          boolean explicitSnapshotBranch, boolean explicitSnapshotVersionMode,
+                                          boolean explicitTagStrategy) {
             String resolvedBaseBranch = trimToNull(baseBranch);
             if (resolvedBaseBranch == null) {
                 resolvedBaseBranch = "main";
@@ -177,10 +186,12 @@ final class ChangesetConfigSupport {
 
             SnapshotVersionMode resolvedSnapshotVersionMode =
                 SnapshotVersionMode.parse(snapshotVersionMode, SnapshotVersionMode.STAMPED);
+            ReleaseTagStrategy resolvedTagStrategy =
+                ReleaseTagStrategy.parse(tagStrategy, ReleaseTagStrategy.WHOLE_REPO);
 
             return new ChangesetConfig(resolvedBaseBranch, resolvedReleaseBranch, resolvedSnapshotBranch,
-                resolvedSnapshotVersionMode, explicitBaseBranch, explicitReleaseBranch, explicitSnapshotBranch,
-                explicitSnapshotVersionMode);
+                resolvedSnapshotVersionMode, resolvedTagStrategy, explicitBaseBranch, explicitReleaseBranch,
+                explicitSnapshotBranch, explicitSnapshotVersionMode, explicitTagStrategy);
         }
 
         String baseBranch() {
@@ -199,6 +210,10 @@ final class ChangesetConfigSupport {
             return snapshotVersionMode;
         }
 
+        ReleaseTagStrategy tagStrategy() {
+            return tagStrategy;
+        }
+
         boolean hasBaseBranch() {
             return explicitBaseBranch;
         }
@@ -213,6 +228,10 @@ final class ChangesetConfigSupport {
 
         boolean hasSnapshotVersionMode() {
             return explicitSnapshotVersionMode;
+        }
+
+        boolean hasTagStrategy() {
+            return explicitTagStrategy;
         }
     }
 }

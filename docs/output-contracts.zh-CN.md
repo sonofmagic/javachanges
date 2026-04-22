@@ -395,6 +395,8 @@ GitLab 额外增强：
 | `effectiveVersion` | 实际传给发布链路的版本，已经包含 snapshot mode 的决策结果 |
 | `releaseModule` | 已解析好的模块名，whole-repo 时为 `null` |
 | `tag` | 相关发布 tag |
+| `tagStrategy` | 相关场景下解析出的 tag 策略 |
+| `tags` | 相关场景下解析出的发布 tag 列表 |
 | `releaseNotesFile` | 相关 release notes 文件路径 |
 | `projectId` | 相关 GitLab project id |
 | `snapshotVersionMode` | 当前命令在处理 snapshot 时所用的版本模式 |
@@ -413,6 +415,8 @@ GitLab 额外增强：
   "effectiveVersion": "1.2.3",
   "releaseModule": "core",
   "tag": "core/v1.2.3",
+  "tagStrategy": null,
+  "tags": null,
   "releaseNotesFile": "/path/to/repo/target/release-notes.md",
   "projectId": "12345",
   "execute": true,

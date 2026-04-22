@@ -1,7 +1,9 @@
 package io.github.sonofmagic.javachanges.core;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
@@ -54,6 +56,8 @@ final class AutomationJsonSupport {
         String effectiveVersion;
         String releaseModule;
         String tag;
+        String tagStrategy;
+        List<String> tags;
         String releaseNotesFile;
         String projectId;
         boolean execute;
@@ -76,6 +80,8 @@ final class AutomationJsonSupport {
             payload.put("effectiveVersion", effectiveVersion);
             payload.put("releaseModule", releaseModule);
             payload.put("tag", tag);
+            payload.put("tagStrategy", tagStrategy);
+            payload.put("tags", tags == null ? null : new ArrayList<String>(tags));
             payload.put("releaseNotesFile", releaseNotesFile);
             payload.put("projectId", projectId);
             payload.put("execute", Boolean.valueOf(execute));

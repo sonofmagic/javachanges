@@ -70,7 +70,8 @@ Rules:
   "baseBranch": "main",
   "releaseBranch": "changeset-release/main",
   "snapshotBranch": "snapshot",
-  "snapshotVersionMode": "plain"
+  "snapshotVersionMode": "plain",
+  "tagStrategy": "whole-repo"
 }
 ```
 
@@ -88,6 +89,7 @@ Supported fields:
 | `releaseBranch` | Default generated release branch name | `changeset-release/<baseBranch>` |
 | `snapshotBranch` | Conventional branch used for snapshot publishing | `snapshot` |
 | `snapshotVersionMode` | Snapshot publish strategy: `stamped` or `plain` | `stamped` |
+| `tagStrategy` | Release tag strategy: `whole-repo` or `per-module` | `whole-repo` |
 
 Current behavior:
 
@@ -96,6 +98,7 @@ Current behavior:
 - `preflight` and `publish` read `snapshotBranch` from this file and default to snapshot mode when the current CI branch matches it
 - `preflight` and `publish` also read `snapshotVersionMode`; CLI `--snapshot-version-mode` overrides the config file
 - when `snapshotBranch` matches and `snapshotVersionMode` is `plain`, GitLab snapshot-branch jobs can keep using `publish --execute true` without extra shell branching
+- `plan`, `github-tag-from-plan`, and `gitlab-tag-from-plan` read `tagStrategy`; `per-module` creates one `artifactId/vX.Y.Z` tag per affected module
 - GitHub Actions examples in this repository follow the same branch naming model
 - `snapshotBranch` is no longer documentation-only; GitLab snapshot publish flows consume it directly
 
@@ -346,6 +349,31 @@ Important note:
 | `--modules` | pass explicit artifactIds during `add` |
 | release tagging | whole-repo `v1.2.3` unless you intentionally use module tags elsewhere |
 | publish target | all packages, or one `--module` when needed |
+
+### 9.3 Why whole-repo tags are the default for Maven monorepos
+
+`javachanges` intentionally defaults to whole-repo tags such as `v1.2.3` for Maven monorepos.
+
+Reasoning:
+
+- many Maven monorepos publish a coordinated release train where multiple artifacts move to the same version together
+- the release PR, changelog, release notes, signing, and Maven Central deploy steps are commonly handled as one repository-level release operation
+- Java consumers often reason about compatibility as "this repository release" or "this platform version", not only as isolated package versions
+
+This differs from the usual Changesets workflow in npm monorepos, where per-package tags such as `pkg-a@1.2.3` are often more useful because packages are published and consumed independently.
+
+In practice, the recommended mental model is:
+
+- use whole-repo tags like `v1.2.3` when your Maven modules are versioned and released together
+- use module tags only when your repository deliberately treats modules as independently tagged release units
+
+`javachanges` can still parse module tags like `demo-app/v2.0.0` for downstream release and notes workflows, but release-plan automation creates a single whole-repo tag by default.
+
+If you opt into `per-module` tagging:
+
+- `plan --apply true` still computes one shared `releaseVersion`
+- `github-tag-from-plan` and `gitlab-tag-from-plan` create one tag per affected module, such as `core/v1.2.3`
+- `github-release-from-plan` only works when the plan resolves to a single tag; for multi-module plans, use explicit tag-based release commands instead
 
 ## 10. Related Guides
 

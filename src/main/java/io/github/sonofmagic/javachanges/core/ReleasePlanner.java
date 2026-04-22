@@ -22,10 +22,11 @@ final class ReleasePlanner {
         Semver currentBaseVersion = Semver.parse(stripSnapshot(currentRevision));
         List<Changeset> changesets = RepoFiles.loadChangesets(repoRoot);
         String latestTag = latestWholeRepoTag();
+        ChangesetConfigSupport.ChangesetConfig changesetConfig = RepoFiles.readChangesetConfig(repoRoot);
 
         if (changesets.isEmpty()) {
             return new ReleasePlan(repoRoot, currentRevision, latestTag, Collections.<Changeset>emptyList(),
-                null, null, currentRevision);
+                null, null, currentRevision, changesetConfig.tagStrategy());
         }
 
         ReleaseLevel releaseLevel = maxReleaseLevel(changesets);
@@ -36,7 +37,7 @@ final class ReleasePlanner {
         String nextSnapshotVersion = releaseVersionText + "-SNAPSHOT";
 
         return new ReleasePlan(repoRoot, currentRevision, latestTag, changesets, releaseLevel,
-            releaseVersionText, nextSnapshotVersion);
+            releaseVersionText, nextSnapshotVersion, changesetConfig.tagStrategy());
     }
 
     private String readRevision(Path pomPath) throws IOException {

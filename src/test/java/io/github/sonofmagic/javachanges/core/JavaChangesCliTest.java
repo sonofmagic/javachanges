@@ -217,7 +217,7 @@ class JavaChangesCliTest {
         ExecutionResult result = execute("github-tag-from-plan", "--directory", repoRoot.toString());
 
         assertEquals(0, result.exitCode);
-        assertTrue(result.stdout.contains("Release tag: v1.2.0"));
+        assertTrue(result.stdout.contains("Release tags: [v1.2.0]"));
         assertTrue(result.stdout.contains("Dry-run only."));
     }
 

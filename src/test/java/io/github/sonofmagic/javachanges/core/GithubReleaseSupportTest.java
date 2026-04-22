@@ -9,10 +9,13 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class GithubReleaseSupportTest {
@@ -59,11 +62,46 @@ class GithubReleaseSupportTest {
         new GithubReleaseSupport(repoRoot, new PrintStream(stdout, true), runtime)
             .tagFromReleasePlan(GithubTagRequest.fromOptions(options));
 
-        assertEquals("v1.2.0", runtime.tagName);
-        assertEquals("abc1234", runtime.tagSha);
-        assertEquals("origin", runtime.pushedRemote);
-        assertEquals("refs/tags/v1.2.0", runtime.pushedRef);
-        assertTrue(stdout.toString(StandardCharsets.UTF_8.name()).contains("Created and pushed tag v1.2.0"));
+        assertEquals("v1.2.0", runtime.tagNames.get(0));
+        assertEquals("abc1234", runtime.tagShas.get(0));
+        assertEquals("origin", runtime.pushedRemotes.get(0));
+        assertEquals("refs/tags/v1.2.0", runtime.pushedRefs.get(0));
+        assertTrue(stdout.toString(StandardCharsets.UTF_8.name()).contains("Created and pushed tag(s) [v1.2.0]"));
+    }
+
+    @Test
+    void tagFromReleasePlanCreatesPerModuleTags(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir);
+        Files.write(
+            repoRoot.resolve(".changesets").resolve("release-plan.json"),
+            ("{\n" +
+                "  \"releaseVersion\": \"1.2.0\",\n" +
+                "  \"tagStrategy\": \"per-module\",\n" +
+                "  \"releaseTargets\": [\n" +
+                "    {\"module\": \"fixture-app\", \"tag\": \"fixture-app/v1.2.0\"},\n" +
+                "    {\"module\": \"fixture-starter\", \"tag\": \"fixture-starter/v1.2.0\"}\n" +
+                "  ]\n" +
+                "}\n").getBytes(StandardCharsets.UTF_8)
+        );
+        RecordingRuntime runtime = new RecordingRuntime(repoRoot);
+        runtime.headSha = "abc1234";
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("current-sha", "abc1234");
+        options.put("execute", "true");
+
+        new GithubReleaseSupport(repoRoot, new PrintStream(stdout, true), runtime)
+            .tagFromReleasePlan(GithubTagRequest.fromOptions(options));
+
+        assertEquals(2, runtime.tagNames.size());
+        assertEquals("fixture-app/v1.2.0", runtime.tagNames.get(0));
+        assertEquals("fixture-starter/v1.2.0", runtime.tagNames.get(1));
+        assertEquals("refs/tags/fixture-app/v1.2.0", runtime.pushedRefs.get(0));
+        assertEquals("refs/tags/fixture-starter/v1.2.0", runtime.pushedRefs.get(1));
+        String stdoutText = stdout.toString(StandardCharsets.UTF_8.name());
+        assertTrue(stdoutText.contains("fixture-app/v1.2.0"));
+        assertTrue(stdoutText.contains("fixture-starter/v1.2.0"));
     }
 
     @Test
@@ -144,8 +182,31 @@ class GithubReleaseSupportTest {
         assertTrue(json.contains("\"ok\":true"));
         assertTrue(json.contains("\"command\":\"github-tag-from-plan\""));
         assertTrue(json.contains("\"tag\":\"v1.2.0\""));
+        assertTrue(json.contains("\"tagStrategy\":\"whole-repo\""));
+        assertTrue(json.contains("\"tags\":[\"v1.2.0\"]"));
         assertTrue(json.contains("\"releaseVersion\":\"1.2.0\""));
         assertTrue(json.contains("\"reason\":\"Dry-run only.\""));
+    }
+
+    @Test
+    void syncReleaseFromPlanRejectsMultiplePerModuleTags(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir);
+        Files.write(
+            repoRoot.resolve(".changesets").resolve("release-plan.json"),
+            ("{\n" +
+                "  \"releaseVersion\": \"1.2.0\",\n" +
+                "  \"tagStrategy\": \"per-module\",\n" +
+                "  \"releaseTargets\": [\n" +
+                "    {\"module\": \"fixture-app\", \"tag\": \"fixture-app/v1.2.0\"},\n" +
+                "    {\"module\": \"fixture-starter\", \"tag\": \"fixture-starter/v1.2.0\"}\n" +
+                "  ]\n" +
+                "}\n").getBytes(StandardCharsets.UTF_8)
+        );
+
+        IllegalStateException error = assertThrows(IllegalStateException.class,
+            () -> new GithubReleaseSupport(repoRoot, new PrintStream(new ByteArrayOutputStream(), true),
+                new RecordingRuntime(repoRoot)).syncReleaseFromPlan(GithubReleasePublishRequest.fromOptions(new HashMap<String, String>())));
+        assertTrue(error.getMessage().contains("multiple tags"));
     }
 
     @Test
@@ -247,10 +308,10 @@ class GithubReleaseSupportTest {
         String prBodyFile;
         String headSha;
         boolean remoteTagExists;
-        String tagName;
-        String tagSha;
-        String pushedRemote;
-        String pushedRef;
+        List<String> tagNames = new ArrayList<String>();
+        List<String> tagShas = new ArrayList<String>();
+        List<String> pushedRemotes = new ArrayList<String>();
+        List<String> pushedRefs = new ArrayList<String>();
         boolean releaseExists;
         String updatedReleaseTag;
         String updatedReleaseNotesFile;
@@ -284,8 +345,8 @@ class GithubReleaseSupportTest {
                 return;
             }
             if (args.length >= 3 && "push".equals(args[0])) {
-                pushedRemote = args[1];
-                pushedRef = args[2];
+                pushedRemotes.add(args[1]);
+                pushedRefs.add(args[2]);
             }
         }
 
@@ -326,8 +387,8 @@ class GithubReleaseSupportTest {
 
         @Override
         void createOrUpdateTag(String tagName, String sha) {
-            this.tagName = tagName;
-            this.tagSha = sha;
+            this.tagNames.add(tagName);
+            this.tagShas.add(sha);
         }
 
         @Override

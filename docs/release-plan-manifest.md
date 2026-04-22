@@ -41,6 +41,14 @@ Typical shape:
   "releaseVersion": "__JAVACHANGES_LATEST_RELEASE_VERSION__",
   "nextSnapshotVersion": "1.3.2-SNAPSHOT",
   "releaseLevel": "minor",
+  "tagStrategy": "whole-repo",
+  "tags": ["v__JAVACHANGES_LATEST_RELEASE_VERSION__"],
+  "releaseTargets": [
+    {
+      "module": null,
+      "tag": "v__JAVACHANGES_LATEST_RELEASE_VERSION__"
+    }
+  ],
   "generatedAt": "2026-04-19T12:34:56+08:00",
   "changesets": [
     {
@@ -61,6 +69,9 @@ Field reference:
 | `releaseVersion` | string | Final release version without the leading `v` |
 | `nextSnapshotVersion` | string | Root version written back into `pom.xml` after plan application |
 | `releaseLevel` | string | Aggregated release type across all pending changesets |
+| `tagStrategy` | string | `whole-repo` or `per-module` |
+| `tags` | array | Planned tags derived from the selected tag strategy |
+| `releaseTargets` | array | Structured tag targets with module and tag values |
 | `generatedAt` | string | Timestamp when the manifest was generated |
 | `changesets` | array | Included pending changesets that were consumed |
 
@@ -73,6 +84,13 @@ Changeset item fields:
 | `type` | string | Legacy compatibility field, often `other`, safe to ignore in new integrations |
 | `summary` | string | User-facing summary derived from the changeset body or legacy frontmatter |
 | `modules` | array | Maven artifactIds affected by that changeset |
+
+Release target item fields:
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `module` | string or `null` | Resolved module name for per-module tags, or `null` for whole-repo tags |
+| `tag` | string | Final git tag to create for that target |
 
 > Note: the JSON field is still named `modules` for compatibility with the current implementation, even though the user-facing docs now prefer the term `packages`.
 >
@@ -111,7 +129,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /pa
 Typical uses:
 
 - read `releaseVersion` for the PR title
-- read `releaseVersion` when creating the final release tag
+- read `tags` or `releaseTargets` when creating the final release tag set
 - attach `.changesets/release-plan.md` as the PR body
 
 ### 5.3 GitLab CI/CD
@@ -119,7 +137,7 @@ Typical uses:
 Typical uses:
 
 - detect whether `release-plan.json` changed between commits
-- generate the final tag only when a new applied plan exists
+- generate the final tag set only when a new applied plan exists
 - create or update the release-plan merge request body
 
 ## 6. Related Files Updated At The Same Time

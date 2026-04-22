@@ -19,7 +19,14 @@ class ReleaseAutomationSupportTest {
         Files.createDirectories(repoRoot.resolve(".changesets"));
         Files.write(
             repoRoot.resolve(".changesets").resolve("release-plan.json"),
-            "{\"releaseVersion\":\"1.2.3\"}\n".getBytes(StandardCharsets.UTF_8)
+            ("{\n" +
+                "  \"releaseVersion\": \"1.2.3\",\n" +
+                "  \"tagStrategy\": \"per-module\",\n" +
+                "  \"releaseTargets\": [\n" +
+                "    {\"module\": \"core\", \"tag\": \"core/v1.2.3\"},\n" +
+                "    {\"module\": \"starter\", \"tag\": \"starter/v1.2.3\"}\n" +
+                "  ]\n" +
+                "}\n").getBytes(StandardCharsets.UTF_8)
         );
 
         ReleaseAutomationSupport support = new ReleaseAutomationSupport(repoRoot);
@@ -28,7 +35,10 @@ class ReleaseAutomationSupportTest {
         assertEquals("1.2.3", support.releaseVersionFromManifest());
         assertEquals("v1.2.3", support.wholeRepoTagFromManifest());
         assertEquals("1.2.3", release.releaseVersion);
+        assertEquals(ReleaseTagStrategy.PER_MODULE, release.tagStrategy);
         assertEquals("v1.2.3", release.wholeRepoTagName());
+        assertEquals("core/v1.2.3", release.tagNames().get(0));
+        assertEquals("starter/v1.2.3", release.tagNames().get(1));
         assertEquals("chore(release): apply changesets for v1.2.3", release.commitMessage());
         assertEquals("chore(release): v1.2.3", release.githubPullRequestTitle());
         assertEquals("chore(release): release v1.2.3", release.gitlabMergeRequestTitle());

@@ -26,6 +26,7 @@ class ChangesetConfigSupportTest {
         assertEquals("changeset-release/main", config.releaseBranch());
         assertEquals("snapshot", config.snapshotBranch());
         assertEquals(SnapshotVersionMode.STAMPED, config.snapshotVersionMode());
+        assertEquals(ReleaseTagStrategy.WHOLE_REPO, config.tagStrategy());
     }
 
     @Test
@@ -38,7 +39,8 @@ class ChangesetConfigSupportTest {
                 "  \"baseBranch\": \"develop\",\n" +
                 "  \"releaseBranch\": \"changeset-release/develop\",\n" +
                 "  \"snapshotBranch\": \"snapshot-dev\",\n" +
-                "  \"snapshotVersionMode\": \"plain\"\n" +
+                "  \"snapshotVersionMode\": \"plain\",\n" +
+                "  \"tagStrategy\": \"per-module\"\n" +
                 "}\n").getBytes(StandardCharsets.UTF_8));
 
         ChangesetConfigSupport.ChangesetConfig config = ChangesetConfigSupport.load(repoRoot);
@@ -47,10 +49,12 @@ class ChangesetConfigSupportTest {
         assertEquals("changeset-release/develop", config.releaseBranch());
         assertEquals("snapshot-dev", config.snapshotBranch());
         assertEquals(SnapshotVersionMode.PLAIN, config.snapshotVersionMode());
+        assertEquals(ReleaseTagStrategy.PER_MODULE, config.tagStrategy());
         assertTrue(config.hasBaseBranch());
         assertTrue(config.hasReleaseBranch());
         assertTrue(config.hasSnapshotBranch());
         assertTrue(config.hasSnapshotVersionMode());
+        assertTrue(config.hasTagStrategy());
     }
 
     @Test
@@ -124,6 +128,7 @@ class ChangesetConfigSupportTest {
         assertFalse(config.hasReleaseBranch());
         assertFalse(config.hasSnapshotBranch());
         assertFalse(config.hasSnapshotVersionMode());
+        assertFalse(config.hasTagStrategy());
     }
 
     @Test
