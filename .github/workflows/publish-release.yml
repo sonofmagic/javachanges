@@ -85,7 +85,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >
           mvn -B -DskipTests exec:java
-          -Dexec.args="github-tag-from-plan --directory $GITHUB_WORKSPACE --execute true"
+          -Dexec.args="github-tag-from-plan --directory $GITHUB_WORKSPACE --current-sha $(git rev-parse HEAD) --execute true"
 
       - name: Prepare GitHub release metadata
         id: github_release
