@@ -5,7 +5,6 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.*;
@@ -16,6 +15,7 @@ final class PublishSupport {
     private final PublishRuntime runtime;
     private final VersionSupport versionSupport;
     private final ReleaseNotesGenerator releaseNotesGenerator;
+    private final PublishPlanSupport planSupport;
 
     PublishSupport(Path repoRoot, PrintStream out) {
         this.repoRoot = repoRoot;
@@ -23,11 +23,12 @@ final class PublishSupport {
         this.runtime = new PublishRuntime(repoRoot);
         this.versionSupport = new VersionSupport(repoRoot);
         this.releaseNotesGenerator = new ReleaseNotesGenerator(repoRoot);
+        this.planSupport = new PublishPlanSupport(repoRoot, runtime, versionSupport);
     }
 
     void preflight(PublishRequest request) throws IOException, InterruptedException {
-        PublishTarget publishTarget = resolvePublishTarget(request);
-        AutomationJsonSupport.AutomationReport report = buildReport("preflight", request, publishTarget);
+        PublishPlanSupport.PublishTarget publishTarget = planSupport.resolvePublishTarget(request);
+        AutomationJsonSupport.AutomationReport report = planSupport.buildReport("preflight", request, publishTarget);
         preflight(request, publishTarget, report);
         if (request.format == OutputFormat.JSON) {
             out.println(report.toJson());
@@ -35,8 +36,8 @@ final class PublishSupport {
     }
 
     void publish(PublishRequest request) throws IOException, InterruptedException {
-        PublishTarget publishTarget = resolvePublishTarget(request);
-        AutomationJsonSupport.AutomationReport report = buildReport("publish", request, publishTarget);
+        PublishPlanSupport.PublishTarget publishTarget = planSupport.resolvePublishTarget(request);
+        AutomationJsonSupport.AutomationReport report = planSupport.buildReport("publish", request, publishTarget);
         preflight(request, publishTarget, report);
 
         Files.createDirectories(repoRoot.resolve(".m2"));
@@ -56,33 +57,7 @@ final class PublishSupport {
             throw new IllegalStateException("未找到可用的 Maven 命令，期望仓库内存在 " + mavenWrapperPath() + " 或系统中可用 mvn");
         }
 
-        List<String> command = new ArrayList<String>();
-        command.add(mavenCommand.command);
-        command.add("--batch-mode");
-        command.add("--errors");
-        command.add("--show-version");
-        command.add("-s");
-        command.add(".m2/settings.xml");
-        if (localMavenRepo != null) {
-            command.add("-Dmaven.repo.local=" + localMavenRepo.toString());
-        }
-        if (publishTarget.publishVersion != null) {
-            command.add("-Drevision=" + publishTarget.publishVersion);
-        }
-        if (publishTarget.resolvedModule != null) {
-            command.add("-pl");
-            command.add(":" + publishTarget.resolvedModule);
-            command.add("-am");
-        }
-        if (request.snapshot) {
-            command.add("-Dmaven.snapshot.repository.id=" + MavenSettingsWriter.snapshotServerId());
-            command.add("-Dmaven.snapshot.repository.url=" + requireEnv("MAVEN_SNAPSHOT_REPOSITORY_URL"));
-        } else {
-            command.add("-Dmaven.release.repository.id=" + MavenSettingsWriter.releaseServerId());
-            command.add("-Dmaven.release.repository.url=" + requireEnv("MAVEN_RELEASE_REPOSITORY_URL"));
-        }
-        command.add("clean");
-        command.add("deploy");
+        List<String> command = planSupport.buildDeployCommand(request, publishTarget, mavenCommand, localMavenRepo);
 
         if (request.format != OutputFormat.JSON) {
             out.println();
@@ -132,7 +107,7 @@ final class PublishSupport {
         }
     }
 
-    private void preflight(PublishRequest request, PublishTarget publishTarget,
+    private void preflight(PublishRequest request, PublishPlanSupport.PublishTarget publishTarget,
                            AutomationJsonSupport.AutomationReport report) throws IOException, InterruptedException {
         if (request.module != null) {
             assertKnownModule(repoRoot, request.module);
@@ -217,43 +192,4 @@ final class PublishSupport {
         }
     }
 
-    private PublishTarget resolvePublishTarget(PublishRequest request) throws IOException, InterruptedException {
-        String resolvedModule = request.module;
-        if (request.snapshot) {
-            versionSupport.assertSnapshot();
-            String buildStamp = firstNonBlank(request.snapshotBuildStamp, runtime.snapshotBuildStamp());
-            return new PublishTarget(versionSupport.resolveSnapshotPublishVersion(buildStamp), resolvedModule);
-        }
-
-        versionSupport.assertReleaseTag(request.tag);
-        String releaseVersion = releaseVersionFromTag(request.tag);
-        String tagModule = releaseModuleFromTag(request.tag);
-        if (resolvedModule == null) {
-            resolvedModule = tagModule;
-        } else if (tagModule != null && !resolvedModule.equals(tagModule)) {
-            throw new IllegalStateException("显式指定的模块 " + resolvedModule + " 与 tag 中的模块 " + tagModule + " 不一致");
-        }
-        return new PublishTarget(releaseVersion, resolvedModule);
-    }
-
-    private AutomationJsonSupport.AutomationReport buildReport(String command, PublishRequest request, PublishTarget publishTarget) {
-        AutomationJsonSupport.AutomationReport report = new AutomationJsonSupport.AutomationReport(command);
-        report.action = request.snapshot ? "publish-snapshot" : "publish-release";
-        report.execute = request.execute;
-        report.dryRun = !request.execute;
-        report.releaseVersion = publishTarget.publishVersion;
-        report.releaseModule = publishTarget.resolvedModule;
-        report.tag = request.tag;
-        return report;
-    }
-
-    private static final class PublishTarget {
-        private final String publishVersion;
-        private final String resolvedModule;
-
-        private PublishTarget(String publishVersion, String resolvedModule) {
-            this.publishVersion = publishVersion;
-            this.resolvedModule = resolvedModule;
-        }
-    }
 }
