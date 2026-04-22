@@ -5,7 +5,6 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.*;
@@ -14,11 +13,13 @@ final class GithubReleaseSupport {
     private final Path repoRoot;
     private final PrintStream out;
     private final GithubReleaseRuntime runtime;
+    private final ReleaseArtifactSupport artifactSupport;
 
     GithubReleaseSupport(Path repoRoot, PrintStream out) {
         this.repoRoot = repoRoot;
         this.out = out;
         this.runtime = new GithubReleaseRuntime(repoRoot);
+        this.artifactSupport = new ReleaseArtifactSupport(repoRoot);
     }
 
     void planPullRequest(GithubReleasePlanRequest request) throws IOException, InterruptedException {
@@ -98,14 +99,14 @@ final class GithubReleaseSupport {
     void syncReleaseFromPlan(GithubReleasePublishRequest request) throws IOException, InterruptedException {
         String releaseVersion = RepoFiles.readManifestField(repoRoot, "releaseVersion");
         String tagName = "v" + releaseVersion;
-        Path notesFile = resolvePath(request.releaseNotesFile);
+        Path notesFile = artifactSupport.resolveReleaseNotesFile(request.releaseNotesFile);
         new ReleaseNotesGenerator(repoRoot).writeReleaseNotes(tagName, notesFile);
 
         out.println("Release version: " + releaseVersion);
         out.println("Release tag: " + tagName);
         out.println("Release notes file: " + notesFile);
 
-        Path githubOutputFile = resolveOptionalPath(request.githubOutputFile);
+        Path githubOutputFile = artifactSupport.resolveOptionalPath(request.githubOutputFile);
         if (githubOutputFile != null) {
             appendGithubOutputs(githubOutputFile, releaseVersion, tagName, notesFile);
             out.println("GitHub output file: " + githubOutputFile);
@@ -140,13 +141,4 @@ final class GithubReleaseSupport {
             StandardOpenOption.CREATE, StandardOpenOption.APPEND);
     }
 
-    private Path resolvePath(String value) {
-        Path path = Paths.get(value);
-        return path.isAbsolute() ? path.normalize() : repoRoot.resolve(path).normalize();
-    }
-
-    private Path resolveOptionalPath(String value) {
-        String resolved = trimToNull(value);
-        return resolved == null ? null : resolvePath(resolved);
-    }
 }

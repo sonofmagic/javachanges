@@ -5,7 +5,6 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.*;
 
@@ -14,6 +13,7 @@ final class GitlabReleaseSupport {
     private final PrintStream out;
     private final GitlabReleaseRuntime runtime;
     private final GitlabMergeRequestClient apiClient;
+    private final ReleaseArtifactSupport artifactSupport;
 
     GitlabReleaseSupport(Path repoRoot, PrintStream out) {
         this(repoRoot, out, new GitlabReleaseRuntime(repoRoot), new GitlabApiClient());
@@ -24,6 +24,7 @@ final class GitlabReleaseSupport {
         this.out = out;
         this.runtime = runtime;
         this.apiClient = apiClient;
+        this.artifactSupport = new ReleaseArtifactSupport(repoRoot);
     }
 
     void planMergeRequest(GitlabReleasePlanRequest request) throws IOException, InterruptedException {
@@ -226,18 +227,17 @@ final class GitlabReleaseSupport {
         if (trimToNull(request.projectId) == null) {
             throw new IllegalArgumentException("Missing GitLab project id. Pass --project-id or set CI_PROJECT_ID.");
         }
-        report.tag = tagName;
-        report.releaseVersion = releaseVersionFromTag(tagName);
-        report.releaseModule = releaseModuleFromTag(tagName);
+        ReleaseArtifactSupport.ReleaseTagInfo tagInfo = artifactSupport.describeTag(tagName);
+        report.tag = tagInfo.tag;
+        report.releaseVersion = tagInfo.releaseVersion;
+        report.releaseModule = tagInfo.releaseModule;
 
-        Path notesFile = resolveReleaseNotesFile(request.releaseNotesFile, tagName);
+        Path notesFile = artifactSupport.resolveReleaseNotesFile(request.releaseNotesFile);
         report.releaseNotesFile = notesFile.toString();
         Files.createDirectories(notesFile.getParent());
         new ReleaseNotesGenerator(repoRoot).writeReleaseNotes(tagName, notesFile);
         String description = new String(Files.readAllBytes(notesFile), StandardCharsets.UTF_8);
-        String releaseName = report.releaseModule == null
-            ? "v" + report.releaseVersion
-            : report.releaseModule + " v" + report.releaseVersion;
+        String releaseName = tagInfo.releaseDisplayName();
 
         if (textOutput) {
             out.println("GitLab host: " + firstNonBlank(trimToNull(request.gitlabHost), trimToNull(System.getenv("CI_SERVER_HOST"))));
@@ -279,14 +279,5 @@ final class GitlabReleaseSupport {
         } else {
             out.println(report.toJson());
         }
-    }
-
-    private Path resolveReleaseNotesFile(String value, String tagName) {
-        String resolved = trimToNull(value);
-        if (resolved == null) {
-            return repoRoot.resolve("target").resolve("release-notes.md").normalize();
-        }
-        Path path = Paths.get(resolved);
-        return path.isAbsolute() ? path.normalize() : repoRoot.resolve(path).normalize();
     }
 }
