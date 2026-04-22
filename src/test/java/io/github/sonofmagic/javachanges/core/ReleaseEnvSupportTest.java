@@ -73,6 +73,34 @@ class ReleaseEnvSupportTest {
         assertTrue(json.contains("OPTIONAL (fallback: CI_JOB_TOKEN)"));
     }
 
+    @Test
+    void auditVarsJsonIncludesGithubMatchAndSecretPresence(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot.resolve("env"));
+        Files.write(repoRoot.resolve("env").resolve("release.env.local"), envFile().getBytes(StandardCharsets.UTF_8));
+
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        FakeReleaseEnvRuntime runtime = new FakeReleaseEnvRuntime(repoRoot);
+        ReleaseEnvSupport support = new ReleaseEnvSupport(repoRoot, new PrintStream(stdout, true), runtime);
+        Map<String, String> options = new LinkedHashMap<String, String>();
+        options.put("env-file", "env/release.env.local");
+        options.put("platform", "github");
+        options.put("github-repo", "owner/repo");
+        options.put("format", "json");
+
+        boolean ok = support.auditVars(AuditVarsRequest.fromOptions(options));
+        String json = stdout.toString(StandardCharsets.UTF_8.name());
+
+        assertTrue(ok);
+        assertTrue(json.contains("\"ok\":true"));
+        assertTrue(json.contains("\"command\":\"audit-vars\""));
+        assertTrue(json.contains("GitHub Audit Preconditions"));
+        assertTrue(json.contains("GitHub Variables 审计"));
+        assertTrue(json.contains("GitHub Secrets 审计"));
+        assertTrue(json.contains("MATCH (2026-04-22T10:00:00Z)"));
+        assertTrue(json.contains("PRESENT (2026-04-22T10:05:00Z)"));
+    }
+
     private static String envFile() {
         return ""
             + "MAVEN_RELEASE_REPOSITORY_URL=https://repo.example.com/releases\n"
@@ -106,6 +134,20 @@ class ReleaseEnvSupportTest {
         @Override
         CommandResult runAndCapture(java.util.List<String> command) throws IOException {
             String joined = command.toString();
+            if (joined.contains("gh, variable, list")) {
+                return json("["
+                    + "{\"name\":\"MAVEN_RELEASE_REPOSITORY_URL\",\"value\":\"https://repo.example.com/releases\",\"updatedAt\":\"2026-04-22T10:00:00Z\"},"
+                    + "{\"name\":\"MAVEN_SNAPSHOT_REPOSITORY_URL\",\"value\":\"https://repo.example.com/snapshots\",\"updatedAt\":\"2026-04-22T10:00:00Z\"},"
+                    + "{\"name\":\"MAVEN_RELEASE_REPOSITORY_ID\",\"value\":\"maven-releases\",\"updatedAt\":\"2026-04-22T10:00:00Z\"},"
+                    + "{\"name\":\"MAVEN_SNAPSHOT_REPOSITORY_ID\",\"value\":\"maven-snapshots\",\"updatedAt\":\"2026-04-22T10:00:00Z\"}"
+                    + "]");
+            }
+            if (joined.contains("gh, secret, list")) {
+                return json("["
+                    + "{\"name\":\"MAVEN_REPOSITORY_USERNAME\",\"updatedAt\":\"2026-04-22T10:05:00Z\"},"
+                    + "{\"name\":\"MAVEN_REPOSITORY_PASSWORD\",\"updatedAt\":\"2026-04-22T10:05:00Z\"}"
+                    + "]");
+            }
             if (joined.contains("/variables?per_page=100")) {
                 return json("["
                     + "{\"key\":\"MAVEN_REPOSITORY_USERNAME\",\"protected\":true,\"masked\":true},"
