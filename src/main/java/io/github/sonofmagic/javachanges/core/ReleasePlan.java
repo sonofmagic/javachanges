@@ -151,23 +151,45 @@ final class ReleasePlan {
         List<String> lines = new ArrayList<String>();
         lines.add("## Release Plan");
         lines.add("");
-        lines.add("- Release type: `" + releaseLevel.id + "`");
-        lines.add("- Affected packages: `" + joinModules(getAffectedPackages()) + "`");
-        lines.add("- Release version: `v" + releaseVersion + "`");
-        lines.add("- Tag strategy: `" + tagStrategy.id + "`");
-        lines.add("- Planned tags: `" + joinModules(getPlannedTags()) + "`");
-        lines.add("- Next snapshot: `" + nextSnapshotVersion + "`");
+        lines.add("| Field | Value |");
+        lines.add("| --- | --- |");
+        lines.add("| Release type | `" + releaseLevel.id + "` |");
+        lines.add("| Affected packages | `" + joinModules(getAffectedPackages()) + "` |");
+        lines.add("| Release version | `v" + releaseVersion + "` |");
+        lines.add("| Tag strategy | `" + tagStrategy.id + "` |");
+        lines.add("| Planned tags | `" + joinModules(getPlannedTags()) + "` |");
+        lines.add("| Next snapshot | `" + nextSnapshotVersion + "` |");
         lines.add("");
         lines.add("## Included Changesets");
         lines.add("");
+        Map<ReleaseLevel, List<Changeset>> grouped = new LinkedHashMap<ReleaseLevel, List<Changeset>>();
+        grouped.put(ReleaseLevel.MAJOR, new ArrayList<Changeset>());
+        grouped.put(ReleaseLevel.MINOR, new ArrayList<Changeset>());
+        grouped.put(ReleaseLevel.PATCH, new ArrayList<Changeset>());
         for (Changeset changeset : changesets) {
-            String visibleType = renderVisibleType(changeset.type);
-            lines.add("- `" + changeset.release.id + "` "
-                + "`packages: " + joinModules(changeset.modules) + "` "
-                + (visibleType.isEmpty() ? "" : "`" + visibleType + "` ")
-                + changeset.summary);
+            grouped.get(changeset.release).add(changeset);
         }
-        lines.add("");
+        for (ReleaseLevel level : Arrays.asList(ReleaseLevel.MAJOR, ReleaseLevel.MINOR, ReleaseLevel.PATCH)) {
+            List<Changeset> levelChangesets = grouped.get(level);
+            if (levelChangesets == null || levelChangesets.isEmpty()) {
+                continue;
+            }
+            lines.add("### " + releaseLevelHeading(level));
+            lines.add("");
+            for (Changeset changeset : levelChangesets) {
+                String visibleType = renderVisibleType(changeset.type);
+                lines.add("- **" + changeset.summary + "**");
+                lines.add("  - Release: `" + changeset.release.id + "`");
+                lines.add("  - Packages: `" + joinModules(changeset.modules) + "`");
+                if (!visibleType.isEmpty()) {
+                    lines.add("  - Type: `" + visibleType + "`");
+                }
+                if (!changeset.body.isEmpty()) {
+                    lines.add("  - Notes: " + firstBodyLine(changeset.body));
+                }
+            }
+            lines.add("");
+        }
         lines.add("This PR was generated automatically from `.changesets/*.md` files.");
         lines.add("Merging it will trigger an automatic tag push and then reuse the existing release workflows.");
         return lines;

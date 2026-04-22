@@ -161,14 +161,20 @@ Current structure:
 ```md
 ## Release Plan
 
-- Release type: `minor`
-- Affected packages: `core, api`
-- Release version: `v0.2.0`
-- Next snapshot: `0.2.0-SNAPSHOT`
+| Field | Value |
+| --- | --- |
+| Release type | `minor` |
+| Affected packages | `core, api` |
+| Release version | `v0.2.0` |
+| Next snapshot | `0.2.0-SNAPSHOT` |
 
 ## Included Changesets
 
-- `minor` `packages: core, api` Add release notes generation workflow.
+### Minor Changes
+
+- **Add release notes generation workflow.**
+  - Release: `minor`
+  - Packages: `core, api`
 ```
 
 Guidance:

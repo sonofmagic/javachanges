@@ -110,6 +110,12 @@ class JavaChangesCliTest {
         assertTrue(read(repoRoot.resolve("pom.xml")).contains("<revision>1.2.0-SNAPSHOT</revision>"));
         assertTrue(Files.exists(repoRoot.resolve(".changesets").resolve("release-plan.json")));
         assertTrue(Files.exists(repoRoot.resolve(".changesets").resolve("release-plan.md")));
+        String releasePlanMarkdown = read(repoRoot.resolve(".changesets").resolve("release-plan.md"));
+        assertTrue(releasePlanMarkdown.contains("| Field | Value |"));
+        assertTrue(releasePlanMarkdown.contains("| Release version | `v1.2.0` |"));
+        assertTrue(releasePlanMarkdown.contains("### Minor Changes"));
+        assertTrue(releasePlanMarkdown.contains("- **automate self release**"));
+        assertTrue(releasePlanMarkdown.contains("  - Packages: `fixture-app`"));
         assertFalse(Files.exists(repoRoot.resolve(".changesets").resolve("minor-release.md")));
     }
 
