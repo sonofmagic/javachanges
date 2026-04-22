@@ -1,14 +1,13 @@
 ## Release Plan
 
-- Release type: `minor`
+- Release type: `patch`
 - Affected packages: `javachanges`
-- Release version: `v1.4.0`
-- Next snapshot: `1.4.0-SNAPSHOT`
+- Release version: `v1.4.1`
+- Next snapshot: `1.4.1-SNAPSHOT`
 
 ## Included Changesets
 
-- `minor` `packages: javachanges` simplify GitHub release metadata sync in Actions workflows
-- `minor` `packages: javachanges` add unique snapshot publish revisions and split GitHub Actions snapshot/release publishing flows, including snapshot branch publishing
+- `patch` `packages: javachanges` Make `gitlab-release-plan --execute true` more idempotent when a stale remote
 
 This PR was generated automatically from `.changesets/*.md` files.
 Merging it will trigger an automatic tag push and then reuse the existing release workflows.
