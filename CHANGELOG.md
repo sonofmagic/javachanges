@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.5.0 - 2026-04-22
+
+### Minor Changes
+
+- Commandize the GitLab CI/CD release flow so business repositories can keep `.gitlab-ci.yml` minimal. (packages: javachanges) Commandize the GitLab CI/CD release flow so business repositories can keep `.gitlab-ci.yml` minimal.
+
+### Patch Changes
+
+- Add `--format json` support for `github-release-plan`, `github-tag-from-plan`, and `github-release-from-plan`. (packages: javachanges) Add `--format json` support for `github-release-plan`, `github-tag-from-plan`, and `github-release-from-plan`.
+- Harden machine-readable JSON handling by replacing more hand-written JSON formatting and parsing with Jackson-based structured serialization. (packages: javachanges) Harden machine-readable JSON handling by replacing more hand-written JSON formatting and parsing with Jackson-based structured serialization.
+- Refactor release automation request parsing and process execution helpers to reduce duplicated CLI runtime code. (packages: javachanges) Refactor release automation request parsing and process execution helpers to reduce duplicated CLI runtime code.
+
 ## 1.4.1 - 2026-04-22
 
 ### Patch Changes
