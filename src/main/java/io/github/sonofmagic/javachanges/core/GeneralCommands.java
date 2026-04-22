@@ -218,3 +218,38 @@ final class ReleaseNotesCommand extends AbstractCliCommand {
         return success();
     }
 }
+
+@Command(name = "ensure-gpg-public-key", mixinStandardHelpOptions = true,
+    description = "Publish the current signing public key and wait until a supported keyserver can fetch it.")
+final class EnsureGpgPublicKeyCommand extends AbstractCliCommand {
+    @Option(names = "--primary-keyserver", defaultValue = "hkps://keyserver.ubuntu.com",
+        description = "Primary keyserver used for upload and lookup.")
+    private String primaryKeyserver;
+
+    @Option(names = "--secondary-keyserver", defaultValue = "hkps://keys.openpgp.org",
+        description = "Secondary keyserver used for upload and lookup.")
+    private String secondaryKeyserver;
+
+    @Option(names = "--attempts", defaultValue = "12",
+        description = "Maximum number of discovery attempts before failing.")
+    private int attempts;
+
+    @Option(names = "--retry-delay-seconds", defaultValue = "10",
+        description = "Delay between discovery attempts in seconds.")
+    private int retryDelaySeconds;
+
+    @Override
+    public Integer call() throws Exception {
+        GpgKeySupport support = new GpgKeySupport(repoRoot());
+        String fingerprint = support.ensurePublicKeyDiscoverable(
+            primaryKeyserver,
+            secondaryKeyserver,
+            attempts,
+            retryDelaySeconds,
+            out(),
+            err()
+        );
+        out().println("gpg public key ok: " + fingerprint);
+        return success();
+    }
+}

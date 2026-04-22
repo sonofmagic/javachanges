@@ -147,11 +147,20 @@ Configure these in `Settings > Secrets and variables > Actions`:
 
 `publish-release.yml` validates these secrets before it prepares Java, Maven settings, or GPG. If any secret is missing, the workflow stops immediately with a direct error that names the missing secret.
 
+After `actions/setup-java` imports the private key, both publishing workflows now run the `javachanges ensure-gpg-public-key` command. That step:
+
+1. extracts the imported signing key fingerprint
+2. attempts to upload the public key to `hkps://keyserver.ubuntu.com` and `hkps://keys.openpgp.org`
+3. waits until the fingerprint becomes discoverable from at least one supported keyserver
+
+This prevents Maven Central from failing later with an error like `Invalid signature for file ... Could not find a public key by the key fingerprint`.
+
 For the failed run at `Actions > Publish Release`, the practical recovery path is:
 
 1. add the missing secrets
 2. rerun the failed workflow or failed job
-3. confirm the rerun reaches the `Publish to Maven Central` step
+3. if the previous failure mentioned an undiscoverable GPG key fingerprint, rerun after this repository change so the workflow can publish and verify the public key before `deploy`
+4. confirm the rerun reaches the `Publish to Maven Central` step
 
 ## 7. Recommended usage
 

@@ -129,6 +129,11 @@ jobs:
       - name: Build CLI
         run: mvn -B -DskipTests compile
 
+      - name: Ensure signing public key is discoverable
+        run: >
+          mvn -B -DskipTests exec:java
+          -Dexec.args="ensure-gpg-public-key --directory $GITHUB_WORKSPACE"
+
       - name: Resolve snapshot build stamp
         id: snapshot_build_stamp
         env:

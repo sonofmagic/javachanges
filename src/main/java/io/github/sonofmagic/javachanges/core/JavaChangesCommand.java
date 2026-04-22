@@ -42,6 +42,7 @@ import java.nio.file.Path;
         GitlabReleasePlanCommand.class,
         GitlabTagFromPlanCommand.class,
         ReleaseNotesCommand.class,
+        EnsureGpgPublicKeyCommand.class,
         HelpCommand.class
     }
 )

@@ -4,6 +4,12 @@ on:
   pull_request:
     types:
       - closed
+  workflow_dispatch:
+    inputs:
+      release_commit_sha:
+        description: Merged release commit SHA to publish
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -11,16 +17,19 @@ permissions:
 jobs:
   publish:
     if: >
-      github.event.pull_request.merged == true &&
-      github.event.pull_request.base.ref == 'main' &&
-      github.event.pull_request.head.ref == 'changeset-release/main'
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.pull_request.merged == true &&
+        github.event.pull_request.base.ref == 'main' &&
+        github.event.pull_request.head.ref == 'changeset-release/main'
+      )
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout merged release commit
         uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_commit_sha || github.event.pull_request.merge_commit_sha }}
           fetch-depth: 0
 
       - name: Validate publishing secrets
@@ -65,6 +74,11 @@ jobs:
 
       - name: Build CLI
         run: mvn -B -DskipTests compile
+
+      - name: Ensure signing public key is discoverable
+        run: >
+          mvn -B -DskipTests exec:java
+          -Dexec.args="ensure-gpg-public-key --directory $GITHUB_WORKSPACE"
 
       - name: Create and push release tag
         env:
