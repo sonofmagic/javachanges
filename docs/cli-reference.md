@@ -1,3 +1,7 @@
+---
+description: Complete command reference for javachanges, including release planning, environment, and publishing helpers.
+---
+
 # javachanges CLI Reference
 
 
@@ -67,6 +71,7 @@ mvn javachanges:manifest-field -Djavachanges.field=releaseVersion
 | `plan --apply true` | Apply the plan and consume changesets | `pom.xml`, `CHANGELOG.md`, `.changesets/release-plan.json`, `.changesets/release-plan.md` |
 | `manifest-field` | Read a field from the generated release manifest | No |
 | `release-notes` | Generate release notes for a tag | target file |
+| `ensure-gpg-public-key` | Publish and verify the current signing public key on supported keyservers | No |
 | `preflight` | Render publish validation commands | No |
 | `publish` | Render or execute the actual publish command | No |
 
@@ -191,6 +196,7 @@ Common fields:
 | `doctor-platform` | Check remote platform readiness, or emit JSON with `--format json` |
 | `sync-vars` | Sync variables to GitHub or GitLab |
 | `audit-vars` | Compare local env values with remote platform state, or emit JSON with `--format json` |
+| `ensure-gpg-public-key` | Upload the current public signing key and wait until a supported keyserver can fetch it |
 
 Example:
 
@@ -223,6 +229,29 @@ Common flags for these commands:
 | `--github-repo` | `doctor-local`, `doctor-platform`, `audit-vars` | optional GitHub `owner/repo` identifier |
 | `--gitlab-repo` | `doctor-local`, `doctor-platform`, `audit-vars` | optional GitLab `group/project` identifier |
 | `--format json` | all four | switch stdout from human text to machine-readable JSON |
+
+### 6.1 `ensure-gpg-public-key`
+
+Use this command in CI after GPG import and before a Maven Central publish:
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="ensure-gpg-public-key --directory /path/to/repo"
+```
+
+What it does:
+
+- reads the imported secret key fingerprint from `gpg`
+- attempts to publish the public key to `hkps://keyserver.ubuntu.com` and `hkps://keys.openpgp.org`
+- retries until at least one supported keyserver can fetch the key
+
+Useful flags:
+
+| Flag | Meaning |
+| --- | --- |
+| `--primary-keyserver` | Override the first keyserver URL |
+| `--secondary-keyserver` | Override the fallback keyserver URL |
+| `--attempts` | Maximum discovery attempts before failure |
+| `--retry-delay-seconds` | Delay between discovery attempts |
 
 JSON mode contract:
 

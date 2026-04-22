@@ -1,3 +1,7 @@
+---
+description: Repository-specific GitHub Actions release automation for javachanges, including snapshots, Maven Central publishing, and release retries.
+---
+
 # javachanges GitHub Actions Release Flow
 
 
@@ -118,7 +122,12 @@ The repository root itself is not directly browseable for hosted snapshots, so v
 
 ## 5. Release publish workflow
 
-`publish-release.yml` only runs when all of these are true:
+`publish-release.yml` runs in two modes:
+
+1. automatically after a merged release PR
+2. manually through `workflow_dispatch` when you need to retry publishing for an existing merged release commit
+
+Automatic mode only runs when all of these are true:
 
 | Condition | Meaning |
 | --- | --- |
@@ -241,9 +250,9 @@ If you need to rerun one of the workflows manually:
 | --- | --- |
 | `Release Plan` | Yes |
 | `Publish Snapshot` | Yes |
-| `Publish Release` | No, it only runs on merged release PRs |
+| `Publish Release` | Yes, with `release_commit_sha` set to the merged release commit |
 
-If a merged release PR already triggered a failed `Publish Release` run, you usually do not need a new release PR. After fixing repository secrets, rerun the existing failed run from the Actions page.
+If a merged release PR already triggered a failed `Publish Release` run, you usually do not need a new release PR. Trigger `Publish Release` manually and pass the original merged release commit SHA through `release_commit_sha`.
 
 ## 10. Local validation
 

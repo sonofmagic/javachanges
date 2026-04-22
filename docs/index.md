@@ -2,6 +2,7 @@
 layout: home
 title: javachanges
 titleTemplate: false
+description: File-based release planning, changelog generation, and CI/CD publishing workflows for Maven repositories.
 hero:
   name: javachanges
   text: Release planning for Maven repositories

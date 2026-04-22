@@ -1,3 +1,7 @@
+---
+description: Practical release-planning and publishing scenarios where javachanges fits Maven repositories and CI systems.
+---
+
 # Use Cases
 
 

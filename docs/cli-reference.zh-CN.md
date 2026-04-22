@@ -1,3 +1,7 @@
+---
+description: javachanges 命令总览，覆盖发布计划、环境检查和发布辅助命令。
+---
+
 # javachanges CLI 命令参考
 
 
@@ -66,6 +70,7 @@ mvn javachanges:manifest-field -Djavachanges.field=releaseVersion
 | `plan --apply true` | 应用 release plan 并消费 changesets | `pom.xml`、`CHANGELOG.md`、`.changesets/release-plan.json`、`.changesets/release-plan.md` |
 | `manifest-field` | 读取生成后的 release manifest 字段 | 否 |
 | `release-notes` | 为 tag 生成 release notes | 目标文件 |
+| `ensure-gpg-public-key` | 发布并验证当前签名公钥是否已被支持的 keyserver 发现 | 否 |
 | `preflight` | 输出发布前校验命令 | 否 |
 | `publish` | 输出或执行实际发布命令 | 否 |
 
@@ -190,6 +195,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /pa
 | `doctor-platform` | 检查远端平台状态，或通过 `--format json` 输出 JSON |
 | `sync-vars` | 把变量同步到 GitHub 或 GitLab |
 | `audit-vars` | 对比本地 env 和远端平台变量，或通过 `--format json` 输出 JSON |
+| `ensure-gpg-public-key` | 上传当前签名公钥，并等待支持的 keyserver 能够查询到它 |
 
 示例：
 
@@ -223,6 +229,29 @@ mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --directory /path
 | `--gitlab-repo` | `doctor-local`、`doctor-platform`、`audit-vars` | 可选的 GitLab `group/project` 标识 |
 | `--format json` | 四者都支持 | 把标准输出从文本切换为机器可读 JSON |
 
+### 6.1 `ensure-gpg-public-key`
+
+在 CI 中完成 GPG 私钥导入后、执行 Maven Central 发布前，建议先运行：
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="ensure-gpg-public-key --directory /path/to/repo"
+```
+
+这个命令会：
+
+- 从 `gpg` 里读取当前已导入私钥对应的指纹
+- 尝试把公钥发布到 `hkps://keyserver.ubuntu.com` 和 `hkps://keys.openpgp.org`
+- 重试查询，直到至少一个受支持的 keyserver 能确认这个公钥可见
+
+常用参数：
+
+| 参数 | 说明 |
+| --- | --- |
+| `--primary-keyserver` | 覆盖主 keyserver 地址 |
+| `--secondary-keyserver` | 覆盖备用 keyserver 地址 |
+| `--attempts` | 最大探测次数 |
+| `--retry-delay-seconds` | 每次探测之间的等待秒数 |
+
 JSON 模式约定：
 
 - 标准输出只包含一个 JSON 对象
@@ -231,7 +260,7 @@ JSON 模式约定：
 
 ## 7. 发布命令
 
-### 7.1 `preflight`
+### 7.2 `preflight`
 
 输出正式发布前的 Maven 校验流程。
 
@@ -253,7 +282,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory /path/to
 mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory /path/to/repo --tag v1.2.3"
 ```
 
-### 7.2 `publish`
+### 7.3 `publish`
 
 只输出发布命令：
 

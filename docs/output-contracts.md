@@ -1,3 +1,7 @@
+---
+description: Stable and human-oriented javachanges outputs, including machine-readable JSON modes for automation.
+---
+
 # javachanges Output Contracts
 
 

@@ -1,3 +1,7 @@
+---
+description: 配置本地 Java 与 Maven 环境，从源码运行 javachanges，并验证当前开发流程。
+---
+
 # javachanges 开发使用指南
 
 
@@ -200,7 +204,7 @@ mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:ad
 
 当前 CLI 入口类是：
 
-- [src/main/java/io/github/sonofmagic/javachanges/core/cli/JavaChangesCli.java](https://github.com/sonofmagic/javachanges/blob/main/src/main/java/io/github/sonofmagic/javachanges/core/cli/JavaChangesCli.java)
+- [src/main/java/io/github/sonofmagic/javachanges/core/JavaChangesCli.java](https://github.com/sonofmagic/javachanges/blob/main/src/main/java/io/github/sonofmagic/javachanges/core/JavaChangesCli.java)
 
 如果你使用 IntelliJ IDEA 或 VS Code，也可以直接以这个类作为运行入口进行调试。
 
@@ -286,6 +290,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="help"
 | `audit-vars` | 审计平台变量 |
 | `preflight` | 发布前检查 |
 | `publish` | 发布辅助 |
+| `ensure-gpg-public-key` | 发布并验证当前签名公钥是否已被支持的 keyserver 发现 |
 | `release-notes` | 生成 release notes |
 
 ## 7. 推荐的日常开发流程

@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import type Token from 'markdown-it/lib/token.mjs'
 import { defineConfigWithTheme } from 'vitepress'
 import type { DefaultTheme } from 'vitepress'
+import llmstxt from 'vitepress-plugin-llms'
 
 const repoUrl = 'https://github.com/sonofmagic/javachanges'
 const docsDir = resolve(fileURLToPath(new URL('../../docs', import.meta.url)))
@@ -241,6 +242,15 @@ export default defineConfigWithTheme<DefaultTheme.Config>({
   },
   sitemap: {
     hostname: 'https://javachanges.icebreaker.top',
+  },
+  vite: {
+    plugins: [
+      llmstxt({
+        domain: 'https://javachanges.icebreaker.top',
+        excludeIndexPage: false,
+        ignoreFiles: ['*.zh-CN.md'],
+      }),
+    ],
   },
   rewrites: zhRewrites,
   title: 'javachanges',

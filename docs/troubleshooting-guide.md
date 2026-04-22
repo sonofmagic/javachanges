@@ -1,3 +1,7 @@
+---
+description: Diagnose the most common javachanges setup, CI, Maven, and Maven Central publishing failures.
+---
+
 # javachanges Troubleshooting Guide
 
 
@@ -193,6 +197,31 @@ Verification command:
 ```bash
 mvn -Pcentral-publish -Dgpg.skip=true verify
 ```
+
+### 6.4 Maven Central rejects signatures because the public key fingerprint is not discoverable
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| Central says it could not find a public key by the key fingerprint | the signing key was imported in CI, but its public key is not yet visible on a supported keyserver | publish the public key and wait for discovery before `deploy` |
+
+Recommended CI check:
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="ensure-gpg-public-key --directory $PWD"
+```
+
+This command currently publishes to and verifies discovery from:
+
+- `hkps://keyserver.ubuntu.com`
+- `hkps://keys.openpgp.org`
+
+### 6.5 Manual publish retry uses the wrong commit or release version
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| a manual retry creates the wrong tag, or `RELEASE_VERSION` is empty | the retry did not target the merged release commit, or the workflow ran helper logic from the old release tree | rerun `Publish Release` with the original merged release commit SHA through `workflow_dispatch` |
+
+For this repository, `publish-release.yml` now supports manual retries through the `release_commit_sha` input.
 
 ## 7. Release plan manifest confusion
 

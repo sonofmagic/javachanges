@@ -1,3 +1,7 @@
+---
+description: Copy-ready javachanges command sequences for common Maven release planning, CI, and publishing workflows.
+---
+
 # javachanges Command Cookbook
 
 

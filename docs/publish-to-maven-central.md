@@ -1,3 +1,7 @@
+---
+description: Publish javachanges to Maven Central with the central-publish profiles, GPG signing, and snapshot support.
+---
+
 # javachanges Publish To Maven Central Guide
 
 

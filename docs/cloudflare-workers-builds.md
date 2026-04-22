@@ -1,3 +1,7 @@
+---
+description: Deploy the javachanges VitePress site with Cloudflare Workers Builds directly from GitHub.
+---
+
 # Cloudflare Workers Builds
 
 Use this guide when you want Cloudflare to pull `sonofmagic/javachanges` directly from GitHub and deploy the docs site without any GitHub-side deploy workflow.

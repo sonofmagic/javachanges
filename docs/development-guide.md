@@ -1,3 +1,7 @@
+---
+description: Set up a local Java and Maven environment, run javachanges from source, and validate current development workflows.
+---
+
 # javachanges Development Guide
 
 
@@ -192,7 +196,7 @@ mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:ad
 
 The current CLI entry class is:
 
-- [src/main/java/io/github/sonofmagic/javachanges/core/cli/JavaChangesCli.java](https://github.com/sonofmagic/javachanges/blob/main/src/main/java/io/github/sonofmagic/javachanges/core/cli/JavaChangesCli.java)
+- [src/main/java/io/github/sonofmagic/javachanges/core/JavaChangesCli.java](https://github.com/sonofmagic/javachanges/blob/main/src/main/java/io/github/sonofmagic/javachanges/core/JavaChangesCli.java)
 
 You can also run or debug this class directly in IntelliJ IDEA or VS Code.
 
@@ -276,6 +280,7 @@ High-value commands include:
 | `audit-vars` | Audit platform variables |
 | `preflight` | Run pre-publish checks |
 | `publish` | Assist publishing |
+| `ensure-gpg-public-key` | Publish and verify the current signing public key on supported keyservers |
 | `release-notes` | Generate release notes |
 
 ## 7. Recommended local workflow

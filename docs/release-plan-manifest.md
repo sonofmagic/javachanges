@@ -1,3 +1,7 @@
+---
+description: Understand the generated release-plan.json and release-plan.md files written by javachanges.
+---
+
 # javachanges Release Plan Manifest
 
 

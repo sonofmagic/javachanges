@@ -1,3 +1,7 @@
+---
+description: Install and use javachanges as a Maven plugin or released CLI for day-to-day release planning.
+---
+
 # Getting Started
 
 ## 0. Quick flow

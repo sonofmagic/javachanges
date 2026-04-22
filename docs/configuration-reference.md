@@ -1,3 +1,7 @@
+---
+description: Reference for javachanges changeset files, CLI flags, environment variables, and publish-related configuration.
+---
+
 # javachanges Configuration Reference
 
 

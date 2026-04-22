@@ -1,3 +1,7 @@
+---
+description: Use javachanges in GitHub Actions for CI validation, release planning, variable sync, and Maven publishing workflows.
+---
+
 # javachanges GitHub Actions Usage Guide
 
 

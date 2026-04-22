@@ -1,3 +1,7 @@
+---
+description: Walk through the checked-in basic Maven monorepo example and map each file to the javachanges release flow.
+---
+
 # Examples Guide
 
 

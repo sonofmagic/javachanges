@@ -1,3 +1,7 @@
+---
+description: Use javachanges in GitLab CI/CD for validation, release merge requests, tag creation, and Maven publishing.
+---
+
 # javachanges GitLab CI/CD Usage Guide
 
 

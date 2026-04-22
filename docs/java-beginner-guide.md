@@ -1,3 +1,7 @@
+---
+description: Learn Java, Maven, CLI, and plugin concepts used in javachanges through a concrete real-world codebase.
+---
+
 # Java Concepts Guide For Beginners
 
 ## 1. Overview

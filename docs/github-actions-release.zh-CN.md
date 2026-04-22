@@ -1,3 +1,7 @@
+---
+description: javachanges 仓库专用的 GitHub Actions 发布自动化说明，涵盖 snapshot、Maven Central 发布和失败重试。
+---
+
 # javachanges GitHub Actions 发布流程使用指南
 
 
@@ -118,7 +122,12 @@ workflow 成功后，建议通过下面这些 snapshot 地址验证：
 
 ## 5. 正式发布工作流
 
-`publish-release.yml` 只在以下条件满足时触发：
+`publish-release.yml` 现在有两种运行模式：
+
+1. release PR 合并后自动触发
+2. 需要对某个已经合并的 release commit 重新发布时，通过 `workflow_dispatch` 手动触发
+
+自动触发模式只会在以下条件全部满足时运行：
 
 | 条件 | 说明 |
 | --- | --- |
@@ -134,6 +143,14 @@ workflow 成功后，建议通过下面这些 snapshot 地址验证：
 4. 用 `central-publish` profile 发布到 Maven Central
 5. 执行 `github-release-from-plan --execute true`，创建或更新 GitHub Release
 
+在 `actions/setup-java` 导入私钥之后，当前两个发布 workflow 都会先执行 `javachanges ensure-gpg-public-key`。这一步会：
+
+1. 读取当前导入的签名指纹
+2. 尝试把公钥上传到 `hkps://keyserver.ubuntu.com` 和 `hkps://keys.openpgp.org`
+3. 轮询确认至少一个受支持的 keyserver 已经能查询到该公钥
+
+这样可以避免 Maven Central 在后续校验签名时出现类似 `Invalid signature for file ... Could not find a public key by the key fingerprint` 的失败。
+
 ## 6. 仓库必须配置的 Secrets
 
 你需要在 GitHub 仓库的 `Settings > Secrets and variables > Actions` 中配置：
@@ -147,11 +164,12 @@ workflow 成功后，建议通过下面这些 snapshot 地址验证：
 
 `publish-release.yml` 现在会在准备 Java、Maven settings 和 GPG 之前先校验这些 secrets。只要有任意一个缺失，工作流会立刻失败，并直接指出缺的是哪一个 secret。
 
-针对这次已经失败的 `Publish Release` 运行，实际恢复步骤就是：
+针对已经失败的 `Publish Release` 运行，推荐恢复步骤是：
 
 1. 把缺少的 secrets 补齐
-2. 在 Actions 页面重跑失败的 workflow 或 job
-3. 确认重跑后能进入 `Publish to Maven Central` 这一步
+2. 如果之前失败日志里提到公钥指纹不可发现，先使用当前仓库版本重新触发，让 workflow 自动发布并校验公钥
+3. 在 Actions 页面重新触发 `Publish Release`
+4. 确认它能进入 `Publish to Maven Central` 这一步
 
 ## 7. 推荐使用方式
 
@@ -234,9 +252,9 @@ snapshot workflow 则会使用：
 | --- | --- |
 | `Release Plan` | 是 |
 | `Publish Snapshot` | 是 |
-| `Publish Release` | 否，默认只在 release PR merge 时触发 |
+| `Publish Release` | 是，需要把 `release_commit_sha` 设为 release PR 合并后的 commit |
 
-如果某个已经 merge 的 release PR 触发过失败的 `Publish Release`，通常不需要重新再走一遍 release PR。把仓库 secrets 修好以后，直接在 Actions 页面重跑那次失败运行即可。
+如果某个已经 merge 的 release PR 触发过失败的 `Publish Release`，通常不需要重新走一遍 release PR。直接手动触发 `Publish Release`，并把原始 merge commit SHA 通过 `release_commit_sha` 传进去即可。
 
 ## 10. 发布前本地验证
 

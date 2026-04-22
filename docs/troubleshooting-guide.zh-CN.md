@@ -1,3 +1,7 @@
+---
+description: 排查 javachanges 在本地开发、CI、Maven 发布和 Maven Central 发布中的常见故障。
+---
+
 # javachanges 故障排查指南
 
 
@@ -193,6 +197,31 @@ JAVACHANGES_VERSION: "REPLACE_WITH_PUBLISHED_VERSION"
 ```bash
 mvn -Pcentral-publish -Dgpg.skip=true verify
 ```
+
+### 6.4 Maven Central 因为无法发现公钥指纹而拒绝签名
+
+| 现象 | 原因 | 修复方式 |
+| --- | --- | --- |
+| Central 提示无法根据 key fingerprint 找到公钥 | CI 里已经导入了签名私钥，但对应公钥还没有出现在受支持的 keyserver 上 | 在 `deploy` 前先发布公钥，并等待可见性确认完成 |
+
+推荐在 CI 里加入：
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="ensure-gpg-public-key --directory $PWD"
+```
+
+当前命令会向这些服务发布并验证公钥可见性：
+
+- `hkps://keyserver.ubuntu.com`
+- `hkps://keys.openpgp.org`
+
+### 6.5 手动重试正式发布时用了错误的 commit 或 release version
+
+| 现象 | 原因 | 修复方式 |
+| --- | --- | --- |
+| 手动重试后打出了错误的 tag，或者 `RELEASE_VERSION` 为空 | 重试时没有对准 release PR 的 merge commit，或者 workflow 从错误的代码树里读取了辅助信息 | 通过 `workflow_dispatch` 重跑 `Publish Release`，并传入原始 merge commit SHA 作为 `release_commit_sha` |
+
+当前仓库里的 `publish-release.yml` 已经支持通过 `release_commit_sha` 做手动重试。
 
 ## 7. Release plan manifest 相关疑惑
 
