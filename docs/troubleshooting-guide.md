@@ -165,6 +165,12 @@ Suggested order:
 | --- | --- | --- |
 | `release_plan_mr` fails with `failed to push some refs` and `stale info` | another writer updated the same `changeset-release/<default-branch>` branch after `gitlab-release-plan` resolved the current remote SHA | rerun the pipeline; if the branch is meant to be owned only by javachanges, remove the competing writer |
 
+### 5.4 Hygiene or secret scanning reports the scanner rules themselves
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| a hygiene job flags `.gitlab-ci.yml`, `Makefile`, or a rules file even though no real credential was added | the scanner matched detector literals such as token prefixes or private-key markers inside its own configuration | move secret patterns into one dedicated file, exclude that file and scanner-owned config files from scanning, and keep allowlist comments for reviewed exceptions only |
+
 ## 6. Publish and credentials problems
 
 ### 6.1 `preflight` or `publish` says credentials are missing

@@ -378,7 +378,65 @@ variables:
 | 不同 runner 且没有共享 cache | 缓存复用会比较弱 |
 | GitLab 配置了共享 / 分布式 cache | 跨 runner 复用会更好 |
 
-## 11. 常见错误
+## 11. 可选的 Hygiene / Secret Scanning 策略
+
+如果你在同一个仓库里再接入 hygiene 或 secret scanning，要先区分两类结果：
+
+- 真实 secret 命中：仓库内容里真的出现了像凭据、token 或私钥一样的值。
+- 规则自命中：扫描器在 `.gitlab-ci.yml`、`Makefile` 或规则定义文件里，扫到了它自己的模式字面量，比如 `ghp_`、`glpat-`、`AKIA`、`BEGIN PRIVATE KEY`。
+
+推荐的默认策略：
+
+1. 把 secret 检测模式放到独立文件，例如 `.hygiene/secret-patterns.txt`
+2. 扫描时显式排除这个规则文件，以及 `.gitlab-ci.yml`、`Makefile`
+3. 继续扫描源码、脚本、文档和业务配置文件
+4. allowlist 注释只用于少量、经过评审的个别例外
+
+为什么这是更稳妥的默认值：
+
+- 扫描器配置不属于业务内容，不应该按业务文件同等扫描
+- 只排除一个专用规则文件，比把正则散落在 CI YAML 里更容易维护
+- 也能避免把模式拆碎后带来的可读性和可移植性问题
+
+推荐示例：
+
+```yaml
+hygiene:
+  stage: verify
+  script:
+    - ./scripts/secret-scan.sh
+  rules:
+    - if: $CI_COMMIT_BRANCH
+```
+
+```bash
+# scripts/secret-scan.sh
+set -eu
+
+scanner scan \
+  --rules .hygiene/secret-patterns.txt \
+  --exclude .hygiene/secret-patterns.txt \
+  --exclude .gitlab-ci.yml \
+  --exclude Makefile \
+  .
+```
+
+方案对比：
+
+| 方案 | 优点 | 缺点 | 建议 |
+| --- | --- | --- | --- |
+| 只排除 `.gitlab-ci.yml` / `Makefile` | 简单，接入快 | 规则以后挪到别的文件时还会继续误报 | 只能当临时止血方案 |
+| 把规则移到单独文件并排除 | 责任边界清晰，最容易解释，也最稳定 | 需要多维护一个文件 | 作为默认推荐方案 |
+| 把模式拆分后再拼接 | 不依赖排除列表，也能避开字面量命中 | 可读性差，容易写坏，还可能依赖具体工具实现 | 默认不推荐 |
+| 使用 allowlist 注释 | 对少量已审阅例外很精确 | 容易越积越多，最后掩盖真实问题，而且常常和具体工具强绑定 | 只用于个别例外 |
+
+避免这样做：
+
+- 直接在 `.gitlab-ci.yml` 里内联 secret 检测正则
+- 在 `Makefile` 目标里重复维护同一套模式字面量
+- 把 allowlist 当成扫描器配置文件的主抑制手段
+
+## 12. 常见错误
 
 | 问题 | 原因 | 修复方式 |
 | --- | --- | --- |
@@ -386,11 +444,12 @@ variables:
 | release MR job 报 `stale info` | javachanges 解析完远端 SHA 之后，又有别的流程更新了同一个 `changeset-release/*` 分支 | 直接重跑 pipeline；如果这个分支名被多个自动流程共用，需要改成单一 owner |
 | release tag job 一直不打 tag | `release-plan.json` 没变化，或 `CI_COMMIT_BEFORE_SHA` 不可用 | 检查默认分支 pipeline 和 release plan 产物 |
 | pipeline 还没启动 job 就报 `could not find expected ':' while scanning a simple key` | heredoc 或其他多行 shell 内容破坏了 YAML 缩进语义 | 把 `script: - |` + heredoc 改成 `- >`、`printf`，或者仓库内脚本 |
+| hygiene / secret scan 命中了 `.gitlab-ci.yml` 或 `Makefile`，但仓库里并没有真实凭据 | 扫描器扫到了自己的规则字面量 | 把模式移到独立规则文件，并排除扫描器自有配置文件 |
 | `sync-vars` 没有任何效果 | env 文件里还是占位值 | 先把 `replace-me` 替换成真实值 |
 | `audit-vars` 报 `MISMATCH` | 本地 env 与远端项目变量已经不一致 | 重新同步，或明确选择以哪一边为准 |
 | publish job 提示 Maven 凭据缺失 | 项目变量没有配置完整 | 先用 `glab` 同步变量，再重跑 pipeline |
 
-## 12. 推荐与哪些文档配合阅读
+## 13. 推荐与哪些文档配合阅读
 
 建议把下面这些文档配合起来看：
 
@@ -400,7 +459,7 @@ variables:
 | 当前仓库自己的 GitHub release 流程 | [GitHub Actions Release Flow](./github-actions-release.md) |
 | Maven Central 专用发布 | [Publish To Maven Central](./publish-to-maven-central.md) |
 
-## 13. 总结
+## 14. 总结
 
 GitLab CI/CD 中最实用的路径通常是：
 
@@ -410,7 +469,7 @@ GitLab CI/CD 中最实用的路径通常是：
 4. 用 `sync-vars` 和 `audit-vars` 管理 GitLab 项目变量
 5. 在 tag pipeline 中用 `preflight` 和 `publish` 做正式发布
 
-## 14. 参考资料
+## 15. 参考资料
 
 - GitLab CI/CD YAML syntax: https://docs.gitlab.com/ci/yaml/
 - GitLab CI/CD caching: https://docs.gitlab.com/ci/caching/

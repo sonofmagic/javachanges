@@ -382,7 +382,65 @@ Important behavior:
 | Different runners without shared cache | Cache reuse may be weak |
 | Shared/distributed GitLab cache configured | Cross-runner reuse improves |
 
-## 11. Common Mistakes
+## 11. Optional Hygiene And Secret Scanning
+
+If you add a hygiene or secret-scanning job to the same repository, distinguish two different outcomes:
+
+- A real secret hit means repository content contains a value that looks like an actual credential or private key.
+- A rule self-hit means the scanner matched its own detection patterns, such as `ghp_`, `glpat-`, `AKIA`, or `BEGIN PRIVATE KEY`, inside `.gitlab-ci.yml`, `Makefile`, or another rule-definition file.
+
+Recommended default strategy:
+
+1. keep secret-detection patterns in a dedicated file such as `.hygiene/secret-patterns.txt`
+2. exclude that file, plus `.gitlab-ci.yml` and `Makefile`, from content scanning
+3. scan source, docs, scripts, and config that may carry real secrets
+4. use allowlist comments only for one-off reviewed exceptions
+
+Why this is the safest default:
+
+- scanner configuration is not business content and should not be scanned like application files
+- excluding one dedicated rules file is easier to reason about than scattering regex literals through CI YAML
+- it avoids fragile pattern splitting that makes rule maintenance harder
+
+Recommended example:
+
+```yaml
+hygiene:
+  stage: verify
+  script:
+    - ./scripts/secret-scan.sh
+  rules:
+    - if: $CI_COMMIT_BRANCH
+```
+
+```bash
+# scripts/secret-scan.sh
+set -eu
+
+scanner scan \
+  --rules .hygiene/secret-patterns.txt \
+  --exclude .hygiene/secret-patterns.txt \
+  --exclude .gitlab-ci.yml \
+  --exclude Makefile \
+  .
+```
+
+Option comparison:
+
+| Option | Pros | Cons | Recommendation |
+| --- | --- | --- | --- |
+| Exclude `.gitlab-ci.yml` / `Makefile` only | simple and quick | still fails if rules move into another scanned file | useful as a minimum stopgap |
+| Move rules to a dedicated file and exclude it | clear ownership, easiest to explain, stable over time | needs one extra checked-in file | recommended default |
+| Split patterns into fragments and concatenate them | can avoid literal self-matches without file exclusions | hurts readability, easier to break, may reduce portability across tools | avoid by default |
+| Use allowlist comments | precise for a few reviewed lines | noisy, tool-specific, easy to overuse until real hits get hidden | keep for exceptional cases only |
+
+Avoid:
+
+- defining detector regex literals directly in `.gitlab-ci.yml`
+- defining the same literals inline in `Makefile` targets
+- treating allowlists as the primary suppression mechanism for scanner-owned files
+
+## 12. Common Mistakes
 
 | Problem | Cause | Fix |
 | --- | --- | --- |
@@ -390,11 +448,12 @@ Important behavior:
 | Release MR job fails with `stale info` | another process updated `changeset-release/*` after javachanges resolved the remote SHA | rerun the pipeline; if the branch is shared by other automation, stop sharing that branch name |
 | Release tag job never tags | `release-plan.json` did not change or `CI_COMMIT_BEFORE_SHA` is unusable | inspect the branch pipeline and the generated release plan |
 | GitLab rejects the pipeline before any job starts with `could not find expected ':' while scanning a simple key` | heredoc or other multiline shell content broke YAML indentation rules | replace `script: - |` heredoc blocks with `- >`, `printf`, or a checked-in shell script |
+| Hygiene or secret scan fails on `.gitlab-ci.yml` or `Makefile`, but no real credential was added | the scanner matched rule literals inside its own configuration | move patterns into a dedicated rules file and exclude scanner-owned files from scanning |
 | `sync-vars` does nothing | env file still contains placeholders | replace `replace-me` values first |
 | `audit-vars` fails with `MISMATCH` | local env and remote project variables diverged | resync or deliberately update one side |
 | Publish job fails on missing Maven credentials | project variables were not configured | sync the variables with `glab`, then rerun |
 
-## 12. Recommended Documentation Split
+## 13. Recommended Documentation Split
 
 Use these docs together:
 
@@ -404,7 +463,7 @@ Use these docs together:
 | GitHub-based self-release flow in this repository | [GitHub Actions Release Flow](./github-actions-release.md) |
 | Maven Central-specific publishing | [Publish To Maven Central](./publish-to-maven-central.md) |
 
-## 13. Summary
+## 14. Summary
 
 The practical GitLab CI/CD path is:
 
@@ -414,7 +473,7 @@ The practical GitLab CI/CD path is:
 4. sync and audit GitLab variables with `sync-vars` and `audit-vars`
 5. publish from tags with `preflight` and `publish`
 
-## 14. References
+## 15. References
 
 - GitLab CI/CD YAML syntax: https://docs.gitlab.com/ci/yaml/
 - GitLab CI/CD caching: https://docs.gitlab.com/ci/caching/

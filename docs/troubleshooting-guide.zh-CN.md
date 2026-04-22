@@ -165,6 +165,12 @@ JAVACHANGES_VERSION: "REPLACE_WITH_PUBLISHED_VERSION"
 | --- | --- | --- |
 | `release_plan_mr` 失败，并出现 `failed to push some refs` / `stale info` | `gitlab-release-plan` 刚解析完远端 `changeset-release/<default-branch>` 的 SHA，就有别的写入方更新了同一个分支 | 直接重跑 pipeline；如果这个分支应当只由 javachanges 持有，需要移除其他写入方 |
 
+### 5.4 Hygiene / secret scanning 扫到了扫描器自己的规则
+
+| 现象 | 原因 | 修复方式 |
+| --- | --- | --- |
+| hygiene job 命中了 `.gitlab-ci.yml`、`Makefile` 或规则文件，但仓库里并没有新增真实凭据 | 扫描器在自己的配置里匹配到了 token 前缀或私钥标记等规则字面量 | 把 secret 模式集中放到一个独立规则文件，扫描时排除该文件和扫描器自有配置文件，并且只把 allowlist 注释用于少量已审阅例外 |
+
 ## 6. 发布和凭据问题
 
 ### 6.1 `preflight` 或 `publish` 提示缺少凭据
