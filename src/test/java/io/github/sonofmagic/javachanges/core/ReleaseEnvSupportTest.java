@@ -101,6 +101,31 @@ class ReleaseEnvSupportTest {
         assertTrue(json.contains("PRESENT (2026-04-22T10:05:00Z)"));
     }
 
+    @Test
+    void syncVarsDryRunPrintsGithubAndGitlabCommands(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot.resolve("env"));
+        Files.write(repoRoot.resolve("env").resolve("release.env.local"), envFile().getBytes(StandardCharsets.UTF_8));
+
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        ReleaseEnvSupport support = new ReleaseEnvSupport(repoRoot, new PrintStream(stdout, true));
+        Map<String, String> options = new LinkedHashMap<String, String>();
+        options.put("env-file", "env/release.env.local");
+        options.put("platform", "all");
+        options.put("repo", "owner/repo");
+        options.put("show-secrets", "true");
+
+        support.syncVars(SyncVarsRequest.fromOptions(options));
+        String text = stdout.toString(StandardCharsets.UTF_8.name());
+
+        assertTrue(text.contains("== GitHub CLI 命令 =="));
+        assertTrue(text.contains("gh variable set MAVEN_RELEASE_REPOSITORY_URL"));
+        assertTrue(text.contains("gh secret set MAVEN_REPOSITORY_USERNAME"));
+        assertTrue(text.contains("== GitLab CLI 命令 =="));
+        assertTrue(text.contains("glab variable set MAVEN_REPOSITORY_USERNAME"));
+        assertTrue(text.contains("--masked --protected"));
+    }
+
     private static String envFile() {
         return ""
             + "MAVEN_RELEASE_REPOSITORY_URL=https://repo.example.com/releases\n"

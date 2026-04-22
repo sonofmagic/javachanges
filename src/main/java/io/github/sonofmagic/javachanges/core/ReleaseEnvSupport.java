@@ -20,6 +20,7 @@ final class ReleaseEnvSupport {
     private final GitlabProtectionSupport gitlabProtectionSupport;
     private final ReleaseEnvRenderSupport renderSupport;
     private final ReleaseEnvAuditSupport auditSupport;
+    private final ReleaseEnvSyncSupport syncSupport;
 
     ReleaseEnvSupport(Path repoRoot, PrintStream out) {
         this(repoRoot, out, new ReleaseEnvRuntime(repoRoot));
@@ -32,6 +33,7 @@ final class ReleaseEnvSupport {
         this.gitlabProtectionSupport = new GitlabProtectionSupport(runtime, out);
         this.renderSupport = new ReleaseEnvRenderSupport(out);
         this.auditSupport = new ReleaseEnvAuditSupport(repoRoot, out, runtime);
+        this.syncSupport = new ReleaseEnvSyncSupport(repoRoot, out, runtime);
     }
 
     void initEnv(InitEnvRequest request) throws IOException {
@@ -486,41 +488,7 @@ final class ReleaseEnvSupport {
 
     void syncVars(SyncVarsRequest request) throws IOException, InterruptedException {
         LoadedEnv env = LoadedEnv.load(runtime.resolveEnvFile(request.envFile));
-        out.println("使用 env 文件: " + runtime.relativizePath(env.path));
-        if (!request.execute) {
-            out.println("当前为 dry-run，只输出命令。传入 --execute true 后才会真正写入平台。");
-        }
-
-        if (request.execute) {
-            if (isBlank(request.repo)) {
-                throw new IllegalArgumentException("执行模式下必须通过 --repo 指定仓库");
-            }
-            if (request.platform.includesGithub()) {
-                runtime.requireCommand("gh");
-            }
-            if (request.platform.includesGitlab()) {
-                runtime.requireCommand("glab");
-            }
-        }
-
-        if (request.platform.includesGithub()) {
-            out.println();
-            out.println("== GitHub CLI 命令 ==");
-            for (EnvEntry entry : ReleaseEnvCatalog.GITHUB_ACTIONS_VARIABLES) {
-                syncGithub(env, request, entry, false);
-            }
-            for (EnvEntry entry : ReleaseEnvCatalog.GITHUB_ACTIONS_SECRETS) {
-                syncGithub(env, request, entry, true);
-            }
-        }
-
-        if (request.platform.includesGitlab()) {
-            out.println();
-            out.println("== GitLab CLI 命令 ==");
-            for (EnvEntry entry : ReleaseEnvCatalog.GITLAB_VARIABLES) {
-                syncGitlab(env, request, entry);
-            }
-        }
+        syncSupport.syncVars(request, env, runtime.relativizePath(env.path));
     }
 
     boolean auditVars(AuditVarsRequest request) throws IOException, InterruptedException {
@@ -584,75 +552,6 @@ final class ReleaseEnvSupport {
             return "PLACEHOLDER";
         }
         return "OK";
-    }
-
-    private void syncGithub(LoadedEnv env, SyncVarsRequest request, EnvEntry entry, boolean secret)
-        throws IOException, InterruptedException {
-        EnvValue value = env.value(entry.name);
-        if (!value.isReal()) {
-            return;
-        }
-        List<String> command = new ArrayList<String>();
-        command.add("gh");
-        command.add(secret ? "secret" : "variable");
-        command.add("set");
-        command.add(entry.name);
-        command.add("--body");
-        command.add(value.raw);
-        if (!isBlank(request.repo)) {
-            command.add("--repo");
-            command.add(request.repo);
-        }
-        if (request.execute) {
-            out.println("执行: " + renderCommand(command));
-            int exitCode = runCommand(command, repoRoot);
-            if (exitCode != 0) {
-                throw new IllegalStateException("命令执行失败: " + renderCommand(command));
-            }
-            return;
-        }
-        String previewValue = secret ? value.renderMasked(request.showSecrets) : value.raw;
-        out.println("gh " + (secret ? "secret" : "variable") + " set "
-            + padRight(entry.name, secret ? 36 : 34) + " --body " + previewValue
-            + runtime.repoFlagPreview(request.repo));
-    }
-
-    private void syncGitlab(LoadedEnv env, SyncVarsRequest request, EnvEntry entry)
-        throws IOException, InterruptedException {
-        EnvValue value = env.value(entry.name);
-        if (!value.isReal()) {
-            return;
-        }
-        List<String> command = new ArrayList<String>();
-        command.add("glab");
-        command.add("variable");
-        command.add("set");
-        command.add(entry.name);
-        command.add("--value");
-        command.add(value.raw);
-        if (entry.secret) {
-            command.add("--masked");
-        }
-        if (entry.protectedValue) {
-            command.add("--protected");
-        }
-        if (!isBlank(request.repo)) {
-            command.add("--repo");
-            command.add(request.repo);
-        }
-        if (request.execute) {
-            out.println("执行: " + renderCommand(command));
-            int exitCode = runCommand(command, repoRoot);
-            if (exitCode != 0) {
-                throw new IllegalStateException("命令执行失败: " + renderCommand(command));
-            }
-            return;
-        }
-        out.println("glab variable set " + padRight(entry.name, 31) + " --value "
-            + value.renderMasked(request.showSecrets)
-            + (entry.secret ? " --masked" : "")
-            + (entry.protectedValue ? " --protected" : "")
-            + runtime.repoFlagPreview(request.repo));
     }
 
 }
