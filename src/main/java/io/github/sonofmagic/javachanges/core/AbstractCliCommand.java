@@ -16,6 +16,16 @@ abstract class AbstractCliCommand implements Callable<Integer> {
         void run() throws Exception;
     }
 
+    @FunctionalInterface
+    interface ThrowingIntSupplier {
+        int get() throws Exception;
+    }
+
+    @FunctionalInterface
+    interface ErrorJsonRenderer {
+        String render(String command, Exception exception);
+    }
+
     @ParentCommand
     private JavaChangesCommand root;
 
@@ -52,12 +62,36 @@ abstract class AbstractCliCommand implements Callable<Integer> {
     }
 
     final int runAutomationCommand(String command, OutputFormat format, ThrowingRunnable action) throws Exception {
+        return runJsonCommand(command, format, new ErrorJsonRenderer() {
+            @Override
+            public String render(String name, Exception exception) {
+                return AutomationJsonSupport.errorJson(name, exception);
+            }
+        }, new ThrowingIntSupplier() {
+            @Override
+            public int get() throws Exception {
+                action.run();
+                return success();
+            }
+        });
+    }
+
+    final int runEnvJsonCommand(String command, OutputFormat format, ThrowingIntSupplier action) throws Exception {
+        return runJsonCommand(command, format, new ErrorJsonRenderer() {
+            @Override
+            public String render(String name, Exception exception) {
+                return ReleaseEnvSupport.errorJson(name, exception);
+            }
+        }, action);
+    }
+
+    final int runJsonCommand(String command, OutputFormat format, ErrorJsonRenderer errorJsonRenderer,
+                             ThrowingIntSupplier action) throws Exception {
         try {
-            action.run();
-            return success();
+            return action.get();
         } catch (Exception exception) {
             if (format == OutputFormat.JSON) {
-                out().println(AutomationJsonSupport.errorJson(command, exception));
+                out().println(errorJsonRenderer.render(command, exception));
                 return 1;
             }
             throw exception;

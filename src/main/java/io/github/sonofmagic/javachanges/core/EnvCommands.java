@@ -67,16 +67,13 @@ final class RenderVarsCommand extends AbstractCliCommand {
         putOption(options, "platform", platform);
         putOption(options, "format", format);
         putFlag(options, "show-secrets", showSecrets);
-        PlatformEnvRequest request = PlatformEnvRequest.fromOptions(options);
-        try {
-            return new ReleaseEnvSupport(repoRoot(), out()).renderVars(request) ? success() : 1;
-        } catch (Exception exception) {
-            if (request.format == OutputFormat.JSON) {
-                out().println(ReleaseEnvSupport.errorJson("render-vars", exception));
-                return 1;
+        final PlatformEnvRequest request = PlatformEnvRequest.fromOptions(options);
+        return runEnvJsonCommand("render-vars", request.format, new ThrowingIntSupplier() {
+            @Override
+            public int get() throws Exception {
+                return new ReleaseEnvSupport(repoRoot(), out()).renderVars(request) ? success() : 1;
             }
-            throw exception;
-        }
+        });
     }
 }
 
@@ -102,16 +99,13 @@ final class DoctorLocalCommand extends AbstractCliCommand {
         putOption(options, "github-repo", githubRepo);
         putOption(options, "gitlab-repo", gitlabRepo);
         putOption(options, "format", format);
-        LocalDoctorRequest request = LocalDoctorRequest.fromOptions(options);
-        try {
-            return new ReleaseEnvSupport(repoRoot(), out()).doctorLocal(request) ? success() : 1;
-        } catch (Exception exception) {
-            if (request.format == OutputFormat.JSON) {
-                out().println(ReleaseEnvSupport.errorJson("doctor-local", exception));
-                return 1;
+        final LocalDoctorRequest request = LocalDoctorRequest.fromOptions(options);
+        return runEnvJsonCommand("doctor-local", request.format, new ThrowingIntSupplier() {
+            @Override
+            public int get() throws Exception {
+                return new ReleaseEnvSupport(repoRoot(), out()).doctorLocal(request) ? success() : 1;
             }
-            throw exception;
-        }
+        });
     }
 }
 
@@ -141,16 +135,13 @@ final class DoctorPlatformCommand extends AbstractCliCommand {
         putOption(options, "github-repo", githubRepo);
         putOption(options, "gitlab-repo", gitlabRepo);
         putOption(options, "format", format);
-        DoctorPlatformRequest request = DoctorPlatformRequest.fromOptions(options);
-        try {
-            return new ReleaseEnvSupport(repoRoot(), out()).doctorPlatform(request) ? success() : 1;
-        } catch (Exception exception) {
-            if (request.format == OutputFormat.JSON) {
-                out().println(ReleaseEnvSupport.errorJson("doctor-platform", exception));
-                return 1;
+        final DoctorPlatformRequest request = DoctorPlatformRequest.fromOptions(options);
+        return runEnvJsonCommand("doctor-platform", request.format, new ThrowingIntSupplier() {
+            @Override
+            public int get() throws Exception {
+                return new ReleaseEnvSupport(repoRoot(), out()).doctorPlatform(request) ? success() : 1;
             }
-            throw exception;
-        }
+        });
     }
 }
 
@@ -213,15 +204,12 @@ final class AuditVarsCommand extends AbstractCliCommand {
         putOption(options, "github-repo", githubRepo);
         putOption(options, "gitlab-repo", gitlabRepo);
         putOption(options, "format", format);
-        AuditVarsRequest request = AuditVarsRequest.fromOptions(options);
-        try {
-            return new ReleaseEnvSupport(repoRoot(), out()).auditVars(request) ? success() : 1;
-        } catch (Exception exception) {
-            if (request.format == OutputFormat.JSON) {
-                out().println(ReleaseEnvSupport.errorJson("audit-vars", exception));
-                return 1;
+        final AuditVarsRequest request = AuditVarsRequest.fromOptions(options);
+        return runEnvJsonCommand("audit-vars", request.format, new ThrowingIntSupplier() {
+            @Override
+            public int get() throws Exception {
+                return new ReleaseEnvSupport(repoRoot(), out()).auditVars(request) ? success() : 1;
             }
-            throw exception;
-        }
+        });
     }
 }
