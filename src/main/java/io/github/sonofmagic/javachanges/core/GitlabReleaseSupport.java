@@ -41,7 +41,8 @@ final class GitlabReleaseSupport {
         }
 
         ReleasePlan plan = automationSupport.plan();
-        report.releaseVersion = plan.getReleaseVersion();
+        ReleaseAutomationSupport.ReleaseDescriptor release = automationSupport.descriptorFromPlan(plan);
+        report.releaseVersion = release.releaseVersion;
         if (!plan.hasPendingChangesets()) {
             report.skipped = true;
             report.reason = "No pending changesets.";
@@ -53,16 +54,15 @@ final class GitlabReleaseSupport {
             return;
         }
 
-        String releaseVersion = plan.getReleaseVersion();
         String releaseBranch = request.releaseBranch;
         String targetBranch = request.targetBranch;
-        String commitMessage = "chore(release): apply changesets for v" + releaseVersion;
-        String title = "chore(release): release v" + releaseVersion;
+        String commitMessage = release.commitMessage();
+        String title = release.gitlabMergeRequestTitle();
 
         if (textOutput) {
             out.println("Release branch: " + releaseBranch);
             out.println("Target branch: " + targetBranch);
-            out.println("Release version: " + releaseVersion);
+            out.println("Release version: " + release.releaseVersion);
         }
 
         if (!request.execute) {
@@ -173,9 +173,9 @@ final class GitlabReleaseSupport {
             return;
         }
 
-        String releaseVersion = automationSupport.releaseVersionFromManifest();
-        String tagName = automationSupport.wholeRepoTagFromManifest();
-        report.releaseVersion = releaseVersion;
+        ReleaseAutomationSupport.ReleaseDescriptor release = automationSupport.descriptorFromManifest();
+        String tagName = release.wholeRepoTagName();
+        report.releaseVersion = release.releaseVersion;
         report.tag = tagName;
         if (textOutput) {
             out.println("Release tag: " + tagName);

@@ -23,9 +23,15 @@ class ReleaseAutomationSupportTest {
         );
 
         ReleaseAutomationSupport support = new ReleaseAutomationSupport(repoRoot);
+        ReleaseAutomationSupport.ReleaseDescriptor release = support.descriptorFromManifest();
 
         assertEquals("1.2.3", support.releaseVersionFromManifest());
         assertEquals("v1.2.3", support.wholeRepoTagFromManifest());
+        assertEquals("1.2.3", release.releaseVersion);
+        assertEquals("v1.2.3", release.wholeRepoTagName());
+        assertEquals("chore(release): apply changesets for v1.2.3", release.commitMessage());
+        assertEquals("chore(release): v1.2.3", release.githubPullRequestTitle());
+        assertEquals("chore(release): release v1.2.3", release.gitlabMergeRequestTitle());
         assertTrue(support.releasePlanMarkdownFile().endsWith(".changesets/release-plan.md"));
     }
 }

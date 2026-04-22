@@ -39,16 +39,16 @@ final class GithubReleaseSupport {
             return;
         }
 
-        String releaseVersion = plan.getReleaseVersion();
+        ReleaseAutomationSupport.ReleaseDescriptor release = automationSupport.descriptorFromPlan(plan);
         String releaseBranch = request.releaseBranch;
         String targetBranch = request.targetBranch;
-        String commitMessage = "chore(release): apply changesets for v" + releaseVersion;
-        String title = "chore(release): v" + releaseVersion;
+        String commitMessage = release.commitMessage();
+        String title = release.githubPullRequestTitle();
 
         out.println("GitHub repo: " + request.githubRepo);
         out.println("Release branch: " + releaseBranch);
         out.println("Target branch: " + targetBranch);
-        out.println("Release version: " + releaseVersion);
+        out.println("Release version: " + release.releaseVersion);
 
         if (!request.execute) {
             out.println("Dry-run only. Use --execute true to create/update the GitHub PR.");
@@ -81,7 +81,7 @@ final class GithubReleaseSupport {
 
     void tagFromReleasePlan(GithubTagRequest request) throws IOException, InterruptedException {
         String currentSha = firstNonBlank(trimToNull(request.currentSha), runtime.headSha());
-        String tagName = automationSupport.wholeRepoTagFromManifest();
+        String tagName = automationSupport.descriptorFromManifest().wholeRepoTagName();
 
         out.println("Release tag: " + tagName);
         out.println("Target commit: " + currentSha);
@@ -102,8 +102,9 @@ final class GithubReleaseSupport {
     }
 
     void syncReleaseFromPlan(GithubReleasePublishRequest request) throws IOException, InterruptedException {
-        String releaseVersion = automationSupport.releaseVersionFromManifest();
-        String tagName = automationSupport.wholeRepoTagFromManifest();
+        ReleaseAutomationSupport.ReleaseDescriptor release = automationSupport.descriptorFromManifest();
+        String releaseVersion = release.releaseVersion;
+        String tagName = release.wholeRepoTagName();
         Path notesFile = artifactSupport.resolveReleaseNotesFile(request.releaseNotesFile);
         new ReleaseNotesGenerator(repoRoot).writeReleaseNotes(tagName, notesFile);
 
