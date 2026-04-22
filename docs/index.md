@@ -68,6 +68,7 @@ flowchart TD
 
 ## Guides
 
+- [LLM Access](./llms-access.md)
 - [Getting Started](./getting-started.md)
 - [Examples Guide](./examples-guide.md)
 - [Command Cookbook](./command-cookbook.md)

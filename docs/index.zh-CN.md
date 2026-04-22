@@ -67,6 +67,7 @@ flowchart TD
 
 ## 指南
 
+- [AI 文档入口](./llms-access.md)
 - [Getting Started](./getting-started.md)
 - [Examples Guide 使用指南](./examples-guide.md)
 - [命令实战手册](./command-cookbook.md)

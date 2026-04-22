@@ -86,6 +86,7 @@ const guideItems: DefaultTheme.SidebarItem[] = [
   {
     text: 'Reference',
     items: [
+      { text: 'LLM Access', link: '/llms-access' },
       { text: 'Configuration Reference', link: '/configuration-reference' },
       { text: 'CLI Reference', link: '/cli-reference' },
       { text: 'Release Plan Manifest', link: '/release-plan-manifest' },
@@ -130,6 +131,7 @@ const zhGuideItems: DefaultTheme.SidebarItem[] = [
   {
     text: '参考',
     items: [
+      { text: 'AI 文档入口', link: '/zh-CN/llms-access' },
       { text: '配置参考大全', link: '/zh-CN/configuration-reference' },
       { text: 'CLI 命令参考', link: '/zh-CN/cli-reference' },
       { text: 'Release Plan Manifest', link: '/zh-CN/release-plan-manifest' },
@@ -162,6 +164,7 @@ const rootThemeConfig: DefaultTheme.Config = {
   },
   nav: [
     { text: 'Docs', link: '/getting-started' },
+    { text: 'LLMs', link: '/llms-access' },
     { text: 'GitHub', link: repoUrl },
   ],
   sidebar: guideItems,
@@ -187,6 +190,7 @@ const rootThemeConfig: DefaultTheme.Config = {
 const zhThemeConfig: DefaultTheme.Config = {
   nav: [
     { text: '文档', link: '/zh-CN/getting-started' },
+    { text: 'AI 入口', link: '/zh-CN/llms-access' },
     { text: 'GitHub', link: repoUrl },
   ],
   sidebar: zhGuideItems,
