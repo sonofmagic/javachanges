@@ -1,16 +1,32 @@
 {
-  "releaseVersion": "1.4.1",
-  "nextSnapshotVersion": "1.4.1-SNAPSHOT",
-  "releaseLevel": "patch",
-  "generatedAt": "2026-04-22T03:53:52.009Z",
-  "changesets": [
-    {
-      "file": "gitlab-release-idempotent-and-agent-rules.md",
-      "release": "patch",
-      "type": "other",
-      "summary": "Make `gitlab-release-plan --execute true` more idempotent when a stale remote",
-      "modules": ["javachanges"]
-    }
-  ]
+  "releaseVersion" : "1.5.0",
+  "nextSnapshotVersion" : "1.5.0-SNAPSHOT",
+  "releaseLevel" : "minor",
+  "generatedAt" : "2026-04-22T07:01:06.148Z",
+  "changesets" : [ {
+    "file" : "github-json-output.md",
+    "release" : "patch",
+    "type" : "other",
+    "summary" : "Add `--format json` support for `github-release-plan`, `github-tag-from-plan`, and `github-release-from-plan`.",
+    "modules" : [ "javachanges" ]
+  }, {
+    "file" : "gitlab-ci-commandize.md",
+    "release" : "minor",
+    "type" : "other",
+    "summary" : "Commandize the GitLab CI/CD release flow so business repositories can keep `.gitlab-ci.yml` minimal.",
+    "modules" : [ "javachanges" ]
+  }, {
+    "file" : "json-structure-hardening.md",
+    "release" : "patch",
+    "type" : "other",
+    "summary" : "Harden machine-readable JSON handling by replacing more hand-written JSON formatting and parsing with Jackson-based structured serialization.",
+    "modules" : [ "javachanges" ]
+  }, {
+    "file" : "runtime-support-cleanup.md",
+    "release" : "patch",
+    "type" : "other",
+    "summary" : "Refactor release automation request parsing and process execution helpers to reduce duplicated CLI runtime code.",
+    "modules" : [ "javachanges" ]
+  } ]
 }
 
