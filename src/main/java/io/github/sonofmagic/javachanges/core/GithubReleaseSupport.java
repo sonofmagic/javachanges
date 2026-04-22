@@ -16,9 +16,13 @@ final class GithubReleaseSupport {
     private final ReleaseArtifactSupport artifactSupport;
 
     GithubReleaseSupport(Path repoRoot, PrintStream out) {
+        this(repoRoot, out, new GithubReleaseRuntime(repoRoot));
+    }
+
+    GithubReleaseSupport(Path repoRoot, PrintStream out, GithubReleaseRuntime runtime) {
         this.repoRoot = repoRoot;
         this.out = out;
-        this.runtime = new GithubReleaseRuntime(repoRoot);
+        this.runtime = runtime;
         this.artifactSupport = new ReleaseArtifactSupport(repoRoot);
     }
 

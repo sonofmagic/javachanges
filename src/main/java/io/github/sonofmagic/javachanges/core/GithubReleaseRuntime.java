@@ -6,7 +6,7 @@ import java.util.Arrays;
 
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
 
-final class GithubReleaseRuntime {
+class GithubReleaseRuntime {
     private final Path repoRoot;
 
     GithubReleaseRuntime(Path repoRoot) {
