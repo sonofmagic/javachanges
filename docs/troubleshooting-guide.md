@@ -117,6 +117,17 @@ JAVACHANGES_VERSION: "REPLACE_WITH_PUBLISHED_VERSION"
 
 That is a reminder, not a runnable default.
 
+### 3.5 Maven says `Unknown lifecycle phase` when wrapping `javachanges`
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| Maven fails with `Unknown lifecycle phase "version --directory ..."` or a similar CLI payload | `-Dexec.args=` was split from the actual `javachanges` command by Make, shell, or CI string concatenation | keep the full `-Dexec.args="..."` assignment in the final command line, or wrap the entire Maven invocation in one Make function or script |
+
+Recommended direction:
+
+- good: `./mvnw -q -DskipTests compile exec:java -Dexec.args="version --directory $PWD"`
+- bad: define a prefix ending in bare `-Dexec.args=` and append `"version --directory ..."` later
+
 ## 4. GitHub Actions problems
 
 ### 4.1 `sync-vars` or `audit-vars` says values are missing

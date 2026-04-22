@@ -61,7 +61,66 @@ mvn javachanges:manifest-field -Djavachanges.field=releaseVersion
 
 > Note: some commands do not require a repository, for example `release-version-from-tag`.
 
-## 3. High-Value Commands
+## 3. Safely Wrapping `javachanges` Through Maven
+
+When `javachanges` is executed through `exec-maven-plugin`, keep the entire CLI payload inside one `-Dexec.args=...` value. Do not define a reusable shell fragment that ends with bare `-Dexec.args=` and append the real command later, because the shell, Make, or CI runner may split the next token and Maven will then treat it as a lifecycle phase.
+
+Recommended Makefile pattern:
+
+```make
+MVNW := ./mvnw
+JAVACHANGES_MVN := $(MVNW) -q -DskipTests compile exec:java
+
+jc-version:
+	$(JAVACHANGES_MVN) -Dexec.args="version --directory $(CURDIR)"
+```
+
+Recommended parameterized Makefile pattern:
+
+```make
+MVNW := ./mvnw
+JAVACHANGES_MVN := $(MVNW) -q -DskipTests compile exec:java
+
+define RUN_JAVACHANGES
+$(JAVACHANGES_MVN) -Dexec.args="$(1) --directory $(CURDIR)"
+endef
+
+jc-status:
+	$(call RUN_JAVACHANGES,status)
+```
+
+Recommended GitLab CI pattern:
+
+```yaml
+script:
+  - >
+    ./mvnw -q -DskipTests compile exec:java
+    -Dexec.args="version --directory $CI_PROJECT_DIR"
+```
+
+Not recommended:
+
+```make
+JAVACHANGES = ./mvnw -q -DskipTests compile exec:java -Dexec.args=
+
+jc-version:
+	$(JAVACHANGES) "version --directory $(CURDIR)"
+```
+
+Why it breaks:
+
+- `-Dexec.args=` is already complete before the next token is appended.
+- The quoted `version --directory ...` token is no longer attached to the system property assignment.
+- Maven receives that token as a positional argument and may parse it as a lifecycle phase, causing errors such as `Unknown lifecycle phase "version --directory ..."`.
+
+Rules of thumb:
+
+- keep `-Dexec.args="..."` in the final command line, not in a prefix variable
+- prefer one shell command per invocation
+- if you need reuse, wrap the whole command in a Make function or shell script
+- in CI YAML, prefer one folded scalar command instead of concatenating fragments across variables
+
+## 4. High-Value Commands
 
 | Command | Purpose | Writes files |
 | --- | --- | --- |
@@ -75,9 +134,9 @@ mvn javachanges:manifest-field -Djavachanges.field=releaseVersion
 | `preflight` | Render publish validation commands | No |
 | `publish` | Render or execute the actual publish command | No |
 
-## 4. Changeset Commands
+## 5. Changeset Commands
 
-### 4.1 `add`
+### 5.1 `add`
 
 Create a new changeset file.
 
@@ -113,7 +172,7 @@ Compatibility note:
 - `add` still accepts legacy flag names such as `--release` and `--modules`
 - the generated file itself uses the official Changesets-style package map
 
-### 4.2 `status`
+### 5.2 `status`
 
 Show the current pending release plan.
 
@@ -132,7 +191,7 @@ Typical output includes:
 - affected packages
 - each pending changeset entry
 
-### 4.3 `plan`
+### 5.3 `plan`
 
 Render the release plan without writing files:
 
@@ -154,7 +213,7 @@ When `--apply true` is used, `javachanges`:
 4. writes `.changesets/release-plan.md`
 5. deletes the consumed changeset files
 
-### 4.4 `manifest-field`
+### 5.4 `manifest-field`
 
 Read a field from the generated release manifest.
 
@@ -172,7 +231,7 @@ Common fields:
 | `nextSnapshotVersion` | Next root snapshot version |
 | `releaseLevel` | Aggregated release type |
 
-## 5. Repository And Version Commands
+## 6. Repository And Version Commands
 
 | Command | Purpose | Example |
 | --- | --- | --- |
@@ -184,7 +243,7 @@ Common fields:
 | `assert-release-tag` | Ensure a tag matches the current repository version | `assert-release-tag --directory /path/to/repo --tag v1.2.3` |
 | `module-selector-args` | Print Maven `-pl` selector args | `module-selector-args --directory /path/to/repo --module core` |
 
-## 6. Environment And Settings Commands
+## 7. Environment And Settings Commands
 
 | Command | Purpose |
 | --- | --- |
@@ -230,7 +289,7 @@ Common flags for these commands:
 | `--gitlab-repo` | `doctor-local`, `doctor-platform`, `audit-vars` | optional GitLab `group/project` identifier |
 | `--format json` | all four | switch stdout from human text to machine-readable JSON |
 
-### 6.1 `ensure-gpg-public-key`
+### 7.1 `ensure-gpg-public-key`
 
 Use this command in CI after GPG import and before a Maven Central publish:
 
@@ -259,9 +318,9 @@ JSON mode contract:
 - exit code `0` means success, non-zero means validation failure or execution error
 - top-level fields may include `ok`, `command`, `envFile`, `platform`, `showSecrets`, `sections`, `suggestions`, and `error`
 
-## 7. Publish Commands
+## 8. Publish Commands
 
-### 7.1 `preflight`
+### 8.1 `preflight`
 
 Render the Maven validation flow before a real publish.
 
@@ -283,7 +342,7 @@ Release example:
 mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory /path/to/repo --tag v1.2.3"
 ```
 
-### 7.2 `publish`
+### 8.2 `publish`
 
 Render the real publish command:
 
@@ -310,9 +369,9 @@ Important flags:
 | `--allow-dirty` | Allow a dirty working tree |
 | `--execute true` | Run the final publish command instead of only printing it |
 
-## 8. Platform Release Commands
+## 9. Platform Release Commands
 
-### 8.1 GitHub Release Commands
+### 9.1 GitHub Release Commands
 
 | Command | Purpose |
 | --- | --- |
@@ -328,7 +387,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="github-tag-from-plan --directo
 mvn -q -DskipTests compile exec:java -Dexec.args="github-release-from-plan --directory /path/to/repo --release-notes-file target/release-notes.md --execute true"
 ```
 
-### 8.2 GitLab Release Commands
+### 9.2 GitLab Release Commands
 
 | Command | Purpose |
 | --- | --- |
@@ -342,7 +401,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-release-plan --director
 mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-tag-from-plan --directory /path/to/repo --execute true"
 ```
 
-## 9. Help Output
+## 10. Help Output
 
 You can always ask `picocli` for built-in help:
 
@@ -351,7 +410,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="--help"
 mvn -q -DskipTests compile exec:java -Dexec.args="plan --help"
 ```
 
-## 10. Related Guides
+## 11. Related Guides
 
 | Need | Document |
 | --- | --- |

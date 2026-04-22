@@ -60,7 +60,66 @@ mvn javachanges:manifest-field -Djavachanges.field=releaseVersion
 
 > **注意**：有些命令不依赖仓库，例如 `release-version-from-tag`。
 
-## 3. 高价值命令
+## 3. 通过 Maven 安全包装 `javachanges`
+
+如果你通过 `exec-maven-plugin` 执行 `javachanges`，要保证完整 CLI 参数始终放在同一个 `-Dexec.args=...` 值里。不要先定义一个以裸 `-Dexec.args=` 结尾的可复用片段，再把真正命令在后面拼上去；Make、shell 或 CI runner 一旦把后续 token 单独拆开，Maven 就可能把它当成 lifecycle phase。
+
+推荐的 Makefile 写法：
+
+```make
+MVNW := ./mvnw
+JAVACHANGES_MVN := $(MVNW) -q -DskipTests compile exec:java
+
+jc-version:
+	$(JAVACHANGES_MVN) -Dexec.args="version --directory $(CURDIR)"
+```
+
+推荐的参数化 Makefile 写法：
+
+```make
+MVNW := ./mvnw
+JAVACHANGES_MVN := $(MVNW) -q -DskipTests compile exec:java
+
+define RUN_JAVACHANGES
+$(JAVACHANGES_MVN) -Dexec.args="$(1) --directory $(CURDIR)"
+endef
+
+jc-status:
+	$(call RUN_JAVACHANGES,status)
+```
+
+推荐的 GitLab CI 写法：
+
+```yaml
+script:
+  - >
+    ./mvnw -q -DskipTests compile exec:java
+    -Dexec.args="version --directory $CI_PROJECT_DIR"
+```
+
+不推荐：
+
+```make
+JAVACHANGES = ./mvnw -q -DskipTests compile exec:java -Dexec.args=
+
+jc-version:
+	$(JAVACHANGES) "version --directory $(CURDIR)"
+```
+
+为什么会坏：
+
+- `-Dexec.args=` 在前缀变量里已经结束了。
+- 后面的 `version --directory ...` 已经不再属于这个 system property。
+- Maven 会把它当成位置参数，进而可能解析成 lifecycle phase，于是报 `Unknown lifecycle phase "version --directory ..."`。
+
+实用规则：
+
+- `-Dexec.args="..."` 必须出现在最终命令行里，不要藏在前缀变量尾部
+- 每次调用尽量保持成一条完整 shell 命令
+- 如果要复用，就封装成 Make function 或仓库脚本
+- 在 CI YAML 里优先用一条折叠命令，不要跨变量拼参数片段
+
+## 4. 高价值命令
 
 | 命令 | 作用 | 是否写文件 |
 | --- | --- | --- |
@@ -74,9 +133,9 @@ mvn javachanges:manifest-field -Djavachanges.field=releaseVersion
 | `preflight` | 输出发布前校验命令 | 否 |
 | `publish` | 输出或执行实际发布命令 | 否 |
 
-## 4. Changeset 相关命令
+## 5. Changeset 相关命令
 
-### 4.1 `add`
+### 5.1 `add`
 
 创建一个新的 changeset 文件。
 
@@ -112,7 +171,7 @@ add release notes command
 - `add` 仍然接受 `--release`、`--modules` 这类旧参数名
 - 但实际写出的文件已经是官方 Changesets 风格的 package map
 
-### 4.2 `status`
+### 5.2 `status`
 
 查看当前待发布的 release plan。
 
@@ -131,7 +190,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/re
 - affected packages
 - 每一个待处理 changeset 条目
 
-### 4.3 `plan`
+### 5.3 `plan`
 
 只计算、不写文件：
 
@@ -153,7 +212,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo
 4. 写入 `.changesets/release-plan.md`
 5. 删除已消费的 changeset 文件
 
-### 4.4 `manifest-field`
+### 5.4 `manifest-field`
 
 读取生成后的 release manifest 字段。
 
@@ -171,7 +230,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /pa
 | `nextSnapshotVersion` | 下一个根快照版本 |
 | `releaseLevel` | 聚合后的发布类型 |
 
-## 5. 仓库与版本相关命令
+## 6. 仓库与版本相关命令
 
 | 命令 | 作用 | 示例 |
 | --- | --- | --- |
@@ -183,7 +242,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /pa
 | `assert-release-tag` | 校验 tag 是否和当前仓库版本一致 | `assert-release-tag --directory /path/to/repo --tag v1.2.3` |
 | `module-selector-args` | 输出 Maven `-pl` 参数 | `module-selector-args --directory /path/to/repo --module core` |
 
-## 6. 环境与 settings 相关命令
+## 7. 环境与 settings 相关命令
 
 | 命令 | 作用 |
 | --- | --- |
@@ -229,7 +288,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --directory /path
 | `--gitlab-repo` | `doctor-local`、`doctor-platform`、`audit-vars` | 可选的 GitLab `group/project` 标识 |
 | `--format json` | 四者都支持 | 把标准输出从文本切换为机器可读 JSON |
 
-### 6.1 `ensure-gpg-public-key`
+### 7.1 `ensure-gpg-public-key`
 
 在 CI 中完成 GPG 私钥导入后、执行 Maven Central 发布前，建议先运行：
 
@@ -258,9 +317,9 @@ JSON 模式约定：
 - 退出码为 `0` 表示成功，非 `0` 表示校验失败或命令执行错误
 - 顶层字段可能包含 `ok`、`command`、`envFile`、`platform`、`showSecrets`、`sections`、`suggestions`、`error`
 
-## 7. 发布命令
+## 8. 发布命令
 
-### 7.2 `preflight`
+### 8.1 `preflight`
 
 输出正式发布前的 Maven 校验流程。
 
@@ -282,7 +341,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory /path/to
 mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory /path/to/repo --tag v1.2.3"
 ```
 
-### 7.3 `publish`
+### 8.2 `publish`
 
 只输出发布命令：
 
@@ -309,9 +368,9 @@ mvn -q -DskipTests compile exec:java -Dexec.args="publish --directory /path/to/r
 | `--allow-dirty` | 允许工作区不干净 |
 | `--execute true` | 真正执行最终发布命令，而不是只打印 |
 
-## 8. 平台发布命令
+## 9. 平台发布命令
 
-### 8.1 GitHub 发布命令
+### 9.1 GitHub 发布命令
 
 | 命令 | 作用 |
 | --- | --- |
@@ -327,7 +386,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="github-tag-from-plan --directo
 mvn -q -DskipTests compile exec:java -Dexec.args="github-release-from-plan --directory /path/to/repo --release-notes-file target/release-notes.md --execute true"
 ```
 
-### 8.2 GitLab 发布命令
+### 9.2 GitLab 发布命令
 
 | 命令 | 作用 |
 | --- | --- |
@@ -341,7 +400,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-release-plan --director
 mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-tag-from-plan --directory /path/to/repo --execute true"
 ```
 
-## 9. 帮助输出
+## 10. 帮助输出
 
 可以直接使用 `picocli` 的内置帮助：
 
@@ -350,7 +409,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="--help"
 mvn -q -DskipTests compile exec:java -Dexec.args="plan --help"
 ```
 
-## 10. 相关文档
+## 11. 相关文档
 
 | 需求 | 文档 |
 | --- | --- |
