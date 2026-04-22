@@ -11,6 +11,16 @@ import java.util.concurrent.Callable;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
 
 abstract class AbstractCliCommand implements Callable<Integer> {
+    static final class CliOption {
+        final String key;
+        final String value;
+
+        private CliOption(String key, String value) {
+            this.key = key;
+            this.value = value;
+        }
+    }
+
     @FunctionalInterface
     interface ThrowingRunnable {
         void run() throws Exception;
@@ -43,6 +53,24 @@ abstract class AbstractCliCommand implements Callable<Integer> {
 
     final Map<String, String> options() {
         return new LinkedHashMap<String, String>();
+    }
+
+    final Map<String, String> options(CliOption... entries) {
+        Map<String, String> options = options();
+        for (CliOption entry : entries) {
+            if (entry != null) {
+                putOption(options, entry.key, entry.value);
+            }
+        }
+        return options;
+    }
+
+    final CliOption option(String key, String value) {
+        return new CliOption(key, value);
+    }
+
+    final CliOption flag(String key, boolean value) {
+        return value ? new CliOption(key, "true") : null;
     }
 
     final void putOption(Map<String, String> options, String key, String value) {

@@ -23,11 +23,12 @@ final class GithubReleasePlanCommand extends AbstractCliCommand {
 
     @Override
     public Integer call() throws Exception {
-        Map<String, String> options = options();
-        putOption(options, "github-repo", githubRepo);
-        putOption(options, "target-branch", targetBranch);
-        putOption(options, "release-branch", releaseBranch);
-        putFlag(options, "execute", execute);
+        Map<String, String> options = options(
+            option("github-repo", githubRepo),
+            option("target-branch", targetBranch),
+            option("release-branch", releaseBranch),
+            flag("execute", execute)
+        );
         new GithubReleaseSupport(repoRoot(), out()).planPullRequest(GithubReleasePlanRequest.fromOptions(options));
         return success();
     }
@@ -45,9 +46,10 @@ final class GithubTagFromPlanCommand extends AbstractCliCommand {
 
     @Override
     public Integer call() throws Exception {
-        Map<String, String> options = options();
-        putOption(options, "current-sha", currentSha);
-        putFlag(options, "execute", execute);
+        Map<String, String> options = options(
+            option("current-sha", currentSha),
+            flag("execute", execute)
+        );
         new GithubReleaseSupport(repoRoot(), out()).tagFromReleasePlan(GithubTagRequest.fromOptions(options));
         return success();
     }
@@ -70,10 +72,11 @@ final class GithubReleaseFromPlanCommand extends AbstractCliCommand {
 
     @Override
     public Integer call() throws Exception {
-        Map<String, String> options = options();
-        putOption(options, "release-notes-file", releaseNotesFile);
-        putOption(options, "github-output-file", githubOutputFile);
-        putFlag(options, "execute", execute);
+        Map<String, String> options = options(
+            option("release-notes-file", releaseNotesFile),
+            option("github-output-file", githubOutputFile),
+            flag("execute", execute)
+        );
         new GithubReleaseSupport(repoRoot(), out()).syncReleaseFromPlan(GithubReleasePublishRequest.fromOptions(options));
         return success();
     }

@@ -20,10 +20,11 @@ final class InitEnvCommand extends AbstractCliCommand {
 
     @Override
     public Integer call() throws Exception {
-        Map<String, String> options = options();
-        putOption(options, "template", template);
-        putOption(options, "target", target);
-        putFlag(options, "force", force);
+        Map<String, String> options = options(
+            option("template", template),
+            option("target", target),
+            flag("force", force)
+        );
         new ReleaseEnvSupport(repoRoot(), out()).initEnv(InitEnvRequest.fromOptions(options));
         return success();
     }
@@ -37,8 +38,7 @@ final class AuthHelpCommand extends AbstractCliCommand {
 
     @Override
     public Integer call() throws Exception {
-        Map<String, String> options = options();
-        putOption(options, "platform", platform);
+        Map<String, String> options = options(option("platform", platform));
         new ReleaseEnvSupport(repoRoot(), out()).printAuthHelp(ReleaseUtils.platformOption(options));
         return success();
     }
@@ -62,11 +62,12 @@ final class RenderVarsCommand extends AbstractCliCommand {
 
     @Override
     public Integer call() throws Exception {
-        Map<String, String> options = options();
-        putOption(options, "env-file", envFile);
-        putOption(options, "platform", platform);
-        putOption(options, "format", format);
-        putFlag(options, "show-secrets", showSecrets);
+        Map<String, String> options = options(
+            option("env-file", envFile),
+            option("platform", platform),
+            option("format", format),
+            flag("show-secrets", showSecrets)
+        );
         final PlatformEnvRequest request = PlatformEnvRequest.fromOptions(options);
         return runEnvJsonCommand("render-vars", request.format, new ThrowingIntSupplier() {
             @Override
@@ -94,11 +95,12 @@ final class DoctorLocalCommand extends AbstractCliCommand {
 
     @Override
     public Integer call() throws Exception {
-        Map<String, String> options = options();
-        putOption(options, "env-file", envFile);
-        putOption(options, "github-repo", githubRepo);
-        putOption(options, "gitlab-repo", gitlabRepo);
-        putOption(options, "format", format);
+        Map<String, String> options = options(
+            option("env-file", envFile),
+            option("github-repo", githubRepo),
+            option("gitlab-repo", gitlabRepo),
+            option("format", format)
+        );
         final LocalDoctorRequest request = LocalDoctorRequest.fromOptions(options);
         return runEnvJsonCommand("doctor-local", request.format, new ThrowingIntSupplier() {
             @Override
@@ -129,12 +131,13 @@ final class DoctorPlatformCommand extends AbstractCliCommand {
 
     @Override
     public Integer call() throws Exception {
-        Map<String, String> options = options();
-        putOption(options, "env-file", envFile);
-        putOption(options, "platform", platform);
-        putOption(options, "github-repo", githubRepo);
-        putOption(options, "gitlab-repo", gitlabRepo);
-        putOption(options, "format", format);
+        Map<String, String> options = options(
+            option("env-file", envFile),
+            option("platform", platform),
+            option("github-repo", githubRepo),
+            option("gitlab-repo", gitlabRepo),
+            option("format", format)
+        );
         final DoctorPlatformRequest request = DoctorPlatformRequest.fromOptions(options);
         return runEnvJsonCommand("doctor-platform", request.format, new ThrowingIntSupplier() {
             @Override
@@ -167,12 +170,13 @@ final class SyncVarsCommand extends AbstractCliCommand {
 
     @Override
     public Integer call() throws Exception {
-        Map<String, String> options = options();
-        putOption(options, "env-file", envFile);
-        putOption(options, "platform", platform);
-        putOption(options, "repo", repo);
-        putFlag(options, "execute", execute);
-        putFlag(options, "show-secrets", showSecrets);
+        Map<String, String> options = options(
+            option("env-file", envFile),
+            option("platform", platform),
+            option("repo", repo),
+            flag("execute", execute),
+            flag("show-secrets", showSecrets)
+        );
         new ReleaseEnvSupport(repoRoot(), out()).syncVars(SyncVarsRequest.fromOptions(options));
         return success();
     }
@@ -198,12 +202,13 @@ final class AuditVarsCommand extends AbstractCliCommand {
 
     @Override
     public Integer call() throws Exception {
-        Map<String, String> options = options();
-        putOption(options, "env-file", envFile);
-        putOption(options, "platform", platform);
-        putOption(options, "github-repo", githubRepo);
-        putOption(options, "gitlab-repo", gitlabRepo);
-        putOption(options, "format", format);
+        Map<String, String> options = options(
+            option("env-file", envFile),
+            option("platform", platform),
+            option("github-repo", githubRepo),
+            option("gitlab-repo", gitlabRepo),
+            option("format", format)
+        );
         final AuditVarsRequest request = AuditVarsRequest.fromOptions(options);
         return runEnvJsonCommand("audit-vars", request.format, new ThrowingIntSupplier() {
             @Override

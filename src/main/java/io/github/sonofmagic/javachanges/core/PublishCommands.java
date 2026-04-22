@@ -31,13 +31,14 @@ final class PreflightCommand extends AbstractCliCommand {
 
     @Override
     public Integer call() throws Exception {
-        Map<String, String> options = options();
-        putFlag(options, "snapshot", snapshot);
-        putOption(options, "tag", tag);
-        putFlag(options, "allow-dirty", allowDirty);
-        putOption(options, "module", module);
-        putOption(options, "snapshot-build-stamp", snapshotBuildStamp);
-        putOption(options, "format", format);
+        Map<String, String> options = options(
+            flag("snapshot", snapshot),
+            option("tag", tag),
+            flag("allow-dirty", allowDirty),
+            option("module", module),
+            option("snapshot-build-stamp", snapshotBuildStamp),
+            option("format", format)
+        );
         PublishRequest request = PublishRequest.fromOptions(options, false);
         return runAutomationCommand("preflight", request.format, new ThrowingRunnable() {
             @Override
@@ -78,14 +79,15 @@ final class PublishCommand extends AbstractCliCommand {
 
     @Override
     public Integer call() throws Exception {
-        Map<String, String> options = options();
-        putFlag(options, "snapshot", snapshot);
-        putOption(options, "tag", tag);
-        putFlag(options, "allow-dirty", allowDirty);
-        putFlag(options, "execute", execute);
-        putOption(options, "module", module);
-        putOption(options, "snapshot-build-stamp", snapshotBuildStamp);
-        putOption(options, "format", format);
+        Map<String, String> options = options(
+            flag("snapshot", snapshot),
+            option("tag", tag),
+            flag("allow-dirty", allowDirty),
+            flag("execute", execute),
+            option("module", module),
+            option("snapshot-build-stamp", snapshotBuildStamp),
+            option("format", format)
+        );
         PublishRequest request = PublishRequest.fromOptions(options, true);
         return runAutomationCommand("publish", request.format, new ThrowingRunnable() {
             @Override

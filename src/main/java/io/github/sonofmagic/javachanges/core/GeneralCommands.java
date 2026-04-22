@@ -36,12 +36,13 @@ final class AddCommand extends AbstractCliCommand {
     public Integer call() throws Exception {
         Path repoRoot = repoRoot();
         RepoFiles.ensureChangesetReadme(repoRoot);
-        Map<String, String> options = options();
-        putOption(options, "summary", summary);
-        putOption(options, "release", release);
-        putOption(options, "type", type);
-        putOption(options, "modules", modules);
-        putOption(options, "body", body);
+        Map<String, String> options = options(
+            option("summary", summary),
+            option("release", release),
+            option("type", type),
+            option("modules", modules),
+            option("body", body)
+        );
         ChangesetInput input = ChangesetPrompter.resolveInput(repoRoot, options, out(), err());
         Path created = RepoFiles.writeChangeset(repoRoot, input);
         out().println("Created changeset: " + repoRoot.relativize(created));

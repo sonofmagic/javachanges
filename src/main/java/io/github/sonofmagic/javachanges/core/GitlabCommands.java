@@ -29,12 +29,13 @@ final class GitlabReleasePlanCommand extends AbstractCliCommand {
 
     @Override
     public Integer call() throws Exception {
-        Map<String, String> options = options();
-        putOption(options, "project-id", projectId);
-        putOption(options, "target-branch", targetBranch);
-        putOption(options, "release-branch", releaseBranch);
-        putFlag(options, "execute", execute);
-        putOption(options, "format", format);
+        Map<String, String> options = options(
+            option("project-id", projectId),
+            option("target-branch", targetBranch),
+            option("release-branch", releaseBranch),
+            flag("execute", execute),
+            option("format", format)
+        );
         GitlabReleasePlanRequest request = GitlabReleasePlanRequest.fromOptions(options);
         return runAutomationCommand("gitlab-release-plan", request.format, new ThrowingRunnable() {
             @Override
@@ -63,11 +64,12 @@ final class GitlabTagFromPlanCommand extends AbstractCliCommand {
 
     @Override
     public Integer call() throws Exception {
-        Map<String, String> options = options();
-        putOption(options, "before-sha", beforeSha);
-        putOption(options, "current-sha", currentSha);
-        putFlag(options, "execute", execute);
-        putOption(options, "format", format);
+        Map<String, String> options = options(
+            option("before-sha", beforeSha),
+            option("current-sha", currentSha),
+            flag("execute", execute),
+            option("format", format)
+        );
         GitlabTagRequest request = GitlabTagRequest.fromOptions(options);
         return runAutomationCommand("gitlab-tag-from-plan", request.format, new ThrowingRunnable() {
             @Override
@@ -103,13 +105,14 @@ final class GitlabReleaseCommand extends AbstractCliCommand {
 
     @Override
     public Integer call() throws Exception {
-        Map<String, String> options = options();
-        putOption(options, "tag", tag);
-        putOption(options, "project-id", projectId);
-        putOption(options, "gitlab-host", gitlabHost);
-        putOption(options, "release-notes-file", releaseNotesFile);
-        putFlag(options, "execute", execute);
-        putOption(options, "format", format);
+        Map<String, String> options = options(
+            option("tag", tag),
+            option("project-id", projectId),
+            option("gitlab-host", gitlabHost),
+            option("release-notes-file", releaseNotesFile),
+            flag("execute", execute),
+            option("format", format)
+        );
         GitlabReleaseRequest request = GitlabReleaseRequest.fromOptions(options);
         return runAutomationCommand("gitlab-release", request.format, new ThrowingRunnable() {
             @Override
