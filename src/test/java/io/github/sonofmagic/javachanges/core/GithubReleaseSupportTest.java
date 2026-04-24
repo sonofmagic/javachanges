@@ -1,5 +1,9 @@
 package io.github.sonofmagic.javachanges.core;
 
+import io.github.sonofmagic.javachanges.core.github.GithubReleasePlanRequest;
+import io.github.sonofmagic.javachanges.core.github.GithubReleasePublishRequest;
+import io.github.sonofmagic.javachanges.core.github.GithubReleaseRuntime;
+import io.github.sonofmagic.javachanges.core.github.GithubTagRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -321,17 +325,17 @@ class GithubReleaseSupportTest {
         }
 
         @Override
-        void configureBotIdentity() {
+        public void configureBotIdentity() {
             configuredBotIdentity = true;
         }
 
         @Override
-        boolean hasNoStagedChanges() {
+        public boolean hasNoStagedChanges() {
             return noStagedChanges;
         }
 
         @Override
-        void runGit(String... args) {
+        public void runGit(String... args) {
             if (args.length >= 3 && "switch".equals(args[0]) && "-C".equals(args[1])) {
                 switchedBranch = args[2];
                 return;
@@ -351,7 +355,7 @@ class GithubReleaseSupportTest {
         }
 
         @Override
-        String findOpenPullRequestNumber(String githubRepo, String headBranch, String baseBranch) {
+        public String findOpenPullRequestNumber(String githubRepo, String headBranch, String baseBranch) {
             prRepo = githubRepo;
             prHeadBranch = headBranch;
             prBaseBranch = baseBranch;
@@ -359,7 +363,7 @@ class GithubReleaseSupportTest {
         }
 
         @Override
-        void createPullRequest(String githubRepo, String headBranch, String baseBranch, String title, Path bodyFile) {
+        public void createPullRequest(String githubRepo, String headBranch, String baseBranch, String title, Path bodyFile) {
             prRepo = githubRepo;
             prHeadBranch = headBranch;
             prBaseBranch = baseBranch;
@@ -368,7 +372,7 @@ class GithubReleaseSupportTest {
         }
 
         @Override
-        void updatePullRequest(String githubRepo, String prNumber, String title, Path bodyFile) {
+        public void updatePullRequest(String githubRepo, String prNumber, String title, Path bodyFile) {
             prRepo = githubRepo;
             prTitle = title;
             prBodyFile = bodyFile.toString().replace('\\', '/');
@@ -376,28 +380,28 @@ class GithubReleaseSupportTest {
         }
 
         @Override
-        String headSha() {
+        public String headSha() {
             return headSha;
         }
 
         @Override
-        boolean remoteTagExists(String tagName, String remoteName) {
+        public boolean remoteTagExists(String tagName, String remoteName) {
             return remoteTagExists;
         }
 
         @Override
-        void createOrUpdateTag(String tagName, String sha) {
+        public void createOrUpdateTag(String tagName, String sha) {
             this.tagNames.add(tagName);
             this.tagShas.add(sha);
         }
 
         @Override
-        boolean releaseExists(String tagName) {
+        public boolean releaseExists(String tagName) {
             return releaseExists;
         }
 
         @Override
-        void updateRelease(String tagName, Path notesFile) {
+        public void updateRelease(String tagName, Path notesFile) {
             updatedReleaseTag = tagName;
             updatedReleaseNotesFile = notesFile.toString();
         }

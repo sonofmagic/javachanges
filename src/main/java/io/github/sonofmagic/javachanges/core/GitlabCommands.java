@@ -1,5 +1,8 @@
 package io.github.sonofmagic.javachanges.core;
 
+import io.github.sonofmagic.javachanges.core.gitlab.GitlabReleasePlanRequest;
+import io.github.sonofmagic.javachanges.core.gitlab.GitlabReleaseRequest;
+import io.github.sonofmagic.javachanges.core.gitlab.GitlabTagRequest;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 

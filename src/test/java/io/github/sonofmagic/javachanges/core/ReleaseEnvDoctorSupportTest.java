@@ -1,5 +1,8 @@
 package io.github.sonofmagic.javachanges.core;
 
+import io.github.sonofmagic.javachanges.core.env.DoctorPlatformRequest;
+import io.github.sonofmagic.javachanges.core.env.LocalDoctorRequest;
+import io.github.sonofmagic.javachanges.core.env.ReleaseEnvSupport;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -22,11 +25,8 @@ class ReleaseEnvDoctorSupportTest {
         Files.createDirectories(repoRoot);
 
         ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-        ReleaseEnvDoctorLocalSupport support = new ReleaseEnvDoctorLocalSupport(
-            repoRoot,
-            new PrintStream(stdout, true),
-            new ReleaseEnvTestFixtures.FakeReleaseEnvRuntime(repoRoot)
-        );
+        ReleaseEnvSupport support = new ReleaseEnvSupport(repoRoot, new PrintStream(stdout, true),
+            new ReleaseEnvTestFixtures.FakeReleaseEnvRuntime(repoRoot));
         Map<String, String> options = new LinkedHashMap<String, String>();
         options.put("env-file", "env/release.env.local");
         options.put("format", "json");
@@ -53,12 +53,7 @@ class ReleaseEnvDoctorSupportTest {
 
         ByteArrayOutputStream stdout = new ByteArrayOutputStream();
         ReleaseEnvTestFixtures.FakeReleaseEnvRuntime runtime = new ReleaseEnvTestFixtures.FakeReleaseEnvRuntime(repoRoot);
-        ReleaseEnvDoctorPlatformSupport support = new ReleaseEnvDoctorPlatformSupport(
-            repoRoot,
-            new PrintStream(stdout, true),
-            runtime,
-            new GitlabProtectionSupport(runtime, new PrintStream(stdout, true))
-        );
+        ReleaseEnvSupport support = new ReleaseEnvSupport(repoRoot, new PrintStream(stdout, true), runtime);
         Map<String, String> options = new LinkedHashMap<String, String>();
         options.put("env-file", "env/release.env.local");
         options.put("platform", "gitlab");

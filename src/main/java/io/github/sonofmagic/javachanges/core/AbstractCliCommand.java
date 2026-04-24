@@ -1,5 +1,6 @@
 package io.github.sonofmagic.javachanges.core;
 
+import io.github.sonofmagic.javachanges.core.env.ReleaseEnvSupport;
 import picocli.CommandLine.ParentCommand;
 
 import java.io.PrintStream;

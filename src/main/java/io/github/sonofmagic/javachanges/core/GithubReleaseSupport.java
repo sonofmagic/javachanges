@@ -1,5 +1,10 @@
 package io.github.sonofmagic.javachanges.core;
 
+import io.github.sonofmagic.javachanges.core.github.GithubReleasePlanRequest;
+import io.github.sonofmagic.javachanges.core.github.GithubReleasePublishRequest;
+import io.github.sonofmagic.javachanges.core.github.GithubReleaseRuntime;
+import io.github.sonofmagic.javachanges.core.github.GithubTagRequest;
+
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;

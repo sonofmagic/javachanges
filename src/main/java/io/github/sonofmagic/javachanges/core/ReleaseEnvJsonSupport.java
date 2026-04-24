@@ -7,11 +7,11 @@ import java.util.Map;
 
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
 
-final class ReleaseEnvJsonSupport {
+public final class ReleaseEnvJsonSupport {
     private ReleaseEnvJsonSupport() {
     }
 
-    static String errorJson(String command, Exception exception) {
+    public static String errorJson(String command, Exception exception) {
         String message = trimToNull(exception.getMessage());
         if (message == null) {
             message = exception.getClass().getSimpleName();
@@ -23,9 +23,9 @@ final class ReleaseEnvJsonSupport {
         return ReleaseJsonUtils.toJson(payload);
     }
 
-    static String commandReportJson(String command, boolean ok, String envFile, String platform,
-                                    boolean showSecrets, List<JsonSection> sections,
-                                    List<String> suggestions, String error) {
+    public static String commandReportJson(String command, boolean ok, String envFile, String platform,
+                                           boolean showSecrets, List<JsonSection> sections,
+                                           List<String> suggestions, String error) {
         Map<String, Object> payload = new LinkedHashMap<String, Object>();
         payload.put("ok", Boolean.valueOf(ok));
         payload.put("command", command);
@@ -50,15 +50,15 @@ final class ReleaseEnvJsonSupport {
         return ReleaseJsonUtils.toJson(payload);
     }
 
-    static final class JsonSection {
+    public static final class JsonSection {
         private final String title;
         private final List<Map<String, String>> entries = new ArrayList<Map<String, String>>();
 
-        JsonSection(String title) {
+        public JsonSection(String title) {
             this.title = title;
         }
 
-        void add(String label, String value) {
+        public void add(String label, String value) {
             Map<String, String> entry = new LinkedHashMap<String, String>();
             entry.put("label", label);
             entry.put("value", value);

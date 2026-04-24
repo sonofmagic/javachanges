@@ -8,17 +8,3 @@ interface MavenCommandProbe {
 
     boolean commandAvailable(Path workingDirectory, String... command) throws IOException, InterruptedException;
 }
-
-final class MavenCommand {
-    final String command;
-    final String source;
-
-    MavenCommand(String command, String source) {
-        this.command = command;
-        this.source = source;
-    }
-
-    String versionLabel() {
-        return command + " -q -version";
-    }
-}

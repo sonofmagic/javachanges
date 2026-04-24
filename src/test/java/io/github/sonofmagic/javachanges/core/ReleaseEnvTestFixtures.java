@@ -43,26 +43,26 @@ final class ReleaseEnvTestFixtures {
         }
 
         @Override
-        boolean commandExists(String command) {
+        public boolean commandExists(String command) {
             return true;
         }
 
         @Override
-        void requireCommand(String command) {
+        public void requireCommand(String command) {
         }
 
         @Override
-        boolean runQuietly(java.util.List<String> command) {
+        public boolean runQuietly(java.util.List<String> command) {
             return true;
         }
 
         @Override
-        boolean commandAvailable(String... command) {
+        public boolean commandAvailable(String... command) {
             return true;
         }
 
         @Override
-        CommandResult runAndCapture(java.util.List<String> command) throws IOException {
+        public CommandResult runAndCapture(java.util.List<String> command) throws IOException {
             String joined = command.toString();
             if (joined.contains("gh, variable, list")) {
                 return json("["

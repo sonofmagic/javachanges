@@ -4,63 +4,6 @@ import java.util.Locale;
 
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
 
-enum Platform {
-    GITHUB("github"),
-    GITLAB("gitlab"),
-    ALL("all");
-
-    final String id;
-
-    Platform(String id) {
-        this.id = id;
-    }
-
-    static Platform parse(String value, Platform defaultValue) {
-        String normalized = trimToNull(value);
-        if (normalized == null) {
-            return defaultValue;
-        }
-        for (Platform platform : values()) {
-            if (platform.id.equalsIgnoreCase(normalized)) {
-                return platform;
-            }
-        }
-        throw new IllegalArgumentException("不支持的平台: " + value + "，可选值: github, gitlab, all");
-    }
-
-    boolean includesGithub() {
-        return this == GITHUB || this == ALL;
-    }
-
-    boolean includesGitlab() {
-        return this == GITLAB || this == ALL;
-    }
-}
-
-enum OutputFormat {
-    TEXT("text"),
-    JSON("json");
-
-    final String id;
-
-    OutputFormat(String id) {
-        this.id = id;
-    }
-
-    static OutputFormat parse(String value, OutputFormat defaultValue) {
-        String normalized = trimToNull(value);
-        if (normalized == null) {
-            return defaultValue;
-        }
-        for (OutputFormat format : values()) {
-            if (format.id.equalsIgnoreCase(normalized)) {
-                return format;
-            }
-        }
-        throw new IllegalArgumentException("不支持的输出格式: " + value + "，可选值: text, json");
-    }
-}
-
 enum SnapshotVersionMode {
     STAMPED("stamped"),
     PLAIN("plain");

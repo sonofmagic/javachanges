@@ -1,4 +1,9 @@
-package io.github.sonofmagic.javachanges.core;
+package io.github.sonofmagic.javachanges.core.env;
+
+import io.github.sonofmagic.javachanges.core.MavenCommand;
+import io.github.sonofmagic.javachanges.core.OutputFormat;
+import io.github.sonofmagic.javachanges.core.ReleaseEnvJsonSupport;
+import io.github.sonofmagic.javachanges.core.ReleaseEnvRuntime;
 
 import java.io.IOException;
 import java.io.PrintStream;

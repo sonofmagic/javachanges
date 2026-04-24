@@ -1,5 +1,7 @@
 package io.github.sonofmagic.javachanges.core;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -8,7 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-final class ReleaseUtils {
+public final class ReleaseUtils {
     static final String CHANGESETS_DIR = ".changesets";
     static final String CHANGESETS_README = "README.md";
     static final String RELEASE_PLAN_JSON = "release-plan.json";
@@ -30,7 +32,7 @@ final class ReleaseUtils {
     private ReleaseUtils() {
     }
 
-    static Platform platformOption(Map<String, String> options) {
+    public static Platform platformOption(Map<String, String> options) {
         return ReleaseTextUtils.platformOption(options);
     }
 
@@ -38,7 +40,7 @@ final class ReleaseUtils {
         return ReleaseTextUtils.parseOptions(args, fromIndex);
     }
 
-    static byte[] readAllBytes(InputStream inputStream) throws IOException {
+    public static byte[] readAllBytes(InputStream inputStream) throws IOException {
         return ReleaseProcessUtils.readAllBytes(inputStream);
     }
 
@@ -70,23 +72,23 @@ final class ReleaseUtils {
         return ReleaseModuleUtils.releaseModuleFromTag(tag);
     }
 
-    static String requiredOption(Map<String, String> options, String name) {
+    public static String requiredOption(Map<String, String> options, String name) {
         return ReleaseTextUtils.requiredOption(options, name);
     }
 
-    static boolean isTrue(String value) {
+    public static boolean isTrue(String value) {
         return ReleaseTextUtils.isTrue(value);
     }
 
-    static String requireEnv(String name) {
+    public static String requireEnv(String name) {
         return ReleaseTextUtils.requireEnv(name);
     }
 
-    static String firstNonBlank(String first, String second) {
+    public static String firstNonBlank(String first, String second) {
         return ReleaseTextUtils.firstNonBlank(first, second);
     }
 
-    static boolean isBlank(String value) {
+    public static boolean isBlank(String value) {
         return ReleaseTextUtils.isBlank(value);
     }
 
@@ -98,11 +100,15 @@ final class ReleaseUtils {
         return ReleaseProcessUtils.gitTextAllowEmpty(repoRoot, args);
     }
 
-    static int runCommand(List<String> command, Path workingDirectory) throws IOException, InterruptedException {
+    public static int runCommand(List<String> command, Path workingDirectory) throws IOException, InterruptedException {
         return ReleaseProcessUtils.runCommand(command, workingDirectory);
     }
 
-    static String renderCommand(List<String> command) {
+    public static CommandResult runCapture(Path workingDirectory, String... command) throws IOException, InterruptedException {
+        return ReleaseProcessUtils.runCapture(workingDirectory, command);
+    }
+
+    public static String renderCommand(List<String> command) {
         return ReleaseTextUtils.renderCommand(command);
     }
 
@@ -110,11 +116,11 @@ final class ReleaseUtils {
         return ReleaseTextUtils.shellEscape(value);
     }
 
-    static String mavenWrapperPath() {
+    public static String mavenWrapperPath() {
         return ReleaseProcessUtils.mavenWrapperPath();
     }
 
-    static MavenCommand resolveMavenCommand(Path repoRoot) throws IOException, InterruptedException {
+    public static MavenCommand resolveMavenCommand(Path repoRoot) throws IOException, InterruptedException {
         return ReleaseProcessUtils.resolveMavenCommand(repoRoot);
     }
 
@@ -122,7 +128,7 @@ final class ReleaseUtils {
         return ReleaseProcessUtils.resolveMavenCommand(repoRoot, probe);
     }
 
-    static Map<String, Map<String, String>> parseFlatJsonObjects(String json) {
+    public static Map<String, Map<String, String>> parseFlatJsonObjects(String json) {
         return ReleaseJsonUtils.parseFlatJsonObjects(json);
     }
 
@@ -138,7 +144,7 @@ final class ReleaseUtils {
         return ReleaseModuleUtils.joinModules(modules);
     }
 
-    static String trimToNull(String value) {
+    public static String trimToNull(String value) {
         return ReleaseTextUtils.trimToNull(value);
     }
 
@@ -170,19 +176,23 @@ final class ReleaseUtils {
         return ReleaseJsonUtils.jsonUnescape(value);
     }
 
-    static boolean isPlaceholderValue(String value) {
+    public static JsonNode readJsonTree(String json) {
+        return ReleaseJsonUtils.readTree(json);
+    }
+
+    public static boolean isPlaceholderValue(String value) {
         return ReleaseTextUtils.isPlaceholderValue(value);
     }
 
-    static boolean isRequiredName(String name) {
+    public static boolean isRequiredName(String name) {
         return ReleaseTextUtils.isRequiredName(name);
     }
 
-    static String stripWrappingQuotes(String value) {
+    public static String stripWrappingQuotes(String value) {
         return ReleaseTextUtils.stripWrappingQuotes(value);
     }
 
-    static String padRight(String value, int width) {
+    public static String padRight(String value, int width) {
         return ReleaseTextUtils.padRight(value, width);
     }
 

@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-final class RequestConfigSupport {
+public final class RequestConfigSupport {
     private RequestConfigSupport() {
     }
 
-    static ChangesetConfigSupport.ChangesetConfig readConfiguredChangesetConfig(String directoryOption) throws IOException {
+    public static ChangesetConfigSupport.ChangesetConfig readConfiguredChangesetConfig(String directoryOption) throws IOException {
         Path configuredRoot = resolveConfigRoot(directoryOption);
         if (configuredRoot != null) {
             try {
@@ -19,7 +19,7 @@ final class RequestConfigSupport {
         return RepoFiles.readChangesetConfig(RepoFiles.resolveRepoRoot(directoryOption));
     }
 
-    static ChangesetConfigSupport.ChangesetConfig readConfiguredChangesetConfigOrDefaults(String directoryOption) {
+    public static ChangesetConfigSupport.ChangesetConfig readConfiguredChangesetConfigOrDefaults(String directoryOption) {
         try {
             return readConfiguredChangesetConfig(directoryOption);
         } catch (Exception ignored) {
@@ -27,7 +27,7 @@ final class RequestConfigSupport {
         }
     }
 
-    static String readConfiguredBaseBranch(String directoryOption) {
+    public static String readConfiguredBaseBranch(String directoryOption) {
         try {
             return readConfiguredChangesetConfig(directoryOption).baseBranch();
         } catch (Exception ignored) {
@@ -35,7 +35,7 @@ final class RequestConfigSupport {
         }
     }
 
-    static String readConfiguredReleaseBranch(String directoryOption, String targetBranch) {
+    public static String readConfiguredReleaseBranch(String directoryOption, String targetBranch) {
         try {
             ChangesetConfigSupport.ChangesetConfig config = readConfiguredChangesetConfig(directoryOption);
             String configured = ReleaseUtils.trimToNull(config.releaseBranch());

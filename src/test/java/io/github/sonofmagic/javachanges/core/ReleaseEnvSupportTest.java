@@ -1,5 +1,11 @@
 package io.github.sonofmagic.javachanges.core;
 
+import io.github.sonofmagic.javachanges.core.env.AuditVarsRequest;
+import io.github.sonofmagic.javachanges.core.env.DoctorPlatformRequest;
+import io.github.sonofmagic.javachanges.core.env.InitEnvRequest;
+import io.github.sonofmagic.javachanges.core.env.PlatformEnvRequest;
+import io.github.sonofmagic.javachanges.core.env.ReleaseEnvSupport;
+import io.github.sonofmagic.javachanges.core.env.SyncVarsRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 

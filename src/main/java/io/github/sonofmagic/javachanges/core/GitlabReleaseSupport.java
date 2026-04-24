@@ -1,5 +1,12 @@
 package io.github.sonofmagic.javachanges.core;
 
+import io.github.sonofmagic.javachanges.core.gitlab.GitlabApiClient;
+import io.github.sonofmagic.javachanges.core.gitlab.GitlabMergeRequestClient;
+import io.github.sonofmagic.javachanges.core.gitlab.GitlabReleasePlanRequest;
+import io.github.sonofmagic.javachanges.core.gitlab.GitlabReleaseRequest;
+import io.github.sonofmagic.javachanges.core.gitlab.GitlabReleaseRuntime;
+import io.github.sonofmagic.javachanges.core.gitlab.GitlabTagRequest;
+
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;

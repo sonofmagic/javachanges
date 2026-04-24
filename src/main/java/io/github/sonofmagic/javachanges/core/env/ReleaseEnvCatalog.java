@@ -1,10 +1,10 @@
-package io.github.sonofmagic.javachanges.core;
+package io.github.sonofmagic.javachanges.core.env;
 
 import java.util.Arrays;
 import java.util.List;
 
-final class ReleaseEnvCatalog {
-    static final List<EnvEntry> COMMON_VARIABLES = Arrays.asList(
+public final class ReleaseEnvCatalog {
+    public static final List<EnvEntry> COMMON_VARIABLES = Arrays.asList(
         new EnvEntry("MAVEN_RELEASE_REPOSITORY_URL", false, false),
         new EnvEntry("MAVEN_SNAPSHOT_REPOSITORY_URL", false, false),
         new EnvEntry("MAVEN_RELEASE_REPOSITORY_ID", false, false),
@@ -17,14 +17,14 @@ final class ReleaseEnvCatalog {
         new EnvEntry("MAVEN_SNAPSHOT_REPOSITORY_PASSWORD", true, false)
     );
 
-    static final List<EnvEntry> GITHUB_ACTIONS_VARIABLES = Arrays.asList(
+    public static final List<EnvEntry> GITHUB_ACTIONS_VARIABLES = Arrays.asList(
         new EnvEntry("MAVEN_RELEASE_REPOSITORY_URL", false, false),
         new EnvEntry("MAVEN_SNAPSHOT_REPOSITORY_URL", false, false),
         new EnvEntry("MAVEN_RELEASE_REPOSITORY_ID", false, false),
         new EnvEntry("MAVEN_SNAPSHOT_REPOSITORY_ID", false, false)
     );
 
-    static final List<EnvEntry> GITHUB_ACTIONS_SECRETS = Arrays.asList(
+    public static final List<EnvEntry> GITHUB_ACTIONS_SECRETS = Arrays.asList(
         new EnvEntry("MAVEN_REPOSITORY_USERNAME", true, false),
         new EnvEntry("MAVEN_REPOSITORY_PASSWORD", true, false),
         new EnvEntry("MAVEN_RELEASE_REPOSITORY_USERNAME", true, false),
@@ -33,7 +33,7 @@ final class ReleaseEnvCatalog {
         new EnvEntry("MAVEN_SNAPSHOT_REPOSITORY_PASSWORD", true, false)
     );
 
-    static final List<EnvEntry> GITLAB_VARIABLES = Arrays.asList(
+    public static final List<EnvEntry> GITLAB_VARIABLES = Arrays.asList(
         new EnvEntry("MAVEN_RELEASE_REPOSITORY_URL", false, false),
         new EnvEntry("MAVEN_SNAPSHOT_REPOSITORY_URL", false, false),
         new EnvEntry("MAVEN_RELEASE_REPOSITORY_ID", false, false),

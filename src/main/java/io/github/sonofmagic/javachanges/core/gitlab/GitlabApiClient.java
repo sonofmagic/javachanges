@@ -1,6 +1,7 @@
-package io.github.sonofmagic.javachanges.core;
+package io.github.sonofmagic.javachanges.core.gitlab;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.github.sonofmagic.javachanges.core.ReleaseUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -12,30 +13,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.firstNonBlank;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.readAllBytes;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.requireEnv;
-
-interface GitlabMergeRequestClient {
-    Integer findOpenMergeRequestIid(String projectId, String sourceBranch, String targetBranch) throws IOException;
-
-    String createMergeRequest(String projectId, String sourceBranch, String targetBranch,
-                              String title, String description) throws IOException;
-
-    void updateMergeRequest(String projectId, int mergeRequestIid, String title, String description) throws IOException;
-
-    String authenticatedRemoteUrl();
-
-    int requiredJsonInt(String json, String field);
-
-    boolean releaseExists(String projectId, String tagName) throws IOException;
-
-    void createRelease(String projectId, String tagName, String releaseName, String description) throws IOException;
-
-    void updateRelease(String projectId, String tagName, String releaseName, String description) throws IOException;
-}
-
-final class GitlabApiClient implements GitlabMergeRequestClient {
+public final class GitlabApiClient implements GitlabMergeRequestClient {
     public Integer findOpenMergeRequestIid(String projectId, String sourceBranch, String targetBranch) throws IOException {
         String response = request(
             "GET",
@@ -43,7 +21,7 @@ final class GitlabApiClient implements GitlabMergeRequestClient {
                 + urlEncode(sourceBranch) + "&target_branch=" + urlEncode(targetBranch),
             null
         );
-        JsonNode root = ReleaseJsonUtils.readTree(response);
+        JsonNode root = ReleaseUtils.readJsonTree(response);
         if (!root.isArray() || root.size() == 0) {
             return null;
         }
@@ -79,15 +57,15 @@ final class GitlabApiClient implements GitlabMergeRequestClient {
     }
 
     public String authenticatedRemoteUrl() {
-        String host = requireEnv("CI_SERVER_HOST");
-        String projectPath = requireEnv("CI_PROJECT_PATH");
-        return "https://" + urlEncode(requireEnv("GITLAB_RELEASE_BOT_USERNAME"))
-            + ":" + urlEncode(requireEnv("GITLAB_RELEASE_BOT_TOKEN"))
+        String host = ReleaseUtils.requireEnv("CI_SERVER_HOST");
+        String projectPath = ReleaseUtils.requireEnv("CI_PROJECT_PATH");
+        return "https://" + urlEncode(ReleaseUtils.requireEnv("GITLAB_RELEASE_BOT_USERNAME"))
+            + ":" + urlEncode(ReleaseUtils.requireEnv("GITLAB_RELEASE_BOT_TOKEN"))
             + "@" + host + "/" + projectPath + ".git";
     }
 
     public int requiredJsonInt(String json, String field) {
-        JsonNode root = ReleaseJsonUtils.readTree(json);
+        JsonNode root = ReleaseUtils.readJsonTree(json);
         JsonNode value = root.get(field);
         if (value == null || value.isNull() || !value.canConvertToInt()) {
             throw new IllegalStateException("Missing `" + field + "` in GitLab response: " + json);
@@ -96,11 +74,7 @@ final class GitlabApiClient implements GitlabMergeRequestClient {
     }
 
     public boolean releaseExists(String projectId, String tagName) throws IOException {
-        return requestAllowNotFound(
-            "GET",
-            "/projects/" + projectId + "/releases/" + urlEncode(tagName),
-            null
-        ) != null;
+        return requestAllowNotFound("GET", "/projects/" + projectId + "/releases/" + urlEncode(tagName), null) != null;
     }
 
     public void createRelease(String projectId, String tagName, String releaseName, String description) throws IOException {
@@ -136,11 +110,12 @@ final class GitlabApiClient implements GitlabMergeRequestClient {
     }
 
     private String requestAllowNotFound(String method, String path, String body) throws IOException {
-        String serverUrl = firstNonBlank(System.getenv("CI_SERVER_URL"), "https://" + requireEnv("CI_SERVER_HOST"));
+        String serverUrl = ReleaseUtils.firstNonBlank(System.getenv("CI_SERVER_URL"),
+            "https://" + ReleaseUtils.requireEnv("CI_SERVER_HOST"));
         URL url = new URL(serverUrl + "/api/v4" + path);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod(method);
-        connection.setRequestProperty("PRIVATE-TOKEN", requireEnv("GITLAB_RELEASE_BOT_TOKEN"));
+        connection.setRequestProperty("PRIVATE-TOKEN", ReleaseUtils.requireEnv("GITLAB_RELEASE_BOT_TOKEN"));
         connection.setRequestProperty("Accept", "application/json");
         if (body != null) {
             byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
@@ -151,7 +126,7 @@ final class GitlabApiClient implements GitlabMergeRequestClient {
             output.write(bytes);
             output.close();
         }
-        byte[] responseBytes = readAllBytes(connection.getResponseCode() >= 400
+        byte[] responseBytes = ReleaseUtils.readAllBytes(connection.getResponseCode() >= 400
             ? connection.getErrorStream()
             : connection.getInputStream());
         String response = new String(responseBytes, StandardCharsets.UTF_8);

@@ -1,5 +1,10 @@
 package io.github.sonofmagic.javachanges.core;
 
+import io.github.sonofmagic.javachanges.core.gitlab.GitlabMergeRequestClient;
+import io.github.sonofmagic.javachanges.core.gitlab.GitlabReleasePlanRequest;
+import io.github.sonofmagic.javachanges.core.gitlab.GitlabReleaseRequest;
+import io.github.sonofmagic.javachanges.core.gitlab.GitlabReleaseRuntime;
+import io.github.sonofmagic.javachanges.core.gitlab.GitlabTagRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -230,17 +235,17 @@ class GitlabReleaseSupportTest {
         }
 
         @Override
-        void configureBotIdentity() {
+        public void configureBotIdentity() {
             configuredBotIdentity = true;
         }
 
         @Override
-        boolean hasNoStagedChanges() {
+        public boolean hasNoStagedChanges() {
             return noStagedChanges;
         }
 
         @Override
-        void runGit(String... args) {
+        public void runGit(String... args) {
             if (args.length >= 3 && "checkout".equals(args[0]) && "-B".equals(args[1])) {
                 checkedOutBranch = args[2];
                 return;
@@ -263,13 +268,13 @@ class GitlabReleaseSupportTest {
         }
 
         @Override
-        String remoteBranchHead(String branchName, String remoteUrl) {
+        public String remoteBranchHead(String branchName, String remoteUrl) {
             remoteBranchHeadBranch = branchName;
             return remoteBranchHead;
         }
 
         @Override
-        void pushReleaseBranch(String remoteUrl, String releaseBranch, String expectedOldSha) {
+        public void pushReleaseBranch(String remoteUrl, String releaseBranch, String expectedOldSha) {
             pushExpectedOldSha = expectedOldSha;
         }
     }

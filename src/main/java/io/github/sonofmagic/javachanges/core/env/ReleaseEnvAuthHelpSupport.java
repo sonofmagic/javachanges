@@ -1,4 +1,6 @@
-package io.github.sonofmagic.javachanges.core;
+package io.github.sonofmagic.javachanges.core.env;
+
+import io.github.sonofmagic.javachanges.core.Platform;
 
 import java.io.PrintStream;
 

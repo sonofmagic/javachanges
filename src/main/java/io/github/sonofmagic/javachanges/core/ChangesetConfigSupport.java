@@ -8,7 +8,7 @@ import java.nio.file.Path;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.CHANGESETS_DIR;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
 
-final class ChangesetConfigSupport {
+public final class ChangesetConfigSupport {
     private static final String CONFIG_JSON = "config.json";
     private static final String CONFIG_JSONC = "config.jsonc";
 
@@ -121,7 +121,7 @@ final class ChangesetConfigSupport {
         return result.toString();
     }
 
-    static final class ChangesetConfig {
+    public static final class ChangesetConfig {
         private final String baseBranch;
         private final String releaseBranch;
         private final String snapshotBranch;
@@ -150,7 +150,7 @@ final class ChangesetConfigSupport {
             this.explicitTagStrategy = explicitTagStrategy;
         }
 
-        static ChangesetConfig defaults() {
+        public static ChangesetConfig defaults() {
             return new ChangesetConfig("main", "changeset-release/main", "snapshot", SnapshotVersionMode.STAMPED,
                 ReleaseTagStrategy.WHOLE_REPO, false, false, false, false, false);
         }
@@ -194,15 +194,15 @@ final class ChangesetConfigSupport {
                 explicitSnapshotBranch, explicitSnapshotVersionMode, explicitTagStrategy);
         }
 
-        String baseBranch() {
+        public String baseBranch() {
             return baseBranch;
         }
 
-        String releaseBranch() {
+        public String releaseBranch() {
             return releaseBranch;
         }
 
-        String snapshotBranch() {
+        public String snapshotBranch() {
             return snapshotBranch;
         }
 
@@ -222,7 +222,7 @@ final class ChangesetConfigSupport {
             return explicitReleaseBranch;
         }
 
-        boolean hasSnapshotBranch() {
+        public boolean hasSnapshotBranch() {
             return explicitSnapshotBranch;
         }
 

@@ -1,4 +1,9 @@
-package io.github.sonofmagic.javachanges.core;
+package io.github.sonofmagic.javachanges.core.env;
+
+import io.github.sonofmagic.javachanges.core.OutputFormat;
+import io.github.sonofmagic.javachanges.core.ReleaseEnvJsonSupport;
+import io.github.sonofmagic.javachanges.core.ReleaseEnvRuntime;
+import io.github.sonofmagic.javachanges.core.ReleaseUtils;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -7,9 +12,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.isBlank;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.parseFlatJsonObjects;
 
 final class ReleaseEnvAuditSupport {
     private final Path repoRoot;
@@ -69,7 +71,7 @@ final class ReleaseEnvAuditSupport {
         sections.add(githubPreconditions);
         sections.add(githubVariablesSection);
         sections.add(githubSecretsSection);
-        if (isBlank(request.githubRepo)) {
+        if (ReleaseUtils.isBlank(request.githubRepo)) {
             githubPreconditions.add("GITHUB_REPO", "MISSING");
             failPrecondition(request, env, sections, "缺少仓库参数: GITHUB_REPO");
         }
@@ -88,8 +90,8 @@ final class ReleaseEnvAuditSupport {
             "--json", "name,value,updatedAt")).stdoutText();
         String secretsJson = runtime.runAndCapture(Arrays.asList("gh", "secret", "list", "--repo", request.githubRepo,
             "--json", "name,updatedAt")).stdoutText();
-        Map<String, Map<String, String>> githubVariables = parseFlatJsonObjects(variablesJson);
-        Map<String, Map<String, String>> githubSecrets = parseFlatJsonObjects(secretsJson);
+        Map<String, Map<String, String>> githubVariables = ReleaseUtils.parseFlatJsonObjects(variablesJson);
+        Map<String, Map<String, String>> githubSecrets = ReleaseUtils.parseFlatJsonObjects(secretsJson);
 
         boolean failed = false;
         if (textOutput) {
@@ -125,7 +127,7 @@ final class ReleaseEnvAuditSupport {
         ReleaseEnvJsonSupport.JsonSection gitlabSection = new ReleaseEnvJsonSupport.JsonSection("GitLab Variables 审计");
         sections.add(gitlabPreconditions);
         sections.add(gitlabSection);
-        if (isBlank(request.gitlabRepo)) {
+        if (ReleaseUtils.isBlank(request.gitlabRepo)) {
             gitlabPreconditions.add("GITLAB_REPO", "MISSING");
             failPrecondition(request, env, sections, "缺少仓库参数: GITLAB_REPO");
         }

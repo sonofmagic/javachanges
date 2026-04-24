@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
-final class RepoFiles {
+public final class RepoFiles {
     private RepoFiles() {
     }
 
@@ -32,7 +32,7 @@ final class RepoFiles {
         ReleasePlanFiles.applyPlan(repoRoot, plan);
     }
 
-    static ChangesetConfigSupport.ChangesetConfig readChangesetConfig(Path repoRoot) throws IOException {
+    public static ChangesetConfigSupport.ChangesetConfig readChangesetConfig(Path repoRoot) throws IOException {
         return ChangesetConfigSupport.load(repoRoot);
     }
 }

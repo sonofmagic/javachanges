@@ -1,6 +1,10 @@
 package io.github.sonofmagic.javachanges.core;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.github.sonofmagic.javachanges.core.env.EnvEntry;
+import io.github.sonofmagic.javachanges.core.env.EnvValue;
+import io.github.sonofmagic.javachanges.core.env.LoadedEnv;
+import io.github.sonofmagic.javachanges.core.env.ReleaseEnvCatalog;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -11,20 +15,20 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-final class GitlabProtectionSupport {
+public final class GitlabProtectionSupport {
     private final ReleaseEnvRuntime runtime;
     private final PrintStream out;
 
-    GitlabProtectionSupport(ReleaseEnvRuntime runtime, PrintStream out) {
+    public GitlabProtectionSupport(ReleaseEnvRuntime runtime, PrintStream out) {
         this.runtime = runtime;
         this.out = out;
     }
 
-    GitlabProtectionCheck inspectProtection(String gitlabRepo, LoadedEnv env,
-                                            ChangesetConfigSupport.ChangesetConfig changesetConfig,
-                                            ReleaseEnvJsonSupport.JsonSection protectedVariablesSection,
-                                            ReleaseEnvJsonSupport.JsonSection protectedBranchesSection,
-                                            boolean textOutput) throws IOException, InterruptedException {
+    public GitlabProtectionCheck inspectProtection(String gitlabRepo, LoadedEnv env,
+                                                   ChangesetConfigSupport.ChangesetConfig changesetConfig,
+                                                   ReleaseEnvJsonSupport.JsonSection protectedVariablesSection,
+                                                   ReleaseEnvJsonSupport.JsonSection protectedBranchesSection,
+                                                   boolean textOutput) throws IOException, InterruptedException {
         GitlabProtectionCheck result = new GitlabProtectionCheck();
         String projectRef = urlEncode(gitlabRepo);
         String variablesJson = runtime.runAndCapture(Arrays.asList(
@@ -197,8 +201,8 @@ final class GitlabProtectionSupport {
         }
     }
 
-    static final class GitlabProtectionCheck {
-        boolean failed;
-        final List<String> suggestions = new ArrayList<String>();
+    public static final class GitlabProtectionCheck {
+        public boolean failed;
+        public final List<String> suggestions = new ArrayList<String>();
     }
 }
