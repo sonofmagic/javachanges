@@ -1,9 +1,9 @@
 package io.github.sonofmagic.javachanges.core.plan;
 
-import io.github.sonofmagic.javachanges.core.ChangesetConfigSupport;
 import io.github.sonofmagic.javachanges.core.CommandResult;
 import io.github.sonofmagic.javachanges.core.ReleaseLevel;
 import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.config.ChangesetConfigSupport;
 import io.github.sonofmagic.javachanges.core.changeset.Changeset;
 
 import java.io.IOException;

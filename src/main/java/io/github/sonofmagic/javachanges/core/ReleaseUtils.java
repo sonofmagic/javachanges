@@ -1,6 +1,7 @@
 package io.github.sonofmagic.javachanges.core;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.github.sonofmagic.javachanges.core.config.RepoRootResolver;
 import io.github.sonofmagic.javachanges.core.changeset.Changeset;
 
 import java.io.IOException;

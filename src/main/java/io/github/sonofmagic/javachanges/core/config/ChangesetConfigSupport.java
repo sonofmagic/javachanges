@@ -1,4 +1,8 @@
-package io.github.sonofmagic.javachanges.core;
+package io.github.sonofmagic.javachanges.core.config;
+
+import io.github.sonofmagic.javachanges.core.ReleaseTagStrategy;
+import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.SnapshotVersionMode;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -59,7 +63,7 @@ public final class ChangesetConfigSupport {
     }
 
     private static String field(String json, String name) {
-        com.fasterxml.jackson.databind.JsonNode root = ReleaseJsonUtils.readTree(json);
+        com.fasterxml.jackson.databind.JsonNode root = ReleaseUtils.readJsonTree(json);
         com.fasterxml.jackson.databind.JsonNode value = root.get(name);
         if (value == null || value.isNull()) {
             return null;
@@ -214,11 +218,11 @@ public final class ChangesetConfigSupport {
             return tagStrategy;
         }
 
-        boolean hasBaseBranch() {
+        public boolean hasBaseBranch() {
             return explicitBaseBranch;
         }
 
-        boolean hasReleaseBranch() {
+        public boolean hasReleaseBranch() {
             return explicitReleaseBranch;
         }
 
@@ -226,11 +230,11 @@ public final class ChangesetConfigSupport {
             return explicitSnapshotBranch;
         }
 
-        boolean hasSnapshotVersionMode() {
+        public boolean hasSnapshotVersionMode() {
             return explicitSnapshotVersionMode;
         }
 
-        boolean hasTagStrategy() {
+        public boolean hasTagStrategy() {
             return explicitTagStrategy;
         }
     }

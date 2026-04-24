@@ -1,7 +1,7 @@
 package io.github.sonofmagic.javachanges.core.plan;
 
-import io.github.sonofmagic.javachanges.core.ChangesetConfigSupport;
 import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.config.ChangesetConfigSupport;
 import io.github.sonofmagic.javachanges.core.changeset.Changeset;
 import io.github.sonofmagic.javachanges.core.changeset.ChangesetFileSupport;
 import io.github.sonofmagic.javachanges.core.changeset.ChangesetInput;

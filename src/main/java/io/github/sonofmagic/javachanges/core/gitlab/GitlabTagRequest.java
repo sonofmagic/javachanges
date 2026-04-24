@@ -1,9 +1,9 @@
 package io.github.sonofmagic.javachanges.core.gitlab;
 
-import io.github.sonofmagic.javachanges.core.ChangesetConfigSupport;
 import io.github.sonofmagic.javachanges.core.OutputFormat;
-import io.github.sonofmagic.javachanges.core.RequestConfigSupport;
 import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.config.ChangesetConfigSupport;
+import io.github.sonofmagic.javachanges.core.config.RequestConfigSupport;
 
 import java.util.Map;
 

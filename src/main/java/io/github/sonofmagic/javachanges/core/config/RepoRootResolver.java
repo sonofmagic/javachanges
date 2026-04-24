@@ -1,10 +1,11 @@
-package io.github.sonofmagic.javachanges.core;
+package io.github.sonofmagic.javachanges.core.config;
 
+import io.github.sonofmagic.javachanges.core.ReleaseUtils;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-final class RepoRootResolver {
+public final class RepoRootResolver {
     private RepoRootResolver() {
     }
 

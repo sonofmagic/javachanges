@@ -1,5 +1,6 @@
 package io.github.sonofmagic.javachanges.core;
 
+import io.github.sonofmagic.javachanges.core.config.ChangesetConfigSupport;
 import io.github.sonofmagic.javachanges.core.gitlab.GitlabReleaseSupport;
 import io.github.sonofmagic.javachanges.core.gitlab.GitlabReleasePlanRequest;
 import io.github.sonofmagic.javachanges.core.gitlab.GitlabReleaseRequest;
