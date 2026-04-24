@@ -45,7 +45,7 @@
 <plugin>
   <groupId>io.github.sonofmagic</groupId>
   <artifactId>javachanges</artifactId>
-  <version>1.3.1</version>
+  <version><!-- latest released version --></version>
 </plugin>
 ```
 
@@ -64,23 +64,25 @@ mvn javachanges:run -Djavachanges.args="release-notes --tag v1.2.3"
 如果你暂时不能修改目标仓库 `pom.xml`，再使用正式发布版 CLI：
 
 ```bash
-mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:1.3.1 -DoutputDirectory=.javachanges
-java -jar .javachanges/javachanges-1.3.1.jar --help
+mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:<released-version> -DoutputDirectory=.javachanges
+java -jar .javachanges/javachanges-<released-version>.jar --help
 ```
 
 在当前 `main` 分支上，如果你先把 SNAPSHOT 安装到本地，也可以把 `javachanges` 当作 Maven plugin 使用：
 
 ```bash
 mvn -q -DskipTests install
-mvn io.github.sonofmagic:javachanges:1.3.1-SNAPSHOT:status
-mvn io.github.sonofmagic:javachanges:1.3.1-SNAPSHOT:plan -Djavachanges.apply=true
-mvn io.github.sonofmagic:javachanges:1.3.1-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
-mvn io.github.sonofmagic:javachanges:1.3.1-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
+mvn io.github.sonofmagic:javachanges:1.6.0-SNAPSHOT:status
+mvn io.github.sonofmagic:javachanges:1.6.0-SNAPSHOT:plan -Djavachanges.apply=true
+mvn io.github.sonofmagic:javachanges:1.6.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn io.github.sonofmagic:javachanges:1.6.0-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
 ```
 
 如果你是在开发 `javachanges` 仓库本身，可以直接用这些本地快捷入口：
 
 ```bash
+mvn -B test
+mvn -B -Pcoverage -Dmaven.repo.local=.m2/repository test
 pnpm snapshot:install
 pnpm snapshot:preflight
 pnpm snapshot:publish:local
@@ -89,7 +91,9 @@ pnpm docs:deploy:local
 
 这几个脚本和文档里的阶段语义保持一致：
 
-- `snapshot:install` 把当前 `1.3.1-SNAPSHOT` 安装到本地 Maven 仓库
+- `mvn -B test` 运行默认测试集，并带上构建前置环境检查
+- `mvn -B -Pcoverage -Dmaven.repo.local=.m2/repository test` 会额外生成 `target/site/jacoco/` 下的 JaCoCo HTML 覆盖率报告
+- `snapshot:install` 把当前 `1.6.0-SNAPSHOT` 安装到本地 Maven 仓库
 - `snapshot:preflight` 用 `local.dev.001` 预演一次本地 snapshot 发布检查
 - `snapshot:publish:local` 通过 `central-publishing-maven-plugin` 发布一个唯一 snapshot 版本
 - `docs:deploy:local` 会重新构建 `website/dist`，再通过 Wrangler 在本地启动预览部署
@@ -107,14 +111,14 @@ Sonatype 当前对 hosted snapshot 没有可用的目录浏览界面，所以实
 已发布包地址：
 
 - Maven Central 页面：`https://central.sonatype.com/artifact/io.github.sonofmagic/javachanges`
-- CLI jar 地址：`https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/1.3.1/javachanges-1.3.1.jar`
+- CLI jar 地址模式：`https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/<released-version>/javachanges-<released-version>.jar`
 
 正式版 CLI 对目标仓库的用法：
 
 ```bash
-java -jar .javachanges/javachanges-1.3.1.jar status --directory /path/to/your/repo
-java -jar .javachanges/javachanges-1.3.1.jar add --directory /path/to/your/repo
-java -jar .javachanges/javachanges-1.3.1.jar plan --directory /path/to/your/repo
+java -jar .javachanges/javachanges-<released-version>.jar status --directory /path/to/your/repo
+java -jar .javachanges/javachanges-<released-version>.jar add --directory /path/to/your/repo
+java -jar .javachanges/javachanges-<released-version>.jar plan --directory /path/to/your/repo
 ```
 
 如果你要开发这个仓库本身，请看 [Development Guide](docs/development-guide.md)。

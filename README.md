@@ -45,7 +45,7 @@ Recommended for target repositories: declare the Maven plugin and run the short 
 <plugin>
   <groupId>io.github.sonofmagic</groupId>
   <artifactId>javachanges</artifactId>
-  <version>1.3.1</version>
+  <version><!-- latest released version --></version>
 </plugin>
 ```
 
@@ -64,23 +64,25 @@ The plugin defaults `--directory` to the current Maven project's `${project.base
 If you cannot modify the target repository `pom.xml`, use the released CLI from Maven Central instead:
 
 ```bash
-mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:1.3.1 -DoutputDirectory=.javachanges
-java -jar .javachanges/javachanges-1.3.1.jar --help
+mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:<released-version> -DoutputDirectory=.javachanges
+java -jar .javachanges/javachanges-<released-version>.jar --help
 ```
 
 On the current `main` branch, after installing the snapshot locally, you can also run `javachanges` as a Maven plugin:
 
 ```bash
 mvn -q -DskipTests install
-mvn io.github.sonofmagic:javachanges:1.3.1-SNAPSHOT:status
-mvn io.github.sonofmagic:javachanges:1.3.1-SNAPSHOT:plan -Djavachanges.apply=true
-mvn io.github.sonofmagic:javachanges:1.3.1-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
-mvn io.github.sonofmagic:javachanges:1.3.1-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
+mvn io.github.sonofmagic:javachanges:1.6.0-SNAPSHOT:status
+mvn io.github.sonofmagic:javachanges:1.6.0-SNAPSHOT:plan -Djavachanges.apply=true
+mvn io.github.sonofmagic:javachanges:1.6.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn io.github.sonofmagic:javachanges:1.6.0-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
 ```
 
 Repository-local shortcuts for working on `javachanges` itself:
 
 ```bash
+mvn -B test
+mvn -B -Pcoverage -Dmaven.repo.local=.m2/repository test
 pnpm snapshot:install
 pnpm snapshot:preflight
 pnpm snapshot:publish:local
@@ -89,7 +91,9 @@ pnpm docs:deploy:local
 
 These map to the same phases used elsewhere in the docs:
 
-- `snapshot:install` installs the current `1.3.1-SNAPSHOT` into local Maven
+- `mvn -B test` runs the default test suite with build prerequisite checks
+- `mvn -B -Pcoverage -Dmaven.repo.local=.m2/repository test` also generates a JaCoCo HTML report under `target/site/jacoco/`
+- `snapshot:install` installs the current `1.6.0-SNAPSHOT` into local Maven
 - `snapshot:preflight` previews a local snapshot publish with `local.dev.001`
 - `snapshot:publish:local` publishes a unique snapshot through `central-publishing-maven-plugin`
 - `docs:deploy:local` rebuilds `website/dist` and serves it through Wrangler locally
@@ -107,14 +111,14 @@ Sonatype currently does not provide a working browse UI for hosted snapshots, so
 Published package:
 
 - Maven Central page: `https://central.sonatype.com/artifact/io.github.sonofmagic/javachanges`
-- CLI jar URL: `https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/1.3.1/javachanges-1.3.1.jar`
+- CLI jar URL pattern: `https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/<released-version>/javachanges-<released-version>.jar`
 
 Released CLI examples against a target repository:
 
 ```bash
-java -jar .javachanges/javachanges-1.3.1.jar status --directory /path/to/your/repo
-java -jar .javachanges/javachanges-1.3.1.jar add --directory /path/to/your/repo
-java -jar .javachanges/javachanges-1.3.1.jar plan --directory /path/to/your/repo
+java -jar .javachanges/javachanges-<released-version>.jar status --directory /path/to/your/repo
+java -jar .javachanges/javachanges-<released-version>.jar add --directory /path/to/your/repo
+java -jar .javachanges/javachanges-<released-version>.jar plan --directory /path/to/your/repo
 ```
 
 If you want to work on this repository itself from source, see [Development Guide](docs/development-guide.md).

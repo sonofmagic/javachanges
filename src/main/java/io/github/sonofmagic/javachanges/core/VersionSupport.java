@@ -1,11 +1,7 @@
 package io.github.sonofmagic.javachanges.core;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.assertKnownModule;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.releaseModuleFromTag;
@@ -20,13 +16,11 @@ final class VersionSupport {
     }
 
     String readRevision() throws IOException {
-        String content = new String(Files.readAllBytes(repoRoot.resolve("pom.xml")), StandardCharsets.UTF_8);
-        Pattern pattern = Pattern.compile("<revision>([^<]+)</revision>");
-        Matcher matcher = pattern.matcher(content);
-        if (!matcher.find()) {
-            throw new IllegalStateException("未在 pom.xml 中找到 <revision> 配置");
+        try {
+            return PomModelSupport.readRevision(repoRoot.resolve("pom.xml"));
+        } catch (IllegalStateException exception) {
+            throw new IllegalStateException("未在 pom.xml 中找到 <revision> 配置", exception);
         }
-        return matcher.group(1).trim();
     }
 
     void assertSnapshot() throws IOException {

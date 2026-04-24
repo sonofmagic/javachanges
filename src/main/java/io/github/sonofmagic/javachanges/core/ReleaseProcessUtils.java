@@ -2,12 +2,17 @@ package io.github.sonofmagic.javachanges.core;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 final class ReleaseProcessUtils {
     private ReleaseProcessUtils() {
@@ -55,10 +60,17 @@ final class ReleaseProcessUtils {
         ProcessBuilder builder = new ProcessBuilder(command);
         builder.directory(workingDirectory.toFile());
         Process process = builder.start();
-        byte[] stdout = readAllBytes(process.getInputStream());
-        byte[] stderr = readAllBytes(process.getErrorStream());
-        int exitCode = process.waitFor();
-        return new CommandResult(exitCode, stdout, stderr);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            Future<byte[]> stdoutFuture = executor.submit(readStream(process.getInputStream()));
+            Future<byte[]> stderrFuture = executor.submit(readStream(process.getErrorStream()));
+            int exitCode = process.waitFor();
+            byte[] stdout = awaitBytes(stdoutFuture);
+            byte[] stderr = awaitBytes(stderrFuture);
+            return new CommandResult(exitCode, stdout, stderr);
+        } finally {
+            executor.shutdownNow();
+        }
     }
 
     static String mavenWrapperPath() {
@@ -94,6 +106,31 @@ final class ReleaseProcessUtils {
         try {
             inputStream.close();
         } catch (IOException ignored) {
+        }
+    }
+
+    private static Callable<byte[]> readStream(final InputStream inputStream) {
+        return new Callable<byte[]>() {
+            @Override
+            public byte[] call() {
+                try {
+                    return readAllBytes(inputStream);
+                } catch (IOException exception) {
+                    throw new UncheckedIOException(exception);
+                }
+            }
+        };
+    }
+
+    private static byte[] awaitBytes(Future<byte[]> future) throws IOException, InterruptedException {
+        try {
+            return future.get();
+        } catch (ExecutionException exception) {
+            Throwable cause = exception.getCause();
+            if (cause instanceof UncheckedIOException) {
+                throw ((UncheckedIOException) cause).getCause();
+            }
+            throw new IllegalStateException("Failed to capture process output", cause);
         }
     }
 }

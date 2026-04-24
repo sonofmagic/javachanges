@@ -1,8 +1,6 @@
 package io.github.sonofmagic.javachanges.core;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -18,7 +16,7 @@ final class ReleasePlanner {
     }
 
     ReleasePlan plan() throws IOException, InterruptedException {
-        String currentRevision = readRevision(repoRoot.resolve("pom.xml"));
+        String currentRevision = PomModelSupport.readRevision(repoRoot.resolve("pom.xml"));
         Semver currentBaseVersion = Semver.parse(stripSnapshot(currentRevision));
         List<Changeset> changesets = RepoFiles.loadChangesets(repoRoot);
         String latestTag = latestWholeRepoTag();
@@ -38,16 +36,6 @@ final class ReleasePlanner {
 
         return new ReleasePlan(repoRoot, currentRevision, latestTag, changesets, releaseLevel,
             releaseVersionText, nextSnapshotVersion, changesetConfig.tagStrategy());
-    }
-
-    private String readRevision(Path pomPath) throws IOException {
-        String content = new String(Files.readAllBytes(pomPath), StandardCharsets.UTF_8);
-        int start = content.indexOf("<revision>");
-        int end = content.indexOf("</revision>");
-        if (start < 0 || end < 0 || end <= start) {
-            throw new IllegalStateException("Cannot find <revision> in " + pomPath);
-        }
-        return content.substring(start + "<revision>".length(), end).trim();
     }
 
     private String latestWholeRepoTag() throws IOException, InterruptedException {

@@ -4,12 +4,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -19,18 +17,55 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ReleaseEnvSupportTest {
 
     @Test
+    void initEnvCopiesTemplateAndPrintsNextStep(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot.resolve("env"));
+        Files.write(repoRoot.resolve("env").resolve("release.env.example"),
+            ReleaseEnvTestFixtures.supportEnvFile().getBytes(StandardCharsets.UTF_8));
+
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        ReleaseEnvSupport support = new ReleaseEnvSupport(repoRoot, new PrintStream(stdout, true));
+        Map<String, String> options = new LinkedHashMap<String, String>();
+        options.put("template", "env/release.env.example");
+        options.put("target", "env/release.env.local");
+
+        support.initEnv(InitEnvRequest.fromOptions(options));
+
+        String text = stdout.toString(StandardCharsets.UTF_8.name());
+        assertTrue(Files.exists(repoRoot.resolve("env").resolve("release.env.local")));
+        assertTrue(text.contains("已生成本地 env 文件: env/release.env.local"));
+        assertTrue(text.contains("下一步请编辑真实仓库地址和凭据，然后执行: make readiness"));
+    }
+
+    @Test
+    void authHelpPrintsGithubAndGitlabGuidance(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot);
+
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        ReleaseEnvSupport support = new ReleaseEnvSupport(repoRoot, new PrintStream(stdout, true));
+
+        support.printAuthHelp(Platform.ALL);
+
+        String text = stdout.toString(StandardCharsets.UTF_8.name());
+        assertTrue(text.contains("== GitHub CLI 登录建议 =="));
+        assertTrue(text.contains("gh auth login --web --git-protocol ssh"));
+        assertTrue(text.contains("== GitLab CLI 登录建议 =="));
+        assertTrue(text.contains("glab auth login --hostname gitlab.example.com --web --git-protocol ssh --use-keyring"));
+    }
+
+    @Test
     void doctorPlatformGitlabDetectsProtectedVariableAndSnapshotBranchMismatch(@TempDir Path tempDir) throws Exception {
         Path repoRoot = tempDir.resolve("repo");
         Files.createDirectories(repoRoot.resolve(".changesets"));
-        Files.createDirectories(repoRoot.resolve("env"));
         Files.write(repoRoot.resolve(".changesets").resolve("config.json"), (
             "{\n" +
                 "  \"snapshotBranch\": \"snapshot-prod\"\n" +
                 "}\n").getBytes(StandardCharsets.UTF_8));
-        Files.write(repoRoot.resolve("env").resolve("release.env.local"), envFile().getBytes(StandardCharsets.UTF_8));
+        ReleaseEnvTestFixtures.writeLocalEnv(repoRoot, ReleaseEnvTestFixtures.supportEnvFile());
 
         ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-        FakeReleaseEnvRuntime runtime = new FakeReleaseEnvRuntime(repoRoot);
+        ReleaseEnvTestFixtures.FakeReleaseEnvRuntime runtime = new ReleaseEnvTestFixtures.FakeReleaseEnvRuntime(repoRoot);
         ReleaseEnvSupport support = new ReleaseEnvSupport(repoRoot, new PrintStream(stdout, true), runtime);
         Map<String, String> options = new LinkedHashMap<String, String>();
         options.put("env-file", "env/release.env.local");
@@ -51,8 +86,7 @@ class ReleaseEnvSupportTest {
     @Test
     void renderVarsJsonIncludesGitlabAndGithubSections(@TempDir Path tempDir) throws Exception {
         Path repoRoot = tempDir.resolve("repo");
-        Files.createDirectories(repoRoot.resolve("env"));
-        Files.write(repoRoot.resolve("env").resolve("release.env.local"), envFile().getBytes(StandardCharsets.UTF_8));
+        ReleaseEnvTestFixtures.writeLocalEnv(repoRoot, ReleaseEnvTestFixtures.supportEnvFile());
 
         ByteArrayOutputStream stdout = new ByteArrayOutputStream();
         ReleaseEnvSupport support = new ReleaseEnvSupport(repoRoot, new PrintStream(stdout, true));
@@ -76,11 +110,10 @@ class ReleaseEnvSupportTest {
     @Test
     void auditVarsJsonIncludesGithubMatchAndSecretPresence(@TempDir Path tempDir) throws Exception {
         Path repoRoot = tempDir.resolve("repo");
-        Files.createDirectories(repoRoot.resolve("env"));
-        Files.write(repoRoot.resolve("env").resolve("release.env.local"), envFile().getBytes(StandardCharsets.UTF_8));
+        ReleaseEnvTestFixtures.writeLocalEnv(repoRoot, ReleaseEnvTestFixtures.supportEnvFile());
 
         ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-        FakeReleaseEnvRuntime runtime = new FakeReleaseEnvRuntime(repoRoot);
+        ReleaseEnvTestFixtures.FakeReleaseEnvRuntime runtime = new ReleaseEnvTestFixtures.FakeReleaseEnvRuntime(repoRoot);
         ReleaseEnvSupport support = new ReleaseEnvSupport(repoRoot, new PrintStream(stdout, true), runtime);
         Map<String, String> options = new LinkedHashMap<String, String>();
         options.put("env-file", "env/release.env.local");
@@ -104,8 +137,7 @@ class ReleaseEnvSupportTest {
     @Test
     void syncVarsDryRunPrintsGithubAndGitlabCommands(@TempDir Path tempDir) throws Exception {
         Path repoRoot = tempDir.resolve("repo");
-        Files.createDirectories(repoRoot.resolve("env"));
-        Files.write(repoRoot.resolve("env").resolve("release.env.local"), envFile().getBytes(StandardCharsets.UTF_8));
+        ReleaseEnvTestFixtures.writeLocalEnv(repoRoot, ReleaseEnvTestFixtures.supportEnvFile());
 
         ByteArrayOutputStream stdout = new ByteArrayOutputStream();
         ReleaseEnvSupport support = new ReleaseEnvSupport(repoRoot, new PrintStream(stdout, true));
@@ -124,70 +156,5 @@ class ReleaseEnvSupportTest {
         assertTrue(text.contains("== GitLab CLI 命令 =="));
         assertTrue(text.contains("glab variable set MAVEN_REPOSITORY_USERNAME"));
         assertTrue(text.contains("--masked --protected"));
-    }
-
-    private static String envFile() {
-        return ""
-            + "MAVEN_RELEASE_REPOSITORY_URL=https://repo.example.com/releases\n"
-            + "MAVEN_SNAPSHOT_REPOSITORY_URL=https://repo.example.com/snapshots\n"
-            + "MAVEN_RELEASE_REPOSITORY_ID=maven-releases\n"
-            + "MAVEN_SNAPSHOT_REPOSITORY_ID=maven-snapshots\n"
-            + "MAVEN_REPOSITORY_USERNAME=ci-user\n"
-            + "MAVEN_REPOSITORY_PASSWORD=ci-password\n"
-            + "GITLAB_RELEASE_TOKEN=glrt-token\n";
-    }
-
-    private static final class FakeReleaseEnvRuntime extends ReleaseEnvRuntime {
-        FakeReleaseEnvRuntime(Path repoRoot) {
-            super(repoRoot);
-        }
-
-        @Override
-        boolean commandExists(String command) {
-            return true;
-        }
-
-        @Override
-        void requireCommand(String command) {
-        }
-
-        @Override
-        boolean runQuietly(java.util.List<String> command) {
-            return true;
-        }
-
-        @Override
-        CommandResult runAndCapture(java.util.List<String> command) throws IOException {
-            String joined = command.toString();
-            if (joined.contains("gh, variable, list")) {
-                return json("["
-                    + "{\"name\":\"MAVEN_RELEASE_REPOSITORY_URL\",\"value\":\"https://repo.example.com/releases\",\"updatedAt\":\"2026-04-22T10:00:00Z\"},"
-                    + "{\"name\":\"MAVEN_SNAPSHOT_REPOSITORY_URL\",\"value\":\"https://repo.example.com/snapshots\",\"updatedAt\":\"2026-04-22T10:00:00Z\"},"
-                    + "{\"name\":\"MAVEN_RELEASE_REPOSITORY_ID\",\"value\":\"maven-releases\",\"updatedAt\":\"2026-04-22T10:00:00Z\"},"
-                    + "{\"name\":\"MAVEN_SNAPSHOT_REPOSITORY_ID\",\"value\":\"maven-snapshots\",\"updatedAt\":\"2026-04-22T10:00:00Z\"}"
-                    + "]");
-            }
-            if (joined.contains("gh, secret, list")) {
-                return json("["
-                    + "{\"name\":\"MAVEN_REPOSITORY_USERNAME\",\"updatedAt\":\"2026-04-22T10:05:00Z\"},"
-                    + "{\"name\":\"MAVEN_REPOSITORY_PASSWORD\",\"updatedAt\":\"2026-04-22T10:05:00Z\"}"
-                    + "]");
-            }
-            if (joined.contains("/variables?per_page=100")) {
-                return json("["
-                    + "{\"key\":\"MAVEN_REPOSITORY_USERNAME\",\"protected\":true,\"masked\":true},"
-                    + "{\"key\":\"MAVEN_REPOSITORY_PASSWORD\",\"protected\":true,\"masked\":true},"
-                    + "{\"key\":\"GITLAB_RELEASE_TOKEN\",\"protected\":true,\"masked\":true}"
-                    + "]");
-            }
-            if (joined.contains("/protected_branches?per_page=100")) {
-                return json("[]");
-            }
-            throw new IllegalStateException("Unexpected command: " + Arrays.asList(command));
-        }
-
-        private CommandResult json(String value) {
-            return new CommandResult(0, value.getBytes(StandardCharsets.UTF_8), new byte[0]);
-        }
     }
 }

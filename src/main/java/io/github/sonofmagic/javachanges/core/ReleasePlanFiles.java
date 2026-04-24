@@ -32,15 +32,7 @@ final class ReleasePlanFiles {
     }
 
     private static void updateRootRevision(Path pomPath, String newSnapshotVersion) throws IOException {
-        String original = new String(Files.readAllBytes(pomPath), StandardCharsets.UTF_8);
-        String updated = original.replaceFirst(
-            "<revision>[^<]+</revision>",
-            "<revision>" + newSnapshotVersion + "</revision>"
-        );
-        if (original.equals(updated)) {
-            throw new IllegalStateException("Unable to update <revision> in " + pomPath);
-        }
-        Files.write(pomPath, Collections.singletonList(updated), StandardCharsets.UTF_8);
+        PomModelSupport.writeRevision(pomPath, newSnapshotVersion);
     }
 
     private static void updateChangelog(Path changelogPath, ReleasePlan plan) throws IOException {

@@ -1,16 +1,14 @@
 package io.github.sonofmagic.javachanges.core;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 final class ReleaseModuleUtils {
     private ReleaseModuleUtils() {
@@ -23,10 +21,9 @@ final class ReleaseModuleUtils {
                 return Collections.emptyList();
             }
 
-            String pomContent = new String(java.nio.file.Files.readAllBytes(pomPath), StandardCharsets.UTF_8);
-            Matcher modulesMatcher = Pattern.compile("(?s)<modules>(.*?)</modules>").matcher(pomContent);
-            if (!modulesMatcher.find()) {
-                String artifactId = detectRootArtifactId(pomContent);
+            List<String> modulePaths = PomModelSupport.readModulePaths(pomPath);
+            if (modulePaths.isEmpty()) {
+                String artifactId = PomModelSupport.readArtifactId(pomPath);
                 if (artifactId == null) {
                     return Collections.emptyList();
                 }
@@ -34,26 +31,14 @@ final class ReleaseModuleUtils {
             }
 
             List<String> modules = new ArrayList<String>();
-            Matcher moduleMatcher = Pattern.compile("<module>([^<]+)</module>").matcher(modulesMatcher.group(1));
-            while (moduleMatcher.find()) {
-                String modulePath = ReleaseTextUtils.trimToNull(moduleMatcher.group(1));
-                if (modulePath == null) {
-                    continue;
-                }
-
+            for (String modulePath : modulePaths) {
                 Path modulePom = repoRoot.resolve(modulePath).resolve("pom.xml");
                 if (!java.nio.file.Files.exists(modulePom)) {
                     continue;
                 }
 
-                String modulePomContent = new String(java.nio.file.Files.readAllBytes(modulePom), StandardCharsets.UTF_8);
-                String withoutParent = modulePomContent.replaceFirst("(?s)<parent>.*?</parent>", "");
-                Matcher artifactMatcher = Pattern.compile("<artifactId>([^<]+)</artifactId>").matcher(withoutParent);
-                if (artifactMatcher.find()) {
-                    modules.add(artifactMatcher.group(1).trim());
-                } else {
-                    modules.add(java.nio.file.Paths.get(modulePath).getFileName().toString());
-                }
+                String artifactId = PomModelSupport.readArtifactId(modulePom);
+                modules.add(artifactId == null ? Paths.get(modulePath).getFileName().toString() : artifactId);
             }
 
             return modules;
@@ -144,14 +129,5 @@ final class ReleaseModuleUtils {
             builder.append(modules.get(i));
         }
         return builder.toString();
-    }
-
-    private static String detectRootArtifactId(String pomContent) {
-        String withoutParent = pomContent.replaceFirst("(?s)<parent>.*?</parent>", "");
-        Matcher artifactMatcher = Pattern.compile("<artifactId>([^<]+)</artifactId>").matcher(withoutParent);
-        if (!artifactMatcher.find()) {
-            return null;
-        }
-        return ReleaseTextUtils.trimToNull(artifactMatcher.group(1));
     }
 }

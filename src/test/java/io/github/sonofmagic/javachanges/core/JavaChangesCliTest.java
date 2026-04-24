@@ -306,9 +306,7 @@ class JavaChangesCliTest {
     @Test
     void doctorLocalFallsBackToSystemMavenWhenWrapperMissing(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, false);
-        Path envDir = repoRoot.resolve("env");
-        Files.createDirectories(envDir);
-        Files.write(envDir.resolve("release.env.local"), envFile().getBytes(StandardCharsets.UTF_8));
+        ReleaseEnvTestFixtures.writeLocalEnv(repoRoot, ReleaseEnvTestFixtures.cliEnvFile());
 
         ExecutionResult result = execute(
             "doctor-local",
@@ -325,9 +323,7 @@ class JavaChangesCliTest {
     @Test
     void renderVarsJsonReturnsMachineReadablePayload(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, false);
-        Path envDir = repoRoot.resolve("env");
-        Files.createDirectories(envDir);
-        Files.write(envDir.resolve("release.env.local"), envFile().getBytes(StandardCharsets.UTF_8));
+        ReleaseEnvTestFixtures.writeLocalEnv(repoRoot, ReleaseEnvTestFixtures.cliEnvFile());
 
         ExecutionResult result = execute(
             "render-vars",
@@ -350,9 +346,7 @@ class JavaChangesCliTest {
     @Test
     void doctorLocalJsonPrintsOnlyJson(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, false);
-        Path envDir = repoRoot.resolve("env");
-        Files.createDirectories(envDir);
-        Files.write(envDir.resolve("release.env.local"), envFile().getBytes(StandardCharsets.UTF_8));
+        ReleaseEnvTestFixtures.writeLocalEnv(repoRoot, ReleaseEnvTestFixtures.cliEnvFile());
 
         ExecutionResult result = execute(
             "doctor-local",
@@ -374,9 +368,7 @@ class JavaChangesCliTest {
     @Test
     void auditVarsJsonPrintsOnlyJson(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, false);
-        Path envDir = repoRoot.resolve("env");
-        Files.createDirectories(envDir);
-        Files.write(envDir.resolve("release.env.local"), envFile().getBytes(StandardCharsets.UTF_8));
+        ReleaseEnvTestFixtures.writeLocalEnv(repoRoot, ReleaseEnvTestFixtures.cliEnvFile());
 
         ExecutionResult result = execute(
             "audit-vars",
@@ -551,15 +543,6 @@ class JavaChangesCliTest {
             + "    </parent>\n"
             + "    <artifactId>" + artifactId + "</artifactId>\n"
             + "</project>\n";
-    }
-
-    private static String envFile() {
-        return "MAVEN_RELEASE_REPOSITORY_URL=https://repo.example.com/maven-releases/\n"
-            + "MAVEN_SNAPSHOT_REPOSITORY_URL=https://repo.example.com/maven-snapshots/\n"
-            + "MAVEN_RELEASE_REPOSITORY_ID=maven-releases\n"
-            + "MAVEN_SNAPSHOT_REPOSITORY_ID=maven-snapshots\n"
-            + "MAVEN_REPOSITORY_USERNAME=replace-me\n"
-            + "MAVEN_REPOSITORY_PASSWORD=replace-me\n";
     }
 
     private static void writeChangeset(Path repoRoot, String fileName, String content) throws IOException {
