@@ -1,5 +1,7 @@
 package io.github.sonofmagic.javachanges.core;
 
+import io.github.sonofmagic.javachanges.core.changeset.Changeset;
+
 import java.io.PrintStream;
 
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.renderVisibleType;

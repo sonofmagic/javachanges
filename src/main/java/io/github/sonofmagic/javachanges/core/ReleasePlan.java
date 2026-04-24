@@ -1,5 +1,7 @@
 package io.github.sonofmagic.javachanges.core;
 
+import io.github.sonofmagic.javachanges.core.changeset.Changeset;
+
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;

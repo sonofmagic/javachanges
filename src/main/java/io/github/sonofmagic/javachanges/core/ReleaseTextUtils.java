@@ -1,5 +1,7 @@
 package io.github.sonofmagic.javachanges.core;
 
+import io.github.sonofmagic.javachanges.core.changeset.Changeset;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;

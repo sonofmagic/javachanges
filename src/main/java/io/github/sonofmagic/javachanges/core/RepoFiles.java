@@ -1,5 +1,9 @@
 package io.github.sonofmagic.javachanges.core;
 
+import io.github.sonofmagic.javachanges.core.changeset.Changeset;
+import io.github.sonofmagic.javachanges.core.changeset.ChangesetFileSupport;
+import io.github.sonofmagic.javachanges.core.changeset.ChangesetInput;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;

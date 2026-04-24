@@ -1,4 +1,7 @@
-package io.github.sonofmagic.javachanges.core;
+package io.github.sonofmagic.javachanges.core.changeset;
+
+import io.github.sonofmagic.javachanges.core.ReleaseLevel;
+import io.github.sonofmagic.javachanges.core.ReleaseUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -8,14 +11,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.detectKnownModules;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.firstBodyLine;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.normalizeType;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.parseModules;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.stripWrappingQuotes;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimTrailingBlankLines;
 
 final class ChangesetParser {
     private ChangesetParser() {
@@ -38,7 +33,7 @@ final class ChangesetParser {
             if (separator <= 0) {
                 throw new IllegalStateException("Invalid changeset line in " + path + ": " + line);
             }
-            String key = stripWrappingQuotes(line.substring(0, separator).trim());
+            String key = ReleaseUtils.stripWrappingQuotes(line.substring(0, separator).trim());
             String value = line.substring(separator + 1).trim();
             frontmatter.put(key, value);
         }
@@ -47,7 +42,7 @@ final class ChangesetParser {
         for (; index < lines.size(); index++) {
             bodyLines.add(lines.get(index));
         }
-        String body = trimTrailingBlankLines(bodyLines);
+        String body = ReleaseUtils.trimTrailingBlankLines(bodyLines);
 
         if (frontmatter.containsKey("release")) {
             return parseLegacyChangeset(repoRoot, path, frontmatter, body);
@@ -59,7 +54,7 @@ final class ChangesetParser {
         String releaseValue = required(frontmatter, "release", path);
         String typeValue = optional(frontmatter, "type", "other");
         String modulesValue = optional(frontmatter, "modules", "all");
-        String summaryValue = trimToNull(frontmatter.get("summary"));
+        String summaryValue = ReleaseUtils.trimToNull(frontmatter.get("summary"));
         if (summaryValue == null) {
             summaryValue = fallbackSummary(path, body);
         }
@@ -68,15 +63,15 @@ final class ChangesetParser {
             path,
             path.getFileName().toString(),
             ReleaseLevel.parse(releaseValue),
-            normalizeType(typeValue),
-            parseModules(repoRoot, modulesValue),
+            ReleaseUtils.normalizeType(typeValue),
+            ReleaseUtils.parseModules(repoRoot, modulesValue),
             summaryValue,
             body
         );
     }
 
     private static Changeset parseOfficialChangeset(Path repoRoot, Path path, Map<String, String> frontmatter, String body) {
-        List<String> knownModules = detectKnownModules(repoRoot);
+        List<String> knownModules = ReleaseUtils.detectKnownModules(repoRoot);
         List<String> modules = new ArrayList<String>();
         ReleaseLevel releaseLevel = ReleaseLevel.PATCH;
         String typeValue = optional(frontmatter, "type", "other");
@@ -106,7 +101,7 @@ final class ChangesetParser {
             path,
             path.getFileName().toString(),
             releaseLevel,
-            normalizeType(typeValue),
+            ReleaseUtils.normalizeType(typeValue),
             modules,
             fallbackSummary(path, body),
             body
@@ -122,12 +117,12 @@ final class ChangesetParser {
     }
 
     private static String optional(Map<String, String> frontmatter, String key, String defaultValue) {
-        String value = trimToNull(frontmatter.get(key));
+        String value = ReleaseUtils.trimToNull(frontmatter.get(key));
         return value == null ? defaultValue : value;
     }
 
     private static String fallbackSummary(Path path, String body) {
-        String fromBody = firstBodyLine(body);
+        String fromBody = ReleaseUtils.firstBodyLine(body);
         if (!fromBody.isEmpty()) {
             return fromBody;
         }

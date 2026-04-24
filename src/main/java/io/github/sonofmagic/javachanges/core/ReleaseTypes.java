@@ -1,31 +1,5 @@
 package io.github.sonofmagic.javachanges.core;
 
-import java.util.Locale;
-
-enum ReleaseLevel {
-    PATCH("patch", 1),
-    MINOR("minor", 2),
-    MAJOR("major", 3);
-
-    final String id;
-    final int weight;
-
-    ReleaseLevel(String id, int weight) {
-        this.id = id;
-        this.weight = weight;
-    }
-
-    static ReleaseLevel parse(String value) {
-        String normalized = value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
-        for (ReleaseLevel level : values()) {
-            if (level.id.equals(normalized)) {
-                return level;
-            }
-        }
-        throw new IllegalArgumentException("Unsupported release level: " + value);
-    }
-}
-
 final class Semver {
     private final int major;
     private final int minor;

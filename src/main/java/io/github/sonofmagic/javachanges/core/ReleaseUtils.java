@@ -1,6 +1,7 @@
 package io.github.sonofmagic.javachanges.core;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.github.sonofmagic.javachanges.core.changeset.Changeset;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,9 +13,9 @@ import java.util.Map;
 
 public final class ReleaseUtils {
     public static final String CHANGESETS_DIR = ".changesets";
-    static final String CHANGESETS_README = "README.md";
+    public static final String CHANGESETS_README = "README.md";
     public static final String RELEASE_PLAN_JSON = "release-plan.json";
-    static final String RELEASE_PLAN_MD = "release-plan.md";
+    public static final String RELEASE_PLAN_MD = "release-plan.md";
     static final List<String> CHANGELOG_TYPE_ORDER = Collections.unmodifiableList(Arrays.asList(
         "breaking",
         "feat",
@@ -52,7 +53,7 @@ public final class ReleaseUtils {
         return ReleaseTextUtils.stripSnapshot(version);
     }
 
-    static List<String> detectKnownModules(Path repoRoot) {
+    public static List<String> detectKnownModules(Path repoRoot) {
         return ReleaseModuleUtils.detectKnownModules(repoRoot);
     }
 
@@ -132,11 +133,11 @@ public final class ReleaseUtils {
         return ReleaseJsonUtils.parseFlatJsonObjects(json);
     }
 
-    static List<String> parseModules(Path repoRoot, String rawModules) {
+    public static List<String> parseModules(Path repoRoot, String rawModules) {
         return ReleaseModuleUtils.parseModules(repoRoot, rawModules);
     }
 
-    static String normalizeType(String rawType) {
+    public static String normalizeType(String rawType) {
         return ReleaseModuleUtils.normalizeType(rawType);
     }
 
@@ -148,7 +149,7 @@ public final class ReleaseUtils {
         return ReleaseTextUtils.trimToNull(value);
     }
 
-    static String trimTrailingBlankLines(List<String> lines) {
+    public static String trimTrailingBlankLines(List<String> lines) {
         return ReleaseTextUtils.trimTrailingBlankLines(lines);
     }
 
@@ -164,7 +165,7 @@ public final class ReleaseUtils {
         return ReleaseTextUtils.renderVisibleType(type);
     }
 
-    static String firstBodyLine(String body) {
+    public static String firstBodyLine(String body) {
         return ReleaseTextUtils.firstBodyLine(body);
     }
 

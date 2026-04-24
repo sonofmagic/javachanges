@@ -1,5 +1,7 @@
 package io.github.sonofmagic.javachanges.core;
 
+import io.github.sonofmagic.javachanges.core.changeset.ChangesetInput;
+import io.github.sonofmagic.javachanges.core.changeset.ChangesetPrompter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
