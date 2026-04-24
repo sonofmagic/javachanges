@@ -1,7 +1,8 @@
 package io.github.sonofmagic.javachanges.core.publish;
 
 import io.github.sonofmagic.javachanges.core.CommandResult;
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseProcessUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -23,11 +24,11 @@ public final class PublishRuntime {
     }
 
     public boolean hasDirtyWorktree() throws IOException, InterruptedException {
-        return !ReleaseUtils.gitTextAllowEmpty(repoRoot, "status", "--short").trim().isEmpty();
+        return !ReleaseProcessUtils.gitTextAllowEmpty(repoRoot, "status", "--short").trim().isEmpty();
     }
 
     public boolean gitRefExists(String ref) throws IOException, InterruptedException {
-        return ReleaseUtils.runCapture(repoRoot, "git", "rev-parse", ref).exitCode == 0;
+        return ReleaseProcessUtils.runCapture(repoRoot, "git", "rev-parse", ref).exitCode == 0;
     }
 
     public String snapshotBuildStamp() throws IOException, InterruptedException {
@@ -40,7 +41,7 @@ public final class PublishRuntime {
         Path defaultLocalRepo = repoRoot.resolve(".m2/repository").normalize();
         Files.createDirectories(defaultLocalRepo);
 
-        String mavenOpts = ReleaseUtils.trimToNull(System.getenv("MAVEN_OPTS"));
+        String mavenOpts = ReleaseTextUtils.trimToNull(System.getenv("MAVEN_OPTS"));
         if (mavenOpts == null) {
             return defaultLocalRepo;
         }
@@ -65,11 +66,11 @@ public final class PublishRuntime {
     }
 
     private String gitHeadShortSha() throws IOException, InterruptedException {
-        CommandResult result = ReleaseUtils.runCapture(repoRoot, "git", "rev-parse", "--short", "HEAD");
+        CommandResult result = ReleaseProcessUtils.runCapture(repoRoot, "git", "rev-parse", "--short", "HEAD");
         if (result.exitCode != 0) {
             return "nogit";
         }
-        String value = ReleaseUtils.trimToNull(result.stdoutText());
+        String value = ReleaseTextUtils.trimToNull(result.stdoutText());
         return value == null ? "nogit" : value;
     }
 }

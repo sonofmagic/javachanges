@@ -3,9 +3,9 @@ package io.github.sonofmagic.javachanges.core.automation;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.releaseModuleFromTag;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.releaseVersionFromTag;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
+import static io.github.sonofmagic.javachanges.core.ReleaseModuleUtils.releaseModuleFromTag;
+import static io.github.sonofmagic.javachanges.core.ReleaseModuleUtils.releaseVersionFromTag;
+import static io.github.sonofmagic.javachanges.core.ReleaseTextUtils.trimToNull;
 
 public final class ReleaseArtifactSupport {
     private final Path repoRoot;

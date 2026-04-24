@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-final class ReleaseJsonUtils {
+public final class ReleaseJsonUtils {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final ObjectWriter PRETTY_WRITER = MAPPER.writerWithDefaultPrettyPrinter();
 
@@ -58,7 +58,7 @@ final class ReleaseJsonUtils {
         }
     }
 
-    static String toJson(Object value) {
+    public static String toJson(Object value) {
         try {
             return MAPPER.writeValueAsString(value);
         } catch (JsonProcessingException exception) {

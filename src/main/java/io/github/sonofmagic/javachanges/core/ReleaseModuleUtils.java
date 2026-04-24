@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-final class ReleaseModuleUtils {
+public final class ReleaseModuleUtils {
     private ReleaseModuleUtils() {
     }
 
@@ -47,7 +47,7 @@ final class ReleaseModuleUtils {
         }
     }
 
-    static void assertKnownModule(Path repoRoot, String module) {
+    public static void assertKnownModule(Path repoRoot, String module) {
         List<String> knownModules = detectKnownModules(repoRoot);
         if (!knownModules.contains(module)) {
             throw new IllegalArgumentException("Unknown module: " + module + ", allowed: " + knownModules);
@@ -62,7 +62,7 @@ final class ReleaseModuleUtils {
         return "-pl :" + module + " -am";
     }
 
-    static String releaseVersionFromTag(String tag) {
+    public static String releaseVersionFromTag(String tag) {
         if (tag.startsWith("v")) {
             return tag.substring(1);
         }
@@ -73,7 +73,7 @@ final class ReleaseModuleUtils {
         throw new IllegalArgumentException("Unsupported release tag: " + tag);
     }
 
-    static String releaseModuleFromTag(String tag) {
+    public static String releaseModuleFromTag(String tag) {
         if (tag.startsWith("v")) {
             return null;
         }

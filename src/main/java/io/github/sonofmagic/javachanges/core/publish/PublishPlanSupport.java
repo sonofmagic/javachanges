@@ -1,8 +1,9 @@
 package io.github.sonofmagic.javachanges.core.publish;
 
 import io.github.sonofmagic.javachanges.core.MavenCommand;
+import io.github.sonofmagic.javachanges.core.ReleaseModuleUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import io.github.sonofmagic.javachanges.core.MavenSettingsWriter;
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
 import io.github.sonofmagic.javachanges.core.SnapshotVersionMode;
 import io.github.sonofmagic.javachanges.core.VersionSupport;
 import io.github.sonofmagic.javachanges.core.automation.AutomationJsonSupport;
@@ -31,14 +32,14 @@ public final class PublishPlanSupport {
                 return new PublishTarget(versionSupport.snapshotRevision(), resolvedModule,
                     SnapshotVersionMode.PLAIN, false);
             }
-            String buildStamp = ReleaseUtils.firstNonBlank(request.snapshotBuildStamp, runtime.snapshotBuildStamp());
+            String buildStamp = ReleaseTextUtils.firstNonBlank(request.snapshotBuildStamp, runtime.snapshotBuildStamp());
             return new PublishTarget(versionSupport.resolveSnapshotPublishVersion(buildStamp), resolvedModule,
                 SnapshotVersionMode.STAMPED, true);
         }
 
         versionSupport.assertReleaseTag(request.tag);
-        String releaseVersion = ReleaseUtils.releaseVersionFromTag(request.tag);
-        String tagModule = ReleaseUtils.releaseModuleFromTag(request.tag);
+        String releaseVersion = ReleaseModuleUtils.releaseVersionFromTag(request.tag);
+        String tagModule = ReleaseModuleUtils.releaseModuleFromTag(request.tag);
         if (resolvedModule == null) {
             resolvedModule = tagModule;
         } else if (tagModule != null && !resolvedModule.equals(tagModule)) {
@@ -64,8 +65,8 @@ public final class PublishPlanSupport {
     public List<String> buildDeployCommand(PublishRequest request, PublishTarget publishTarget, MavenCommand mavenCommand,
                                            Path localMavenRepo) {
         String repositoryUrl = request.snapshot
-            ? ReleaseUtils.requireEnv("MAVEN_SNAPSHOT_REPOSITORY_URL")
-            : ReleaseUtils.requireEnv("MAVEN_RELEASE_REPOSITORY_URL");
+            ? ReleaseTextUtils.requireEnv("MAVEN_SNAPSHOT_REPOSITORY_URL")
+            : ReleaseTextUtils.requireEnv("MAVEN_RELEASE_REPOSITORY_URL");
         return buildDeployCommand(request, publishTarget, mavenCommand, localMavenRepo, repositoryUrl);
     }
 

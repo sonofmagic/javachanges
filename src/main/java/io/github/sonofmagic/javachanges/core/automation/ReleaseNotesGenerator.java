@@ -1,7 +1,8 @@
 package io.github.sonofmagic.javachanges.core.automation;
 
 import io.github.sonofmagic.javachanges.core.CommandResult;
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseModuleUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseProcessUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -14,9 +15,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.releaseModuleFromTag;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.releaseVersionFromTag;
-
 public final class ReleaseNotesGenerator {
     private final Path repoRoot;
 
@@ -25,7 +23,7 @@ public final class ReleaseNotesGenerator {
     }
 
     public void writeReleaseNotes(String tag, Path outputPath) throws IOException, InterruptedException {
-        String releaseVersion = releaseVersionFromTag(tag);
+        String releaseVersion = ReleaseModuleUtils.releaseVersionFromTag(tag);
         String releaseDate = gitSingleLine("log", "-1", "--format=%cs", tag);
 
         String changelogSection = readChangelogSection(repoRoot.resolve("CHANGELOG.md"), releaseVersion);
@@ -35,7 +33,7 @@ public final class ReleaseNotesGenerator {
             return;
         }
 
-        String releaseModule = releaseModuleFromTag(tag);
+        String releaseModule = ReleaseModuleUtils.releaseModuleFromTag(tag);
         String tagMatch = releaseModule == null ? "v*" : releaseModule + "/v*";
         String previousTag = gitSingleLineAllowEmpty("describe", "--tags", "--abbrev=0", "--match", tagMatch, tag + "^");
         String commitRange = previousTag == null || previousTag.isEmpty() ? tag : previousTag + ".." + tag;
@@ -186,7 +184,7 @@ public final class ReleaseNotesGenerator {
         String[] command = new String[args.length + 1];
         command[0] = "git";
         System.arraycopy(args, 0, command, 1, args.length);
-        CommandResult result = ReleaseUtils.runCapture(repoRoot, command);
+        CommandResult result = ReleaseProcessUtils.runCapture(repoRoot, command);
         if (result.exitCode != 0) {
             String error = result.stderrText().trim();
             if (error.isEmpty()) {

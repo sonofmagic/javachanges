@@ -1,7 +1,8 @@
 package io.github.sonofmagic.javachanges.core.automation;
 
 import io.github.sonofmagic.javachanges.core.OutputFormat;
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseJsonUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -9,14 +10,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
-
 public final class AutomationJsonSupport {
     private AutomationJsonSupport() {
     }
 
     public static String errorJson(String command, Exception exception) {
-        String message = trimToNull(exception.getMessage());
+        String message = ReleaseTextUtils.trimToNull(exception.getMessage());
         if (message == null) {
             message = exception.getClass().getSimpleName();
         }
@@ -91,7 +90,7 @@ public final class AutomationJsonSupport {
             payload.put("dryRun", Boolean.valueOf(dryRun));
             payload.put("snapshotVersionMode", snapshotVersionMode);
             payload.put("snapshotBuildStampApplied", Boolean.valueOf(snapshotBuildStampApplied));
-            return ReleaseUtils.toJson(payload);
+            return ReleaseJsonUtils.toJson(payload);
         }
     }
 }

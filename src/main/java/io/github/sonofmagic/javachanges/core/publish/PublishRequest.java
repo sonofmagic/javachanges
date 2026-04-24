@@ -2,7 +2,7 @@ package io.github.sonofmagic.javachanges.core.publish;
 
 import io.github.sonofmagic.javachanges.core.OutputFormat;
 import io.github.sonofmagic.javachanges.core.SnapshotVersionMode;
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import io.github.sonofmagic.javachanges.core.config.ChangesetConfigSupport;
 import io.github.sonofmagic.javachanges.core.config.RequestConfigSupport;
 
@@ -35,11 +35,11 @@ public final class PublishRequest {
     }
 
     public static PublishRequest fromOptions(Map<String, String> options, boolean supportExecute, String currentBranch) {
-        String directoryOption = ReleaseUtils.trimToNull(options.get("directory"));
-        boolean snapshot = ReleaseUtils.isTrue(options.get("snapshot"));
-        String tag = ReleaseUtils.firstNonBlank(
-            ReleaseUtils.trimToNull(options.get("tag")),
-            ReleaseUtils.trimToNull(System.getenv("CI_COMMIT_TAG"))
+        String directoryOption = ReleaseTextUtils.trimToNull(options.get("directory"));
+        boolean snapshot = ReleaseTextUtils.isTrue(options.get("snapshot"));
+        String tag = ReleaseTextUtils.firstNonBlank(
+            ReleaseTextUtils.trimToNull(options.get("tag")),
+            ReleaseTextUtils.trimToNull(System.getenv("CI_COMMIT_TAG"))
         );
         if (!snapshot && tag == null && shouldDefaultToSnapshot(currentBranch, directoryOption)) {
             snapshot = true;
@@ -53,18 +53,18 @@ public final class PublishRequest {
         return new PublishRequest(
             snapshot,
             tag,
-            ReleaseUtils.isTrue(options.get("allow-dirty")),
-            supportExecute && ReleaseUtils.isTrue(options.get("execute")),
-            ReleaseUtils.trimToNull(options.get("module")),
+            ReleaseTextUtils.isTrue(options.get("allow-dirty")),
+            supportExecute && ReleaseTextUtils.isTrue(options.get("execute")),
+            ReleaseTextUtils.trimToNull(options.get("module")),
             resolveSnapshotVersionMode(options, directoryOption),
-            ReleaseUtils.firstNonBlank(ReleaseUtils.trimToNull(options.get("snapshot-build-stamp")),
+            ReleaseTextUtils.firstNonBlank(ReleaseTextUtils.trimToNull(options.get("snapshot-build-stamp")),
                 System.getenv("JAVACHANGES_SNAPSHOT_BUILD_STAMP")),
             OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );
     }
 
     public static SnapshotVersionMode resolveSnapshotVersionMode(Map<String, String> options, String directoryOption) {
-        String cliValue = ReleaseUtils.trimToNull(options.get("snapshot-version-mode"));
+        String cliValue = ReleaseTextUtils.trimToNull(options.get("snapshot-version-mode"));
         if (cliValue != null) {
             return SnapshotVersionMode.parse(cliValue, SnapshotVersionMode.STAMPED);
         }
@@ -89,7 +89,7 @@ public final class PublishRequest {
     }
 
     private static String currentBranchFromEnvironment() {
-        return ReleaseUtils.firstNonBlank(ReleaseUtils.trimToNull(System.getenv("CI_COMMIT_BRANCH")),
-            ReleaseUtils.trimToNull(System.getenv("GITHUB_REF_NAME")));
+        return ReleaseTextUtils.firstNonBlank(ReleaseTextUtils.trimToNull(System.getenv("CI_COMMIT_BRANCH")),
+            ReleaseTextUtils.trimToNull(System.getenv("GITHUB_REF_NAME")));
     }
 }

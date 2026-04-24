@@ -2,7 +2,9 @@ package io.github.sonofmagic.javachanges.core.publish;
 
 import io.github.sonofmagic.javachanges.core.MavenCommand;
 import io.github.sonofmagic.javachanges.core.MavenSettingsWriter;
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseModuleUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseProcessUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import io.github.sonofmagic.javachanges.core.SnapshotVersionMode;
 import io.github.sonofmagic.javachanges.core.VersionSupport;
 import io.github.sonofmagic.javachanges.core.automation.AutomationJsonSupport;
@@ -58,10 +60,10 @@ public final class PublishSupport {
             report.releaseNotesFile = releaseNotesFile.toString();
         }
 
-        MavenCommand mavenCommand = ReleaseUtils.resolveMavenCommand(repoRoot);
+        MavenCommand mavenCommand = ReleaseProcessUtils.resolveMavenCommand(repoRoot);
         if (mavenCommand == null) {
             throw new IllegalStateException("未找到可用的 Maven 命令，期望仓库内存在 "
-                + ReleaseUtils.mavenWrapperPath() + " 或系统中可用 mvn");
+                + ReleaseProcessUtils.mavenWrapperPath() + " 或系统中可用 mvn");
         }
 
         List<String> command = planSupport.buildDeployCommand(request, publishTarget, mavenCommand, localMavenRepo);
@@ -89,7 +91,7 @@ public final class PublishSupport {
             out.println(publishTarget.resolvedModule == null ? "目标模块: all" : "目标模块: " + publishTarget.resolvedModule);
             out.println();
             out.println("将执行的命令:");
-            out.println(ReleaseUtils.renderCommand(command));
+            out.println(ReleaseTextUtils.renderCommand(command));
         }
 
         if (!request.execute) {
@@ -107,7 +109,7 @@ public final class PublishSupport {
             out.println();
             out.println("== 开始执行 ==");
         }
-        int exitCode = ReleaseUtils.runCommand(command, repoRoot);
+        int exitCode = ReleaseProcessUtils.runCommand(command, repoRoot);
         if (exitCode != 0) {
             throw new IllegalStateException("Maven deploy failed with exit code " + exitCode);
         }
@@ -121,7 +123,7 @@ public final class PublishSupport {
     private void preflight(PublishRequest request, PublishPlanSupport.PublishTarget publishTarget,
                            AutomationJsonSupport.AutomationReport report) throws IOException, InterruptedException {
         if (request.module != null) {
-            ReleaseUtils.assertKnownModule(repoRoot, request.module);
+            ReleaseModuleUtils.assertKnownModule(repoRoot, request.module);
         }
 
         if (!request.allowDirty && runtime.hasDirtyWorktree()) {
@@ -160,12 +162,12 @@ public final class PublishSupport {
             out.println("== 仓库变量检查 ==");
         }
         if (request.snapshot) {
-            String ignored = ReleaseUtils.requireEnv("MAVEN_SNAPSHOT_REPOSITORY_URL");
+            String ignored = ReleaseTextUtils.requireEnv("MAVEN_SNAPSHOT_REPOSITORY_URL");
             if (request.format != io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
                 out.println("MAVEN_SNAPSHOT_REPOSITORY_URL=" + ignored);
             }
         } else {
-            String ignored = ReleaseUtils.requireEnv("MAVEN_RELEASE_REPOSITORY_URL");
+            String ignored = ReleaseTextUtils.requireEnv("MAVEN_RELEASE_REPOSITORY_URL");
             if (request.format != io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
                 out.println("MAVEN_RELEASE_REPOSITORY_URL=" + ignored);
             }

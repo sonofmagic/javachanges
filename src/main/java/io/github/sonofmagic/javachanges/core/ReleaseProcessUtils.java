@@ -14,7 +14,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-final class ReleaseProcessUtils {
+public final class ReleaseProcessUtils {
     private ReleaseProcessUtils() {
     }
 
@@ -28,7 +28,7 @@ final class ReleaseProcessUtils {
         return output.toByteArray();
     }
 
-    static String gitTextAllowEmpty(Path repoRoot, String... args) throws IOException, InterruptedException {
+    public static String gitTextAllowEmpty(Path repoRoot, String... args) throws IOException, InterruptedException {
         List<String> command = new ArrayList<String>();
         command.add("git");
         command.addAll(Arrays.asList(args));
@@ -44,7 +44,7 @@ final class ReleaseProcessUtils {
         return result.stdoutText();
     }
 
-    static int runCommand(List<String> command, Path workingDirectory) throws IOException, InterruptedException {
+    public static int runCommand(List<String> command, Path workingDirectory) throws IOException, InterruptedException {
         ProcessBuilder builder = new ProcessBuilder(command);
         builder.directory(workingDirectory.toFile());
         builder.inheritIO();
@@ -52,11 +52,11 @@ final class ReleaseProcessUtils {
         return process.waitFor();
     }
 
-    static CommandResult runCapture(Path workingDirectory, String... command) throws IOException, InterruptedException {
+    public static CommandResult runCapture(Path workingDirectory, String... command) throws IOException, InterruptedException {
         return runCapture(workingDirectory, Arrays.asList(command));
     }
 
-    static CommandResult runCapture(Path workingDirectory, List<String> command) throws IOException, InterruptedException {
+    public static CommandResult runCapture(Path workingDirectory, List<String> command) throws IOException, InterruptedException {
         ProcessBuilder builder = new ProcessBuilder(command);
         builder.directory(workingDirectory.toFile());
         Process process = builder.start();
@@ -73,11 +73,11 @@ final class ReleaseProcessUtils {
         }
     }
 
-    static String mavenWrapperPath() {
+    public static String mavenWrapperPath() {
         return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win") ? "mvnw.cmd" : "./mvnw";
     }
 
-    static MavenCommand resolveMavenCommand(Path repoRoot) throws IOException, InterruptedException {
+    public static MavenCommand resolveMavenCommand(Path repoRoot) throws IOException, InterruptedException {
         return resolveMavenCommand(repoRoot, new MavenCommandProbe() {
             @Override
             public boolean fileExists(Path path) {
@@ -91,7 +91,7 @@ final class ReleaseProcessUtils {
         });
     }
 
-    static MavenCommand resolveMavenCommand(Path repoRoot, MavenCommandProbe probe) throws IOException, InterruptedException {
+    public static MavenCommand resolveMavenCommand(Path repoRoot, MavenCommandProbe probe) throws IOException, InterruptedException {
         Path wrapperPath = repoRoot.resolve(mavenWrapperPath());
         if (probe.fileExists(wrapperPath)) {
             return new MavenCommand(mavenWrapperPath(), "wrapper");
@@ -102,7 +102,7 @@ final class ReleaseProcessUtils {
         return null;
     }
 
-    static void closeQuietly(InputStream inputStream) {
+    public static void closeQuietly(InputStream inputStream) {
         try {
             inputStream.close();
         } catch (IOException ignored) {

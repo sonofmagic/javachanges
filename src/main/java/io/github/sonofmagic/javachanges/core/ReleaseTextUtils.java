@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-final class ReleaseTextUtils {
+public final class ReleaseTextUtils {
     private ReleaseTextUtils() {
     }
 
@@ -57,11 +57,11 @@ final class ReleaseTextUtils {
         return value;
     }
 
-    static boolean isTrue(String value) {
+    public static boolean isTrue(String value) {
         return "true".equalsIgnoreCase(trimToNull(value));
     }
 
-    static String requireEnv(String name) {
+    public static String requireEnv(String name) {
         String value = trimToNull(System.getenv(name));
         if (value == null) {
             throw new IllegalStateException("缺少环境变量: " + name);
@@ -69,12 +69,12 @@ final class ReleaseTextUtils {
         return value;
     }
 
-    static String firstNonBlank(String first, String second) {
+    public static String firstNonBlank(String first, String second) {
         String candidate = trimToNull(first);
         return candidate != null ? candidate : trimToNull(second);
     }
 
-    static boolean isBlank(String value) {
+    public static boolean isBlank(String value) {
         return trimToNull(value) == null;
     }
 
@@ -87,7 +87,7 @@ final class ReleaseTextUtils {
             .replace("'", "&apos;");
     }
 
-    static String renderCommand(List<String> command) {
+    public static String renderCommand(List<String> command) {
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < command.size(); i++) {
             if (i > 0) {
@@ -105,7 +105,7 @@ final class ReleaseTextUtils {
         return "'" + value.replace("'", "'\"'\"'") + "'";
     }
 
-    static String trimToNull(String value) {
+    public static String trimToNull(String value) {
         if (value == null) {
             return null;
         }
