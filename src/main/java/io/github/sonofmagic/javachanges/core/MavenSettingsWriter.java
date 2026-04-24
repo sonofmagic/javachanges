@@ -10,8 +10,8 @@ import static io.github.sonofmagic.javachanges.core.ReleaseUtils.firstNonBlank;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.xmlEscape;
 
-final class MavenSettingsWriter {
-    enum RepositoryMode {
+public final class MavenSettingsWriter {
+    public enum RepositoryMode {
         RELEASE,
         SNAPSHOT
     }
@@ -19,11 +19,11 @@ final class MavenSettingsWriter {
     private MavenSettingsWriter() {
     }
 
-    static void write(Path outputPath) throws IOException {
+    public static void write(Path outputPath) throws IOException {
         write(outputPath, true, true);
     }
 
-    static void write(Path outputPath, RepositoryMode mode) throws IOException {
+    public static void write(Path outputPath, RepositoryMode mode) throws IOException {
         write(outputPath, mode == RepositoryMode.RELEASE, mode == RepositoryMode.SNAPSHOT);
     }
 
@@ -81,12 +81,12 @@ final class MavenSettingsWriter {
         Files.write(outputPath, Collections.singletonList(xml.toString()), StandardCharsets.UTF_8);
     }
 
-    static String releaseServerId() {
+    public static String releaseServerId() {
         String id = trimToNull(System.getenv("MAVEN_RELEASE_REPOSITORY_ID"));
         return id == null ? "maven-releases" : id;
     }
 
-    static String snapshotServerId() {
+    public static String snapshotServerId() {
         String id = trimToNull(System.getenv("MAVEN_SNAPSHOT_REPOSITORY_ID"));
         return id == null ? "maven-snapshots" : id;
     }

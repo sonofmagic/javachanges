@@ -56,7 +56,7 @@ public final class ReleaseUtils {
         return ReleaseModuleUtils.detectKnownModules(repoRoot);
     }
 
-    static void assertKnownModule(Path repoRoot, String module) {
+    public static void assertKnownModule(Path repoRoot, String module) {
         ReleaseModuleUtils.assertKnownModule(repoRoot, module);
     }
 
@@ -64,11 +64,11 @@ public final class ReleaseUtils {
         return ReleaseModuleUtils.moduleSelectorArgs(repoRoot, module);
     }
 
-    static String releaseVersionFromTag(String tag) {
+    public static String releaseVersionFromTag(String tag) {
         return ReleaseModuleUtils.releaseVersionFromTag(tag);
     }
 
-    static String releaseModuleFromTag(String tag) {
+    public static String releaseModuleFromTag(String tag) {
         return ReleaseModuleUtils.releaseModuleFromTag(tag);
     }
 
@@ -96,7 +96,7 @@ public final class ReleaseUtils {
         return ReleaseTextUtils.xmlEscape(value);
     }
 
-    static String gitTextAllowEmpty(Path repoRoot, String... args) throws IOException, InterruptedException {
+    public static String gitTextAllowEmpty(Path repoRoot, String... args) throws IOException, InterruptedException {
         return ReleaseProcessUtils.gitTextAllowEmpty(repoRoot, args);
     }
 

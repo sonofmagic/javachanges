@@ -1,5 +1,7 @@
 package io.github.sonofmagic.javachanges.core;
 
+import io.github.sonofmagic.javachanges.core.publish.PublishRequest;
+import io.github.sonofmagic.javachanges.core.publish.PublishSupport;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 

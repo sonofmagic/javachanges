@@ -14,14 +14,14 @@ import java.util.Map;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.releaseModuleFromTag;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.releaseVersionFromTag;
 
-final class ReleaseNotesGenerator {
+public final class ReleaseNotesGenerator {
     private final Path repoRoot;
 
-    ReleaseNotesGenerator(Path repoRoot) {
+    public ReleaseNotesGenerator(Path repoRoot) {
         this.repoRoot = repoRoot;
     }
 
-    void writeReleaseNotes(String tag, Path outputPath) throws IOException, InterruptedException {
+    public void writeReleaseNotes(String tag, Path outputPath) throws IOException, InterruptedException {
         String releaseVersion = releaseVersionFromTag(tag);
         String releaseDate = gitSingleLine("log", "-1", "--format=%cs", tag);
 

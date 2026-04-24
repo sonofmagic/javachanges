@@ -8,11 +8,11 @@ import java.util.Map;
 
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
 
-final class AutomationJsonSupport {
+public final class AutomationJsonSupport {
     private AutomationJsonSupport() {
     }
 
-    static String errorJson(String command, Exception exception) {
+    public static String errorJson(String command, Exception exception) {
         String message = trimToNull(exception.getMessage());
         if (message == null) {
             message = exception.getClass().getSimpleName();
@@ -25,11 +25,11 @@ final class AutomationJsonSupport {
         return report.toJson();
     }
 
-    static boolean isText(OutputFormat format) {
+    public static boolean isText(OutputFormat format) {
         return format != OutputFormat.JSON;
     }
 
-    static void print(PrintStream out, boolean textOutput, AutomationReport report, String textMessage) {
+    public static void print(PrintStream out, boolean textOutput, AutomationReport report, String textMessage) {
         if (textOutput) {
             out.println(textMessage);
         } else {
@@ -37,7 +37,7 @@ final class AutomationJsonSupport {
         }
     }
 
-    static void printLines(PrintStream out, boolean textOutput, String... lines) {
+    public static void printLines(PrintStream out, boolean textOutput, String... lines) {
         if (!textOutput) {
             return;
         }
@@ -46,30 +46,30 @@ final class AutomationJsonSupport {
         }
     }
 
-    static final class AutomationReport {
-        boolean ok = true;
-        final String command;
-        String action;
-        boolean skipped;
-        String reason;
-        String releaseVersion;
-        String effectiveVersion;
-        String releaseModule;
-        String tag;
-        String tagStrategy;
-        List<String> tags;
-        String releaseNotesFile;
-        String projectId;
-        boolean execute;
-        boolean dryRun;
-        String snapshotVersionMode;
-        boolean snapshotBuildStampApplied;
+    public static final class AutomationReport {
+        public boolean ok = true;
+        public final String command;
+        public String action;
+        public boolean skipped;
+        public String reason;
+        public String releaseVersion;
+        public String effectiveVersion;
+        public String releaseModule;
+        public String tag;
+        public String tagStrategy;
+        public List<String> tags;
+        public String releaseNotesFile;
+        public String projectId;
+        public boolean execute;
+        public boolean dryRun;
+        public String snapshotVersionMode;
+        public boolean snapshotBuildStampApplied;
 
-        AutomationReport(String command) {
+        public AutomationReport(String command) {
             this.command = command;
         }
 
-        String toJson() {
+        public String toJson() {
             Map<String, Object> payload = new LinkedHashMap<String, Object>();
             payload.put("ok", Boolean.valueOf(ok));
             payload.put("command", command);

@@ -206,7 +206,7 @@ public final class ChangesetConfigSupport {
             return snapshotBranch;
         }
 
-        SnapshotVersionMode snapshotVersionMode() {
+        public SnapshotVersionMode snapshotVersionMode() {
             return snapshotVersionMode;
         }
 

@@ -1,5 +1,8 @@
 package io.github.sonofmagic.javachanges.core;
 
+import io.github.sonofmagic.javachanges.core.publish.PublishPlanSupport;
+import io.github.sonofmagic.javachanges.core.publish.PublishRequest;
+import io.github.sonofmagic.javachanges.core.publish.PublishRuntime;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 

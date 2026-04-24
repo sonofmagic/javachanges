@@ -8,14 +8,14 @@ import static io.github.sonofmagic.javachanges.core.ReleaseUtils.releaseModuleFr
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.releaseVersionFromTag;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.stripSnapshot;
 
-final class VersionSupport {
+public final class VersionSupport {
     private final Path repoRoot;
 
-    VersionSupport(Path repoRoot) {
+    public VersionSupport(Path repoRoot) {
         this.repoRoot = repoRoot;
     }
 
-    String readRevision() throws IOException {
+    public String readRevision() throws IOException {
         try {
             return PomModelSupport.readRevision(repoRoot.resolve("pom.xml"));
         } catch (IllegalStateException exception) {
@@ -23,14 +23,14 @@ final class VersionSupport {
         }
     }
 
-    void assertSnapshot() throws IOException {
+    public void assertSnapshot() throws IOException {
         String version = readRevision();
         if (!version.endsWith("-SNAPSHOT")) {
             throw new IllegalStateException("当前项目版本不是 SNAPSHOT: " + version);
         }
     }
 
-    String resolveSnapshotPublishVersion(String buildStamp) throws IOException {
+    public String resolveSnapshotPublishVersion(String buildStamp) throws IOException {
         String version = readRevision();
         if (!version.endsWith("-SNAPSHOT")) {
             throw new IllegalStateException("当前项目版本不是 SNAPSHOT: " + version);
@@ -39,7 +39,7 @@ final class VersionSupport {
         return stripSnapshot(version) + "-" + normalizedBuildStamp + "-SNAPSHOT";
     }
 
-    String snapshotRevision() throws IOException {
+    public String snapshotRevision() throws IOException {
         String version = readRevision();
         if (!version.endsWith("-SNAPSHOT")) {
             throw new IllegalStateException("当前项目版本不是 SNAPSHOT: " + version);
@@ -58,7 +58,7 @@ final class VersionSupport {
         return normalized;
     }
 
-    void assertReleaseTag(String tag) throws IOException {
+    public void assertReleaseTag(String tag) throws IOException {
         String version = readRevision();
         String releaseVersion = releaseVersionFromTag(tag);
         String module = releaseModuleFromTag(tag);
