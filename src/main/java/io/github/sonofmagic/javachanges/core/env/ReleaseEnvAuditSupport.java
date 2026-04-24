@@ -15,11 +15,13 @@ final class ReleaseEnvAuditSupport {
     private final Path repoRoot;
     private final PrintStream out;
     private final ReleaseEnvRuntime runtime;
+    private final ReleaseEnvDoctorSupport doctorSupport;
 
     ReleaseEnvAuditSupport(Path repoRoot, PrintStream out, ReleaseEnvRuntime runtime) {
         this.repoRoot = repoRoot;
         this.out = out;
         this.runtime = runtime;
+        this.doctorSupport = new ReleaseEnvDoctorSupport(out);
     }
 
     boolean auditVars(AuditVarsRequest request, LoadedEnv env, String envPath) throws IOException, InterruptedException {
@@ -43,9 +45,8 @@ final class ReleaseEnvAuditSupport {
         }
         if (failed) {
             if (request.format == OutputFormat.JSON) {
-                out.println(ReleaseEnvJsonSupport.commandReportJson("audit-vars", false, envPath, request.platform.id,
-                    false, sections, Collections.<String>emptyList(),
-                    "平台变量审计失败，请修正 MISSING_REMOTE / MISMATCH 项后重试"));
+                out.println(doctorSupport.commandReportJson("audit-vars", false, envPath, request.platform.id,
+                    sections, Collections.<String>emptyList(), "平台变量审计失败，请修正 MISSING_REMOTE / MISMATCH 项后重试"));
                 return false;
             }
             throw new IllegalStateException("平台变量审计失败，请修正 MISSING_REMOTE / MISMATCH 项后重试");
@@ -54,8 +55,8 @@ final class ReleaseEnvAuditSupport {
             out.println("平台变量审计通过");
         }
         if (request.format == OutputFormat.JSON) {
-            out.println(ReleaseEnvJsonSupport.commandReportJson("audit-vars", true, envPath, request.platform.id,
-                false, sections, Collections.<String>emptyList(), null));
+            out.println(doctorSupport.commandReportJson("audit-vars", true, envPath, request.platform.id,
+                sections, Collections.<String>emptyList(), null));
         }
         return true;
     }
@@ -98,7 +99,7 @@ final class ReleaseEnvAuditSupport {
         }
         for (EnvEntry entry : ReleaseEnvCatalog.GITHUB_ACTIONS_VARIABLES) {
             AuditOutcome outcome = auditValue(env.value(entry.name), githubVariables.get(entry.name), true);
-            recordAuditStatus(textOutput, githubVariablesSection, entry.name, outcome);
+            doctorSupport.recordStatus(textOutput, githubVariablesSection, entry.name, outcome.message);
             if (outcome.isFailure()) {
                 failed = true;
             }
@@ -110,7 +111,7 @@ final class ReleaseEnvAuditSupport {
         }
         for (EnvEntry entry : ReleaseEnvCatalog.GITHUB_ACTIONS_SECRETS) {
             AuditOutcome outcome = auditPresence(env.value(entry.name), githubSecrets.get(entry.name));
-            recordAuditStatus(textOutput, githubSecretsSection, entry.name, outcome);
+            doctorSupport.recordStatus(textOutput, githubSecretsSection, entry.name, outcome.message);
             if (outcome.isFailure()) {
                 failed = true;
             }
@@ -151,7 +152,7 @@ final class ReleaseEnvAuditSupport {
         }
         for (EnvEntry entry : ReleaseEnvCatalog.GITLAB_VARIABLES) {
             AuditOutcome outcome = auditValue(env.value(entry.name), remoteEnv.value(entry.name), true);
-            recordAuditStatus(textOutput, gitlabSection, entry.name, outcome);
+            doctorSupport.recordStatus(textOutput, gitlabSection, entry.name, outcome.message);
             if (outcome.isFailure()) {
                 failed = true;
             }
@@ -163,8 +164,8 @@ final class ReleaseEnvAuditSupport {
                                   String error) {
         String envPath = runtime.relativizePath(env.path);
         if (request.format == OutputFormat.JSON) {
-            out.println(ReleaseEnvJsonSupport.commandReportJson("audit-vars", false, envPath, request.platform.id,
-                false, sections, Collections.<String>emptyList(), error));
+            out.println(doctorSupport.commandReportJson("audit-vars", false, envPath, request.platform.id,
+                sections, Collections.<String>emptyList(), error));
             throw new AuditPreconditionFailure(false);
         }
         throw new IllegalStateException(error);
@@ -211,15 +212,6 @@ final class ReleaseEnvAuditSupport {
             return AuditOutcome.success("REMOTE_ONLY");
         }
         return AuditOutcome.success("SKIPPED");
-    }
-
-    private void recordAuditStatus(boolean textOutput, ReleaseEnvJsonSupport.JsonSection section, String label, AuditOutcome outcome) {
-        if (textOutput) {
-            out.printf("%-40s %s%n", label, outcome.message);
-        }
-        if (section != null) {
-            section.add(label, outcome.message);
-        }
     }
 
     static final class AuditPreconditionFailure extends RuntimeException {

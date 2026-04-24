@@ -1,6 +1,7 @@
 package io.github.sonofmagic.javachanges.core.gitlab;
 
 import io.github.sonofmagic.javachanges.core.ReleaseAutomationSupport;
+import io.github.sonofmagic.javachanges.core.automation.AbstractReleaseAutomationSupport;
 import io.github.sonofmagic.javachanges.core.automation.AutomationJsonSupport;
 import io.github.sonofmagic.javachanges.core.automation.ReleaseArtifactSupport;
 import io.github.sonofmagic.javachanges.core.automation.ReleaseNotesGenerator;
@@ -19,45 +20,32 @@ import static io.github.sonofmagic.javachanges.core.ReleaseUtils.RELEASE_PLAN_JS
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.firstNonBlank;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
 
-public final class GitlabReleaseSupport {
-    private final Path repoRoot;
-    private final PrintStream out;
+public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport {
     private final GitlabReleaseRuntime runtime;
     private final GitlabMergeRequestClient apiClient;
-    private final ReleaseArtifactSupport artifactSupport;
-    private final ReleaseAutomationSupport automationSupport;
 
     public GitlabReleaseSupport(Path repoRoot, PrintStream out) {
         this(repoRoot, out, new GitlabReleaseRuntime(repoRoot), new GitlabApiClient());
     }
 
     public GitlabReleaseSupport(Path repoRoot, PrintStream out, GitlabReleaseRuntime runtime, GitlabMergeRequestClient apiClient) {
-        this.repoRoot = repoRoot;
-        this.out = out;
+        super(repoRoot, out);
         this.runtime = runtime;
         this.apiClient = apiClient;
-        this.artifactSupport = new ReleaseArtifactSupport(repoRoot);
-        this.automationSupport = new ReleaseAutomationSupport(repoRoot);
     }
 
     public void planMergeRequest(GitlabReleasePlanRequest request) throws IOException, InterruptedException {
-        boolean textOutput = AutomationJsonSupport.isText(request.format);
-        AutomationJsonSupport.AutomationReport report = new AutomationJsonSupport.AutomationReport("gitlab-release-plan");
+        boolean textOutput = isTextOutput(request.format);
+        AutomationJsonSupport.AutomationReport report =
+            newAutomationReport("gitlab-release-plan", "plan-merge-request", request.execute);
         report.projectId = request.projectId;
-        report.action = "plan-merge-request";
-        report.execute = request.execute;
-        report.dryRun = !request.execute;
         if (trimToNull(request.projectId) == null) {
             throw new IllegalArgumentException("Missing GitLab project id. Pass --project-id or set CI_PROJECT_ID.");
         }
 
         ReleasePlan plan = automationSupport.plan();
-        ReleaseAutomationSupport.ReleaseDescriptor release = automationSupport.descriptorFromPlan(plan);
-        report.releaseVersion = release.releaseVersion;
-        if (!plan.hasPendingChangesets()) {
-            report.skipped = true;
-            report.reason = "No pending changesets.";
-            AutomationJsonSupport.print(out, textOutput, report, "No pending changesets. Skip release MR.");
+        ReleaseAutomationSupport.ReleaseDescriptor release = descriptorFromPlan(plan, report);
+        if (skipWhenNoPendingChangesets(plan, report, textOutput, "No pending changesets. Skip release MR.")) {
             return;
         }
 
@@ -72,10 +60,7 @@ public final class GitlabReleaseSupport {
             "Release version: " + release.releaseVersion
         );
 
-        if (!request.execute) {
-            report.reason = "Dry-run only.";
-            AutomationJsonSupport.print(out, textOutput, report,
-                "Dry-run only. Use --execute true to create/update the GitLab MR.");
+        if (skipDryRun(report, textOutput, "Dry-run only. Use --execute true to create/update the GitLab MR.")) {
             return;
         }
 
@@ -83,7 +68,7 @@ public final class GitlabReleaseSupport {
         runtime.runGit("checkout", "-B", releaseBranch);
         RepoFiles.applyPlan(repoRoot, plan);
         String description = new String(
-            Files.readAllBytes(automationSupport.releasePlanMarkdownFile()),
+            Files.readAllBytes(releasePlanMarkdownFile()),
             StandardCharsets.UTF_8
         );
         runtime.runGit("add", "pom.xml", "CHANGELOG.md", CHANGESETS_DIR);
@@ -115,11 +100,9 @@ public final class GitlabReleaseSupport {
     }
 
     public void tagFromReleasePlan(GitlabTagRequest request) throws IOException, InterruptedException {
-        boolean textOutput = AutomationJsonSupport.isText(request.format);
-        AutomationJsonSupport.AutomationReport report = new AutomationJsonSupport.AutomationReport("gitlab-tag-from-plan");
-        report.action = "tag-from-plan";
-        report.execute = request.execute;
-        report.dryRun = !request.execute;
+        boolean textOutput = isTextOutput(request.format);
+        AutomationJsonSupport.AutomationReport report =
+            newAutomationReport("gitlab-tag-from-plan", "tag-from-plan", request.execute);
         if (trimToNull(request.currentBranch) != null && trimToNull(request.releaseBranch) != null
             && request.currentBranch.equals(request.releaseBranch)) {
             report.skipped = true;
@@ -154,28 +137,19 @@ public final class GitlabReleaseSupport {
             return;
         }
 
-        ReleaseAutomationSupport.ReleaseDescriptor release = automationSupport.descriptorFromManifest();
-        report.releaseVersion = release.releaseVersion;
-        report.tagStrategy = release.tagStrategy.id;
-        report.tags = release.tagNames();
-        report.tag = release.releaseTargets.size() == 1 ? release.tagNames().get(0) : null;
+        ReleaseAutomationSupport.ReleaseDescriptor release = descriptorFromManifest(report);
         List<String> tagNames = release.tagNames();
         AutomationJsonSupport.printLines(out, textOutput, "Release tags: " + tagNames);
 
         String remoteUrl = apiClient.authenticatedRemoteUrl();
         for (String tagName : tagNames) {
             if (runtime.remoteTagExists(tagName, remoteUrl)) {
-                report.skipped = true;
-                report.reason = "Tag already exists remotely: " + tagName;
-                AutomationJsonSupport.print(out, textOutput, report, "Tag already exists remotely. Skip.");
+                skipWhenRemoteTagExists(report, textOutput, tagName);
                 return;
             }
         }
 
-        if (!request.execute) {
-            report.reason = "Dry-run only.";
-            AutomationJsonSupport.print(out, textOutput, report,
-                "Dry-run only. Use --execute true to create and push the release tag.");
+        if (skipDryRun(report, textOutput, "Dry-run only. Use --execute true to create and push the release tag.")) {
             return;
         }
 
@@ -189,12 +163,10 @@ public final class GitlabReleaseSupport {
     }
 
     public void syncRelease(GitlabReleaseRequest request) throws IOException, InterruptedException {
-        boolean textOutput = AutomationJsonSupport.isText(request.format);
-        AutomationJsonSupport.AutomationReport report = new AutomationJsonSupport.AutomationReport("gitlab-release");
-        report.action = "sync-release";
+        boolean textOutput = isTextOutput(request.format);
+        AutomationJsonSupport.AutomationReport report =
+            newAutomationReport("gitlab-release", "sync-release", request.execute);
         report.projectId = request.projectId;
-        report.execute = request.execute;
-        report.dryRun = !request.execute;
 
         String tagName = trimToNull(request.tag);
         if (tagName == null) {

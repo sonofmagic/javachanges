@@ -14,11 +14,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.assertKnownModule;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.moduleSelectorArgs;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.releaseModuleFromTag;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.releaseVersionFromTag;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
+import static io.github.sonofmagic.javachanges.core.ReleaseModuleUtils.assertKnownModule;
+import static io.github.sonofmagic.javachanges.core.ReleaseModuleUtils.moduleSelectorArgs;
+import static io.github.sonofmagic.javachanges.core.ReleaseModuleUtils.releaseModuleFromTag;
+import static io.github.sonofmagic.javachanges.core.ReleaseModuleUtils.releaseVersionFromTag;
+import static io.github.sonofmagic.javachanges.core.ReleaseTextUtils.trimToNull;
 
 @Command(name = "add", mixinStandardHelpOptions = true,
     description = "Create a changeset file.")

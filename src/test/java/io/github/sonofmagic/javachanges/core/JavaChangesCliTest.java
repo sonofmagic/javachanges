@@ -393,9 +393,9 @@ class JavaChangesCliTest {
     @Test
     void resolveMavenCommandPrefersWrapper(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, false);
-        Files.write(repoRoot.resolve(ReleaseUtils.mavenWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.mavenWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
 
-        MavenCommand command = ReleaseUtils.resolveMavenCommand(repoRoot, new MavenCommandProbe() {
+        MavenCommand command = ReleaseProcessUtils.resolveMavenCommand(repoRoot, new MavenCommandProbe() {
             @Override
             public boolean fileExists(Path path) {
                 return Files.exists(path);
@@ -407,7 +407,7 @@ class JavaChangesCliTest {
             }
         });
 
-        assertEquals(ReleaseUtils.mavenWrapperPath(), command.command);
+        assertEquals(ReleaseProcessUtils.mavenWrapperPath(), command.command);
         assertEquals("wrapper", command.source);
     }
 
@@ -415,7 +415,7 @@ class JavaChangesCliTest {
     void resolveMavenCommandFallsBackToSystemMaven(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, false);
 
-        MavenCommand command = ReleaseUtils.resolveMavenCommand(repoRoot, new MavenCommandProbe() {
+        MavenCommand command = ReleaseProcessUtils.resolveMavenCommand(repoRoot, new MavenCommandProbe() {
             @Override
             public boolean fileExists(Path path) {
                 return false;
@@ -435,7 +435,7 @@ class JavaChangesCliTest {
     void resolveMavenCommandReturnsNullWhenUnavailable(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, false);
 
-        MavenCommand command = ReleaseUtils.resolveMavenCommand(repoRoot, new MavenCommandProbe() {
+        MavenCommand command = ReleaseProcessUtils.resolveMavenCommand(repoRoot, new MavenCommandProbe() {
             @Override
             public boolean fileExists(Path path) {
                 return false;

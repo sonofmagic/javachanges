@@ -11,7 +11,7 @@ public enum SnapshotVersionMode {
     }
 
     public static SnapshotVersionMode parse(String value, SnapshotVersionMode defaultValue) {
-        String normalized = ReleaseUtils.trimToNull(value);
+        String normalized = ReleaseTextUtils.trimToNull(value);
         if (normalized == null) {
             return defaultValue;
         }

@@ -2,6 +2,9 @@ package io.github.sonofmagic.javachanges.core;
 
 import io.github.sonofmagic.javachanges.core.automation.AutomationJsonSupport;
 import io.github.sonofmagic.javachanges.core.env.ReleaseEnvSupport;
+import io.github.sonofmagic.javachanges.core.github.GithubReleaseSupport;
+import io.github.sonofmagic.javachanges.core.gitlab.GitlabReleaseSupport;
+import io.github.sonofmagic.javachanges.core.publish.PublishSupport;
 import picocli.CommandLine.ParentCommand;
 
 import java.io.PrintStream;
@@ -10,7 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
+import static io.github.sonofmagic.javachanges.core.ReleaseTextUtils.trimToNull;
 
 abstract class AbstractCliCommand implements Callable<Integer> {
     static final class CliOption {
@@ -34,6 +37,11 @@ abstract class AbstractCliCommand implements Callable<Integer> {
     }
 
     @FunctionalInterface
+    interface ThrowingBooleanSupplier {
+        boolean get() throws Exception;
+    }
+
+    @FunctionalInterface
     interface ErrorJsonRenderer {
         String render(String command, Exception exception);
     }
@@ -51,6 +59,22 @@ abstract class AbstractCliCommand implements Callable<Integer> {
 
     final Path repoRoot() {
         return root.repoRoot();
+    }
+
+    final ReleaseEnvSupport envSupport() {
+        return new ReleaseEnvSupport(repoRoot(), out());
+    }
+
+    final GithubReleaseSupport githubReleaseSupport() {
+        return new GithubReleaseSupport(repoRoot(), out());
+    }
+
+    final GitlabReleaseSupport gitlabReleaseSupport() {
+        return new GitlabReleaseSupport(repoRoot(), out());
+    }
+
+    final PublishSupport publishSupport() {
+        return new PublishSupport(repoRoot(), out());
     }
 
     final Map<String, String> options() {
@@ -91,28 +115,27 @@ abstract class AbstractCliCommand implements Callable<Integer> {
         return 0;
     }
 
+    final int failure() {
+        return 1;
+    }
+
     final int runAutomationCommand(String command, OutputFormat format, ThrowingRunnable action) throws Exception {
-        return runJsonCommand(command, format, new ErrorJsonRenderer() {
-            @Override
-            public String render(String name, Exception exception) {
-                return AutomationJsonSupport.errorJson(name, exception);
-            }
-        }, new ThrowingIntSupplier() {
-            @Override
-            public int get() throws Exception {
+        return runJsonCommand(command, format,
+            (name, exception) -> AutomationJsonSupport.errorJson(name, exception),
+            () -> {
                 action.run();
                 return success();
-            }
-        });
+            });
     }
 
     final int runEnvJsonCommand(String command, OutputFormat format, ThrowingIntSupplier action) throws Exception {
-        return runJsonCommand(command, format, new ErrorJsonRenderer() {
-            @Override
-            public String render(String name, Exception exception) {
-                return ReleaseEnvSupport.errorJson(name, exception);
-            }
-        }, action);
+        return runJsonCommand(command, format,
+            (name, exception) -> ReleaseEnvSupport.errorJson(name, exception),
+            action);
+    }
+
+    final int runEnvBooleanCommand(String command, OutputFormat format, ThrowingBooleanSupplier action) throws Exception {
+        return runEnvJsonCommand(command, format, () -> action.get() ? success() : failure());
     }
 
     final int runJsonCommand(String command, OutputFormat format, ErrorJsonRenderer errorJsonRenderer,

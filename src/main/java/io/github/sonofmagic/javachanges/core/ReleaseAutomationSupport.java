@@ -12,10 +12,11 @@ import io.github.sonofmagic.javachanges.core.plan.ReleasePlan;
 import io.github.sonofmagic.javachanges.core.plan.ReleasePlanner;
 import io.github.sonofmagic.javachanges.core.plan.RepoFiles;
 
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.CHANGESETS_DIR;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.RELEASE_PLAN_MD;
-
 public final class ReleaseAutomationSupport {
+    private static final String CHANGESETS_DIR = ".changesets";
+    private static final String RELEASE_PLAN_JSON = "release-plan.json";
+    private static final String RELEASE_PLAN_MD = "release-plan.md";
+
     private final Path repoRoot;
 
     public ReleaseAutomationSupport(Path repoRoot) {
@@ -105,7 +106,7 @@ public final class ReleaseAutomationSupport {
 
     private JsonNode readManifest() throws IOException {
         return ReleaseJsonUtils.readTree(new String(
-            java.nio.file.Files.readAllBytes(repoRoot.resolve(CHANGESETS_DIR).resolve(ReleaseUtils.RELEASE_PLAN_JSON)),
+            java.nio.file.Files.readAllBytes(repoRoot.resolve(CHANGESETS_DIR).resolve(RELEASE_PLAN_JSON)),
             StandardCharsets.UTF_8
         ));
     }

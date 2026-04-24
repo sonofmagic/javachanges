@@ -172,21 +172,10 @@ final class ReleaseEnvDoctorLocalSupport {
 
         if (state.envPresent && !runtime.isExampleFile(envPath)) {
             LoadedEnv env = LoadedEnv.load(envPath);
-            for (EnvEntry entry : ReleaseEnvCatalog.COMMON_VARIABLES) {
-                EnvValue value = env.value(entry.name);
-                String status = doctorSupport.requiredStatus(value, entry.required);
-                doctorSupport.recordStatus(textOutput, envSection, entry.name, status);
-                if ("MISSING".equals(status) || "PLACEHOLDER".equals(status)) {
-                    if (entry.required) {
-                        state.failed = true;
-                    }
-                    if (!"OPTIONAL".equals(status)) {
-                        state.envNeedsEdit = true;
-                    }
-                }
-            }
-            String gitlabTokenStatus = doctorSupport.requiredStatus(env.value("GITLAB_RELEASE_TOKEN"), false);
-            doctorSupport.recordStatus(textOutput, envSection, "GITLAB_RELEASE_TOKEN", gitlabTokenStatus);
+            ReleaseEnvDoctorSupport.EnvStatusSummary summary =
+                doctorSupport.recordCommonEnvStatuses(env, textOutput, envSection);
+            state.failed = state.failed || summary.failed;
+            state.envNeedsEdit = state.envNeedsEdit || summary.needsEdit;
         } else if (state.envPresent) {
             doctorSupport.recordStatus(textOutput, envSection, "env file type", "INVALID");
             state.failed = true;
@@ -239,24 +228,14 @@ final class ReleaseEnvDoctorLocalSupport {
             out.println();
             out.println("== 仓库标识 ==");
         }
-        doctorSupport.recordStatus(textOutput, repoSection, "GITHUB_REPO", repoStatusValue(request.githubRepo));
-        doctorSupport.recordStatus(textOutput, repoSection, "GITLAB_REPO", repoStatusValue(request.gitlabRepo));
-        if (!isBlank(request.githubRepo) && !request.githubRepo.contains("/")) {
+        doctorSupport.recordStatus(textOutput, repoSection, "GITHUB_REPO", doctorSupport.repoStatusValue(request.githubRepo));
+        doctorSupport.recordStatus(textOutput, repoSection, "GITLAB_REPO", doctorSupport.repoStatusValue(request.gitlabRepo));
+        if (!isBlank(request.githubRepo) && !doctorSupport.isValidRepoIdentifier(request.githubRepo)) {
             state.failed = true;
         }
-        if (!isBlank(request.gitlabRepo) && !request.gitlabRepo.contains("/")) {
+        if (!isBlank(request.gitlabRepo) && !doctorSupport.isValidRepoIdentifier(request.gitlabRepo)) {
             state.failed = true;
         }
-    }
-
-    private String repoStatusValue(String value) {
-        if (isBlank(value)) {
-            return "NOT_SET";
-        }
-        if (value.contains("/")) {
-            return value;
-        }
-        return "INVALID";
     }
 
     private static final class DoctorLocalState {

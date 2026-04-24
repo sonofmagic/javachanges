@@ -1,8 +1,8 @@
 package io.github.sonofmagic.javachanges.core.github;
 
 import io.github.sonofmagic.javachanges.core.ReleaseAutomationSupport;
+import io.github.sonofmagic.javachanges.core.automation.AbstractReleaseAutomationSupport;
 import io.github.sonofmagic.javachanges.core.automation.AutomationJsonSupport;
-import io.github.sonofmagic.javachanges.core.automation.ReleaseArtifactSupport;
 import io.github.sonofmagic.javachanges.core.automation.ReleaseNotesGenerator;
 import io.github.sonofmagic.javachanges.core.plan.ReleasePlan;
 import io.github.sonofmagic.javachanges.core.plan.RepoFiles;
@@ -19,42 +19,29 @@ import static io.github.sonofmagic.javachanges.core.ReleaseUtils.CHANGESETS_DIR;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.firstNonBlank;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
 
-public final class GithubReleaseSupport {
-    private final Path repoRoot;
-    private final PrintStream out;
+public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport {
     private final GithubReleaseRuntime runtime;
-    private final ReleaseArtifactSupport artifactSupport;
-    private final ReleaseAutomationSupport automationSupport;
 
     public GithubReleaseSupport(Path repoRoot, PrintStream out) {
         this(repoRoot, out, new GithubReleaseRuntime(repoRoot));
     }
 
     public GithubReleaseSupport(Path repoRoot, PrintStream out, GithubReleaseRuntime runtime) {
-        this.repoRoot = repoRoot;
-        this.out = out;
+        super(repoRoot, out);
         this.runtime = runtime;
-        this.artifactSupport = new ReleaseArtifactSupport(repoRoot);
-        this.automationSupport = new ReleaseAutomationSupport(repoRoot);
     }
 
     public void planPullRequest(GithubReleasePlanRequest request) throws IOException, InterruptedException {
-        boolean textOutput = AutomationJsonSupport.isText(request.format);
-        AutomationJsonSupport.AutomationReport report = new AutomationJsonSupport.AutomationReport("github-release-plan");
-        report.action = "plan-pull-request";
-        report.execute = request.execute;
-        report.dryRun = !request.execute;
+        boolean textOutput = isTextOutput(request.format);
+        AutomationJsonSupport.AutomationReport report =
+            newAutomationReport("github-release-plan", "plan-pull-request", request.execute);
         if (trimToNull(request.githubRepo) == null) {
             throw new IllegalArgumentException("Missing GitHub repo. Pass --github-repo or set GITHUB_REPOSITORY.");
         }
 
         ReleasePlan plan = automationSupport.plan();
-        ReleaseAutomationSupport.ReleaseDescriptor release = automationSupport.descriptorFromPlan(plan);
-        report.releaseVersion = release.releaseVersion;
-        if (!plan.hasPendingChangesets()) {
-            report.skipped = true;
-            report.reason = "No pending changesets.";
-            AutomationJsonSupport.print(out, textOutput, report, "No pending changesets. Skip release PR.");
+        ReleaseAutomationSupport.ReleaseDescriptor release = descriptorFromPlan(plan, report);
+        if (skipWhenNoPendingChangesets(plan, report, textOutput, "No pending changesets. Skip release PR.")) {
             return;
         }
 
@@ -70,10 +57,7 @@ public final class GithubReleaseSupport {
             "Release version: " + release.releaseVersion
         );
 
-        if (!request.execute) {
-            report.reason = "Dry-run only.";
-            AutomationJsonSupport.print(out, textOutput, report,
-                "Dry-run only. Use --execute true to create/update the GitHub PR.");
+        if (skipDryRun(report, textOutput, "Dry-run only. Use --execute true to create/update the GitHub PR.")) {
             return;
         }
 
@@ -96,7 +80,7 @@ public final class GithubReleaseSupport {
             report.action = "create-pull-request";
             report.reason = "Created GitHub pull request.";
             runtime.createPullRequest(request.githubRepo, releaseBranch, targetBranch, title,
-                automationSupport.releasePlanMarkdownFile());
+                releasePlanMarkdownFile());
             AutomationJsonSupport.print(out, textOutput, report, "Created GitHub PR for " + title);
             return;
         }
@@ -104,22 +88,16 @@ public final class GithubReleaseSupport {
         report.action = "update-pull-request";
         report.reason = "Updated GitHub pull request.";
         runtime.updatePullRequest(request.githubRepo, prNumber, title,
-            automationSupport.releasePlanMarkdownFile());
+            releasePlanMarkdownFile());
         AutomationJsonSupport.print(out, textOutput, report, "Updated GitHub PR #" + prNumber);
     }
 
     public void tagFromReleasePlan(GithubTagRequest request) throws IOException, InterruptedException {
-        boolean textOutput = AutomationJsonSupport.isText(request.format);
-        AutomationJsonSupport.AutomationReport report = new AutomationJsonSupport.AutomationReport("github-tag-from-plan");
-        report.action = "tag-from-plan";
-        report.execute = request.execute;
-        report.dryRun = !request.execute;
+        boolean textOutput = isTextOutput(request.format);
+        AutomationJsonSupport.AutomationReport report =
+            newAutomationReport("github-tag-from-plan", "tag-from-plan", request.execute);
         String currentSha = firstNonBlank(trimToNull(request.currentSha), runtime.headSha());
-        ReleaseAutomationSupport.ReleaseDescriptor release = automationSupport.descriptorFromManifest();
-        report.releaseVersion = release.releaseVersion;
-        report.tagStrategy = release.tagStrategy.id;
-        report.tags = release.tagNames();
-        report.tag = release.releaseTargets.size() == 1 ? release.tagNames().get(0) : null;
+        ReleaseAutomationSupport.ReleaseDescriptor release = descriptorFromManifest(report);
         List<String> tagNames = release.tagNames();
 
         AutomationJsonSupport.printLines(out, textOutput,
@@ -129,17 +107,12 @@ public final class GithubReleaseSupport {
 
         for (String tagName : tagNames) {
             if (runtime.remoteTagExists(tagName, "origin")) {
-                report.skipped = true;
-                report.reason = "Tag already exists remotely: " + tagName;
-                AutomationJsonSupport.print(out, textOutput, report, "Tag already exists remotely. Skip.");
+                skipWhenRemoteTagExists(report, textOutput, tagName);
                 return;
             }
         }
 
-        if (!request.execute) {
-            report.reason = "Dry-run only.";
-            AutomationJsonSupport.print(out, textOutput, report,
-                "Dry-run only. Use --execute true to create and push the release tag.");
+        if (skipDryRun(report, textOutput, "Dry-run only. Use --execute true to create and push the release tag.")) {
             return;
         }
 
@@ -153,18 +126,12 @@ public final class GithubReleaseSupport {
     }
 
     public void syncReleaseFromPlan(GithubReleasePublishRequest request) throws IOException, InterruptedException {
-        boolean textOutput = AutomationJsonSupport.isText(request.format);
-        AutomationJsonSupport.AutomationReport report = new AutomationJsonSupport.AutomationReport("github-release-from-plan");
-        report.action = "sync-release";
-        report.execute = request.execute;
-        report.dryRun = !request.execute;
-        ReleaseAutomationSupport.ReleaseDescriptor release = automationSupport.descriptorFromManifest();
+        boolean textOutput = isTextOutput(request.format);
+        AutomationJsonSupport.AutomationReport report =
+            newAutomationReport("github-release-from-plan", "sync-release", request.execute);
+        ReleaseAutomationSupport.ReleaseDescriptor release = descriptorFromManifest(report);
         String releaseVersion = release.releaseVersion;
         String tagName = release.primaryTagName();
-        report.releaseVersion = releaseVersion;
-        report.tag = tagName;
-        report.tagStrategy = release.tagStrategy.id;
-        report.tags = release.tagNames();
         Path notesFile = artifactSupport.resolveReleaseNotesFile(request.releaseNotesFile);
         report.releaseNotesFile = notesFile.toString();
         new ReleaseNotesGenerator(repoRoot).writeReleaseNotes(tagName, notesFile);
@@ -181,10 +148,7 @@ public final class GithubReleaseSupport {
             AutomationJsonSupport.printLines(out, textOutput, "GitHub output file: " + githubOutputFile);
         }
 
-        if (!request.execute) {
-            report.reason = "Dry-run only.";
-            AutomationJsonSupport.print(out, textOutput, report,
-                "Dry-run only. Use --execute true to create/update the GitHub Release.");
+        if (skipDryRun(report, textOutput, "Dry-run only. Use --execute true to create/update the GitHub Release.")) {
             return;
         }
 

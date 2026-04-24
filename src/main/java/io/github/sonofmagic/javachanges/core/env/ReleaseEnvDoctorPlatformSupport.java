@@ -77,15 +77,9 @@ final class ReleaseEnvDoctorPlatformSupport {
             out.println();
             out.println("== 本地 env 检查 ==");
         }
-        for (EnvEntry entry : ReleaseEnvCatalog.COMMON_VARIABLES) {
-            String status = doctorSupport.requiredStatus(env.value(entry.name), entry.required);
-            doctorSupport.recordStatus(textOutput, envSection, entry.name, status);
-            if (("MISSING".equals(status) || "PLACEHOLDER".equals(status)) && entry.required) {
-                state.failed = true;
-            }
-        }
-        String gitlabTokenStatus = doctorSupport.requiredStatus(env.value("GITLAB_RELEASE_TOKEN"), false);
-        doctorSupport.recordStatus(textOutput, envSection, "GITLAB_RELEASE_TOKEN", gitlabTokenStatus);
+        ReleaseEnvDoctorSupport.EnvStatusSummary summary =
+            doctorSupport.recordCommonEnvStatuses(env, textOutput, envSection);
+        state.failed = state.failed || summary.failed;
     }
 
     private void checkGithub(DoctorPlatformRequest request, boolean textOutput,
@@ -116,7 +110,7 @@ final class ReleaseEnvDoctorPlatformSupport {
         if (isBlank(request.githubRepo)) {
             doctorSupport.recordStatus(textOutput, githubSection, "GITHUB_REPO", "MISSING");
             state.failed = true;
-        } else if (!request.githubRepo.contains("/")) {
+        } else if (!doctorSupport.isValidRepoIdentifier(request.githubRepo)) {
             doctorSupport.recordStatus(textOutput, githubSection, "GITHUB_REPO", "INVALID");
             state.failed = true;
         } else {
@@ -154,7 +148,7 @@ final class ReleaseEnvDoctorPlatformSupport {
             state.failed = true;
             return;
         }
-        if (!request.gitlabRepo.contains("/")) {
+        if (!doctorSupport.isValidRepoIdentifier(request.gitlabRepo)) {
             doctorSupport.recordStatus(textOutput, gitlabSection, "GITLAB_REPO", "INVALID");
             state.failed = true;
             return;

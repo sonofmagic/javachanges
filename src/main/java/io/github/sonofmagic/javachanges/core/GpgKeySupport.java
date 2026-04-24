@@ -12,8 +12,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.readAllBytes;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
+import static io.github.sonofmagic.javachanges.core.ReleaseProcessUtils.readAllBytes;
+import static io.github.sonofmagic.javachanges.core.ReleaseTextUtils.trimToNull;
 
 final class GpgKeySupport {
     private final Path workingDirectory;

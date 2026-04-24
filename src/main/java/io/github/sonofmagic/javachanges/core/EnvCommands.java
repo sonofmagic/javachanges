@@ -32,7 +32,7 @@ final class InitEnvCommand extends AbstractCliCommand {
             option("target", target),
             flag("force", force)
         );
-        new ReleaseEnvSupport(repoRoot(), out()).initEnv(InitEnvRequest.fromOptions(options));
+        envSupport().initEnv(InitEnvRequest.fromOptions(options));
         return success();
     }
 }
@@ -46,7 +46,7 @@ final class AuthHelpCommand extends AbstractCliCommand {
     @Override
     public Integer call() throws Exception {
         Map<String, String> options = options(option("platform", platform));
-        new ReleaseEnvSupport(repoRoot(), out()).printAuthHelp(ReleaseUtils.platformOption(options));
+        envSupport().printAuthHelp(ReleaseTextUtils.platformOption(options));
         return success();
     }
 }
@@ -75,13 +75,8 @@ final class RenderVarsCommand extends AbstractCliCommand {
             option("format", format),
             flag("show-secrets", showSecrets)
         );
-        final PlatformEnvRequest request = PlatformEnvRequest.fromOptions(options);
-        return runEnvJsonCommand("render-vars", request.format, new ThrowingIntSupplier() {
-            @Override
-            public int get() throws Exception {
-                return new ReleaseEnvSupport(repoRoot(), out()).renderVars(request) ? success() : 1;
-            }
-        });
+        PlatformEnvRequest request = PlatformEnvRequest.fromOptions(options);
+        return runEnvBooleanCommand("render-vars", request.format, () -> envSupport().renderVars(request));
     }
 }
 
@@ -108,13 +103,8 @@ final class DoctorLocalCommand extends AbstractCliCommand {
             option("gitlab-repo", gitlabRepo),
             option("format", format)
         );
-        final LocalDoctorRequest request = LocalDoctorRequest.fromOptions(options);
-        return runEnvJsonCommand("doctor-local", request.format, new ThrowingIntSupplier() {
-            @Override
-            public int get() throws Exception {
-                return new ReleaseEnvSupport(repoRoot(), out()).doctorLocal(request) ? success() : 1;
-            }
-        });
+        LocalDoctorRequest request = LocalDoctorRequest.fromOptions(options);
+        return runEnvBooleanCommand("doctor-local", request.format, () -> envSupport().doctorLocal(request));
     }
 }
 
@@ -145,13 +135,8 @@ final class DoctorPlatformCommand extends AbstractCliCommand {
             option("gitlab-repo", gitlabRepo),
             option("format", format)
         );
-        final DoctorPlatformRequest request = DoctorPlatformRequest.fromOptions(options);
-        return runEnvJsonCommand("doctor-platform", request.format, new ThrowingIntSupplier() {
-            @Override
-            public int get() throws Exception {
-                return new ReleaseEnvSupport(repoRoot(), out()).doctorPlatform(request) ? success() : 1;
-            }
-        });
+        DoctorPlatformRequest request = DoctorPlatformRequest.fromOptions(options);
+        return runEnvBooleanCommand("doctor-platform", request.format, () -> envSupport().doctorPlatform(request));
     }
 }
 
@@ -184,7 +169,7 @@ final class SyncVarsCommand extends AbstractCliCommand {
             flag("execute", execute),
             flag("show-secrets", showSecrets)
         );
-        new ReleaseEnvSupport(repoRoot(), out()).syncVars(SyncVarsRequest.fromOptions(options));
+        envSupport().syncVars(SyncVarsRequest.fromOptions(options));
         return success();
     }
 }
@@ -216,12 +201,7 @@ final class AuditVarsCommand extends AbstractCliCommand {
             option("gitlab-repo", gitlabRepo),
             option("format", format)
         );
-        final AuditVarsRequest request = AuditVarsRequest.fromOptions(options);
-        return runEnvJsonCommand("audit-vars", request.format, new ThrowingIntSupplier() {
-            @Override
-            public int get() throws Exception {
-                return new ReleaseEnvSupport(repoRoot(), out()).auditVars(request) ? success() : 1;
-            }
-        });
+        AuditVarsRequest request = AuditVarsRequest.fromOptions(options);
+        return runEnvBooleanCommand("audit-vars", request.format, () -> envSupport().auditVars(request));
     }
 }

@@ -47,12 +47,8 @@ final class PreflightCommand extends AbstractCliCommand {
             option("format", format)
         );
         PublishRequest request = PublishRequest.fromOptions(options, false);
-        return runAutomationCommand("preflight", request.format, new ThrowingRunnable() {
-            @Override
-            public void run() throws Exception {
-                new PublishSupport(repoRoot(), out()).preflight(request);
-            }
-        });
+        return runAutomationCommand("preflight", request.format,
+            () -> publishSupport().preflight(request));
     }
 }
 
@@ -101,11 +97,7 @@ final class PublishCommand extends AbstractCliCommand {
             option("format", format)
         );
         PublishRequest request = PublishRequest.fromOptions(options, true);
-        return runAutomationCommand("publish", request.format, new ThrowingRunnable() {
-            @Override
-            public void run() throws Exception {
-                new PublishSupport(repoRoot(), out()).publish(request);
-            }
-        });
+        return runAutomationCommand("publish", request.format,
+            () -> publishSupport().publish(request));
     }
 }

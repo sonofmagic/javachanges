@@ -209,8 +209,8 @@ class GitlabReleaseSupportTest {
         ProcessBuilder builder = new ProcessBuilder(command);
         builder.directory(workingDirectory.toFile());
         Process process = builder.start();
-        byte[] stdout = ReleaseUtils.readAllBytes(process.getInputStream());
-        byte[] stderr = ReleaseUtils.readAllBytes(process.getErrorStream());
+        byte[] stdout = ReleaseProcessUtils.readAllBytes(process.getInputStream());
+        byte[] stderr = ReleaseProcessUtils.readAllBytes(process.getErrorStream());
         int exitCode = process.waitFor();
         if (exitCode != 0) {
             throw new IllegalStateException("Command failed with exit code " + exitCode

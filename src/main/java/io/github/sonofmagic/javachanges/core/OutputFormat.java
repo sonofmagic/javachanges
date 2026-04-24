@@ -11,7 +11,7 @@ public enum OutputFormat {
     }
 
     public static OutputFormat parse(String value, OutputFormat defaultValue) {
-        String normalized = ReleaseUtils.trimToNull(value);
+        String normalized = ReleaseTextUtils.trimToNull(value);
         if (normalized == null) {
             return defaultValue;
         }

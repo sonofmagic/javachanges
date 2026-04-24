@@ -6,9 +6,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.firstNonBlank;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.xmlEscape;
+import static io.github.sonofmagic.javachanges.core.ReleaseTextUtils.firstNonBlank;
+import static io.github.sonofmagic.javachanges.core.ReleaseTextUtils.trimToNull;
+import static io.github.sonofmagic.javachanges.core.ReleaseTextUtils.xmlEscape;
 
 public final class MavenSettingsWriter {
     public enum RepositoryMode {

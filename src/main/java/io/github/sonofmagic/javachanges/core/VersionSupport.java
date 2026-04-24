@@ -3,10 +3,10 @@ package io.github.sonofmagic.javachanges.core;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.assertKnownModule;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.releaseModuleFromTag;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.releaseVersionFromTag;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.stripSnapshot;
+import static io.github.sonofmagic.javachanges.core.ReleaseModuleUtils.assertKnownModule;
+import static io.github.sonofmagic.javachanges.core.ReleaseModuleUtils.releaseModuleFromTag;
+import static io.github.sonofmagic.javachanges.core.ReleaseModuleUtils.releaseVersionFromTag;
+import static io.github.sonofmagic.javachanges.core.ReleaseTextUtils.stripSnapshot;
 
 public final class VersionSupport {
     private final Path repoRoot;

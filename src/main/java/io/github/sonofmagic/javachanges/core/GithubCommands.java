@@ -38,12 +38,8 @@ final class GithubReleasePlanCommand extends AbstractCliCommand {
             option("format", format)
         );
         GithubReleasePlanRequest request = GithubReleasePlanRequest.fromOptions(options);
-        return runAutomationCommand("github-release-plan", request.format, new ThrowingRunnable() {
-            @Override
-            public void run() throws Exception {
-                new GithubReleaseSupport(repoRoot(), out()).planPullRequest(request);
-            }
-        });
+        return runAutomationCommand("github-release-plan", request.format,
+            () -> githubReleaseSupport().planPullRequest(request));
     }
 }
 
@@ -68,12 +64,8 @@ final class GithubTagFromPlanCommand extends AbstractCliCommand {
             option("format", format)
         );
         GithubTagRequest request = GithubTagRequest.fromOptions(options);
-        return runAutomationCommand("github-tag-from-plan", request.format, new ThrowingRunnable() {
-            @Override
-            public void run() throws Exception {
-                new GithubReleaseSupport(repoRoot(), out()).tagFromReleasePlan(request);
-            }
-        });
+        return runAutomationCommand("github-tag-from-plan", request.format,
+            () -> githubReleaseSupport().tagFromReleasePlan(request));
     }
 }
 
@@ -104,11 +96,7 @@ final class GithubReleaseFromPlanCommand extends AbstractCliCommand {
             option("format", format)
         );
         GithubReleasePublishRequest request = GithubReleasePublishRequest.fromOptions(options);
-        return runAutomationCommand("github-release-from-plan", request.format, new ThrowingRunnable() {
-            @Override
-            public void run() throws Exception {
-                new GithubReleaseSupport(repoRoot(), out()).syncReleaseFromPlan(request);
-            }
-        });
+        return runAutomationCommand("github-release-from-plan", request.format,
+            () -> githubReleaseSupport().syncReleaseFromPlan(request));
     }
 }

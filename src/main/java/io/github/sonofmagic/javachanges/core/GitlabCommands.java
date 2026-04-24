@@ -43,12 +43,8 @@ final class GitlabReleasePlanCommand extends AbstractCliCommand {
             option("format", format)
         );
         GitlabReleasePlanRequest request = GitlabReleasePlanRequest.fromOptions(options);
-        return runAutomationCommand("gitlab-release-plan", request.format, new ThrowingRunnable() {
-            @Override
-            public void run() throws Exception {
-                new GitlabReleaseSupport(repoRoot(), out()).planMergeRequest(request);
-            }
-        });
+        return runAutomationCommand("gitlab-release-plan", request.format,
+            () -> gitlabReleaseSupport().planMergeRequest(request));
     }
 }
 
@@ -77,12 +73,8 @@ final class GitlabTagFromPlanCommand extends AbstractCliCommand {
             option("format", format)
         );
         GitlabTagRequest request = GitlabTagRequest.fromOptions(options);
-        return runAutomationCommand("gitlab-tag-from-plan", request.format, new ThrowingRunnable() {
-            @Override
-            public void run() throws Exception {
-                new GitlabReleaseSupport(repoRoot(), out()).tagFromReleasePlan(request);
-            }
-        });
+        return runAutomationCommand("gitlab-tag-from-plan", request.format,
+            () -> gitlabReleaseSupport().tagFromReleasePlan(request));
     }
 }
 
@@ -120,12 +112,8 @@ final class GitlabReleaseCommand extends AbstractCliCommand {
             option("format", format)
         );
         GitlabReleaseRequest request = GitlabReleaseRequest.fromOptions(options);
-        return runAutomationCommand("gitlab-release", request.format, new ThrowingRunnable() {
-            @Override
-            public void run() throws Exception {
-                new GitlabReleaseSupport(repoRoot(), out()).syncRelease(request);
-            }
-        });
+        return runAutomationCommand("gitlab-release", request.format,
+            () -> gitlabReleaseSupport().syncRelease(request));
     }
 }
 
@@ -161,11 +149,11 @@ final class InitGitlabCiCommand extends AbstractCliCommand {
     }
 
     private String effectiveVersion() {
-        String explicit = ReleaseUtils.trimToNull(javachangesVersion);
+        String explicit = ReleaseTextUtils.trimToNull(javachangesVersion);
         if (explicit != null) {
             return explicit;
         }
-        String implementationVersion = ReleaseUtils.trimToNull(JavaChangesCli.class.getPackage().getImplementationVersion());
+        String implementationVersion = ReleaseTextUtils.trimToNull(JavaChangesCli.class.getPackage().getImplementationVersion());
         if (implementationVersion != null) {
             return implementationVersion;
         }

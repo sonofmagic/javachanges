@@ -12,7 +12,7 @@ public enum Platform {
     }
 
     public static Platform parse(String value, Platform defaultValue) {
-        String normalized = ReleaseUtils.trimToNull(value);
+        String normalized = ReleaseTextUtils.trimToNull(value);
         if (normalized == null) {
             return defaultValue;
         }

@@ -1,6 +1,6 @@
 package io.github.sonofmagic.javachanges.core;
 
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
+import static io.github.sonofmagic.javachanges.core.ReleaseTextUtils.trimToNull;
 
 public enum ReleaseTagStrategy {
     WHOLE_REPO("whole-repo"),

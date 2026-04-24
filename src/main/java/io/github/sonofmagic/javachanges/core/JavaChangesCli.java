@@ -5,7 +5,7 @@ import picocli.CommandLine;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
+import static io.github.sonofmagic.javachanges.core.ReleaseTextUtils.trimToNull;
 
 public final class JavaChangesCli {
 
