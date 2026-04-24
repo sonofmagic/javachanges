@@ -14,7 +14,7 @@ public final class ReleaseModuleUtils {
     private ReleaseModuleUtils() {
     }
 
-    static List<String> detectKnownModules(Path repoRoot) {
+    public static List<String> detectKnownModules(Path repoRoot) {
         try {
             Path pomPath = repoRoot.resolve("pom.xml");
             if (!java.nio.file.Files.exists(pomPath)) {
@@ -84,7 +84,7 @@ public final class ReleaseModuleUtils {
         throw new IllegalArgumentException("Unsupported release tag: " + tag);
     }
 
-    static List<String> parseModules(Path repoRoot, String rawModules) {
+    public static List<String> parseModules(Path repoRoot, String rawModules) {
         List<String> knownModules = detectKnownModules(repoRoot);
         String trimmed = rawModules.trim();
         if ("all".equalsIgnoreCase(trimmed)) {
@@ -108,7 +108,7 @@ public final class ReleaseModuleUtils {
         return new ArrayList<String>(modules);
     }
 
-    static String normalizeType(String rawType) {
+    public static String normalizeType(String rawType) {
         String normalized = rawType.trim().toLowerCase(Locale.ROOT);
         if ("breaking".equals(normalized)) {
             return "breaking";

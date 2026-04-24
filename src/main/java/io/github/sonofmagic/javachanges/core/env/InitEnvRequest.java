@@ -1,6 +1,6 @@
 package io.github.sonofmagic.javachanges.core.env;
 
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.util.Map;
 
@@ -16,15 +16,15 @@ public final class InitEnvRequest {
     }
 
     public static InitEnvRequest fromOptions(Map<String, String> options) {
-        String target = ReleaseUtils.trimToNull(options.get("target"));
+        String target = ReleaseTextUtils.trimToNull(options.get("target"));
         if (target == null) {
-            target = ReleaseUtils.trimToNull(options.get("path"));
+            target = ReleaseTextUtils.trimToNull(options.get("path"));
         }
         return new InitEnvRequest(
-            ReleaseUtils.trimToNull(options.get("template")) == null ? "env/release.env.example"
-                : ReleaseUtils.trimToNull(options.get("template")),
+            ReleaseTextUtils.trimToNull(options.get("template")) == null ? "env/release.env.example"
+                : ReleaseTextUtils.trimToNull(options.get("template")),
             target == null ? "env/release.env.local" : target,
-            ReleaseUtils.isTrue(options.get("force"))
+            ReleaseTextUtils.isTrue(options.get("force"))
         );
     }
 }

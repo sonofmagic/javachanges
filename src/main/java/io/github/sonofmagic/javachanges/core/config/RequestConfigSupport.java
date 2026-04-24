@@ -1,6 +1,6 @@
 package io.github.sonofmagic.javachanges.core.config;
 
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import io.github.sonofmagic.javachanges.core.plan.RepoFiles;
 
 import java.io.IOException;
@@ -41,7 +41,7 @@ public final class RequestConfigSupport {
     public static String readConfiguredReleaseBranch(String directoryOption, String targetBranch) {
         try {
             ChangesetConfigSupport.ChangesetConfig config = readConfiguredChangesetConfig(directoryOption);
-            String configured = ReleaseUtils.trimToNull(config.releaseBranch());
+            String configured = ReleaseTextUtils.trimToNull(config.releaseBranch());
             if (configured != null) {
                 return configured;
             }

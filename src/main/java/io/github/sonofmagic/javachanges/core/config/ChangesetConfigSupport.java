@@ -1,7 +1,8 @@
 package io.github.sonofmagic.javachanges.core.config;
 
 import io.github.sonofmagic.javachanges.core.ReleaseTagStrategy;
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseJsonUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import io.github.sonofmagic.javachanges.core.SnapshotVersionMode;
 
 import java.io.IOException;
@@ -9,12 +10,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.CHANGESETS_DIR;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
-
 public final class ChangesetConfigSupport {
     private static final String CONFIG_JSON = "config.json";
     private static final String CONFIG_JSONC = "config.jsonc";
+    private static final String CHANGESETS_DIR = ".changesets";
 
     private ChangesetConfigSupport() {
     }
@@ -31,11 +30,11 @@ public final class ChangesetConfigSupport {
         String snapshotVersionMode = field(json, "snapshotVersionMode");
         String tagStrategy = field(json, "tagStrategy");
         return ChangesetConfig.fromValues(baseBranch, releaseBranch, snapshotBranch, snapshotVersionMode, tagStrategy,
-            trimToNull(baseBranch) != null,
-            trimToNull(releaseBranch) != null,
-            trimToNull(snapshotBranch) != null,
-            trimToNull(snapshotVersionMode) != null,
-            trimToNull(tagStrategy) != null);
+            ReleaseTextUtils.trimToNull(baseBranch) != null,
+            ReleaseTextUtils.trimToNull(releaseBranch) != null,
+            ReleaseTextUtils.trimToNull(snapshotBranch) != null,
+            ReleaseTextUtils.trimToNull(snapshotVersionMode) != null,
+            ReleaseTextUtils.trimToNull(tagStrategy) != null);
     }
 
     static Path resolveConfigRoot(Path start) {
@@ -63,7 +62,7 @@ public final class ChangesetConfigSupport {
     }
 
     private static String field(String json, String name) {
-        com.fasterxml.jackson.databind.JsonNode root = ReleaseUtils.readJsonTree(json);
+        com.fasterxml.jackson.databind.JsonNode root = ReleaseJsonUtils.readTree(json);
         com.fasterxml.jackson.databind.JsonNode value = root.get(name);
         if (value == null || value.isNull()) {
             return null;
@@ -161,9 +160,9 @@ public final class ChangesetConfigSupport {
 
         static ChangesetConfig fromValues(String baseBranch, String releaseBranch, String snapshotBranch) {
             return fromValues(baseBranch, releaseBranch, snapshotBranch, null, null,
-                trimToNull(baseBranch) != null,
-                trimToNull(releaseBranch) != null,
-                trimToNull(snapshotBranch) != null,
+                ReleaseTextUtils.trimToNull(baseBranch) != null,
+                ReleaseTextUtils.trimToNull(releaseBranch) != null,
+                ReleaseTextUtils.trimToNull(snapshotBranch) != null,
                 false,
                 false);
         }
@@ -173,17 +172,17 @@ public final class ChangesetConfigSupport {
                                           boolean explicitBaseBranch, boolean explicitReleaseBranch,
                                           boolean explicitSnapshotBranch, boolean explicitSnapshotVersionMode,
                                           boolean explicitTagStrategy) {
-            String resolvedBaseBranch = trimToNull(baseBranch);
+            String resolvedBaseBranch = ReleaseTextUtils.trimToNull(baseBranch);
             if (resolvedBaseBranch == null) {
                 resolvedBaseBranch = "main";
             }
 
-            String resolvedReleaseBranch = trimToNull(releaseBranch);
+            String resolvedReleaseBranch = ReleaseTextUtils.trimToNull(releaseBranch);
             if (resolvedReleaseBranch == null) {
                 resolvedReleaseBranch = "changeset-release/" + resolvedBaseBranch;
             }
 
-            String resolvedSnapshotBranch = trimToNull(snapshotBranch);
+            String resolvedSnapshotBranch = ReleaseTextUtils.trimToNull(snapshotBranch);
             if (resolvedSnapshotBranch == null) {
                 resolvedSnapshotBranch = "snapshot";
             }

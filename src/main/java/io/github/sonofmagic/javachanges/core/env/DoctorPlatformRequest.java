@@ -2,7 +2,7 @@ package io.github.sonofmagic.javachanges.core.env;
 
 import io.github.sonofmagic.javachanges.core.OutputFormat;
 import io.github.sonofmagic.javachanges.core.Platform;
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.util.Map;
 
@@ -24,10 +24,10 @@ public final class DoctorPlatformRequest {
 
     public static DoctorPlatformRequest fromOptions(Map<String, String> options) {
         return new DoctorPlatformRequest(
-            ReleaseUtils.requiredOption(options, "env-file"),
-            ReleaseUtils.platformOption(options),
-            ReleaseUtils.trimToNull(options.get("github-repo")),
-            ReleaseUtils.trimToNull(options.get("gitlab-repo")),
+            ReleaseTextUtils.requiredOption(options, "env-file"),
+            ReleaseTextUtils.platformOption(options),
+            ReleaseTextUtils.trimToNull(options.get("github-repo")),
+            ReleaseTextUtils.trimToNull(options.get("gitlab-repo")),
             OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );
     }

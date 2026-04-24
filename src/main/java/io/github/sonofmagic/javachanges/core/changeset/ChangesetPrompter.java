@@ -1,7 +1,8 @@
 package io.github.sonofmagic.javachanges.core.changeset;
 
 import io.github.sonofmagic.javachanges.core.ReleaseLevel;
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseModuleUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.io.Console;
 import java.io.PrintStream;
@@ -14,33 +15,33 @@ public final class ChangesetPrompter {
     }
 
     public static ChangesetInput resolveInput(Path repoRoot, Map<String, String> options, PrintStream out, PrintStream err) {
-        String summary = ReleaseUtils.trimToNull(options.get("summary"));
-        String release = ReleaseUtils.trimToNull(options.get("release"));
-        String type = ReleaseUtils.trimToNull(options.get("type"));
-        String modules = ReleaseUtils.trimToNull(options.get("modules"));
-        String body = ReleaseUtils.trimToNull(options.get("body"));
+        String summary = ReleaseTextUtils.trimToNull(options.get("summary"));
+        String release = ReleaseTextUtils.trimToNull(options.get("release"));
+        String type = ReleaseTextUtils.trimToNull(options.get("type"));
+        String modules = ReleaseTextUtils.trimToNull(options.get("modules"));
+        String body = ReleaseTextUtils.trimToNull(options.get("body"));
 
         if (summary == null) {
-            summary = ReleaseUtils.trimToNull(System.getenv("CHANGESET_SUMMARY"));
+            summary = ReleaseTextUtils.trimToNull(System.getenv("CHANGESET_SUMMARY"));
         }
         if (release == null) {
-            release = ReleaseUtils.trimToNull(System.getenv("CHANGESET_RELEASE"));
+            release = ReleaseTextUtils.trimToNull(System.getenv("CHANGESET_RELEASE"));
         }
         if (type == null) {
-            type = ReleaseUtils.trimToNull(System.getenv("CHANGESET_TYPE"));
+            type = ReleaseTextUtils.trimToNull(System.getenv("CHANGESET_TYPE"));
         }
         if (modules == null) {
-            modules = ReleaseUtils.trimToNull(System.getenv("CHANGESET_MODULES"));
+            modules = ReleaseTextUtils.trimToNull(System.getenv("CHANGESET_MODULES"));
         }
         if (body == null) {
-            body = ReleaseUtils.trimToNull(System.getenv("CHANGESET_BODY"));
+            body = ReleaseTextUtils.trimToNull(System.getenv("CHANGESET_BODY"));
         }
 
         if (summary != null && release != null) {
             return new ChangesetInput(
                 ReleaseLevel.parse(release),
-                ReleaseUtils.normalizeType(type == null ? "other" : type),
-                ReleaseUtils.parseModules(repoRoot, modules == null ? "all" : modules),
+                ReleaseModuleUtils.normalizeType(type == null ? "other" : type),
+                ReleaseModuleUtils.parseModules(repoRoot, modules == null ? "all" : modules),
                 summary,
                 body == null ? "" : body
             );
@@ -61,8 +62,8 @@ public final class ChangesetPrompter {
 
         return new ChangesetInput(
             ReleaseLevel.parse(release),
-            ReleaseUtils.normalizeType(type),
-            ReleaseUtils.parseModules(repoRoot, modules),
+            ReleaseModuleUtils.normalizeType(type),
+            ReleaseModuleUtils.parseModules(repoRoot, modules),
             summary,
             body
         );
@@ -78,7 +79,7 @@ public final class ChangesetPrompter {
                 out.flush();
                 value = scanner.nextLine();
             }
-            value = ReleaseUtils.trimToNull(value);
+            value = ReleaseTextUtils.trimToNull(value);
         } while (value == null);
         return value;
     }

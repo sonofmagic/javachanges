@@ -2,7 +2,7 @@ package io.github.sonofmagic.javachanges.core.env;
 
 import io.github.sonofmagic.javachanges.core.OutputFormat;
 import io.github.sonofmagic.javachanges.core.Platform;
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.util.Map;
 
@@ -21,9 +21,9 @@ public final class PlatformEnvRequest {
 
     public static PlatformEnvRequest fromOptions(Map<String, String> options) {
         return new PlatformEnvRequest(
-            ReleaseUtils.requiredOption(options, "env-file"),
-            ReleaseUtils.platformOption(options),
-            ReleaseUtils.isTrue(options.get("show-secrets")),
+            ReleaseTextUtils.requiredOption(options, "env-file"),
+            ReleaseTextUtils.platformOption(options),
+            ReleaseTextUtils.isTrue(options.get("show-secrets")),
             OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );
     }

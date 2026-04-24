@@ -1,7 +1,7 @@
 package io.github.sonofmagic.javachanges.core.env;
 
 import io.github.sonofmagic.javachanges.core.OutputFormat;
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.util.Map;
 
@@ -20,10 +20,10 @@ public final class LocalDoctorRequest {
 
     public static LocalDoctorRequest fromOptions(Map<String, String> options) {
         return new LocalDoctorRequest(
-            ReleaseUtils.trimToNull(options.get("env-file")) == null ? "env/release.env.local"
-                : ReleaseUtils.trimToNull(options.get("env-file")),
-            ReleaseUtils.trimToNull(options.get("github-repo")),
-            ReleaseUtils.trimToNull(options.get("gitlab-repo")),
+            ReleaseTextUtils.trimToNull(options.get("env-file")) == null ? "env/release.env.local"
+                : ReleaseTextUtils.trimToNull(options.get("env-file")),
+            ReleaseTextUtils.trimToNull(options.get("github-repo")),
+            ReleaseTextUtils.trimToNull(options.get("gitlab-repo")),
             OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );
     }

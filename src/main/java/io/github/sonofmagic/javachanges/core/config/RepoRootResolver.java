@@ -1,6 +1,6 @@
 package io.github.sonofmagic.javachanges.core.config;
 
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseModuleUtils;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -16,7 +16,7 @@ public final class RepoRootResolver {
 
         Path probe = current;
         while (probe != null) {
-            if (Files.exists(probe.resolve("pom.xml")) && !ReleaseUtils.detectKnownModules(probe).isEmpty()) {
+            if (Files.exists(probe.resolve("pom.xml")) && !ReleaseModuleUtils.detectKnownModules(probe).isEmpty()) {
                 return probe;
             }
             probe = probe.getParent();

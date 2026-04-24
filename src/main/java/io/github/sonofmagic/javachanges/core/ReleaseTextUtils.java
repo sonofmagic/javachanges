@@ -11,7 +11,7 @@ public final class ReleaseTextUtils {
     private ReleaseTextUtils() {
     }
 
-    static Platform platformOption(Map<String, String> options) {
+    public static Platform platformOption(Map<String, String> options) {
         return Platform.parse(options.get("platform"), Platform.ALL);
     }
 
@@ -49,7 +49,7 @@ public final class ReleaseTextUtils {
         return version;
     }
 
-    static String requiredOption(Map<String, String> options, String name) {
+    public static String requiredOption(Map<String, String> options, String name) {
         String value = trimToNull(options.get(name));
         if (value == null) {
             throw new IllegalArgumentException("Missing required option: --" + name);
@@ -113,7 +113,7 @@ public final class ReleaseTextUtils {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
-    static String trimTrailingBlankLines(List<String> lines) {
+    public static String trimTrailingBlankLines(List<String> lines) {
         int end = lines.size();
         while (end > 0 && lines.get(end - 1).trim().isEmpty()) {
             end--;
@@ -176,7 +176,7 @@ public final class ReleaseTextUtils {
         return "other".equals(type) ? "" : type;
     }
 
-    static String firstBodyLine(String body) {
+    public static String firstBodyLine(String body) {
         String[] lines = body.split("\\r?\\n");
         for (String line : lines) {
             String trimmed = line.trim();
@@ -187,11 +187,11 @@ public final class ReleaseTextUtils {
         return "";
     }
 
-    static boolean isPlaceholderValue(String value) {
+    public static boolean isPlaceholderValue(String value) {
         return "replace-me".equals(value) || value.startsWith("https://nexus.example.com/");
     }
 
-    static boolean isRequiredName(String name) {
+    public static boolean isRequiredName(String name) {
         return !Arrays.asList(
             "MAVEN_RELEASE_REPOSITORY_ID",
             "MAVEN_SNAPSHOT_REPOSITORY_ID",
@@ -203,7 +203,7 @@ public final class ReleaseTextUtils {
         ).contains(name);
     }
 
-    static String stripWrappingQuotes(String value) {
+    public static String stripWrappingQuotes(String value) {
         if (value.length() >= 2 && ((value.startsWith("\"") && value.endsWith("\""))
             || (value.startsWith("'") && value.endsWith("'")))) {
             return value.substring(1, value.length() - 1);

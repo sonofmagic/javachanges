@@ -1,7 +1,7 @@
 package io.github.sonofmagic.javachanges.core.env;
 
 import io.github.sonofmagic.javachanges.core.Platform;
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.util.Map;
 
@@ -22,11 +22,11 @@ public final class SyncVarsRequest {
 
     public static SyncVarsRequest fromOptions(Map<String, String> options) {
         return new SyncVarsRequest(
-            ReleaseUtils.requiredOption(options, "env-file"),
-            ReleaseUtils.platformOption(options),
-            ReleaseUtils.trimToNull(options.get("repo")),
-            ReleaseUtils.isTrue(options.get("execute")),
-            ReleaseUtils.isTrue(options.get("show-secrets"))
+            ReleaseTextUtils.requiredOption(options, "env-file"),
+            ReleaseTextUtils.platformOption(options),
+            ReleaseTextUtils.trimToNull(options.get("repo")),
+            ReleaseTextUtils.isTrue(options.get("execute")),
+            ReleaseTextUtils.isTrue(options.get("show-secrets"))
         );
     }
 }

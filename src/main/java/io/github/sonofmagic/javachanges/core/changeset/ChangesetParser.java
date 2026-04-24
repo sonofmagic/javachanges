@@ -1,7 +1,8 @@
 package io.github.sonofmagic.javachanges.core.changeset;
 
 import io.github.sonofmagic.javachanges.core.ReleaseLevel;
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseModuleUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -33,7 +34,7 @@ final class ChangesetParser {
             if (separator <= 0) {
                 throw new IllegalStateException("Invalid changeset line in " + path + ": " + line);
             }
-            String key = ReleaseUtils.stripWrappingQuotes(line.substring(0, separator).trim());
+            String key = ReleaseTextUtils.stripWrappingQuotes(line.substring(0, separator).trim());
             String value = line.substring(separator + 1).trim();
             frontmatter.put(key, value);
         }
@@ -42,7 +43,7 @@ final class ChangesetParser {
         for (; index < lines.size(); index++) {
             bodyLines.add(lines.get(index));
         }
-        String body = ReleaseUtils.trimTrailingBlankLines(bodyLines);
+        String body = ReleaseTextUtils.trimTrailingBlankLines(bodyLines);
 
         if (frontmatter.containsKey("release")) {
             return parseLegacyChangeset(repoRoot, path, frontmatter, body);
@@ -54,7 +55,7 @@ final class ChangesetParser {
         String releaseValue = required(frontmatter, "release", path);
         String typeValue = optional(frontmatter, "type", "other");
         String modulesValue = optional(frontmatter, "modules", "all");
-        String summaryValue = ReleaseUtils.trimToNull(frontmatter.get("summary"));
+        String summaryValue = ReleaseTextUtils.trimToNull(frontmatter.get("summary"));
         if (summaryValue == null) {
             summaryValue = fallbackSummary(path, body);
         }
@@ -63,15 +64,15 @@ final class ChangesetParser {
             path,
             path.getFileName().toString(),
             ReleaseLevel.parse(releaseValue),
-            ReleaseUtils.normalizeType(typeValue),
-            ReleaseUtils.parseModules(repoRoot, modulesValue),
+            ReleaseModuleUtils.normalizeType(typeValue),
+            ReleaseModuleUtils.parseModules(repoRoot, modulesValue),
             summaryValue,
             body
         );
     }
 
     private static Changeset parseOfficialChangeset(Path repoRoot, Path path, Map<String, String> frontmatter, String body) {
-        List<String> knownModules = ReleaseUtils.detectKnownModules(repoRoot);
+        List<String> knownModules = ReleaseModuleUtils.detectKnownModules(repoRoot);
         List<String> modules = new ArrayList<String>();
         ReleaseLevel releaseLevel = ReleaseLevel.PATCH;
         String typeValue = optional(frontmatter, "type", "other");
@@ -101,7 +102,7 @@ final class ChangesetParser {
             path,
             path.getFileName().toString(),
             releaseLevel,
-            ReleaseUtils.normalizeType(typeValue),
+            ReleaseModuleUtils.normalizeType(typeValue),
             modules,
             fallbackSummary(path, body),
             body
@@ -117,12 +118,12 @@ final class ChangesetParser {
     }
 
     private static String optional(Map<String, String> frontmatter, String key, String defaultValue) {
-        String value = ReleaseUtils.trimToNull(frontmatter.get(key));
+        String value = ReleaseTextUtils.trimToNull(frontmatter.get(key));
         return value == null ? defaultValue : value;
     }
 
     private static String fallbackSummary(Path path, String body) {
-        String fromBody = ReleaseUtils.firstBodyLine(body);
+        String fromBody = ReleaseTextUtils.firstBodyLine(body);
         if (!fromBody.isEmpty()) {
             return fromBody;
         }

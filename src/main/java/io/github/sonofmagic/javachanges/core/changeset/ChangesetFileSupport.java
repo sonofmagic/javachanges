@@ -1,6 +1,7 @@
 package io.github.sonofmagic.javachanges.core.changeset;
 
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseJsonUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -16,13 +17,18 @@ import java.util.Comparator;
 import java.util.List;
 
 public final class ChangesetFileSupport {
+    private static final String CHANGESETS_DIR = ".changesets";
+    private static final String CHANGESETS_README = "README.md";
+    private static final String RELEASE_PLAN_JSON = "release-plan.json";
+    private static final String RELEASE_PLAN_MD = "release-plan.md";
+
     private ChangesetFileSupport() {
     }
 
     public static void ensureChangesetReadme(Path repoRoot) throws IOException {
-        Path dir = repoRoot.resolve(ReleaseUtils.CHANGESETS_DIR);
+        Path dir = repoRoot.resolve(CHANGESETS_DIR);
         Files.createDirectories(dir);
-        Path readme = dir.resolve(ReleaseUtils.CHANGESETS_README);
+        Path readme = dir.resolve(CHANGESETS_README);
         if (!Files.exists(readme)) {
             Files.write(readme, Collections.singletonList("# Changesets"), StandardCharsets.UTF_8);
         }
@@ -32,7 +38,7 @@ public final class ChangesetFileSupport {
         ensureChangesetReadme(repoRoot);
         String slug = Slug.slugify(input.summary);
         String baseName = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE) + "-" + slug;
-        Path dir = repoRoot.resolve(ReleaseUtils.CHANGESETS_DIR);
+        Path dir = repoRoot.resolve(CHANGESETS_DIR);
         Path file = dir.resolve(baseName + ".md");
         int counter = 2;
         while (Files.exists(file)) {
@@ -53,7 +59,7 @@ public final class ChangesetFileSupport {
     }
 
     public static List<Changeset> loadChangesets(Path repoRoot) throws IOException {
-        Path dir = repoRoot.resolve(ReleaseUtils.CHANGESETS_DIR);
+        Path dir = repoRoot.resolve(CHANGESETS_DIR);
         if (!Files.exists(dir)) {
             return Collections.emptyList();
         }
@@ -62,7 +68,7 @@ public final class ChangesetFileSupport {
         try {
             for (Path path : stream) {
                 String fileName = path.getFileName().toString();
-                if (isChangesetReadme(fileName) || ReleaseUtils.RELEASE_PLAN_MD.equals(fileName)) {
+                if (isChangesetReadme(fileName) || RELEASE_PLAN_MD.equals(fileName)) {
                     continue;
                 }
                 changesets.add(ChangesetParser.parse(repoRoot, path));
@@ -80,12 +86,12 @@ public final class ChangesetFileSupport {
     }
 
     public static String readManifestField(Path repoRoot, String field) throws IOException {
-        Path manifest = repoRoot.resolve(ReleaseUtils.CHANGESETS_DIR).resolve(ReleaseUtils.RELEASE_PLAN_JSON);
+        Path manifest = repoRoot.resolve(CHANGESETS_DIR).resolve(RELEASE_PLAN_JSON);
         if (!Files.exists(manifest)) {
             throw new IllegalStateException("Missing release plan manifest: " + manifest);
         }
         String content = new String(Files.readAllBytes(manifest), StandardCharsets.UTF_8);
-        com.fasterxml.jackson.databind.JsonNode root = ReleaseUtils.readJsonTree(content);
+        com.fasterxml.jackson.databind.JsonNode root = ReleaseJsonUtils.readTree(content);
         com.fasterxml.jackson.databind.JsonNode value = root.get(field);
         if (value == null || value.isNull()) {
             throw new IllegalStateException("Missing field `" + field + "` in " + manifest);
@@ -94,18 +100,18 @@ public final class ChangesetFileSupport {
     }
 
     private static boolean isChangesetReadme(String fileName) {
-        return ReleaseUtils.CHANGESETS_README.equals(fileName)
+        return CHANGESETS_README.equals(fileName)
             || fileName.startsWith("README.")
             || fileName.startsWith("README-");
     }
 
     private static String renderChangesetBody(String summary, String body) {
         String normalizedSummary = summary.trim();
-        String normalizedBody = ReleaseUtils.trimToNull(body);
+        String normalizedBody = ReleaseTextUtils.trimToNull(body);
         if (normalizedBody == null) {
             return normalizedSummary;
         }
-        if (normalizedSummary.equals(ReleaseUtils.firstBodyLine(normalizedBody))) {
+        if (normalizedSummary.equals(ReleaseTextUtils.firstBodyLine(normalizedBody))) {
             return normalizedBody;
         }
         return normalizedSummary + "\n\n" + normalizedBody;

@@ -50,7 +50,7 @@ public final class ReleaseJsonUtils {
         return value.replace("\\\"", "\"").replace("\\\\", "\\");
     }
 
-    static JsonNode readTree(String json) {
+    public static JsonNode readTree(String json) {
         try {
             return MAPPER.readTree(json);
         } catch (IOException exception) {
