@@ -1,6 +1,7 @@
 package io.github.sonofmagic.javachanges.core.env;
 
 import io.github.sonofmagic.javachanges.core.OutputFormat;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import io.github.sonofmagic.javachanges.core.config.ChangesetConfigSupport;
 import io.github.sonofmagic.javachanges.core.gitlab.GitlabProtectionSupport;
 import io.github.sonofmagic.javachanges.core.plan.RepoFiles;
@@ -11,8 +12,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.isBlank;
 
 final class ReleaseEnvDoctorPlatformSupport {
     private final Path repoRoot;
@@ -107,7 +106,7 @@ final class ReleaseEnvDoctorPlatformSupport {
             throw new IllegalStateException("gh auth status 失败，请先执行 make auth-help");
         }
         doctorSupport.recordStatus(textOutput, githubSection, "gh auth status", "OK");
-        if (isBlank(request.githubRepo)) {
+        if (ReleaseTextUtils.isBlank(request.githubRepo)) {
             doctorSupport.recordStatus(textOutput, githubSection, "GITHUB_REPO", "MISSING");
             state.failed = true;
         } else if (!doctorSupport.isValidRepoIdentifier(request.githubRepo)) {
@@ -143,7 +142,7 @@ final class ReleaseEnvDoctorPlatformSupport {
             throw new IllegalStateException("glab auth status 失败，请先执行 make auth-help");
         }
         doctorSupport.recordStatus(textOutput, gitlabSection, "glab auth status", "OK");
-        if (isBlank(request.gitlabRepo)) {
+        if (ReleaseTextUtils.isBlank(request.gitlabRepo)) {
             doctorSupport.recordStatus(textOutput, gitlabSection, "GITLAB_REPO", "MISSING");
             state.failed = true;
             return;

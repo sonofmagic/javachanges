@@ -211,7 +211,7 @@ public final class ReleaseTextUtils {
         return value;
     }
 
-    static String padRight(String value, int width) {
+    public static String padRight(String value, int width) {
         StringBuilder builder = new StringBuilder(value);
         while (builder.length() < width) {
             builder.append(' ');

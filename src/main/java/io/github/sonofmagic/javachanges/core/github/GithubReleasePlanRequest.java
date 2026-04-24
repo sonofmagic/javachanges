@@ -1,7 +1,7 @@
 package io.github.sonofmagic.javachanges.core.github;
 
 import io.github.sonofmagic.javachanges.core.OutputFormat;
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import io.github.sonofmagic.javachanges.core.config.RequestConfigSupport;
 
 import java.util.Map;
@@ -23,23 +23,24 @@ public final class GithubReleasePlanRequest {
     }
 
     public static GithubReleasePlanRequest fromOptions(Map<String, String> options) {
-        String repoRootOption = ReleaseUtils.trimToNull(options.get("directory"));
-        String targetBranch = ReleaseUtils.firstNonBlank(
-            ReleaseUtils.trimToNull(options.get("target-branch")),
+        String repoRootOption = ReleaseTextUtils.trimToNull(options.get("directory"));
+        String targetBranch = ReleaseTextUtils.firstNonBlank(
+            ReleaseTextUtils.trimToNull(options.get("target-branch")),
             System.getenv("GITHUB_BASE_REF")
         );
         if (targetBranch == null) {
             targetBranch = RequestConfigSupport.readConfiguredBaseBranch(repoRootOption);
         }
-        String releaseBranch = ReleaseUtils.trimToNull(options.get("release-branch"));
+        String releaseBranch = ReleaseTextUtils.trimToNull(options.get("release-branch"));
         if (releaseBranch == null) {
             releaseBranch = RequestConfigSupport.readConfiguredReleaseBranch(repoRootOption, targetBranch);
         }
         return new GithubReleasePlanRequest(
-            ReleaseUtils.firstNonBlank(ReleaseUtils.trimToNull(options.get("github-repo")), System.getenv("GITHUB_REPOSITORY")),
+            ReleaseTextUtils.firstNonBlank(ReleaseTextUtils.trimToNull(options.get("github-repo")),
+                System.getenv("GITHUB_REPOSITORY")),
             targetBranch,
             releaseBranch,
-            ReleaseUtils.isTrue(options.get("execute")),
+            ReleaseTextUtils.isTrue(options.get("execute")),
             OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );
     }

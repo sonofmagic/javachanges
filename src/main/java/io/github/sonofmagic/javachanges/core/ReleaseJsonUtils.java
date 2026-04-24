@@ -17,7 +17,7 @@ public final class ReleaseJsonUtils {
     private ReleaseJsonUtils() {
     }
 
-    static Map<String, Map<String, String>> parseFlatJsonObjects(String json) {
+    public static Map<String, Map<String, String>> parseFlatJsonObjects(String json) {
         Map<String, Map<String, String>> result = new LinkedHashMap<String, Map<String, String>>();
         JsonNode root = readTree(json);
         if (!root.isArray()) {

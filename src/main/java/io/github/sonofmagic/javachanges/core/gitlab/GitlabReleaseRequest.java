@@ -1,7 +1,7 @@
 package io.github.sonofmagic.javachanges.core.gitlab;
 
 import io.github.sonofmagic.javachanges.core.OutputFormat;
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.util.Map;
 
@@ -25,14 +25,14 @@ public final class GitlabReleaseRequest {
 
     public static GitlabReleaseRequest fromOptions(Map<String, String> options) {
         return new GitlabReleaseRequest(
-            ReleaseUtils.firstNonBlank(ReleaseUtils.trimToNull(options.get("tag")),
-                ReleaseUtils.trimToNull(System.getenv("CI_COMMIT_TAG"))),
-            ReleaseUtils.firstNonBlank(ReleaseUtils.trimToNull(options.get("project-id")),
-                ReleaseUtils.trimToNull(System.getenv("CI_PROJECT_ID"))),
-            ReleaseUtils.firstNonBlank(ReleaseUtils.trimToNull(options.get("gitlab-host")),
-                ReleaseUtils.trimToNull(System.getenv("CI_SERVER_HOST"))),
-            ReleaseUtils.trimToNull(options.get("release-notes-file")),
-            ReleaseUtils.isTrue(options.get("execute")),
+            ReleaseTextUtils.firstNonBlank(ReleaseTextUtils.trimToNull(options.get("tag")),
+                ReleaseTextUtils.trimToNull(System.getenv("CI_COMMIT_TAG"))),
+            ReleaseTextUtils.firstNonBlank(ReleaseTextUtils.trimToNull(options.get("project-id")),
+                ReleaseTextUtils.trimToNull(System.getenv("CI_PROJECT_ID"))),
+            ReleaseTextUtils.firstNonBlank(ReleaseTextUtils.trimToNull(options.get("gitlab-host")),
+                ReleaseTextUtils.trimToNull(System.getenv("CI_SERVER_HOST"))),
+            ReleaseTextUtils.trimToNull(options.get("release-notes-file")),
+            ReleaseTextUtils.isTrue(options.get("execute")),
             OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );
     }

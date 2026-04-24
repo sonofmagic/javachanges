@@ -3,8 +3,7 @@ package io.github.sonofmagic.javachanges.core.env;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
-
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.isBlank;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 final class ReleaseEnvDoctorSupport {
     private final PrintStream out;
@@ -64,7 +63,7 @@ final class ReleaseEnvDoctorSupport {
     }
 
     String repoStatusValue(String value) {
-        if (isBlank(value)) {
+        if (ReleaseTextUtils.isBlank(value)) {
             return "NOT_SET";
         }
         if (value.contains("/")) {
@@ -74,7 +73,7 @@ final class ReleaseEnvDoctorSupport {
     }
 
     boolean isValidRepoIdentifier(String value) {
-        return !isBlank(value) && value.contains("/");
+        return !ReleaseTextUtils.isBlank(value) && value.contains("/");
     }
 
     String commandReportJson(String command, boolean ok, String envFile, String platform,

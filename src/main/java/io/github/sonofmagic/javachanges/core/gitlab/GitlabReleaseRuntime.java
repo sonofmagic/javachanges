@@ -1,7 +1,8 @@
 package io.github.sonofmagic.javachanges.core.gitlab;
 
 import io.github.sonofmagic.javachanges.core.CommandResult;
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseProcessUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -15,7 +16,7 @@ public class GitlabReleaseRuntime {
     }
 
     public void configureBotIdentity() throws IOException, InterruptedException {
-        String botUsername = ReleaseUtils.requireEnv("GITLAB_RELEASE_BOT_USERNAME");
+        String botUsername = ReleaseTextUtils.requireEnv("GITLAB_RELEASE_BOT_USERNAME");
         String gitlabHost = firstNonBlank(System.getenv("CI_SERVER_HOST"), "gitlab.example.com");
         runGit("config", "user.name", "gitlab-release-bot");
         runGit("config", "user.email", botUsername + "@users.noreply." + gitlabHost);
@@ -31,18 +32,18 @@ public class GitlabReleaseRuntime {
 
     public boolean remoteTagExists(String tagName, String remoteUrl) throws IOException, InterruptedException {
         CommandResult result = runGitCapture("ls-remote", "--tags", remoteUrl, "refs/tags/" + tagName);
-        return result.exitCode == 0 && ReleaseUtils.trimToNull(result.stdoutText()) != null;
+        return result.exitCode == 0 && ReleaseTextUtils.trimToNull(result.stdoutText()) != null;
     }
 
     public String remoteBranchHead(String branchName, String remoteUrl) throws IOException, InterruptedException {
         CommandResult result = runGitCapture("ls-remote", "--heads", remoteUrl, "refs/heads/" + branchName);
         if (result.exitCode != 0) {
-            String error = ReleaseUtils.trimToNull(result.stderrText());
+            String error = ReleaseTextUtils.trimToNull(result.stderrText());
             throw new IllegalStateException(error == null
                 ? "git command failed: [ls-remote, --heads, " + remoteUrl + ", refs/heads/" + branchName + "]"
                 : error);
         }
-        String stdout = ReleaseUtils.trimToNull(result.stdoutText());
+        String stdout = ReleaseTextUtils.trimToNull(result.stdoutText());
         if (stdout == null) {
             return null;
         }
@@ -56,7 +57,7 @@ public class GitlabReleaseRuntime {
     public void pushReleaseBranch(String remoteUrl, String releaseBranch, String expectedOldSha)
         throws IOException, InterruptedException {
         String destination = "HEAD:refs/heads/" + releaseBranch;
-        if (ReleaseUtils.trimToNull(expectedOldSha) == null) {
+        if (ReleaseTextUtils.trimToNull(expectedOldSha) == null) {
             runGit("push", remoteUrl, destination);
             return;
         }
@@ -71,7 +72,7 @@ public class GitlabReleaseRuntime {
     public void runGit(String... args) throws IOException, InterruptedException {
         CommandResult result = runGitCapture(args);
         if (result.exitCode != 0) {
-            String error = ReleaseUtils.trimToNull(result.stderrText());
+            String error = ReleaseTextUtils.trimToNull(result.stderrText());
             throw new IllegalStateException(error == null ? "git command failed: " + Arrays.asList(args) : error);
         }
     }
@@ -84,12 +85,12 @@ public class GitlabReleaseRuntime {
         String[] command = new String[args.length + 1];
         command[0] = "git";
         System.arraycopy(args, 0, command, 1, args.length);
-        return ReleaseUtils.runCapture(repoRoot, command);
+        return ReleaseProcessUtils.runCapture(repoRoot, command);
     }
 
     private String firstNonBlank(String... values) {
         for (String value : values) {
-            String trimmed = ReleaseUtils.trimToNull(value);
+            String trimmed = ReleaseTextUtils.trimToNull(value);
             if (trimmed != null) {
                 return trimmed;
             }

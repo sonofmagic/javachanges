@@ -1,6 +1,6 @@
 package io.github.sonofmagic.javachanges.core.env;
 
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 public final class EnvEntry {
     public final String name;
@@ -9,7 +9,7 @@ public final class EnvEntry {
     public final boolean required;
 
     public EnvEntry(String name, boolean secret, boolean protectedValue) {
-        this(name, secret, protectedValue, ReleaseUtils.isRequiredName(name));
+        this(name, secret, protectedValue, ReleaseTextUtils.isRequiredName(name));
     }
 
     public EnvEntry(String name, boolean secret, boolean protectedValue, boolean required) {

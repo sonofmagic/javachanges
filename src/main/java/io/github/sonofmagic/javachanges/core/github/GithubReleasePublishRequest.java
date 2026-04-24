@@ -1,7 +1,7 @@
 package io.github.sonofmagic.javachanges.core.github;
 
 import io.github.sonofmagic.javachanges.core.OutputFormat;
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.util.Map;
 
@@ -20,12 +20,12 @@ public final class GithubReleasePublishRequest {
     }
 
     public static GithubReleasePublishRequest fromOptions(Map<String, String> options) {
+        String releaseNotesFile = ReleaseTextUtils.trimToNull(options.get("release-notes-file"));
         return new GithubReleasePublishRequest(
-            ReleaseUtils.trimToNull(options.get("release-notes-file")) == null
-                ? "target/release-notes.md"
-                : ReleaseUtils.trimToNull(options.get("release-notes-file")),
-            ReleaseUtils.firstNonBlank(ReleaseUtils.trimToNull(options.get("github-output-file")), System.getenv("GITHUB_OUTPUT")),
-            ReleaseUtils.isTrue(options.get("execute")),
+            releaseNotesFile == null ? "target/release-notes.md" : releaseNotesFile,
+            ReleaseTextUtils.firstNonBlank(ReleaseTextUtils.trimToNull(options.get("github-output-file")),
+                System.getenv("GITHUB_OUTPUT")),
+            ReleaseTextUtils.isTrue(options.get("execute")),
             OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );
     }

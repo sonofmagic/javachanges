@@ -1,7 +1,7 @@
 package io.github.sonofmagic.javachanges.core.gitlab;
 
 import io.github.sonofmagic.javachanges.core.OutputFormat;
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import io.github.sonofmagic.javachanges.core.config.RequestConfigSupport;
 
 import java.util.Map;
@@ -23,23 +23,24 @@ public final class GitlabReleasePlanRequest {
     }
 
     public static GitlabReleasePlanRequest fromOptions(Map<String, String> options) {
-        String repoRootOption = ReleaseUtils.trimToNull(options.get("directory"));
-        String targetBranch = ReleaseUtils.firstNonBlank(
-            ReleaseUtils.trimToNull(options.get("target-branch")),
+        String repoRootOption = ReleaseTextUtils.trimToNull(options.get("directory"));
+        String targetBranch = ReleaseTextUtils.firstNonBlank(
+            ReleaseTextUtils.trimToNull(options.get("target-branch")),
             System.getenv("CI_DEFAULT_BRANCH")
         );
         if (targetBranch == null) {
             targetBranch = RequestConfigSupport.readConfiguredBaseBranch(repoRootOption);
         }
-        String releaseBranch = ReleaseUtils.trimToNull(options.get("release-branch"));
+        String releaseBranch = ReleaseTextUtils.trimToNull(options.get("release-branch"));
         if (releaseBranch == null) {
             releaseBranch = RequestConfigSupport.readConfiguredReleaseBranch(repoRootOption, targetBranch);
         }
         return new GitlabReleasePlanRequest(
-            ReleaseUtils.firstNonBlank(ReleaseUtils.trimToNull(options.get("project-id")), System.getenv("CI_PROJECT_ID")),
+            ReleaseTextUtils.firstNonBlank(ReleaseTextUtils.trimToNull(options.get("project-id")),
+                System.getenv("CI_PROJECT_ID")),
             targetBranch,
             releaseBranch,
-            ReleaseUtils.isTrue(options.get("execute")),
+            ReleaseTextUtils.isTrue(options.get("execute")),
             OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );
     }

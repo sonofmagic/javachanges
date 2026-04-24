@@ -1,6 +1,7 @@
 package io.github.sonofmagic.javachanges.core.github;
 
 import io.github.sonofmagic.javachanges.core.ReleaseAutomationSupport;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import io.github.sonofmagic.javachanges.core.automation.AbstractReleaseAutomationSupport;
 import io.github.sonofmagic.javachanges.core.automation.AutomationJsonSupport;
 import io.github.sonofmagic.javachanges.core.automation.ReleaseNotesGenerator;
@@ -15,11 +16,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.CHANGESETS_DIR;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.firstNonBlank;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
-
 public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport {
+    private static final String CHANGESETS_DIR = ".changesets";
     private final GithubReleaseRuntime runtime;
 
     public GithubReleaseSupport(Path repoRoot, PrintStream out) {
@@ -35,7 +33,7 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
         boolean textOutput = isTextOutput(request.format);
         AutomationJsonSupport.AutomationReport report =
             newAutomationReport("github-release-plan", "plan-pull-request", request.execute);
-        if (trimToNull(request.githubRepo) == null) {
+        if (ReleaseTextUtils.trimToNull(request.githubRepo) == null) {
             throw new IllegalArgumentException("Missing GitHub repo. Pass --github-repo or set GITHUB_REPOSITORY.");
         }
 
@@ -76,7 +74,7 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
         runtime.runGit("push", "--force-with-lease", "origin", "HEAD:" + releaseBranch);
 
         String prNumber = runtime.findOpenPullRequestNumber(request.githubRepo, releaseBranch, targetBranch);
-        if (trimToNull(prNumber) == null) {
+        if (ReleaseTextUtils.trimToNull(prNumber) == null) {
             report.action = "create-pull-request";
             report.reason = "Created GitHub pull request.";
             runtime.createPullRequest(request.githubRepo, releaseBranch, targetBranch, title,
@@ -96,7 +94,8 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
         boolean textOutput = isTextOutput(request.format);
         AutomationJsonSupport.AutomationReport report =
             newAutomationReport("github-tag-from-plan", "tag-from-plan", request.execute);
-        String currentSha = firstNonBlank(trimToNull(request.currentSha), runtime.headSha());
+        String currentSha = ReleaseTextUtils.firstNonBlank(ReleaseTextUtils.trimToNull(request.currentSha),
+            runtime.headSha());
         ReleaseAutomationSupport.ReleaseDescriptor release = descriptorFromManifest(report);
         List<String> tagNames = release.tagNames();
 

@@ -1,6 +1,7 @@
 package io.github.sonofmagic.javachanges.core.env;
 
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseProcessUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -25,7 +26,7 @@ final class ReleaseEnvSyncSupport {
         }
 
         if (request.execute) {
-            if (ReleaseUtils.isBlank(request.repo)) {
+            if (ReleaseTextUtils.isBlank(request.repo)) {
                 throw new IllegalArgumentException("执行模式下必须通过 --repo 指定仓库");
             }
             if (request.platform.includesGithub()) {
@@ -69,21 +70,21 @@ final class ReleaseEnvSyncSupport {
         command.add(entry.name);
         command.add("--body");
         command.add(value.raw);
-        if (!ReleaseUtils.isBlank(request.repo)) {
+        if (!ReleaseTextUtils.isBlank(request.repo)) {
             command.add("--repo");
             command.add(request.repo);
         }
         if (request.execute) {
-            out.println("执行: " + ReleaseUtils.renderCommand(command));
-            int exitCode = ReleaseUtils.runCommand(command, repoRoot);
+            out.println("执行: " + ReleaseTextUtils.renderCommand(command));
+            int exitCode = ReleaseProcessUtils.runCommand(command, repoRoot);
             if (exitCode != 0) {
-                throw new IllegalStateException("命令执行失败: " + ReleaseUtils.renderCommand(command));
+                throw new IllegalStateException("命令执行失败: " + ReleaseTextUtils.renderCommand(command));
             }
             return;
         }
         String previewValue = secret ? value.renderMasked(request.showSecrets) : value.raw;
         out.println("gh " + (secret ? "secret" : "variable") + " set "
-            + ReleaseUtils.padRight(entry.name, secret ? 36 : 34) + " --body " + previewValue
+            + ReleaseTextUtils.padRight(entry.name, secret ? 36 : 34) + " --body " + previewValue
             + runtime.repoFlagPreview(request.repo));
     }
 
@@ -106,19 +107,19 @@ final class ReleaseEnvSyncSupport {
         if (entry.protectedValue) {
             command.add("--protected");
         }
-        if (!ReleaseUtils.isBlank(request.repo)) {
+        if (!ReleaseTextUtils.isBlank(request.repo)) {
             command.add("--repo");
             command.add(request.repo);
         }
         if (request.execute) {
-            out.println("执行: " + ReleaseUtils.renderCommand(command));
-            int exitCode = ReleaseUtils.runCommand(command, repoRoot);
+            out.println("执行: " + ReleaseTextUtils.renderCommand(command));
+            int exitCode = ReleaseProcessUtils.runCommand(command, repoRoot);
             if (exitCode != 0) {
-                throw new IllegalStateException("命令执行失败: " + ReleaseUtils.renderCommand(command));
+                throw new IllegalStateException("命令执行失败: " + ReleaseTextUtils.renderCommand(command));
             }
             return;
         }
-        out.println("glab variable set " + ReleaseUtils.padRight(entry.name, 31) + " --value "
+        out.println("glab variable set " + ReleaseTextUtils.padRight(entry.name, 31) + " --value "
             + value.renderMasked(request.showSecrets)
             + (entry.secret ? " --masked" : "")
             + (entry.protectedValue ? " --protected" : "")

@@ -1,6 +1,6 @@
 package io.github.sonofmagic.javachanges.core.env;
 
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -39,7 +39,7 @@ public final class LoadedEnv {
             }
             String key = line.substring(0, separator).trim();
             String value = line.substring(separator + 1).trim();
-            values.put(key, ReleaseUtils.stripWrappingQuotes(value));
+            values.put(key, ReleaseTextUtils.stripWrappingQuotes(value));
         }
         return new LoadedEnv(path, values);
     }

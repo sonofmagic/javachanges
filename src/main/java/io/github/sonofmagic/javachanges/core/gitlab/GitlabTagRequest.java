@@ -1,7 +1,7 @@
 package io.github.sonofmagic.javachanges.core.gitlab;
 
 import io.github.sonofmagic.javachanges.core.OutputFormat;
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import io.github.sonofmagic.javachanges.core.config.ChangesetConfigSupport;
 import io.github.sonofmagic.javachanges.core.config.RequestConfigSupport;
 
@@ -29,16 +29,18 @@ public final class GitlabTagRequest {
     }
 
     public static GitlabTagRequest fromOptions(Map<String, String> options) {
-        String repoRootOption = ReleaseUtils.trimToNull(options.get("directory"));
+        String repoRootOption = ReleaseTextUtils.trimToNull(options.get("directory"));
         ChangesetConfigSupport.ChangesetConfig config =
             RequestConfigSupport.readConfiguredChangesetConfigOrDefaults(repoRootOption);
         return new GitlabTagRequest(
-            ReleaseUtils.firstNonBlank(ReleaseUtils.trimToNull(options.get("before-sha")), System.getenv("CI_COMMIT_BEFORE_SHA")),
-            ReleaseUtils.firstNonBlank(ReleaseUtils.trimToNull(options.get("current-sha")), System.getenv("CI_COMMIT_SHA")),
-            ReleaseUtils.isTrue(options.get("execute")),
+            ReleaseTextUtils.firstNonBlank(ReleaseTextUtils.trimToNull(options.get("before-sha")),
+                System.getenv("CI_COMMIT_BEFORE_SHA")),
+            ReleaseTextUtils.firstNonBlank(ReleaseTextUtils.trimToNull(options.get("current-sha")),
+                System.getenv("CI_COMMIT_SHA")),
+            ReleaseTextUtils.isTrue(options.get("execute")),
             config.baseBranch(),
             config.releaseBranch(),
-            ReleaseUtils.trimToNull(System.getenv("CI_COMMIT_BRANCH")),
+            ReleaseTextUtils.trimToNull(System.getenv("CI_COMMIT_BRANCH")),
             OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );
     }

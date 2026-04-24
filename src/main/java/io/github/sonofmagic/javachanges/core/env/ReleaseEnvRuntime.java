@@ -1,7 +1,8 @@
 package io.github.sonofmagic.javachanges.core.env;
 
 import io.github.sonofmagic.javachanges.core.CommandResult;
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseProcessUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -9,8 +10,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.isBlank;
 
 public class ReleaseEnvRuntime {
     private final Path repoRoot;
@@ -56,7 +55,7 @@ public class ReleaseEnvRuntime {
             builder.directory(repoRoot.toFile());
             builder.redirectErrorStream(true);
             Process process = builder.start();
-            ReleaseUtils.closeQuietly(process.getInputStream());
+            ReleaseProcessUtils.closeQuietly(process.getInputStream());
             process.destroy();
             return true;
         } catch (IOException exception) {
@@ -76,7 +75,7 @@ public class ReleaseEnvRuntime {
     }
 
     public CommandResult runAndCapture(List<String> command) throws IOException, InterruptedException {
-        return ReleaseUtils.runCapture(repoRoot, command.toArray(new String[0]));
+        return ReleaseProcessUtils.runCapture(repoRoot, command);
     }
 
     public String relativizePath(Path path) {
@@ -89,7 +88,7 @@ public class ReleaseEnvRuntime {
     }
 
     public String repoFlagPreview(String repo) {
-        if (isBlank(repo)) {
+        if (ReleaseTextUtils.isBlank(repo)) {
             return "";
         }
         return " --repo " + repo;

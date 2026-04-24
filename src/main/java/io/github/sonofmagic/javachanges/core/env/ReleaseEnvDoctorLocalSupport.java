@@ -2,6 +2,8 @@ package io.github.sonofmagic.javachanges.core.env;
 
 import io.github.sonofmagic.javachanges.core.MavenCommand;
 import io.github.sonofmagic.javachanges.core.OutputFormat;
+import io.github.sonofmagic.javachanges.core.ReleaseProcessUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -10,10 +12,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.isBlank;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.mavenWrapperPath;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.resolveMavenCommand;
 
 final class ReleaseEnvDoctorLocalSupport {
     private final Path repoRoot;
@@ -118,12 +116,12 @@ final class ReleaseEnvDoctorLocalSupport {
             state.failed = true;
         }
 
-        Path mvnw = repoRoot.resolve(mavenWrapperPath());
+        Path mvnw = repoRoot.resolve(ReleaseProcessUtils.mavenWrapperPath());
         boolean wrapperPresent = Files.exists(mvnw);
         if (wrapperPresent) {
-            doctorSupport.recordStatus(textOutput, runtimeSection, mavenWrapperPath(), "OK");
+            doctorSupport.recordStatus(textOutput, runtimeSection, ReleaseProcessUtils.mavenWrapperPath(), "OK");
         } else {
-            doctorSupport.recordStatus(textOutput, runtimeSection, mavenWrapperPath(), "MISSING");
+            doctorSupport.recordStatus(textOutput, runtimeSection, ReleaseProcessUtils.mavenWrapperPath(), "MISSING");
         }
 
         boolean systemMavenPresent = runtime.commandExists("mvn");
@@ -131,7 +129,7 @@ final class ReleaseEnvDoctorLocalSupport {
             doctorSupport.recordStatus(textOutput, runtimeSection, "mvn", systemMavenPresent ? "OK" : "MISSING");
         }
 
-        MavenCommand mavenCommand = resolveMavenCommand(repoRoot);
+        MavenCommand mavenCommand = ReleaseProcessUtils.resolveMavenCommand(repoRoot);
         if (mavenCommand == null) {
             doctorSupport.recordStatus(textOutput, runtimeSection, "Maven command", "MISSING");
             state.mavenMissing = true;
@@ -230,10 +228,10 @@ final class ReleaseEnvDoctorLocalSupport {
         }
         doctorSupport.recordStatus(textOutput, repoSection, "GITHUB_REPO", doctorSupport.repoStatusValue(request.githubRepo));
         doctorSupport.recordStatus(textOutput, repoSection, "GITLAB_REPO", doctorSupport.repoStatusValue(request.gitlabRepo));
-        if (!isBlank(request.githubRepo) && !doctorSupport.isValidRepoIdentifier(request.githubRepo)) {
+        if (!ReleaseTextUtils.isBlank(request.githubRepo) && !doctorSupport.isValidRepoIdentifier(request.githubRepo)) {
             state.failed = true;
         }
-        if (!isBlank(request.gitlabRepo) && !doctorSupport.isValidRepoIdentifier(request.gitlabRepo)) {
+        if (!ReleaseTextUtils.isBlank(request.gitlabRepo) && !doctorSupport.isValidRepoIdentifier(request.gitlabRepo)) {
             state.failed = true;
         }
     }

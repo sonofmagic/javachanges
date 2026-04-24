@@ -1,7 +1,8 @@
 package io.github.sonofmagic.javachanges.core.env;
 
 import io.github.sonofmagic.javachanges.core.OutputFormat;
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseJsonUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -70,7 +71,7 @@ final class ReleaseEnvAuditSupport {
         sections.add(githubPreconditions);
         sections.add(githubVariablesSection);
         sections.add(githubSecretsSection);
-        if (ReleaseUtils.isBlank(request.githubRepo)) {
+        if (ReleaseTextUtils.isBlank(request.githubRepo)) {
             githubPreconditions.add("GITHUB_REPO", "MISSING");
             failPrecondition(request, env, sections, "缺少仓库参数: GITHUB_REPO");
         }
@@ -89,8 +90,8 @@ final class ReleaseEnvAuditSupport {
             "--json", "name,value,updatedAt")).stdoutText();
         String secretsJson = runtime.runAndCapture(Arrays.asList("gh", "secret", "list", "--repo", request.githubRepo,
             "--json", "name,updatedAt")).stdoutText();
-        Map<String, Map<String, String>> githubVariables = ReleaseUtils.parseFlatJsonObjects(variablesJson);
-        Map<String, Map<String, String>> githubSecrets = ReleaseUtils.parseFlatJsonObjects(secretsJson);
+        Map<String, Map<String, String>> githubVariables = ReleaseJsonUtils.parseFlatJsonObjects(variablesJson);
+        Map<String, Map<String, String>> githubSecrets = ReleaseJsonUtils.parseFlatJsonObjects(secretsJson);
 
         boolean failed = false;
         if (textOutput) {
@@ -126,7 +127,7 @@ final class ReleaseEnvAuditSupport {
         ReleaseEnvJsonSupport.JsonSection gitlabSection = new ReleaseEnvJsonSupport.JsonSection("GitLab Variables 审计");
         sections.add(gitlabPreconditions);
         sections.add(gitlabSection);
-        if (ReleaseUtils.isBlank(request.gitlabRepo)) {
+        if (ReleaseTextUtils.isBlank(request.gitlabRepo)) {
             gitlabPreconditions.add("GITLAB_REPO", "MISSING");
             failPrecondition(request, env, sections, "缺少仓库参数: GITLAB_REPO");
         }

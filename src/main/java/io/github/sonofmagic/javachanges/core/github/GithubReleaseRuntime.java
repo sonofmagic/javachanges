@@ -1,7 +1,8 @@
 package io.github.sonofmagic.javachanges.core.github;
 
 import io.github.sonofmagic.javachanges.core.CommandResult;
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseProcessUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -25,21 +26,21 @@ public class GithubReleaseRuntime {
 
     public boolean remoteTagExists(String tagName, String remoteName) throws IOException, InterruptedException {
         CommandResult result = runGitCapture("ls-remote", "--tags", remoteName, "refs/tags/" + tagName);
-        return result.exitCode == 0 && ReleaseUtils.trimToNull(result.stdoutText()) != null;
+        return result.exitCode == 0 && ReleaseTextUtils.trimToNull(result.stdoutText()) != null;
     }
 
     public String headSha() throws IOException, InterruptedException {
-        String githubSha = ReleaseUtils.trimToNull(System.getenv("GITHUB_SHA"));
+        String githubSha = ReleaseTextUtils.trimToNull(System.getenv("GITHUB_SHA"));
         if (githubSha != null) {
             return githubSha;
         }
         CommandResult result = runGitCapture("rev-parse", "HEAD");
         if (result.exitCode != 0) {
-            throw new IllegalStateException(ReleaseUtils.trimToNull(result.stderrText()) == null
+            throw new IllegalStateException(ReleaseTextUtils.trimToNull(result.stderrText()) == null
                 ? "git rev-parse HEAD failed"
                 : result.stderrText().trim());
         }
-        String sha = ReleaseUtils.trimToNull(result.stdoutText());
+        String sha = ReleaseTextUtils.trimToNull(result.stdoutText());
         if (sha == null) {
             throw new IllegalStateException("Current HEAD SHA is empty");
         }
@@ -77,10 +78,10 @@ public class GithubReleaseRuntime {
             "--jq", ".[0].number"
         );
         if (result.exitCode != 0) {
-            String error = ReleaseUtils.trimToNull(result.stderrText());
+            String error = ReleaseTextUtils.trimToNull(result.stderrText());
             throw new IllegalStateException(error == null ? "gh pr list failed" : error);
         }
-        return ReleaseUtils.trimToNull(result.stdoutText());
+        return ReleaseTextUtils.trimToNull(result.stdoutText());
     }
 
     public void createPullRequest(String githubRepo, String headBranch, String baseBranch, String title, Path bodyFile)
@@ -108,7 +109,7 @@ public class GithubReleaseRuntime {
     public void runGit(String... args) throws IOException, InterruptedException {
         CommandResult result = runGitCapture(args);
         if (result.exitCode != 0) {
-            String error = ReleaseUtils.trimToNull(result.stderrText());
+            String error = ReleaseTextUtils.trimToNull(result.stderrText());
             throw new IllegalStateException(error == null ? "git command failed: " + Arrays.asList(args) : error);
         }
     }
@@ -116,7 +117,7 @@ public class GithubReleaseRuntime {
     public void runGh(String... args) throws IOException, InterruptedException {
         CommandResult result = runGhCapture(args);
         if (result.exitCode != 0) {
-            String error = ReleaseUtils.trimToNull(result.stderrText());
+            String error = ReleaseTextUtils.trimToNull(result.stderrText());
             throw new IllegalStateException(error == null ? "gh command failed: " + Arrays.asList(args) : error);
         }
     }
@@ -137,6 +138,6 @@ public class GithubReleaseRuntime {
         String[] command = new String[args.length + 1];
         command[0] = executable;
         System.arraycopy(args, 0, command, 1, args.length);
-        return ReleaseUtils.runCapture(repoRoot, command);
+        return ReleaseProcessUtils.runCapture(repoRoot, command);
     }
 }

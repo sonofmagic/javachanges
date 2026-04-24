@@ -1,7 +1,9 @@
 package io.github.sonofmagic.javachanges.core.gitlab;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseJsonUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseProcessUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -21,7 +23,7 @@ public final class GitlabApiClient implements GitlabMergeRequestClient {
                 + urlEncode(sourceBranch) + "&target_branch=" + urlEncode(targetBranch),
             null
         );
-        JsonNode root = ReleaseUtils.readJsonTree(response);
+        JsonNode root = ReleaseJsonUtils.readTree(response);
         if (!root.isArray() || root.size() == 0) {
             return null;
         }
@@ -57,15 +59,15 @@ public final class GitlabApiClient implements GitlabMergeRequestClient {
     }
 
     public String authenticatedRemoteUrl() {
-        String host = ReleaseUtils.requireEnv("CI_SERVER_HOST");
-        String projectPath = ReleaseUtils.requireEnv("CI_PROJECT_PATH");
-        return "https://" + urlEncode(ReleaseUtils.requireEnv("GITLAB_RELEASE_BOT_USERNAME"))
-            + ":" + urlEncode(ReleaseUtils.requireEnv("GITLAB_RELEASE_BOT_TOKEN"))
+        String host = ReleaseTextUtils.requireEnv("CI_SERVER_HOST");
+        String projectPath = ReleaseTextUtils.requireEnv("CI_PROJECT_PATH");
+        return "https://" + urlEncode(ReleaseTextUtils.requireEnv("GITLAB_RELEASE_BOT_USERNAME"))
+            + ":" + urlEncode(ReleaseTextUtils.requireEnv("GITLAB_RELEASE_BOT_TOKEN"))
             + "@" + host + "/" + projectPath + ".git";
     }
 
     public int requiredJsonInt(String json, String field) {
-        JsonNode root = ReleaseUtils.readJsonTree(json);
+        JsonNode root = ReleaseJsonUtils.readTree(json);
         JsonNode value = root.get(field);
         if (value == null || value.isNull() || !value.canConvertToInt()) {
             throw new IllegalStateException("Missing `" + field + "` in GitLab response: " + json);
@@ -110,12 +112,12 @@ public final class GitlabApiClient implements GitlabMergeRequestClient {
     }
 
     private String requestAllowNotFound(String method, String path, String body) throws IOException {
-        String serverUrl = ReleaseUtils.firstNonBlank(System.getenv("CI_SERVER_URL"),
-            "https://" + ReleaseUtils.requireEnv("CI_SERVER_HOST"));
+        String serverUrl = ReleaseTextUtils.firstNonBlank(System.getenv("CI_SERVER_URL"),
+            "https://" + ReleaseTextUtils.requireEnv("CI_SERVER_HOST"));
         URL url = new URL(serverUrl + "/api/v4" + path);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod(method);
-        connection.setRequestProperty("PRIVATE-TOKEN", ReleaseUtils.requireEnv("GITLAB_RELEASE_BOT_TOKEN"));
+        connection.setRequestProperty("PRIVATE-TOKEN", ReleaseTextUtils.requireEnv("GITLAB_RELEASE_BOT_TOKEN"));
         connection.setRequestProperty("Accept", "application/json");
         if (body != null) {
             byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
@@ -126,7 +128,7 @@ public final class GitlabApiClient implements GitlabMergeRequestClient {
             output.write(bytes);
             output.close();
         }
-        byte[] responseBytes = ReleaseUtils.readAllBytes(connection.getResponseCode() >= 400
+        byte[] responseBytes = ReleaseProcessUtils.readAllBytes(connection.getResponseCode() >= 400
             ? connection.getErrorStream()
             : connection.getInputStream());
         String response = new String(responseBytes, StandardCharsets.UTF_8);

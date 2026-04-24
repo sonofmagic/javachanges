@@ -18,7 +18,7 @@ public final class ReleaseProcessUtils {
     private ReleaseProcessUtils() {
     }
 
-    static byte[] readAllBytes(InputStream inputStream) throws IOException {
+    public static byte[] readAllBytes(InputStream inputStream) throws IOException {
         java.io.ByteArrayOutputStream output = new java.io.ByteArrayOutputStream();
         byte[] buffer = new byte[8192];
         int read;

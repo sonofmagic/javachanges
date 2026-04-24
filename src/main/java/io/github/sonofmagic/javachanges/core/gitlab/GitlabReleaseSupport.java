@@ -1,6 +1,7 @@
 package io.github.sonofmagic.javachanges.core.gitlab;
 
 import io.github.sonofmagic.javachanges.core.ReleaseAutomationSupport;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import io.github.sonofmagic.javachanges.core.automation.AbstractReleaseAutomationSupport;
 import io.github.sonofmagic.javachanges.core.automation.AutomationJsonSupport;
 import io.github.sonofmagic.javachanges.core.automation.ReleaseArtifactSupport;
@@ -15,12 +16,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.CHANGESETS_DIR;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.RELEASE_PLAN_JSON;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.firstNonBlank;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
-
 public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport {
+    private static final String CHANGESETS_DIR = ".changesets";
+    private static final String RELEASE_PLAN_JSON = "release-plan.json";
     private final GitlabReleaseRuntime runtime;
     private final GitlabMergeRequestClient apiClient;
 
@@ -39,7 +37,7 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
         AutomationJsonSupport.AutomationReport report =
             newAutomationReport("gitlab-release-plan", "plan-merge-request", request.execute);
         report.projectId = request.projectId;
-        if (trimToNull(request.projectId) == null) {
+        if (ReleaseTextUtils.trimToNull(request.projectId) == null) {
             throw new IllegalArgumentException("Missing GitLab project id. Pass --project-id or set CI_PROJECT_ID.");
         }
 
@@ -103,7 +101,8 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
         boolean textOutput = isTextOutput(request.format);
         AutomationJsonSupport.AutomationReport report =
             newAutomationReport("gitlab-tag-from-plan", "tag-from-plan", request.execute);
-        if (trimToNull(request.currentBranch) != null && trimToNull(request.releaseBranch) != null
+        if (ReleaseTextUtils.trimToNull(request.currentBranch) != null
+            && ReleaseTextUtils.trimToNull(request.releaseBranch) != null
             && request.currentBranch.equals(request.releaseBranch)) {
             report.skipped = true;
             report.reason = "Current branch matches the configured release branch.";
@@ -111,7 +110,8 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
                 "Current branch matches the configured release branch. Skip release tag.");
             return;
         }
-        if (trimToNull(request.currentBranch) != null && trimToNull(request.baseBranch) != null
+        if (ReleaseTextUtils.trimToNull(request.currentBranch) != null
+            && ReleaseTextUtils.trimToNull(request.baseBranch) != null
             && !request.currentBranch.equals(request.baseBranch)) {
             report.skipped = true;
             report.reason = "Current branch does not match the configured base branch.";
@@ -120,8 +120,8 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
                     + request.baseBranch + ". Skip release tag.");
             return;
         }
-        String beforeSha = trimToNull(request.beforeSha);
-        String currentSha = trimToNull(request.currentSha);
+        String beforeSha = ReleaseTextUtils.trimToNull(request.beforeSha);
+        String currentSha = ReleaseTextUtils.trimToNull(request.currentSha);
         if (beforeSha == null || currentSha == null || beforeSha.matches("0+")) {
             report.skipped = true;
             report.reason = "Missing previous SHA.";
@@ -168,11 +168,11 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
             newAutomationReport("gitlab-release", "sync-release", request.execute);
         report.projectId = request.projectId;
 
-        String tagName = trimToNull(request.tag);
+        String tagName = ReleaseTextUtils.trimToNull(request.tag);
         if (tagName == null) {
             throw new IllegalArgumentException("Missing GitLab tag. Pass --tag or set CI_COMMIT_TAG.");
         }
-        if (trimToNull(request.projectId) == null) {
+        if (ReleaseTextUtils.trimToNull(request.projectId) == null) {
             throw new IllegalArgumentException("Missing GitLab project id. Pass --project-id or set CI_PROJECT_ID.");
         }
         ReleaseArtifactSupport.ReleaseTagInfo tagInfo = artifactSupport.describeTag(tagName);
@@ -188,7 +188,9 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
         String releaseName = tagInfo.releaseDisplayName();
 
         AutomationJsonSupport.printLines(out, textOutput,
-            "GitLab host: " + firstNonBlank(trimToNull(request.gitlabHost), trimToNull(System.getenv("CI_SERVER_HOST"))),
+            "GitLab host: " + ReleaseTextUtils.firstNonBlank(
+                ReleaseTextUtils.trimToNull(request.gitlabHost),
+                ReleaseTextUtils.trimToNull(System.getenv("CI_SERVER_HOST"))),
             "Project ID: " + request.projectId,
             "Release tag: " + tagName,
             "Release version: " + report.releaseVersion,

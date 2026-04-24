@@ -1,6 +1,6 @@
 package io.github.sonofmagic.javachanges.core.env;
 
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 public final class EnvValue {
     public final String raw;
@@ -14,11 +14,11 @@ public final class EnvValue {
     }
 
     public static EnvValue of(String value) {
-        String normalized = ReleaseUtils.trimToNull(value);
+        String normalized = ReleaseTextUtils.trimToNull(value);
         if (normalized == null) {
             return missing();
         }
-        if (ReleaseUtils.isPlaceholderValue(normalized)) {
+        if (ReleaseTextUtils.isPlaceholderValue(normalized)) {
             return new EnvValue(normalized, false, true);
         }
         return new EnvValue(normalized, false, false);

@@ -1,7 +1,7 @@
 package io.github.sonofmagic.javachanges.core.github;
 
 import io.github.sonofmagic.javachanges.core.OutputFormat;
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.util.Map;
 
@@ -18,8 +18,9 @@ public final class GithubTagRequest {
 
     public static GithubTagRequest fromOptions(Map<String, String> options) {
         return new GithubTagRequest(
-            ReleaseUtils.firstNonBlank(ReleaseUtils.trimToNull(options.get("current-sha")), System.getenv("GITHUB_SHA")),
-            ReleaseUtils.isTrue(options.get("execute")),
+            ReleaseTextUtils.firstNonBlank(ReleaseTextUtils.trimToNull(options.get("current-sha")),
+                System.getenv("GITHUB_SHA")),
+            ReleaseTextUtils.isTrue(options.get("execute")),
             OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );
     }
