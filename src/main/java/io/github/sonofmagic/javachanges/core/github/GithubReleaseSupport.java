@@ -1,5 +1,6 @@
 package io.github.sonofmagic.javachanges.core.github;
 
+import io.github.sonofmagic.javachanges.core.ChangesetPaths;
 import io.github.sonofmagic.javachanges.core.ReleaseAutomationSupport;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import io.github.sonofmagic.javachanges.core.automation.AbstractReleaseAutomationSupport;
@@ -17,7 +18,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.List;
 
 public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport {
-    private static final String CHANGESETS_DIR = ".changesets";
     private final GithubReleaseRuntime runtime;
 
     public GithubReleaseSupport(Path repoRoot, PrintStream out) {
@@ -62,7 +62,7 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
         runtime.configureBotIdentity();
         runtime.runGit("switch", "-C", releaseBranch);
         RepoFiles.applyPlan(repoRoot, plan);
-        runtime.runGit("add", "pom.xml", "CHANGELOG.md", CHANGESETS_DIR);
+        runtime.runGit("add", "pom.xml", "CHANGELOG.md", ChangesetPaths.DIR);
         if (runtime.hasNoStagedChanges()) {
             report.skipped = true;
             report.reason = "No staged release plan changes.";

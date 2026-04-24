@@ -1,5 +1,6 @@
 package io.github.sonofmagic.javachanges.core.config;
 
+import io.github.sonofmagic.javachanges.core.ChangesetPaths;
 import io.github.sonofmagic.javachanges.core.ReleaseTagStrategy;
 import io.github.sonofmagic.javachanges.core.ReleaseJsonUtils;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
@@ -11,10 +12,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public final class ChangesetConfigSupport {
-    private static final String CONFIG_JSON = "config.json";
-    private static final String CONFIG_JSONC = "config.jsonc";
-    private static final String CHANGESETS_DIR = ".changesets";
-
     private ChangesetConfigSupport() {
     }
 
@@ -49,12 +46,12 @@ public final class ChangesetConfigSupport {
     }
 
     static Path resolveConfigPath(Path repoRoot) {
-        Path changesetsDir = repoRoot.resolve(CHANGESETS_DIR);
-        Path jsonPath = changesetsDir.resolve(CONFIG_JSON);
+        Path changesetsDir = repoRoot.resolve(ChangesetPaths.DIR);
+        Path jsonPath = changesetsDir.resolve(ChangesetPaths.CONFIG_JSON);
         if (Files.exists(jsonPath)) {
             return jsonPath;
         }
-        Path jsoncPath = changesetsDir.resolve(CONFIG_JSONC);
+        Path jsoncPath = changesetsDir.resolve(ChangesetPaths.CONFIG_JSONC);
         if (Files.exists(jsoncPath)) {
             return jsoncPath;
         }

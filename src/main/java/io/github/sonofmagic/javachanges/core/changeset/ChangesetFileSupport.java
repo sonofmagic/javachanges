@@ -1,5 +1,6 @@
 package io.github.sonofmagic.javachanges.core.changeset;
 
+import io.github.sonofmagic.javachanges.core.ChangesetPaths;
 import io.github.sonofmagic.javachanges.core.ReleaseJsonUtils;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
@@ -17,18 +18,13 @@ import java.util.Comparator;
 import java.util.List;
 
 public final class ChangesetFileSupport {
-    private static final String CHANGESETS_DIR = ".changesets";
-    private static final String CHANGESETS_README = "README.md";
-    private static final String RELEASE_PLAN_JSON = "release-plan.json";
-    private static final String RELEASE_PLAN_MD = "release-plan.md";
-
     private ChangesetFileSupport() {
     }
 
     public static void ensureChangesetReadme(Path repoRoot) throws IOException {
-        Path dir = repoRoot.resolve(CHANGESETS_DIR);
+        Path dir = repoRoot.resolve(ChangesetPaths.DIR);
         Files.createDirectories(dir);
-        Path readme = dir.resolve(CHANGESETS_README);
+        Path readme = dir.resolve(ChangesetPaths.README);
         if (!Files.exists(readme)) {
             Files.write(readme, Collections.singletonList("# Changesets"), StandardCharsets.UTF_8);
         }
@@ -38,7 +34,7 @@ public final class ChangesetFileSupport {
         ensureChangesetReadme(repoRoot);
         String slug = Slug.slugify(input.summary);
         String baseName = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE) + "-" + slug;
-        Path dir = repoRoot.resolve(CHANGESETS_DIR);
+        Path dir = repoRoot.resolve(ChangesetPaths.DIR);
         Path file = dir.resolve(baseName + ".md");
         int counter = 2;
         while (Files.exists(file)) {
@@ -59,7 +55,7 @@ public final class ChangesetFileSupport {
     }
 
     public static List<Changeset> loadChangesets(Path repoRoot) throws IOException {
-        Path dir = repoRoot.resolve(CHANGESETS_DIR);
+        Path dir = repoRoot.resolve(ChangesetPaths.DIR);
         if (!Files.exists(dir)) {
             return Collections.emptyList();
         }
@@ -68,7 +64,7 @@ public final class ChangesetFileSupport {
         try {
             for (Path path : stream) {
                 String fileName = path.getFileName().toString();
-                if (isChangesetReadme(fileName) || RELEASE_PLAN_MD.equals(fileName)) {
+                if (isChangesetReadme(fileName) || ChangesetPaths.RELEASE_PLAN_MD.equals(fileName)) {
                     continue;
                 }
                 changesets.add(ChangesetParser.parse(repoRoot, path));
@@ -86,7 +82,7 @@ public final class ChangesetFileSupport {
     }
 
     public static String readManifestField(Path repoRoot, String field) throws IOException {
-        Path manifest = repoRoot.resolve(CHANGESETS_DIR).resolve(RELEASE_PLAN_JSON);
+        Path manifest = repoRoot.resolve(ChangesetPaths.DIR).resolve(ChangesetPaths.RELEASE_PLAN_JSON);
         if (!Files.exists(manifest)) {
             throw new IllegalStateException("Missing release plan manifest: " + manifest);
         }
@@ -100,7 +96,7 @@ public final class ChangesetFileSupport {
     }
 
     private static boolean isChangesetReadme(String fileName) {
-        return CHANGESETS_README.equals(fileName)
+        return ChangesetPaths.README.equals(fileName)
             || fileName.startsWith("README.")
             || fileName.startsWith("README-");
     }

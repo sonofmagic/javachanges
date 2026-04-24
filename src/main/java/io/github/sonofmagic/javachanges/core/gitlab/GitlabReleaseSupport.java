@@ -1,5 +1,6 @@
 package io.github.sonofmagic.javachanges.core.gitlab;
 
+import io.github.sonofmagic.javachanges.core.ChangesetPaths;
 import io.github.sonofmagic.javachanges.core.ReleaseAutomationSupport;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import io.github.sonofmagic.javachanges.core.automation.AbstractReleaseAutomationSupport;
@@ -17,8 +18,6 @@ import java.nio.file.Path;
 import java.util.List;
 
 public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport {
-    private static final String CHANGESETS_DIR = ".changesets";
-    private static final String RELEASE_PLAN_JSON = "release-plan.json";
     private final GitlabReleaseRuntime runtime;
     private final GitlabMergeRequestClient apiClient;
 
@@ -69,7 +68,7 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
             Files.readAllBytes(releasePlanMarkdownFile()),
             StandardCharsets.UTF_8
         );
-        runtime.runGit("add", "pom.xml", "CHANGELOG.md", CHANGESETS_DIR);
+        runtime.runGit("add", "pom.xml", "CHANGELOG.md", ChangesetPaths.DIR);
         if (runtime.hasNoStagedChanges()) {
             report.skipped = true;
             report.reason = "No staged release plan changes.";
@@ -129,7 +128,8 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
             return;
         }
 
-        if (!runtime.changedBetween(beforeSha, currentSha, CHANGESETS_DIR + "/" + RELEASE_PLAN_JSON)) {
+        if (!runtime.changedBetween(beforeSha, currentSha,
+            ChangesetPaths.DIR + "/" + ChangesetPaths.RELEASE_PLAN_JSON)) {
             report.skipped = true;
             report.reason = "No release plan manifest change detected.";
             AutomationJsonSupport.print(out, textOutput, report,

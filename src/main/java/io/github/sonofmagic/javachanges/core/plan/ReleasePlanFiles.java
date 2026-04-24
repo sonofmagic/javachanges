@@ -1,5 +1,6 @@
 package io.github.sonofmagic.javachanges.core.plan;
 
+import io.github.sonofmagic.javachanges.core.ChangesetPaths;
 import io.github.sonofmagic.javachanges.core.PomModelSupport;
 import io.github.sonofmagic.javachanges.core.changeset.Changeset;
 
@@ -13,20 +14,16 @@ import java.util.Collections;
 import java.util.List;
 
 final class ReleasePlanFiles {
-    private static final String CHANGESETS_DIR = ".changesets";
-    private static final String RELEASE_PLAN_JSON = "release-plan.json";
-    private static final String RELEASE_PLAN_MD = "release-plan.md";
-
     private ReleasePlanFiles() {
     }
 
     static void applyPlan(Path repoRoot, ReleasePlan plan) throws IOException {
         updateRootRevision(repoRoot.resolve("pom.xml"), plan.getNextSnapshotVersion());
         updateChangelog(repoRoot.resolve("CHANGELOG.md"), plan);
-        Files.write(repoRoot.resolve(CHANGESETS_DIR).resolve(RELEASE_PLAN_JSON),
+        Files.write(repoRoot.resolve(ChangesetPaths.DIR).resolve(ChangesetPaths.RELEASE_PLAN_JSON),
             Collections.singletonList(plan.toJson()),
             StandardCharsets.UTF_8);
-        Files.write(repoRoot.resolve(CHANGESETS_DIR).resolve(RELEASE_PLAN_MD),
+        Files.write(repoRoot.resolve(ChangesetPaths.DIR).resolve(ChangesetPaths.RELEASE_PLAN_MD),
             plan.toPullRequestBodyLines(),
             StandardCharsets.UTF_8);
         for (Changeset changeset : plan.getChangesets()) {
