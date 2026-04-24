@@ -1,7 +1,5 @@
 package io.github.sonofmagic.javachanges.core.env;
 
-import io.github.sonofmagic.javachanges.core.ReleaseEnvJsonSupport;
-import io.github.sonofmagic.javachanges.core.ReleaseEnvRuntime;
 import io.github.sonofmagic.javachanges.core.gitlab.GitlabProtectionSupport;
 
 import java.io.IOException;

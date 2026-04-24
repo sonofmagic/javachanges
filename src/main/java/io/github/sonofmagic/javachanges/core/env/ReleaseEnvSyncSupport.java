@@ -1,6 +1,5 @@
 package io.github.sonofmagic.javachanges.core.env;
 
-import io.github.sonofmagic.javachanges.core.ReleaseEnvRuntime;
 import io.github.sonofmagic.javachanges.core.ReleaseUtils;
 
 import java.io.IOException;

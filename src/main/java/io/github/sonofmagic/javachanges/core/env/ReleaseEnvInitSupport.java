@@ -1,7 +1,5 @@
 package io.github.sonofmagic.javachanges.core.env;
 
-import io.github.sonofmagic.javachanges.core.ReleaseEnvRuntime;
-
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;

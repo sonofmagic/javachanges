@@ -201,6 +201,10 @@ public final class ReleaseUtils {
         return ReleaseJsonUtils.readTree(json);
     }
 
+    public static String toJson(Object value) {
+        return ReleaseJsonUtils.toJson(value);
+    }
+
     public static String toPrettyJson(Object value) {
         return ReleaseJsonUtils.toPrettyJson(value);
     }
@@ -221,7 +225,7 @@ public final class ReleaseUtils {
         return ReleaseTextUtils.padRight(value, width);
     }
 
-    static void closeQuietly(InputStream inputStream) {
+    public static void closeQuietly(InputStream inputStream) {
         ReleaseProcessUtils.closeQuietly(inputStream);
     }
 }

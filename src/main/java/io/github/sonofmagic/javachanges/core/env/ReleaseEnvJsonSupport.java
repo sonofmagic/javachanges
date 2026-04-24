@@ -1,4 +1,6 @@
-package io.github.sonofmagic.javachanges.core;
+package io.github.sonofmagic.javachanges.core.env;
+
+import io.github.sonofmagic.javachanges.core.ReleaseUtils;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -20,7 +22,7 @@ public final class ReleaseEnvJsonSupport {
         payload.put("ok", Boolean.FALSE);
         payload.put("command", command);
         payload.put("error", message);
-        return ReleaseJsonUtils.toJson(payload);
+        return ReleaseUtils.toJson(payload);
     }
 
     public static String commandReportJson(String command, boolean ok, String envFile, String platform,
@@ -47,7 +49,7 @@ public final class ReleaseEnvJsonSupport {
         if (error != null) {
             payload.put("error", error);
         }
-        return ReleaseJsonUtils.toJson(payload);
+        return ReleaseUtils.toJson(payload);
     }
 
     public static final class JsonSection {

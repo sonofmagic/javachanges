@@ -1,7 +1,6 @@
 package io.github.sonofmagic.javachanges.core.env;
 
 import io.github.sonofmagic.javachanges.core.OutputFormat;
-import io.github.sonofmagic.javachanges.core.ReleaseEnvJsonSupport;
 
 import java.io.PrintStream;
 import java.util.ArrayList;

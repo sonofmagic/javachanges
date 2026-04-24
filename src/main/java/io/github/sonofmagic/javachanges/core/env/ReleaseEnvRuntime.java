@@ -1,4 +1,7 @@
-package io.github.sonofmagic.javachanges.core;
+package io.github.sonofmagic.javachanges.core.env;
+
+import io.github.sonofmagic.javachanges.core.CommandResult;
+import io.github.sonofmagic.javachanges.core.ReleaseUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -7,7 +10,6 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.closeQuietly;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.isBlank;
 
 public class ReleaseEnvRuntime {
@@ -54,7 +56,7 @@ public class ReleaseEnvRuntime {
             builder.directory(repoRoot.toFile());
             builder.redirectErrorStream(true);
             Process process = builder.start();
-            closeQuietly(process.getInputStream());
+            ReleaseUtils.closeQuietly(process.getInputStream());
             process.destroy();
             return true;
         } catch (IOException exception) {
@@ -74,7 +76,7 @@ public class ReleaseEnvRuntime {
     }
 
     public CommandResult runAndCapture(List<String> command) throws IOException, InterruptedException {
-        return ReleaseProcessUtils.runCapture(repoRoot, command);
+        return ReleaseUtils.runCapture(repoRoot, command.toArray(new String[0]));
     }
 
     public String relativizePath(Path path) {
