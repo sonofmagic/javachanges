@@ -1,5 +1,6 @@
-package io.github.sonofmagic.javachanges.core;
+package io.github.sonofmagic.javachanges.core.plan;
 
+import io.github.sonofmagic.javachanges.core.ReleaseUtils;
 import io.github.sonofmagic.javachanges.core.changeset.Changeset;
 
 import java.io.IOException;
@@ -34,7 +35,7 @@ final class ReleasePlanFiles {
     }
 
     private static void updateRootRevision(Path pomPath, String newSnapshotVersion) throws IOException {
-        PomModelSupport.writeRevision(pomPath, newSnapshotVersion);
+        ReleaseUtils.writeRevision(pomPath, newSnapshotVersion);
     }
 
     private static void updateChangelog(Path changelogPath, ReleasePlan plan) throws IOException {

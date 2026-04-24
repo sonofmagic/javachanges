@@ -1,5 +1,8 @@
-package io.github.sonofmagic.javachanges.core;
+package io.github.sonofmagic.javachanges.core.plan;
 
+import io.github.sonofmagic.javachanges.core.ReleaseLevel;
+import io.github.sonofmagic.javachanges.core.ReleaseTagStrategy;
+import io.github.sonofmagic.javachanges.core.ReleaseUtils;
 import io.github.sonofmagic.javachanges.core.changeset.Changeset;
 
 import java.nio.file.Path;
@@ -224,14 +227,14 @@ public final class ReleasePlan {
             renderedChangesets.add(entry);
         }
         payload.put("changesets", renderedChangesets);
-        return ReleaseJsonUtils.toPrettyJson(payload) + "\n";
+        return ReleaseUtils.toPrettyJson(payload) + "\n";
     }
 
     public static final class ReleaseTarget {
         public final String module;
         public final String tag;
 
-        ReleaseTarget(String module, String tag) {
+        public ReleaseTarget(String module, String tag) {
             this.module = module;
             this.tag = tag;
         }

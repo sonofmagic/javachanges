@@ -4,8 +4,8 @@ import io.github.sonofmagic.javachanges.core.AutomationJsonSupport;
 import io.github.sonofmagic.javachanges.core.ReleaseArtifactSupport;
 import io.github.sonofmagic.javachanges.core.ReleaseAutomationSupport;
 import io.github.sonofmagic.javachanges.core.ReleaseNotesGenerator;
-import io.github.sonofmagic.javachanges.core.ReleasePlan;
-import io.github.sonofmagic.javachanges.core.RepoFiles;
+import io.github.sonofmagic.javachanges.core.plan.ReleasePlan;
+import io.github.sonofmagic.javachanges.core.plan.RepoFiles;
 
 import java.io.IOException;
 import java.io.PrintStream;

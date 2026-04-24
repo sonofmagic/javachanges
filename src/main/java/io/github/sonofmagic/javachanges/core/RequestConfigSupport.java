@@ -1,5 +1,7 @@
 package io.github.sonofmagic.javachanges.core;
 
+import io.github.sonofmagic.javachanges.core.plan.RepoFiles;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;

@@ -15,7 +15,7 @@ public final class ChangesetConfigSupport {
     private ChangesetConfigSupport() {
     }
 
-    static ChangesetConfig load(Path repoRoot) throws IOException {
+    public static ChangesetConfig load(Path repoRoot) throws IOException {
         Path configPath = resolveConfigPath(repoRoot);
         if (configPath == null) {
             return ChangesetConfig.defaults();
@@ -210,7 +210,7 @@ public final class ChangesetConfigSupport {
             return snapshotVersionMode;
         }
 
-        ReleaseTagStrategy tagStrategy() {
+        public ReleaseTagStrategy tagStrategy() {
             return tagStrategy;
         }
 

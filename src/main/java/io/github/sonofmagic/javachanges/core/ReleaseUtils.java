@@ -45,11 +45,23 @@ public final class ReleaseUtils {
         return ReleaseProcessUtils.readAllBytes(inputStream);
     }
 
-    static ReleaseLevel maxReleaseLevel(List<Changeset> changesets) {
+    public static Path resolveRepoRoot(String directoryOption) {
+        return RepoRootResolver.resolveRepoRoot(directoryOption);
+    }
+
+    public static String readRevision(Path pomPath) throws IOException {
+        return PomModelSupport.readRevision(pomPath);
+    }
+
+    public static void writeRevision(Path pomPath, String revision) throws IOException {
+        PomModelSupport.writeRevision(pomPath, revision);
+    }
+
+    public static ReleaseLevel maxReleaseLevel(List<Changeset> changesets) {
         return ReleaseTextUtils.maxReleaseLevel(changesets);
     }
 
-    static String stripSnapshot(String version) {
+    public static String stripSnapshot(String version) {
         return ReleaseTextUtils.stripSnapshot(version);
     }
 
@@ -71,6 +83,13 @@ public final class ReleaseUtils {
 
     public static String releaseModuleFromTag(String tag) {
         return ReleaseModuleUtils.releaseModuleFromTag(tag);
+    }
+
+    public static String releaseVersionForChanges(String currentRevision, String latestTag, ReleaseLevel releaseLevel) {
+        Semver currentBaseVersion = Semver.parse(stripSnapshot(currentRevision));
+        Semver latestTagVersion = latestTag == null ? currentBaseVersion : Semver.parse(latestTag.substring(1));
+        Semver bumpedFromTag = latestTag == null ? currentBaseVersion.bump(releaseLevel) : latestTagVersion.bump(releaseLevel);
+        return Semver.max(currentBaseVersion, bumpedFromTag).toString();
     }
 
     public static String requiredOption(Map<String, String> options, String name) {
@@ -141,7 +160,7 @@ public final class ReleaseUtils {
         return ReleaseModuleUtils.normalizeType(rawType);
     }
 
-    static String joinModules(List<String> modules) {
+    public static String joinModules(List<String> modules) {
         return ReleaseModuleUtils.joinModules(modules);
     }
 
@@ -157,11 +176,11 @@ public final class ReleaseUtils {
         return ReleaseTextUtils.changeTypeHeading(type);
     }
 
-    static String releaseLevelHeading(ReleaseLevel level) {
+    public static String releaseLevelHeading(ReleaseLevel level) {
         return ReleaseTextUtils.releaseLevelHeading(level);
     }
 
-    static String renderVisibleType(String type) {
+    public static String renderVisibleType(String type) {
         return ReleaseTextUtils.renderVisibleType(type);
     }
 
@@ -179,6 +198,10 @@ public final class ReleaseUtils {
 
     public static JsonNode readJsonTree(String json) {
         return ReleaseJsonUtils.readTree(json);
+    }
+
+    public static String toPrettyJson(Object value) {
+        return ReleaseJsonUtils.toPrettyJson(value);
     }
 
     public static boolean isPlaceholderValue(String value) {

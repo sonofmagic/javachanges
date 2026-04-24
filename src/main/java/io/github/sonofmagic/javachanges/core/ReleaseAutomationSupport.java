@@ -8,6 +8,9 @@ import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.github.sonofmagic.javachanges.core.plan.ReleasePlan;
+import io.github.sonofmagic.javachanges.core.plan.ReleasePlanner;
+import io.github.sonofmagic.javachanges.core.plan.RepoFiles;
 
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.CHANGESETS_DIR;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.RELEASE_PLAN_MD;

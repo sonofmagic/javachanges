@@ -2,6 +2,10 @@ package io.github.sonofmagic.javachanges.core;
 
 import io.github.sonofmagic.javachanges.core.changeset.ChangesetInput;
 import io.github.sonofmagic.javachanges.core.changeset.ChangesetPrompter;
+import io.github.sonofmagic.javachanges.core.plan.JavaChangesStatusPrinter;
+import io.github.sonofmagic.javachanges.core.plan.ReleasePlan;
+import io.github.sonofmagic.javachanges.core.plan.ReleasePlanner;
+import io.github.sonofmagic.javachanges.core.plan.RepoFiles;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 

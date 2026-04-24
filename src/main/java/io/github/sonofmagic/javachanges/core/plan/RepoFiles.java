@@ -1,5 +1,7 @@
-package io.github.sonofmagic.javachanges.core;
+package io.github.sonofmagic.javachanges.core.plan;
 
+import io.github.sonofmagic.javachanges.core.ChangesetConfigSupport;
+import io.github.sonofmagic.javachanges.core.ReleaseUtils;
 import io.github.sonofmagic.javachanges.core.changeset.Changeset;
 import io.github.sonofmagic.javachanges.core.changeset.ChangesetFileSupport;
 import io.github.sonofmagic.javachanges.core.changeset.ChangesetInput;
@@ -12,23 +14,23 @@ public final class RepoFiles {
     private RepoFiles() {
     }
 
-    static Path resolveRepoRoot(String directoryOption) {
-        return RepoRootResolver.resolveRepoRoot(directoryOption);
+    public static Path resolveRepoRoot(String directoryOption) {
+        return ReleaseUtils.resolveRepoRoot(directoryOption);
     }
 
-    static void ensureChangesetReadme(Path repoRoot) throws IOException {
+    public static void ensureChangesetReadme(Path repoRoot) throws IOException {
         ChangesetFileSupport.ensureChangesetReadme(repoRoot);
     }
 
-    static Path writeChangeset(Path repoRoot, ChangesetInput input) throws IOException {
+    public static Path writeChangeset(Path repoRoot, ChangesetInput input) throws IOException {
         return ChangesetFileSupport.writeChangeset(repoRoot, input);
     }
 
-    static List<Changeset> loadChangesets(Path repoRoot) throws IOException {
+    public static List<Changeset> loadChangesets(Path repoRoot) throws IOException {
         return ChangesetFileSupport.loadChangesets(repoRoot);
     }
 
-    static String readManifestField(Path repoRoot, String field) throws IOException {
+    public static String readManifestField(Path repoRoot, String field) throws IOException {
         return ChangesetFileSupport.readManifestField(repoRoot, field);
     }
 

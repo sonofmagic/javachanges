@@ -1,16 +1,17 @@
-package io.github.sonofmagic.javachanges.core;
+package io.github.sonofmagic.javachanges.core.plan;
 
+import io.github.sonofmagic.javachanges.core.ReleaseUtils;
 import io.github.sonofmagic.javachanges.core.changeset.Changeset;
 
 import java.io.PrintStream;
 
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.renderVisibleType;
 
-final class JavaChangesStatusPrinter {
+public final class JavaChangesStatusPrinter {
     private JavaChangesStatusPrinter() {
     }
 
-    static void printStatus(ReleasePlan plan, PrintStream out) {
+    public static void printStatus(ReleasePlan plan, PrintStream out) {
         out.println("Repository: " + plan.getRepoRoot());
         out.println("Current revision: " + plan.getCurrentRevision());
         out.println(plan.getLatestWholeRepoTag() == null

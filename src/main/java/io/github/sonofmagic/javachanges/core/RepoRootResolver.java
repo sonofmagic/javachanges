@@ -8,7 +8,7 @@ final class RepoRootResolver {
     private RepoRootResolver() {
     }
 
-    static Path resolveRepoRoot(String directoryOption) {
+    public static Path resolveRepoRoot(String directoryOption) {
         Path current = directoryOption == null
             ? Paths.get("").toAbsolutePath().normalize()
             : Paths.get(directoryOption).toAbsolutePath().normalize();

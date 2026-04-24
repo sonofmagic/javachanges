@@ -1,5 +1,9 @@
-package io.github.sonofmagic.javachanges.core;
+package io.github.sonofmagic.javachanges.core.plan;
 
+import io.github.sonofmagic.javachanges.core.ChangesetConfigSupport;
+import io.github.sonofmagic.javachanges.core.CommandResult;
+import io.github.sonofmagic.javachanges.core.ReleaseLevel;
+import io.github.sonofmagic.javachanges.core.ReleaseUtils;
 import io.github.sonofmagic.javachanges.core.changeset.Changeset;
 
 import java.io.IOException;
@@ -7,19 +11,15 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.maxReleaseLevel;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.stripSnapshot;
-
-final class ReleasePlanner {
+public final class ReleasePlanner {
     private final Path repoRoot;
 
-    ReleasePlanner(Path repoRoot) {
+    public ReleasePlanner(Path repoRoot) {
         this.repoRoot = repoRoot;
     }
 
-    ReleasePlan plan() throws IOException, InterruptedException {
-        String currentRevision = PomModelSupport.readRevision(repoRoot.resolve("pom.xml"));
-        Semver currentBaseVersion = Semver.parse(stripSnapshot(currentRevision));
+    public ReleasePlan plan() throws IOException, InterruptedException {
+        String currentRevision = ReleaseUtils.readRevision(repoRoot.resolve("pom.xml"));
         List<Changeset> changesets = RepoFiles.loadChangesets(repoRoot);
         String latestTag = latestWholeRepoTag();
         ChangesetConfigSupport.ChangesetConfig changesetConfig = RepoFiles.readChangesetConfig(repoRoot);
@@ -29,11 +29,8 @@ final class ReleasePlanner {
                 null, null, currentRevision, changesetConfig.tagStrategy());
         }
 
-        ReleaseLevel releaseLevel = maxReleaseLevel(changesets);
-        Semver latestTagVersion = latestTag == null ? currentBaseVersion : Semver.parse(latestTag.substring(1));
-        Semver bumpedFromTag = latestTag == null ? currentBaseVersion.bump(releaseLevel) : latestTagVersion.bump(releaseLevel);
-        Semver releaseVersion = Semver.max(currentBaseVersion, bumpedFromTag);
-        String releaseVersionText = releaseVersion.toString();
+        ReleaseLevel releaseLevel = ReleaseUtils.maxReleaseLevel(changesets);
+        String releaseVersionText = ReleaseUtils.releaseVersionForChanges(currentRevision, latestTag, releaseLevel);
         String nextSnapshotVersion = releaseVersionText + "-SNAPSHOT";
 
         return new ReleasePlan(repoRoot, currentRevision, latestTag, changesets, releaseLevel,
@@ -41,7 +38,7 @@ final class ReleasePlanner {
     }
 
     private String latestWholeRepoTag() throws IOException, InterruptedException {
-        CommandResult result = ReleaseProcessUtils.runCapture(repoRoot, "git", "tag", "--list", "v*", "--sort=-v:refname");
+        CommandResult result = ReleaseUtils.runCapture(repoRoot, "git", "tag", "--list", "v*", "--sort=-v:refname");
         int exitCode = result.exitCode;
         if (exitCode != 0) {
             String error = result.stderrText().trim();
