@@ -32,7 +32,7 @@ public final class ReleaseTextUtils {
         return options;
     }
 
-    static ReleaseLevel maxReleaseLevel(List<Changeset> changesets) {
+    public static ReleaseLevel maxReleaseLevel(List<Changeset> changesets) {
         ReleaseLevel result = ReleaseLevel.PATCH;
         for (Changeset changeset : changesets) {
             if (changeset.release.weight > result.weight) {
@@ -162,7 +162,7 @@ public final class ReleaseTextUtils {
         return "Other";
     }
 
-    static String releaseLevelHeading(ReleaseLevel level) {
+    public static String releaseLevelHeading(ReleaseLevel level) {
         if (level == ReleaseLevel.MAJOR) {
             return "Major Changes";
         }
@@ -172,7 +172,7 @@ public final class ReleaseTextUtils {
         return "Patch Changes";
     }
 
-    static String renderVisibleType(String type) {
+    public static String renderVisibleType(String type) {
         return "other".equals(type) ? "" : type;
     }
 

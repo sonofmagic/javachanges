@@ -1,11 +1,10 @@
 package io.github.sonofmagic.javachanges.core.plan;
 
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseModuleUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import io.github.sonofmagic.javachanges.core.changeset.Changeset;
 
 import java.io.PrintStream;
-
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.renderVisibleType;
 
 public final class JavaChangesStatusPrinter {
     private JavaChangesStatusPrinter() {
@@ -26,15 +25,15 @@ public final class JavaChangesStatusPrinter {
 
         out.println("Release plan:");
         out.println("- Release type: " + plan.getReleaseLevel().id);
-        out.println("- Affected packages: " + ReleaseUtils.joinModules(plan.getAffectedPackages()));
+        out.println("- Affected packages: " + ReleaseModuleUtils.joinModules(plan.getAffectedPackages()));
         out.println("- Release version: v" + plan.getReleaseVersion());
         out.println("- Next snapshot: " + plan.getNextSnapshotVersion());
         out.println();
         out.println("Changesets:");
         for (Changeset changeset : plan.getChangesets()) {
-            String visibleType = renderVisibleType(changeset.type);
+            String visibleType = ReleaseTextUtils.renderVisibleType(changeset.type);
             out.println("- " + changeset.fileName + " [" + changeset.release.id + "] "
-                + "(packages: " + ReleaseUtils.joinModules(changeset.modules) + ") "
+                + "(packages: " + ReleaseModuleUtils.joinModules(changeset.modules) + ") "
                 + (visibleType.isEmpty() ? "" : visibleType + ": ") + changeset.summary);
         }
     }

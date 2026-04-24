@@ -66,7 +66,7 @@ public final class ReleaseJsonUtils {
         }
     }
 
-    static String toPrettyJson(Object value) {
+    public static String toPrettyJson(Object value) {
         try {
             return PRETTY_WRITER.writeValueAsString(value);
         } catch (JsonProcessingException exception) {

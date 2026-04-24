@@ -1,8 +1,10 @@
 package io.github.sonofmagic.javachanges.core.plan;
 
 import io.github.sonofmagic.javachanges.core.ReleaseLevel;
+import io.github.sonofmagic.javachanges.core.ReleaseJsonUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseModuleUtils;
 import io.github.sonofmagic.javachanges.core.ReleaseTagStrategy;
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import io.github.sonofmagic.javachanges.core.changeset.Changeset;
 
 import java.nio.file.Path;
@@ -16,11 +18,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.firstBodyLine;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.joinModules;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.releaseLevelHeading;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.renderVisibleType;
 
 public final class ReleasePlan {
     private final Path repoRoot;
@@ -131,13 +128,13 @@ public final class ReleasePlan {
             if (levelChangesets == null || levelChangesets.isEmpty()) {
                 continue;
             }
-            builder.append("### ").append(releaseLevelHeading(level)).append("\n\n");
+            builder.append("### ").append(ReleaseTextUtils.releaseLevelHeading(level)).append("\n\n");
             for (Changeset changeset : levelChangesets) {
                 builder.append("- ").append(changeset.summary);
-                builder.append(" (packages: ").append(joinModules(changeset.modules)).append(")");
+                builder.append(" (packages: ").append(ReleaseModuleUtils.joinModules(changeset.modules)).append(")");
                 if (!changeset.body.isEmpty()) {
                     builder.append(" ");
-                    builder.append(firstBodyLine(changeset.body));
+                    builder.append(ReleaseTextUtils.firstBodyLine(changeset.body));
                 }
                 builder.append("\n");
             }
@@ -159,10 +156,10 @@ public final class ReleasePlan {
         lines.add("| Field | Value |");
         lines.add("| --- | --- |");
         lines.add("| Release type | `" + releaseLevel.id + "` |");
-        lines.add("| Affected packages | `" + joinModules(getAffectedPackages()) + "` |");
+        lines.add("| Affected packages | `" + ReleaseModuleUtils.joinModules(getAffectedPackages()) + "` |");
         lines.add("| Release version | `v" + releaseVersion + "` |");
         lines.add("| Tag strategy | `" + tagStrategy.id + "` |");
-        lines.add("| Planned tags | `" + joinModules(getPlannedTags()) + "` |");
+        lines.add("| Planned tags | `" + ReleaseModuleUtils.joinModules(getPlannedTags()) + "` |");
         lines.add("| Next snapshot | `" + nextSnapshotVersion + "` |");
         lines.add("");
         lines.add("## Included Changesets");
@@ -179,18 +176,18 @@ public final class ReleasePlan {
             if (levelChangesets == null || levelChangesets.isEmpty()) {
                 continue;
             }
-            lines.add("### " + releaseLevelHeading(level));
+            lines.add("### " + ReleaseTextUtils.releaseLevelHeading(level));
             lines.add("");
             for (Changeset changeset : levelChangesets) {
-                String visibleType = renderVisibleType(changeset.type);
+                String visibleType = ReleaseTextUtils.renderVisibleType(changeset.type);
                 lines.add("- **" + changeset.summary + "**");
                 lines.add("  - Release: `" + changeset.release.id + "`");
-                lines.add("  - Packages: `" + joinModules(changeset.modules) + "`");
+                lines.add("  - Packages: `" + ReleaseModuleUtils.joinModules(changeset.modules) + "`");
                 if (!visibleType.isEmpty()) {
                     lines.add("  - Type: `" + visibleType + "`");
                 }
                 if (!changeset.body.isEmpty()) {
-                    lines.add("  - Notes: " + firstBodyLine(changeset.body));
+                    lines.add("  - Notes: " + ReleaseTextUtils.firstBodyLine(changeset.body));
                 }
             }
             lines.add("");
@@ -227,7 +224,7 @@ public final class ReleasePlan {
             renderedChangesets.add(entry);
         }
         payload.put("changesets", renderedChangesets);
-        return ReleaseUtils.toPrettyJson(payload) + "\n";
+        return ReleaseJsonUtils.toPrettyJson(payload) + "\n";
     }
 
     public static final class ReleaseTarget {

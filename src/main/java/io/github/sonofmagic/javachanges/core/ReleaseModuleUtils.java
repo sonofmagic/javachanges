@@ -120,7 +120,7 @@ public final class ReleaseModuleUtils {
         return normalized;
     }
 
-    static String joinModules(List<String> modules) {
+    public static String joinModules(List<String> modules) {
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < modules.size(); i++) {
             if (i > 0) {

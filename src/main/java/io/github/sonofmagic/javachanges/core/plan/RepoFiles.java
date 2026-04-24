@@ -1,7 +1,7 @@
 package io.github.sonofmagic.javachanges.core.plan;
 
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
 import io.github.sonofmagic.javachanges.core.config.ChangesetConfigSupport;
+import io.github.sonofmagic.javachanges.core.config.RepoRootResolver;
 import io.github.sonofmagic.javachanges.core.changeset.Changeset;
 import io.github.sonofmagic.javachanges.core.changeset.ChangesetFileSupport;
 import io.github.sonofmagic.javachanges.core.changeset.ChangesetInput;
@@ -15,7 +15,7 @@ public final class RepoFiles {
     }
 
     public static Path resolveRepoRoot(String directoryOption) {
-        return ReleaseUtils.resolveRepoRoot(directoryOption);
+        return RepoRootResolver.resolveRepoRoot(directoryOption);
     }
 
     public static void ensureChangesetReadme(Path repoRoot) throws IOException {

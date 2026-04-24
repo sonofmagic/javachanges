@@ -26,11 +26,11 @@ import java.util.List;
 
 import org.xml.sax.SAXException;
 
-final class PomModelSupport {
+public final class PomModelSupport {
     private PomModelSupport() {
     }
 
-    static String readRevision(Path pomPath) throws IOException {
+    public static String readRevision(Path pomPath) throws IOException {
         Document document = parse(pomPath);
         Element project = document.getDocumentElement();
         Element properties = directChild(project, "properties");
@@ -44,7 +44,7 @@ final class PomModelSupport {
         return revision;
     }
 
-    static void writeRevision(Path pomPath, String revision) throws IOException {
+    public static void writeRevision(Path pomPath, String revision) throws IOException {
         Document document = parse(pomPath);
         Element project = document.getDocumentElement();
         Element properties = directChild(project, "properties");

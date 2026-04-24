@@ -1,6 +1,6 @@
 package io.github.sonofmagic.javachanges.core.plan;
 
-import io.github.sonofmagic.javachanges.core.ReleaseUtils;
+import io.github.sonofmagic.javachanges.core.PomModelSupport;
 import io.github.sonofmagic.javachanges.core.changeset.Changeset;
 
 import java.io.IOException;
@@ -12,11 +12,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.CHANGESETS_DIR;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.RELEASE_PLAN_JSON;
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.RELEASE_PLAN_MD;
-
 final class ReleasePlanFiles {
+    private static final String CHANGESETS_DIR = ".changesets";
+    private static final String RELEASE_PLAN_JSON = "release-plan.json";
+    private static final String RELEASE_PLAN_MD = "release-plan.md";
+
     private ReleasePlanFiles() {
     }
 
@@ -35,7 +35,7 @@ final class ReleasePlanFiles {
     }
 
     private static void updateRootRevision(Path pomPath, String newSnapshotVersion) throws IOException {
-        ReleaseUtils.writeRevision(pomPath, newSnapshotVersion);
+        PomModelSupport.writeRevision(pomPath, newSnapshotVersion);
     }
 
     private static void updateChangelog(Path changelogPath, ReleasePlan plan) throws IOException {
