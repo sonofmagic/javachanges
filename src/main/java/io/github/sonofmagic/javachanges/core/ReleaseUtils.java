@@ -87,10 +87,7 @@ public final class ReleaseUtils {
     }
 
     public static String releaseVersionForChanges(String currentRevision, String latestTag, ReleaseLevel releaseLevel) {
-        Semver currentBaseVersion = Semver.parse(stripSnapshot(currentRevision));
-        Semver latestTagVersion = latestTag == null ? currentBaseVersion : Semver.parse(latestTag.substring(1));
-        Semver bumpedFromTag = latestTag == null ? currentBaseVersion.bump(releaseLevel) : latestTagVersion.bump(releaseLevel);
-        return Semver.max(currentBaseVersion, bumpedFromTag).toString();
+        return ReleaseVersionUtils.releaseVersionForChanges(currentRevision, latestTag, releaseLevel);
     }
 
     public static String requiredOption(Map<String, String> options, String name) {
