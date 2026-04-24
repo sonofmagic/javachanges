@@ -1,12 +1,12 @@
 package io.github.sonofmagic.javachanges.core.publish;
 
-import io.github.sonofmagic.javachanges.core.AutomationJsonSupport;
 import io.github.sonofmagic.javachanges.core.MavenCommand;
 import io.github.sonofmagic.javachanges.core.MavenSettingsWriter;
-import io.github.sonofmagic.javachanges.core.ReleaseNotesGenerator;
 import io.github.sonofmagic.javachanges.core.ReleaseUtils;
 import io.github.sonofmagic.javachanges.core.SnapshotVersionMode;
 import io.github.sonofmagic.javachanges.core.VersionSupport;
+import io.github.sonofmagic.javachanges.core.automation.AutomationJsonSupport;
+import io.github.sonofmagic.javachanges.core.automation.ReleaseNotesGenerator;
 
 import java.io.IOException;
 import java.io.PrintStream;

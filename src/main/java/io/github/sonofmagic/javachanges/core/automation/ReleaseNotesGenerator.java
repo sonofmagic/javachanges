@@ -1,4 +1,7 @@
-package io.github.sonofmagic.javachanges.core;
+package io.github.sonofmagic.javachanges.core.automation;
+
+import io.github.sonofmagic.javachanges.core.CommandResult;
+import io.github.sonofmagic.javachanges.core.ReleaseUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -183,7 +186,7 @@ public final class ReleaseNotesGenerator {
         String[] command = new String[args.length + 1];
         command[0] = "git";
         System.arraycopy(args, 0, command, 1, args.length);
-        CommandResult result = ReleaseProcessUtils.runCapture(repoRoot, command);
+        CommandResult result = ReleaseUtils.runCapture(repoRoot, command);
         if (result.exitCode != 0) {
             String error = result.stderrText().trim();
             if (error.isEmpty()) {

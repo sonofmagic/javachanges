@@ -1,9 +1,9 @@
 package io.github.sonofmagic.javachanges.core.github;
 
-import io.github.sonofmagic.javachanges.core.AutomationJsonSupport;
-import io.github.sonofmagic.javachanges.core.ReleaseArtifactSupport;
 import io.github.sonofmagic.javachanges.core.ReleaseAutomationSupport;
-import io.github.sonofmagic.javachanges.core.ReleaseNotesGenerator;
+import io.github.sonofmagic.javachanges.core.automation.AutomationJsonSupport;
+import io.github.sonofmagic.javachanges.core.automation.ReleaseArtifactSupport;
+import io.github.sonofmagic.javachanges.core.automation.ReleaseNotesGenerator;
 import io.github.sonofmagic.javachanges.core.plan.ReleasePlan;
 import io.github.sonofmagic.javachanges.core.plan.RepoFiles;
 

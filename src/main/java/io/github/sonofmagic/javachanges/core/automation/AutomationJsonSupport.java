@@ -1,4 +1,7 @@
-package io.github.sonofmagic.javachanges.core;
+package io.github.sonofmagic.javachanges.core.automation;
+
+import io.github.sonofmagic.javachanges.core.OutputFormat;
+import io.github.sonofmagic.javachanges.core.ReleaseUtils;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -88,7 +91,7 @@ public final class AutomationJsonSupport {
             payload.put("dryRun", Boolean.valueOf(dryRun));
             payload.put("snapshotVersionMode", snapshotVersionMode);
             payload.put("snapshotBuildStampApplied", Boolean.valueOf(snapshotBuildStampApplied));
-            return ReleaseJsonUtils.toJson(payload);
+            return ReleaseUtils.toJson(payload);
         }
     }
 }

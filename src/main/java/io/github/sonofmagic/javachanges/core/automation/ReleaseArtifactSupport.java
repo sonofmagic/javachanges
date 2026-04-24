@@ -1,4 +1,4 @@
-package io.github.sonofmagic.javachanges.core;
+package io.github.sonofmagic.javachanges.core.automation;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;

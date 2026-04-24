@@ -1,5 +1,6 @@
 package io.github.sonofmagic.javachanges.core;
 
+import io.github.sonofmagic.javachanges.core.automation.ReleaseNotesGenerator;
 import io.github.sonofmagic.javachanges.core.changeset.ChangesetInput;
 import io.github.sonofmagic.javachanges.core.changeset.ChangesetPrompter;
 import io.github.sonofmagic.javachanges.core.plan.JavaChangesStatusPrinter;
