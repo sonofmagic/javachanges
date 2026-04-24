@@ -1,9 +1,11 @@
-package io.github.sonofmagic.javachanges.core;
+package io.github.sonofmagic.javachanges.core.github;
 
-import io.github.sonofmagic.javachanges.core.github.GithubReleasePlanRequest;
-import io.github.sonofmagic.javachanges.core.github.GithubReleasePublishRequest;
-import io.github.sonofmagic.javachanges.core.github.GithubReleaseRuntime;
-import io.github.sonofmagic.javachanges.core.github.GithubTagRequest;
+import io.github.sonofmagic.javachanges.core.AutomationJsonSupport;
+import io.github.sonofmagic.javachanges.core.ReleaseArtifactSupport;
+import io.github.sonofmagic.javachanges.core.ReleaseAutomationSupport;
+import io.github.sonofmagic.javachanges.core.ReleaseNotesGenerator;
+import io.github.sonofmagic.javachanges.core.ReleasePlan;
+import io.github.sonofmagic.javachanges.core.RepoFiles;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -13,20 +15,22 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.*;
+import static io.github.sonofmagic.javachanges.core.ReleaseUtils.CHANGESETS_DIR;
+import static io.github.sonofmagic.javachanges.core.ReleaseUtils.firstNonBlank;
+import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
 
-final class GithubReleaseSupport {
+public final class GithubReleaseSupport {
     private final Path repoRoot;
     private final PrintStream out;
     private final GithubReleaseRuntime runtime;
     private final ReleaseArtifactSupport artifactSupport;
     private final ReleaseAutomationSupport automationSupport;
 
-    GithubReleaseSupport(Path repoRoot, PrintStream out) {
+    public GithubReleaseSupport(Path repoRoot, PrintStream out) {
         this(repoRoot, out, new GithubReleaseRuntime(repoRoot));
     }
 
-    GithubReleaseSupport(Path repoRoot, PrintStream out, GithubReleaseRuntime runtime) {
+    public GithubReleaseSupport(Path repoRoot, PrintStream out, GithubReleaseRuntime runtime) {
         this.repoRoot = repoRoot;
         this.out = out;
         this.runtime = runtime;
@@ -34,7 +38,7 @@ final class GithubReleaseSupport {
         this.automationSupport = new ReleaseAutomationSupport(repoRoot);
     }
 
-    void planPullRequest(GithubReleasePlanRequest request) throws IOException, InterruptedException {
+    public void planPullRequest(GithubReleasePlanRequest request) throws IOException, InterruptedException {
         boolean textOutput = AutomationJsonSupport.isText(request.format);
         AutomationJsonSupport.AutomationReport report = new AutomationJsonSupport.AutomationReport("github-release-plan");
         report.action = "plan-pull-request";
@@ -104,7 +108,7 @@ final class GithubReleaseSupport {
         AutomationJsonSupport.print(out, textOutput, report, "Updated GitHub PR #" + prNumber);
     }
 
-    void tagFromReleasePlan(GithubTagRequest request) throws IOException, InterruptedException {
+    public void tagFromReleasePlan(GithubTagRequest request) throws IOException, InterruptedException {
         boolean textOutput = AutomationJsonSupport.isText(request.format);
         AutomationJsonSupport.AutomationReport report = new AutomationJsonSupport.AutomationReport("github-tag-from-plan");
         report.action = "tag-from-plan";
@@ -148,7 +152,7 @@ final class GithubReleaseSupport {
         AutomationJsonSupport.print(out, textOutput, report, "Created and pushed tag(s) " + tagNames);
     }
 
-    void syncReleaseFromPlan(GithubReleasePublishRequest request) throws IOException, InterruptedException {
+    public void syncReleaseFromPlan(GithubReleasePublishRequest request) throws IOException, InterruptedException {
         boolean textOutput = AutomationJsonSupport.isText(request.format);
         AutomationJsonSupport.AutomationReport report = new AutomationJsonSupport.AutomationReport("github-release-from-plan");
         report.action = "sync-release";

@@ -3,6 +3,7 @@ package io.github.sonofmagic.javachanges.core;
 import io.github.sonofmagic.javachanges.core.github.GithubReleasePlanRequest;
 import io.github.sonofmagic.javachanges.core.github.GithubReleasePublishRequest;
 import io.github.sonofmagic.javachanges.core.github.GithubReleaseRuntime;
+import io.github.sonofmagic.javachanges.core.github.GithubReleaseSupport;
 import io.github.sonofmagic.javachanges.core.github.GithubTagRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;

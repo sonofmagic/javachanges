@@ -4,6 +4,7 @@ import io.github.sonofmagic.javachanges.core.gitlab.GitlabMergeRequestClient;
 import io.github.sonofmagic.javachanges.core.gitlab.GitlabReleasePlanRequest;
 import io.github.sonofmagic.javachanges.core.gitlab.GitlabReleaseRequest;
 import io.github.sonofmagic.javachanges.core.gitlab.GitlabReleaseRuntime;
+import io.github.sonofmagic.javachanges.core.gitlab.GitlabReleaseSupport;
 import io.github.sonofmagic.javachanges.core.gitlab.GitlabTagRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;

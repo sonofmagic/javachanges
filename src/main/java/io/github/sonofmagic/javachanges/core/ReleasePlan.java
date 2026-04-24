@@ -17,7 +17,7 @@ import static io.github.sonofmagic.javachanges.core.ReleaseUtils.joinModules;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.releaseLevelHeading;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.renderVisibleType;
 
-final class ReleasePlan {
+public final class ReleasePlan {
     private final Path repoRoot;
     private final String currentRevision;
     private final String latestWholeRepoTag;
@@ -56,7 +56,7 @@ final class ReleasePlan {
         return changesets;
     }
 
-    boolean hasPendingChangesets() {
+    public boolean hasPendingChangesets() {
         return !changesets.isEmpty();
     }
 
@@ -64,7 +64,7 @@ final class ReleasePlan {
         return releaseLevel;
     }
 
-    String getReleaseVersion() {
+    public String getReleaseVersion() {
         return releaseVersion;
     }
 
@@ -72,7 +72,7 @@ final class ReleasePlan {
         return nextSnapshotVersion;
     }
 
-    ReleaseTagStrategy getTagStrategy() {
+    public ReleaseTagStrategy getTagStrategy() {
         return tagStrategy;
     }
 
@@ -84,7 +84,7 @@ final class ReleasePlan {
         return new ArrayList<String>(packages);
     }
 
-    List<ReleaseTarget> getReleaseTargets() {
+    public List<ReleaseTarget> getReleaseTargets() {
         List<ReleaseTarget> targets = new ArrayList<ReleaseTarget>();
         if (releaseVersion == null) {
             return targets;
@@ -225,9 +225,9 @@ final class ReleasePlan {
         return ReleaseJsonUtils.toPrettyJson(payload) + "\n";
     }
 
-    static final class ReleaseTarget {
-        final String module;
-        final String tag;
+    public static final class ReleaseTarget {
+        public final String module;
+        public final String tag;
 
         ReleaseTarget(String module, String tag) {
             this.module = module;

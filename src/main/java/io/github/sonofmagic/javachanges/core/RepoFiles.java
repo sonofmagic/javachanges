@@ -28,7 +28,7 @@ public final class RepoFiles {
         return ChangesetFileSupport.readManifestField(repoRoot, field);
     }
 
-    static void applyPlan(Path repoRoot, ReleasePlan plan) throws IOException {
+    public static void applyPlan(Path repoRoot, ReleasePlan plan) throws IOException {
         ReleasePlanFiles.applyPlan(repoRoot, plan);
     }
 

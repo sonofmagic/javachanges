@@ -11,9 +11,9 @@ import java.util.List;
 import java.util.Map;
 
 public final class ReleaseUtils {
-    static final String CHANGESETS_DIR = ".changesets";
+    public static final String CHANGESETS_DIR = ".changesets";
     static final String CHANGESETS_README = "README.md";
-    static final String RELEASE_PLAN_JSON = "release-plan.json";
+    public static final String RELEASE_PLAN_JSON = "release-plan.json";
     static final String RELEASE_PLAN_MD = "release-plan.md";
     static final List<String> CHANGELOG_TYPE_ORDER = Collections.unmodifiableList(Arrays.asList(
         "breaking",

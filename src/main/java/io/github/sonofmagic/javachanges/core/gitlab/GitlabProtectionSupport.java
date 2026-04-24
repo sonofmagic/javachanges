@@ -1,6 +1,10 @@
-package io.github.sonofmagic.javachanges.core;
+package io.github.sonofmagic.javachanges.core.gitlab;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.github.sonofmagic.javachanges.core.ChangesetConfigSupport;
+import io.github.sonofmagic.javachanges.core.ReleaseEnvJsonSupport;
+import io.github.sonofmagic.javachanges.core.ReleaseEnvRuntime;
+import io.github.sonofmagic.javachanges.core.ReleaseUtils;
 import io.github.sonofmagic.javachanges.core.env.EnvEntry;
 import io.github.sonofmagic.javachanges.core.env.EnvValue;
 import io.github.sonofmagic.javachanges.core.env.LoadedEnv;
@@ -115,7 +119,7 @@ public final class GitlabProtectionSupport {
 
     private Map<String, GitlabVariableMetadata> parseGitlabVariableMetadata(String json) {
         Map<String, GitlabVariableMetadata> result = new LinkedHashMap<String, GitlabVariableMetadata>();
-        JsonNode root = ReleaseJsonUtils.readTree(json);
+        JsonNode root = ReleaseUtils.readJsonTree(json);
         if (!root.isArray()) {
             return result;
         }
@@ -135,7 +139,7 @@ public final class GitlabProtectionSupport {
 
     private List<String> parseProtectedBranchNames(String json) {
         List<String> names = new ArrayList<String>();
-        JsonNode root = ReleaseJsonUtils.readTree(json);
+        JsonNode root = ReleaseUtils.readJsonTree(json);
         if (!root.isArray()) {
             return names;
         }

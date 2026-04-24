@@ -1,11 +1,11 @@
 package io.github.sonofmagic.javachanges.core.env;
 
 import io.github.sonofmagic.javachanges.core.ChangesetConfigSupport;
-import io.github.sonofmagic.javachanges.core.GitlabProtectionSupport;
 import io.github.sonofmagic.javachanges.core.OutputFormat;
 import io.github.sonofmagic.javachanges.core.ReleaseEnvJsonSupport;
 import io.github.sonofmagic.javachanges.core.ReleaseEnvRuntime;
 import io.github.sonofmagic.javachanges.core.RepoFiles;
+import io.github.sonofmagic.javachanges.core.gitlab.GitlabProtectionSupport;
 
 import java.io.IOException;
 import java.io.PrintStream;

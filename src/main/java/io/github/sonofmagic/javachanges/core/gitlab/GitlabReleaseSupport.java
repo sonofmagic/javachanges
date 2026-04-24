@@ -1,11 +1,11 @@
-package io.github.sonofmagic.javachanges.core;
+package io.github.sonofmagic.javachanges.core.gitlab;
 
-import io.github.sonofmagic.javachanges.core.gitlab.GitlabApiClient;
-import io.github.sonofmagic.javachanges.core.gitlab.GitlabMergeRequestClient;
-import io.github.sonofmagic.javachanges.core.gitlab.GitlabReleasePlanRequest;
-import io.github.sonofmagic.javachanges.core.gitlab.GitlabReleaseRequest;
-import io.github.sonofmagic.javachanges.core.gitlab.GitlabReleaseRuntime;
-import io.github.sonofmagic.javachanges.core.gitlab.GitlabTagRequest;
+import io.github.sonofmagic.javachanges.core.AutomationJsonSupport;
+import io.github.sonofmagic.javachanges.core.ReleaseArtifactSupport;
+import io.github.sonofmagic.javachanges.core.ReleaseAutomationSupport;
+import io.github.sonofmagic.javachanges.core.ReleaseNotesGenerator;
+import io.github.sonofmagic.javachanges.core.ReleasePlan;
+import io.github.sonofmagic.javachanges.core.RepoFiles;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -14,9 +14,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import static io.github.sonofmagic.javachanges.core.ReleaseUtils.*;
+import static io.github.sonofmagic.javachanges.core.ReleaseUtils.CHANGESETS_DIR;
+import static io.github.sonofmagic.javachanges.core.ReleaseUtils.RELEASE_PLAN_JSON;
+import static io.github.sonofmagic.javachanges.core.ReleaseUtils.firstNonBlank;
+import static io.github.sonofmagic.javachanges.core.ReleaseUtils.trimToNull;
 
-final class GitlabReleaseSupport {
+public final class GitlabReleaseSupport {
     private final Path repoRoot;
     private final PrintStream out;
     private final GitlabReleaseRuntime runtime;
@@ -24,11 +27,11 @@ final class GitlabReleaseSupport {
     private final ReleaseArtifactSupport artifactSupport;
     private final ReleaseAutomationSupport automationSupport;
 
-    GitlabReleaseSupport(Path repoRoot, PrintStream out) {
+    public GitlabReleaseSupport(Path repoRoot, PrintStream out) {
         this(repoRoot, out, new GitlabReleaseRuntime(repoRoot), new GitlabApiClient());
     }
 
-    GitlabReleaseSupport(Path repoRoot, PrintStream out, GitlabReleaseRuntime runtime, GitlabMergeRequestClient apiClient) {
+    public GitlabReleaseSupport(Path repoRoot, PrintStream out, GitlabReleaseRuntime runtime, GitlabMergeRequestClient apiClient) {
         this.repoRoot = repoRoot;
         this.out = out;
         this.runtime = runtime;
@@ -37,7 +40,7 @@ final class GitlabReleaseSupport {
         this.automationSupport = new ReleaseAutomationSupport(repoRoot);
     }
 
-    void planMergeRequest(GitlabReleasePlanRequest request) throws IOException, InterruptedException {
+    public void planMergeRequest(GitlabReleasePlanRequest request) throws IOException, InterruptedException {
         boolean textOutput = AutomationJsonSupport.isText(request.format);
         AutomationJsonSupport.AutomationReport report = new AutomationJsonSupport.AutomationReport("gitlab-release-plan");
         report.projectId = request.projectId;
@@ -111,7 +114,7 @@ final class GitlabReleaseSupport {
         AutomationJsonSupport.print(out, textOutput, report, "Updated GitLab MR !" + mergeRequestIid);
     }
 
-    void tagFromReleasePlan(GitlabTagRequest request) throws IOException, InterruptedException {
+    public void tagFromReleasePlan(GitlabTagRequest request) throws IOException, InterruptedException {
         boolean textOutput = AutomationJsonSupport.isText(request.format);
         AutomationJsonSupport.AutomationReport report = new AutomationJsonSupport.AutomationReport("gitlab-tag-from-plan");
         report.action = "tag-from-plan";
@@ -185,7 +188,7 @@ final class GitlabReleaseSupport {
         AutomationJsonSupport.print(out, textOutput, report, "Created and pushed tag(s) " + tagNames);
     }
 
-    void syncRelease(GitlabReleaseRequest request) throws IOException, InterruptedException {
+    public void syncRelease(GitlabReleaseRequest request) throws IOException, InterruptedException {
         boolean textOutput = AutomationJsonSupport.isText(request.format);
         AutomationJsonSupport.AutomationReport report = new AutomationJsonSupport.AutomationReport("gitlab-release");
         report.action = "sync-release";

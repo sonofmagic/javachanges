@@ -12,22 +12,22 @@ import com.fasterxml.jackson.databind.JsonNode;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.CHANGESETS_DIR;
 import static io.github.sonofmagic.javachanges.core.ReleaseUtils.RELEASE_PLAN_MD;
 
-final class ReleaseAutomationSupport {
+public final class ReleaseAutomationSupport {
     private final Path repoRoot;
 
-    ReleaseAutomationSupport(Path repoRoot) {
+    public ReleaseAutomationSupport(Path repoRoot) {
         this.repoRoot = repoRoot;
     }
 
-    ReleasePlan plan() throws IOException, InterruptedException {
+    public ReleasePlan plan() throws IOException, InterruptedException {
         return new ReleasePlanner(repoRoot).plan();
     }
 
-    ReleaseDescriptor descriptorFromPlan(ReleasePlan plan) {
+    public ReleaseDescriptor descriptorFromPlan(ReleasePlan plan) {
         return new ReleaseDescriptor(plan.getReleaseVersion(), plan.getTagStrategy(), plan.getReleaseTargets());
     }
 
-    ReleaseDescriptor descriptorFromManifest() throws IOException {
+    public ReleaseDescriptor descriptorFromManifest() throws IOException {
         JsonNode manifest = readManifest();
         String releaseVersion = requiredText(manifest, "releaseVersion");
         ReleaseTagStrategy tagStrategy = ReleaseTagStrategy.parse(textOrNull(manifest.get("tagStrategy")),
@@ -36,22 +36,22 @@ final class ReleaseAutomationSupport {
         return new ReleaseDescriptor(releaseVersion, tagStrategy, releaseTargets);
     }
 
-    String releaseVersionFromManifest() throws IOException {
+    public String releaseVersionFromManifest() throws IOException {
         return RepoFiles.readManifestField(repoRoot, "releaseVersion");
     }
 
-    String wholeRepoTagFromManifest() throws IOException {
+    public String wholeRepoTagFromManifest() throws IOException {
         return "v" + releaseVersionFromManifest();
     }
 
-    Path releasePlanMarkdownFile() {
+    public Path releasePlanMarkdownFile() {
         return repoRoot.resolve(CHANGESETS_DIR).resolve(RELEASE_PLAN_MD);
     }
 
-    static final class ReleaseDescriptor {
-        final String releaseVersion;
-        final ReleaseTagStrategy tagStrategy;
-        final List<ReleasePlan.ReleaseTarget> releaseTargets;
+    public static final class ReleaseDescriptor {
+        public final String releaseVersion;
+        public final ReleaseTagStrategy tagStrategy;
+        public final List<ReleasePlan.ReleaseTarget> releaseTargets;
 
         ReleaseDescriptor(String releaseVersion, ReleaseTagStrategy tagStrategy, List<ReleasePlan.ReleaseTarget> releaseTargets) {
             this.releaseVersion = releaseVersion;
@@ -59,23 +59,23 @@ final class ReleaseAutomationSupport {
             this.releaseTargets = Collections.unmodifiableList(new ArrayList<ReleasePlan.ReleaseTarget>(releaseTargets));
         }
 
-        String commitMessage() {
+        public String commitMessage() {
             return "chore(release): apply changesets for v" + releaseVersion;
         }
 
-        String githubPullRequestTitle() {
+        public String githubPullRequestTitle() {
             return "chore(release): v" + releaseVersion;
         }
 
-        String gitlabMergeRequestTitle() {
+        public String gitlabMergeRequestTitle() {
             return "chore(release): release v" + releaseVersion;
         }
 
-        String wholeRepoTagName() {
+        public String wholeRepoTagName() {
             return "v" + releaseVersion;
         }
 
-        List<String> tagNames() {
+        public List<String> tagNames() {
             List<String> tags = new ArrayList<String>();
             for (ReleasePlan.ReleaseTarget target : releaseTargets) {
                 tags.add(target.tag);
@@ -83,7 +83,7 @@ final class ReleaseAutomationSupport {
             return tags;
         }
 
-        String primaryTagName() {
+        public String primaryTagName() {
             if (releaseTargets.isEmpty()) {
                 return wholeRepoTagName();
             }
