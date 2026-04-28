@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -66,6 +67,20 @@ public final class ReleaseProcessUtils {
     public static CommandResult runCapture(Path workingDirectory, List<String> command) throws IOException, InterruptedException {
         ProcessBuilder builder = new ProcessBuilder(command);
         builder.directory(workingDirectory.toFile());
+        return runCapture(builder);
+    }
+
+    public static CommandResult runCapture(Path workingDirectory, List<String> command, Map<String, String> environment)
+        throws IOException, InterruptedException {
+        ProcessBuilder builder = new ProcessBuilder(command);
+        builder.directory(workingDirectory.toFile());
+        if (environment != null) {
+            builder.environment().putAll(environment);
+        }
+        return runCapture(builder);
+    }
+
+    private static CommandResult runCapture(ProcessBuilder builder) throws IOException, InterruptedException {
         Process process = builder.start();
         ExecutorService executor = Executors.newFixedThreadPool(2);
         try {

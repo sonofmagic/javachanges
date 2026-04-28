@@ -2,17 +2,13 @@ package io.github.sonofmagic.javachanges.core;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-import static io.github.sonofmagic.javachanges.core.ReleaseProcessUtils.readAllBytes;
 import static io.github.sonofmagic.javachanges.core.ReleaseTextUtils.trimToNull;
 
 final class GpgKeySupport {
@@ -64,13 +60,13 @@ final class GpgKeySupport {
     }
 
     private String detectFingerprint() throws IOException, InterruptedException {
-        ProcessResult result = runCommand(Arrays.asList(
+        CommandResult result = runCommand(Arrays.asList(
             "gpg", "--batch", "--list-secret-keys", "--with-colons", "--fingerprint"
         ), null);
         if (result.exitCode != 0) {
-            throw new IllegalStateException("Failed to inspect imported GPG secret keys: " + result.stderrOrStdout());
+            throw new IllegalStateException("Failed to inspect imported GPG secret keys: " + stderrOrStdout(result));
         }
-        String[] lines = result.stdout.split("\\R");
+        String[] lines = result.stdoutText().split("\\R");
         for (String line : lines) {
             if (line.startsWith("fpr:")) {
                 String[] fields = line.split(":");
@@ -87,7 +83,7 @@ final class GpgKeySupport {
 
     private void sendKey(String keyserver, String fingerprint, PrintStream out, PrintStream err)
         throws IOException, InterruptedException {
-        ProcessResult result = runCommand(Arrays.asList(
+        CommandResult result = runCommand(Arrays.asList(
             "gpg", "--batch", "--keyserver", keyserver, "--send-keys", fingerprint
         ), null);
         if (result.exitCode == 0) {
@@ -95,72 +91,36 @@ final class GpgKeySupport {
             return;
         }
         err.println("Warning: unable to upload public key " + fingerprint + " to " + keyserver
-            + ". Continuing to verification. Details: " + result.stderrOrStdout());
+            + ". Continuing to verification. Details: " + stderrOrStdout(result));
     }
 
     private boolean keyVisibleOnServer(String keyserver, String fingerprint) throws IOException, InterruptedException {
         Path tempHome = Files.createTempDirectory("javachanges-gpg-");
+        ReleaseProcessUtils.restrictOwnerOnly(tempHome);
         try {
-            ProcessResult result = runCommand(Arrays.asList(
+            CommandResult result = runCommand(Arrays.asList(
                 "gpg", "--batch", "--homedir", tempHome.toString(), "--keyserver", keyserver, "--recv-keys", fingerprint
             ), tempHome);
             return result.exitCode == 0;
         } finally {
-            deleteRecursively(tempHome);
+            ReleaseProcessUtils.deleteRecursively(tempHome);
         }
     }
 
-    private ProcessResult runCommand(List<String> command, Path customHome) throws IOException, InterruptedException {
-        ProcessBuilder builder = new ProcessBuilder(new ArrayList<String>(command));
-        builder.directory(workingDirectory.toFile());
+    private CommandResult runCommand(List<String> command, Path customHome) throws IOException, InterruptedException {
         if (customHome != null) {
-            builder.environment().put("GNUPGHOME", customHome.toString());
+            return ReleaseProcessUtils.runCapture(workingDirectory, new ArrayList<String>(command),
+                Collections.singletonMap("GNUPGHOME", customHome.toString()));
         }
-        Process process = builder.start();
-        byte[] stdout = readAllBytes(process.getInputStream());
-        byte[] stderr = readAllBytes(process.getErrorStream());
-        int exitCode = process.waitFor();
-        return new ProcessResult(
-            exitCode,
-            new String(stdout, StandardCharsets.UTF_8).trim(),
-            new String(stderr, StandardCharsets.UTF_8).trim()
-        );
+        return ReleaseProcessUtils.runCapture(workingDirectory, new ArrayList<String>(command));
     }
 
-    private void deleteRecursively(Path root) throws IOException {
-        Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                Files.deleteIfExists(file);
-                return FileVisitResult.CONTINUE;
-            }
-
-            @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                Files.deleteIfExists(dir);
-                return FileVisitResult.CONTINUE;
-            }
-        });
-    }
-
-    private static final class ProcessResult {
-        private final int exitCode;
-        private final String stdout;
-        private final String stderr;
-
-        private ProcessResult(int exitCode, String stdout, String stderr) {
-            this.exitCode = exitCode;
-            this.stdout = stdout;
-            this.stderr = stderr;
+    private static String stderrOrStdout(CommandResult result) {
+        String value = trimToNull(result.stderrText());
+        if (value != null) {
+            return value;
         }
-
-        private String stderrOrStdout() {
-            String value = trimToNull(stderr);
-            if (value != null) {
-                return value;
-            }
-            value = trimToNull(stdout);
-            return value == null ? "no process output" : value;
-        }
+        value = trimToNull(result.stdoutText());
+        return value == null ? "no process output" : value;
     }
 }

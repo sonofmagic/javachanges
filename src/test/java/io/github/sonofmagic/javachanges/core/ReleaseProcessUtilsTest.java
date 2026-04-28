@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -22,6 +23,15 @@ class ReleaseProcessUtilsTest {
         assertEquals(0, result.exitCode);
         assertTrue(result.stdoutText().contains("stdout-line"));
         assertTrue(result.stderrText().contains("stderr-line"));
+    }
+
+    @Test
+    void runCaptureAppliesEnvironment(@TempDir Path tempDir) throws Exception {
+        CommandResult result = ReleaseProcessUtils.runCapture(tempDir, environmentCommand(),
+            Collections.singletonMap("JAVACHANGES_TEST_ENV", "from-env"));
+
+        assertEquals(0, result.exitCode);
+        assertTrue(result.stdoutText().contains("from-env"));
     }
 
     @Test
@@ -51,5 +61,12 @@ class ReleaseProcessUtilsTest {
             return Arrays.asList("cmd", "/c", "(echo stdout-line) & (echo stderr-line 1>&2)");
         }
         return Arrays.asList("sh", "-c", "printf 'stdout-line\\n'; printf 'stderr-line\\n' >&2");
+    }
+
+    private static List<String> environmentCommand() {
+        if (System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win")) {
+            return Arrays.asList("cmd", "/c", "echo %JAVACHANGES_TEST_ENV%");
+        }
+        return Arrays.asList("sh", "-c", "printf '%s\\n' \"$JAVACHANGES_TEST_ENV\"");
     }
 }
