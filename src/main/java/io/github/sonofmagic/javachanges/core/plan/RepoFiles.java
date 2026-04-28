@@ -38,6 +38,10 @@ public final class RepoFiles {
         ReleasePlanFiles.applyPlan(repoRoot, plan);
     }
 
+    public static void applyPlan(Path repoRoot, ReleasePlan plan, boolean writeReleasePlanFiles) throws IOException {
+        ReleasePlanFiles.applyPlan(repoRoot, plan, writeReleasePlanFiles);
+    }
+
     public static ChangesetConfigSupport.ChangesetConfig readChangesetConfig(Path repoRoot) throws IOException {
         return ChangesetConfigSupport.load(repoRoot);
     }

@@ -30,6 +30,10 @@ final class GithubReleasePlanCommand extends AbstractCliCommand {
         description = "Call GitHub through gh instead of a dry run.")
     private boolean execute;
 
+    @Option(names = "--write-plan-files", arity = "0..1", fallbackValue = "true", defaultValue = "true",
+        description = "Write .changesets/release-plan.json and .changesets/release-plan.md into the release branch.")
+    private boolean writePlanFiles;
+
     @Option(names = "--format", description = "Output format: text or json.")
     private String format;
 
@@ -40,6 +44,7 @@ final class GithubReleasePlanCommand extends AbstractCliCommand {
             option("target-branch", targetBranch),
             option("release-branch", releaseBranch),
             flag("execute", execute),
+            flag("write-plan-files", writePlanFiles),
             option("format", format)
         );
         GithubReleasePlanRequest request = GithubReleasePlanRequest.fromOptions(options);
@@ -58,6 +63,10 @@ final class GithubTagFromPlanCommand extends AbstractCliCommand {
         description = "Push the release tag instead of a dry run.")
     private boolean execute;
 
+    @Option(names = "--fresh", arity = "0..1", fallbackValue = "true", defaultValue = "false",
+        description = "Derive release metadata from the current repository state instead of .changesets/release-plan.json.")
+    private boolean fresh;
+
     @Option(names = "--format", description = "Output format: text or json.")
     private String format;
 
@@ -66,6 +75,7 @@ final class GithubTagFromPlanCommand extends AbstractCliCommand {
         Map<String, String> options = options(
             option("current-sha", currentSha),
             flag("execute", execute),
+            flag("fresh", fresh),
             option("format", format)
         );
         GithubTagRequest request = GithubTagRequest.fromOptions(options);
@@ -89,6 +99,10 @@ final class GithubReleaseFromPlanCommand extends AbstractCliCommand {
         description = "Create or update the GitHub Release through gh instead of a dry run.")
     private boolean execute;
 
+    @Option(names = "--fresh", arity = "0..1", fallbackValue = "true", defaultValue = "false",
+        description = "Derive release metadata from the current repository state instead of .changesets/release-plan.json.")
+    private boolean fresh;
+
     @Option(names = "--format", description = "Output format: text or json.")
     private String format;
 
@@ -98,6 +112,7 @@ final class GithubReleaseFromPlanCommand extends AbstractCliCommand {
             option("release-notes-file", releaseNotesFile),
             option("github-output-file", githubOutputFile),
             flag("execute", execute),
+            flag("fresh", fresh),
             option("format", format)
         );
         GithubReleasePublishRequest request = GithubReleasePublishRequest.fromOptions(options);
@@ -208,7 +223,7 @@ final class InitGithubActionsCommand extends AbstractCliCommand {
             + "          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n"
             + "        run: >\n"
             + "          mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run\n"
-            + "          -Djavachanges.args=\"github-release-plan --directory $GITHUB_WORKSPACE --execute true\"\n"
+            + "          -Djavachanges.args=\"github-release-plan --directory $GITHUB_WORKSPACE --write-plan-files false --execute true\"\n"
             + "\n"
             + "  publish:\n"
             + "    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == '" + baseBranch + "' && github.event.pull_request.head.ref == '" + releaseBranch + "'\n"
@@ -229,11 +244,11 @@ final class InitGithubActionsCommand extends AbstractCliCommand {
             + "          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n"
             + "        run: >\n"
             + "          mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run\n"
-            + "          -Djavachanges.args=\"github-tag-from-plan --directory $GITHUB_WORKSPACE --current-sha $(git rev-parse HEAD) --execute true\"\n"
+            + "          -Djavachanges.args=\"github-tag-from-plan --directory $GITHUB_WORKSPACE --fresh true --current-sha $(git rev-parse HEAD) --execute true\"\n"
             + "      - name: Read release version\n"
             + "        id: release_meta\n"
             + "        run: |\n"
-            + "          release_version=\"$(mvn -B -q io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run -Djavachanges.args=\\\"manifest-field --directory $GITHUB_WORKSPACE --field releaseVersion\\\")\"\n"
+            + "          release_version=\"$(mvn -B -q io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run -Djavachanges.args=\\\"manifest-field --directory $GITHUB_WORKSPACE --field releaseVersion --fresh true\\\")\"\n"
             + "          echo \"release_version=$release_version\" >> \"$GITHUB_OUTPUT\"\n"
             + "      - name: Publish Maven artifacts\n"
             + "        run: >\n"
@@ -244,7 +259,7 @@ final class InitGithubActionsCommand extends AbstractCliCommand {
             + "          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n"
             + "        run: >\n"
             + "          mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run\n"
-            + "          -Djavachanges.args=\"github-release-from-plan --directory $GITHUB_WORKSPACE --release-notes-file target/release-notes.md --execute true\"\n";
+            + "          -Djavachanges.args=\"github-release-from-plan --directory $GITHUB_WORKSPACE --fresh true --release-notes-file target/release-notes.md --execute true\"\n";
     }
 
     private String renderGradleTemplate(ChangesetConfigSupport.ChangesetConfig config, String version) {
@@ -292,7 +307,7 @@ final class InitGithubActionsCommand extends AbstractCliCommand {
             + "      - name: Create or update release pull request\n"
             + "        env:\n"
             + "          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n"
-            + "        run: java -jar \"$JAVACHANGES_JAR\" github-release-plan --directory \"$GITHUB_WORKSPACE\" --execute true\n"
+            + "        run: java -jar \"$JAVACHANGES_JAR\" github-release-plan --directory \"$GITHUB_WORKSPACE\" --write-plan-files false --execute true\n"
             + "\n"
             + "  publish:\n"
             + "    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == '" + baseBranch + "' && github.event.pull_request.head.ref == '" + releaseBranch + "'\n"
@@ -314,17 +329,17 @@ final class InitGithubActionsCommand extends AbstractCliCommand {
             + "      - name: Create and push release tag\n"
             + "        env:\n"
             + "          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n"
-            + "        run: java -jar \"$JAVACHANGES_JAR\" github-tag-from-plan --directory \"$GITHUB_WORKSPACE\" --current-sha \"$(git rev-parse HEAD)\" --execute true\n"
+            + "        run: java -jar \"$JAVACHANGES_JAR\" github-tag-from-plan --directory \"$GITHUB_WORKSPACE\" --fresh true --current-sha \"$(git rev-parse HEAD)\" --execute true\n"
             + "      - name: Read release version\n"
             + "        id: release_meta\n"
             + "        run: |\n"
-            + "          release_version=\"$(java -jar \"$JAVACHANGES_JAR\" manifest-field --directory \"$GITHUB_WORKSPACE\" --field releaseVersion)\"\n"
+            + "          release_version=\"$(java -jar \"$JAVACHANGES_JAR\" manifest-field --directory \"$GITHUB_WORKSPACE\" --field releaseVersion --fresh true)\"\n"
             + "          echo \"release_version=$release_version\" >> \"$GITHUB_OUTPUT\"\n"
             + "      - name: Publish Gradle artifacts\n"
             + "        run: java -jar \"$JAVACHANGES_JAR\" gradle-publish --directory \"$GITHUB_WORKSPACE\" --tag \"v${{ steps.release_meta.outputs.release_version }}\" --execute true\n"
             + "      - name: Create GitHub release\n"
             + "        env:\n"
             + "          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n"
-            + "        run: java -jar \"$JAVACHANGES_JAR\" github-release-from-plan --directory \"$GITHUB_WORKSPACE\" --release-notes-file target/release-notes.md --execute true\n";
+            + "        run: java -jar \"$JAVACHANGES_JAR\" github-release-from-plan --directory \"$GITHUB_WORKSPACE\" --fresh true --release-notes-file target/release-notes.md --execute true\n";
     }
 }

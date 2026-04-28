@@ -229,11 +229,11 @@ java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar \
 
 Release-plan automation stages `gradle.properties`, `CHANGELOG.md`, and `.changesets/` for Gradle repositories.
 
-Tagging from an applied plan is unchanged:
+Tagging from an applied plan can use fresh metadata:
 
 ```bash
-$JAVACHANGES github-tag-from-plan --directory . --execute true
-$JAVACHANGES gitlab-tag-from-plan --directory . --execute true
+$JAVACHANGES github-tag-from-plan --directory . --fresh true --execute true
+$JAVACHANGES gitlab-tag-from-plan --directory . --fresh true --execute true
 ```
 
 ## 7. Publishing Gradle artifacts
@@ -270,7 +270,7 @@ If your Gradle publication task has a different name, pass `--task`:
 $JAVACHANGES gradle-publish --directory . --tag v1.4.0 --task publishAllPublicationsToMavenRepository
 ```
 
-If your Gradle build already reads `version` from `gradle.properties`, the applied release plan has already updated that file to the next snapshot. Use the release manifest for release tags and release notes, and keep the actual publication logic inside your Gradle build.
+If your Gradle build already reads `version` from `gradle.properties`, the applied release plan has already updated that file to the next snapshot. Use fresh release metadata for release tags and release notes, and keep the actual publication logic inside your Gradle build.
 
 ## 8. Common mistakes
 

@@ -67,7 +67,7 @@ mvn javachanges:status
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
 mvn javachanges:plan
 mvn javachanges:plan -Djavachanges.apply=true
-mvn javachanges:manifest-field -Djavachanges.field=releaseVersion
+mvn javachanges:manifest-field -Djavachanges.field=releaseVersion -Djavachanges.fresh=true
 ```
 
 对还没有专门 Maven goal 的命令，可以使用通用 `run` goal：

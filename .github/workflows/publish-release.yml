@@ -97,17 +97,17 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >
           ./mvnw -B -DskipTests exec:java
-          -Dexec.args="github-tag-from-plan --directory $GITHUB_WORKSPACE --current-sha $(git rev-parse HEAD) --execute true"
+          -Dexec.args="github-tag-from-plan --directory $GITHUB_WORKSPACE --fresh true --current-sha $(git rev-parse HEAD) --execute true"
 
       - name: Read release metadata
         id: github_release
         run: |
           release_version="$(
             ./mvnw -q -DskipTests exec:java \
-              -Dexec.args="manifest-field --directory $GITHUB_WORKSPACE --field releaseVersion"
+              -Dexec.args="manifest-field --directory $GITHUB_WORKSPACE --field releaseVersion --fresh true"
           )"
           if [ -z "$release_version" ]; then
-            echo "::error title=Missing release version::releaseVersion is empty in .changesets/release-plan.json"
+            echo "::error title=Missing release version::releaseVersion is empty in fresh release metadata"
             exit 1
           fi
           echo "release_version=$release_version" >> "$GITHUB_OUTPUT"
@@ -131,4 +131,4 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >
           ./mvnw -B -DskipTests exec:java
-          -Dexec.args="github-release-from-plan --directory $GITHUB_WORKSPACE --release-notes-file target/release-notes.md --execute true"
+          -Dexec.args="github-release-from-plan --directory $GITHUB_WORKSPACE --fresh true --release-notes-file target/release-notes.md --execute true"

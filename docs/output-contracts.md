@@ -20,8 +20,8 @@ Use it when you are:
 | Output | Intended consumer | Stability guidance |
 | --- | --- | --- |
 | `manifest-field` stdout | scripts and CI | preferred machine-readable interface |
-| `.changesets/release-plan.json` | scripts and CI | preferred machine-readable interface |
-| `.changesets/release-plan.md` | pull request and merge request bodies | human-readable, structure may evolve |
+| `.changesets/release-plan.json` | compatibility scripts and CI | machine-readable when generated plan files are enabled |
+| `.changesets/release-plan.md` | compatibility pull request and merge request bodies | human-readable, structure may evolve |
 | `status` stdout | local operators and reviewers | human-oriented, do not parse rigidly |
 | `render-vars` stdout | local operators | human-oriented by default |
 | `render-vars --format json` stdout | scripts and CI | machine-readable JSON contract |
@@ -45,7 +45,8 @@ Use it when you are:
 Practical rule:
 
 - if automation needs one value, prefer `manifest-field`
-- if automation needs multiple values, prefer `.changesets/release-plan.json`
+- if automation needs fresh release metadata in CI, prefer `--fresh true`
+- if automation needs the compatibility manifest, read `.changesets/release-plan.json`
 - do not build CI logic around terminal headings, spacing, or localized labels
 
 ## 3. `status` output
@@ -93,12 +94,12 @@ Automation guidance:
 Command:
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /path/to/repo --field releaseVersion"
+mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /path/to/repo --field releaseVersion --fresh true"
 ```
 
 Current behavior:
 
-- reads `.changesets/release-plan.json`
+- reads `.changesets/release-plan.json`, or derives from current repository state with `--fresh true`
 - prints the requested field value
 - is intended for CI steps such as PR titles, tag names, or publish job metadata
 
@@ -477,10 +478,10 @@ Snapshot-specific example:
 
 For CI and scripting:
 
-1. use `plan --apply true` to generate the manifest
-2. read `releaseVersion` and `releaseLevel` through `manifest-field` or `release-plan.json`
+1. use platform release-plan commands with `--write-plan-files false` for normal CI release branches
+2. read `releaseVersion` with `manifest-field --fresh true`; use the compatibility manifest only when you intentionally generated one
 3. if scripts need structured diagnostics, use `render-vars --format json`, `doctor-local --format json`, `doctor-platform --format json`, or `audit-vars --format json`
-4. keep parsing generated manifests for release planning data, and use diagnostic JSON only for environment validation flows
+4. use diagnostic JSON only for environment validation flows
 
 Avoid:
 

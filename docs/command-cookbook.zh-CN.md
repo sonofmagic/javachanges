@@ -204,7 +204,8 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory $REPO --apply
 ### 7.2 GitHub Actions 最常消费的字段
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory $REPO --field releaseVersion"
+mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory $REPO --field releaseVersion --fresh true"
+# releaseLevel 需要写出兼容 manifest 后读取。
 mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory $REPO --field releaseLevel"
 ```
 
@@ -213,8 +214,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory $RE
 - `pom.xml`
 - 或 `gradle.properties`
 - `CHANGELOG.md`
-- `.changesets/release-plan.json`
-- `.changesets/release-plan.md`
+- 仅在开启兼容输出时提交生成的 release-plan 文件
 
 完整 workflow 示例请看 [GitHub Actions Usage Guide](./github-actions-guide.md) 和 [Examples Guide](./examples-guide.md)。
 
@@ -225,13 +225,13 @@ mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory $RE
 ### 8.1 创建或更新 release MR
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-release-plan --directory $REPO --project-id 12345 --execute true"
+mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-release-plan --directory $REPO --project-id 12345 --write-plan-files false --execute true"
 ```
 
 ### 8.2 根据 applied plan 创建最终 tag
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-tag-from-plan --directory $REPO --before-sha <before-sha> --current-sha <current-sha> --execute true"
+mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-tag-from-plan --directory $REPO --fresh true --before-sha <before-sha> --current-sha <current-sha> --execute true"
 ```
 
 CI 里最常见的映射如下：

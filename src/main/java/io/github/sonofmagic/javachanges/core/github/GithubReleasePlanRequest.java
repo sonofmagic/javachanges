@@ -11,14 +11,16 @@ public final class GithubReleasePlanRequest {
     public final String targetBranch;
     public final String releaseBranch;
     public final boolean execute;
+    public final boolean writePlanFiles;
     public final OutputFormat format;
 
     private GithubReleasePlanRequest(String githubRepo, String targetBranch, String releaseBranch,
-                                     boolean execute, OutputFormat format) {
+                                     boolean execute, boolean writePlanFiles, OutputFormat format) {
         this.githubRepo = githubRepo;
         this.targetBranch = targetBranch;
         this.releaseBranch = releaseBranch;
         this.execute = execute;
+        this.writePlanFiles = writePlanFiles;
         this.format = format;
     }
 
@@ -41,6 +43,7 @@ public final class GithubReleasePlanRequest {
             targetBranch,
             releaseBranch,
             ReleaseTextUtils.isTrue(options.get("execute")),
+            !"false".equalsIgnoreCase(ReleaseTextUtils.trimToNull(options.get("write-plan-files"))),
             OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );
     }

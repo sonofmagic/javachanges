@@ -34,8 +34,8 @@
 | 检查平台就绪状态 | `doctor-local`、`doctor-platform` |
 | 通过 `glab` 同步 GitLab 变量 | `sync-vars --platform gitlab` |
 | 通过 `glab variable export` 回读审计 | `audit-vars --platform gitlab` |
-| 创建或更新 GitLab release MR | `gitlab-release-plan --execute true` |
-| 在 release plan 落地后创建并推送 tag | `gitlab-tag-from-plan --execute true` |
+| 创建或更新 GitLab release MR | `gitlab-release-plan --write-plan-files false --execute true` |
+| 在 release plan 落地后创建并推送 tag | `gitlab-tag-from-plan --fresh true --execute true` |
 | 做发布前检查 | `preflight` |
 | 执行真正的 Maven deploy | `publish --execute true` |
 | 执行真正的 Gradle publish task | `gradle-publish --execute true` |
@@ -150,7 +150,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="init-gitlab-ci --directory /pa
 如果业务仓库不想维护额外 runner POM，最短可执行 Maven 命令范式是：
 
 ```bash
-mvn -B io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__:run -Djavachanges.args="gitlab-release-plan --directory $CI_PROJECT_DIR --execute true"
+mvn -B io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__:run -Djavachanges.args="gitlab-release-plan --directory $CI_PROJECT_DIR --write-plan-files false --execute true"
 ```
 
 生成后的模板大致如下：
@@ -191,7 +191,7 @@ release_plan_mr:
   script:
     - >
       mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run
-      -Djavachanges.args="gitlab-release-plan --directory $CI_PROJECT_DIR --execute true"
+      -Djavachanges.args="gitlab-release-plan --directory $CI_PROJECT_DIR --write-plan-files false --execute true"
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
 
@@ -200,7 +200,7 @@ release_tag:
   script:
     - >
       mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run
-      -Djavachanges.args="gitlab-tag-from-plan --directory $CI_PROJECT_DIR --execute true"
+      -Djavachanges.args="gitlab-tag-from-plan --directory $CI_PROJECT_DIR --fresh true --execute true"
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
 
@@ -297,6 +297,7 @@ release_plan_mr:
       gitlab-release-plan
       --directory "$CI_PROJECT_DIR"
       --project-id "$CI_PROJECT_ID"
+      --write-plan-files false
       --execute true
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
@@ -345,7 +346,7 @@ release_tag:
     - mvn -B -DskipTests compile
     - >
       mvn -B -DskipTests compile exec:java
-      -Dexec.args="gitlab-tag-from-plan --directory $CI_PROJECT_DIR --before-sha $CI_COMMIT_BEFORE_SHA --current-sha $CI_COMMIT_SHA --execute true"
+      -Dexec.args="gitlab-tag-from-plan --directory $CI_PROJECT_DIR --fresh true --before-sha $CI_COMMIT_BEFORE_SHA --current-sha $CI_COMMIT_SHA --execute true"
 ```
 
 避免这样写：
@@ -359,7 +360,7 @@ release_tag:
       CI_PROJECT_DIR=$CI_PROJECT_DIR
       CI_COMMIT_SHA=$CI_COMMIT_SHA
       EOF
-      mvn -B -DskipTests compile exec:java -Dexec.args="gitlab-tag-from-plan --directory $CI_PROJECT_DIR --execute true"
+      mvn -B -DskipTests compile exec:java -Dexec.args="gitlab-tag-from-plan --directory $CI_PROJECT_DIR --fresh true --execute true"
 ```
 
 更稳妥的写文件方式：
@@ -413,7 +414,7 @@ release_plan_mr:
 | 条件 | 结果 |
 | --- | --- |
 | `beforeSha` 缺失或全 0 | 跳过打 tag |
-| `.changesets/release-plan.json` 在两个提交之间没有变化 | 跳过打 tag |
+| 发布状态在两个提交之间没有变化 | 跳过打 tag |
 | 远端 tag 已经存在 | 跳过打 tag |
 | 没有传 `--execute true` | 只做 dry-run |
 
@@ -559,7 +560,7 @@ scanner scan \
 | --- | --- | --- |
 | release MR job 无法 push | 缺少 `GITLAB_RELEASE_BOT_TOKEN` 或 `GITLAB_RELEASE_BOT_USERNAME` | 把 bot 凭据加成项目变量 |
 | release MR job 报 `stale info` | javachanges 解析完远端 SHA 之后，又有别的流程更新了同一个 `changeset-release/*` 分支 | 直接重跑 pipeline；如果这个分支名被多个自动流程共用，需要改成单一 owner |
-| release tag job 一直不打 tag | `release-plan.json` 没变化，或 `CI_COMMIT_BEFORE_SHA` 不可用 | 检查默认分支 pipeline 和 release plan 产物 |
+| release tag job 一直不打 tag | 发布状态没变化，或 `CI_COMMIT_BEFORE_SHA` 不可用 | 检查默认分支 pipeline、版本文件和 changelog |
 | pipeline 还没启动 job 就报 `could not find expected ':' while scanning a simple key` | heredoc 或其他多行 shell 内容破坏了 YAML 缩进语义 | 把 `script: - |` + heredoc 改成 `- >`、`printf`，或者仓库内脚本 |
 | snapshot publish job 看不到 Maven 凭据或 `GITLAB_RELEASE_TOKEN` | 变量是 protected，但配置的 `snapshotBranch` 不是 protected branch | 先把 `snapshotBranch` 设为 protected，再跑 `doctor-platform --platform gitlab` 和 pipeline |
 | hygiene / secret scan 命中了 `.gitlab-ci.yml` 或 `Makefile`，但仓库里并没有真实凭据 | 扫描器扫到了自己的规则字面量 | 把模式移到独立规则文件，并排除扫描器自有配置文件 |

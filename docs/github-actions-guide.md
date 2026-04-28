@@ -30,9 +30,9 @@ Recommended command mapping:
 | Goal | Command |
 | --- | --- |
 | Check pending release state | `status` |
-| Create or update a GitHub release PR | `github-release-plan --execute true` |
-| Tag the merged release commit | `github-tag-from-plan --execute true` |
-| Generate release metadata or sync the GitHub Release | `github-release-from-plan [--execute true]` |
+| Create or update a GitHub release PR | `github-release-plan --write-plan-files false --execute true` |
+| Tag the merged release commit | `github-tag-from-plan --fresh true --execute true` |
+| Generate release metadata or sync the GitHub Release | `github-release-from-plan --fresh true [--execute true]` |
 | Generate a starter GitHub Actions workflow | `init-github-actions --build-tool auto` |
 | Generate Maven settings from env vars | `write-settings --output .m2/settings.xml` |
 | Render required GitHub variables and secrets | `render-vars --env-file env/release.env.local --platform github` |
@@ -51,8 +51,6 @@ For a GitHub-based release workflow, keep these files under version control:
 | Path | Purpose |
 | --- | --- |
 | `.changesets/*.md` | Pending release intent |
-| `.changesets/release-plan.json` | Generated release manifest |
-| `.changesets/release-plan.md` | Generated release PR body |
 | `CHANGELOG.md` | Generated changelog |
 | `env/release.env.example` | Variable template for repository publishing |
 | `.github/workflows/*.yml` | CI and release workflows |
@@ -216,7 +214,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >
           mvn -B -DskipTests exec:java
-          -Dexec.args="github-release-plan --directory $GITHUB_WORKSPACE --execute true"
+          -Dexec.args="github-release-plan --directory $GITHUB_WORKSPACE --write-plan-files false --execute true"
 ```
 
 ### 5.3 Release tag automation
@@ -262,7 +260,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >
           mvn -B -DskipTests exec:java
-          -Dexec.args="github-tag-from-plan --directory $GITHUB_WORKSPACE --execute true"
+          -Dexec.args="github-tag-from-plan --directory $GITHUB_WORKSPACE --fresh true --execute true"
 ```
 
 ### 5.4 Snapshot publish with `javachanges publish`
@@ -448,6 +446,7 @@ jobs:
           github-release-plan
           --directory "$GITHUB_WORKSPACE"
           --github-repo "$GITHUB_REPOSITORY"
+          --write-plan-files false
           --execute true
 ```
 

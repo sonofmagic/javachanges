@@ -14,17 +14,19 @@ public final class GitlabTagRequest {
     public final String baseBranch;
     public final String releaseBranch;
     public final String currentBranch;
+    public final boolean fresh;
     public final OutputFormat format;
 
     private GitlabTagRequest(String beforeSha, String currentSha, boolean execute,
                              String baseBranch, String releaseBranch, String currentBranch,
-                             OutputFormat format) {
+                             boolean fresh, OutputFormat format) {
         this.beforeSha = beforeSha;
         this.currentSha = currentSha;
         this.execute = execute;
         this.baseBranch = baseBranch;
         this.releaseBranch = releaseBranch;
         this.currentBranch = currentBranch;
+        this.fresh = fresh;
         this.format = format;
     }
 
@@ -41,6 +43,7 @@ public final class GitlabTagRequest {
             config.baseBranch(),
             config.releaseBranch(),
             ReleaseTextUtils.trimToNull(System.getenv("CI_COMMIT_BRANCH")),
+            ReleaseTextUtils.isTrue(options.get("fresh")),
             OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );
     }

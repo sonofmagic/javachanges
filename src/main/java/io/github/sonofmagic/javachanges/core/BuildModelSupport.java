@@ -97,6 +97,16 @@ public final class BuildModelSupport {
         return paths.toArray(new String[0]);
     }
 
+    public static String[] releaseStateGitPaths(Path repoRoot) {
+        List<String> paths = new ArrayList<String>();
+        BuildModel model = detect(repoRoot);
+        if (model != null) {
+            paths.add(repoRoot.relativize(model.versionFile).toString());
+        }
+        paths.add("CHANGELOG.md");
+        return paths.toArray(new String[0]);
+    }
+
     private static BuildModel require(Path repoRoot) {
         BuildModel model = detect(repoRoot);
         if (model == null) {

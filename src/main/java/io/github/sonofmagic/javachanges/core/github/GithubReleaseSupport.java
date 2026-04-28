@@ -61,7 +61,10 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
 
         runtime.configureBotIdentity();
         runtime.runGit("switch", "-C", releaseBranch);
-        RepoFiles.applyPlan(repoRoot, plan);
+        RepoFiles.applyPlan(repoRoot, plan, request.writePlanFiles);
+        Path pullRequestBodyFile = request.writePlanFiles
+            ? releasePlanMarkdownFile()
+            : writeTransientReleasePlanBody(plan);
         runtime.runGit(concat("add", BuildModelSupport.releasePlanGitAddPaths(repoRoot)));
         if (runtime.hasNoStagedChanges()) {
             report.skipped = true;
@@ -78,7 +81,7 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
             report.action = "create-pull-request";
             report.reason = "Created GitHub pull request.";
             runtime.createPullRequest(request.githubRepo, releaseBranch, targetBranch, title,
-                releasePlanMarkdownFile());
+                pullRequestBodyFile);
             AutomationJsonSupport.print(out, textOutput, report, "Created GitHub PR for " + title);
             return;
         }
@@ -86,7 +89,7 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
         report.action = "update-pull-request";
         report.reason = "Updated GitHub pull request.";
         runtime.updatePullRequest(request.githubRepo, prNumber, title,
-            releasePlanMarkdownFile());
+            pullRequestBodyFile);
         AutomationJsonSupport.print(out, textOutput, report, "Updated GitHub PR #" + prNumber);
     }
 
@@ -103,7 +106,9 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
             newAutomationReport("github-tag-from-plan", "tag-from-plan", request.execute);
         String currentSha = ReleaseTextUtils.firstNonBlank(ReleaseTextUtils.trimToNull(request.currentSha),
             runtime.headSha());
-        ReleaseAutomationSupport.ReleaseDescriptor release = descriptorFromManifest(report);
+        ReleaseAutomationSupport.ReleaseDescriptor release = request.fresh
+            ? descriptorFromFreshPlan(report)
+            : descriptorFromManifest(report);
         List<String> tagNames = release.tagNames();
 
         AutomationJsonSupport.printLines(out, textOutput,
@@ -135,7 +140,9 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
         boolean textOutput = isTextOutput(request.format);
         AutomationJsonSupport.AutomationReport report =
             newAutomationReport("github-release-from-plan", "sync-release", request.execute);
-        ReleaseAutomationSupport.ReleaseDescriptor release = descriptorFromManifest(report);
+        ReleaseAutomationSupport.ReleaseDescriptor release = request.fresh
+            ? descriptorFromFreshPlan(report)
+            : descriptorFromManifest(report);
         String releaseVersion = release.releaseVersion;
         String tagName = release.primaryTagName();
         Path notesFile = artifactSupport.resolveReleaseNotesFile(request.releaseNotesFile);
@@ -190,6 +197,13 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
         builder.append("release_notes_file=").append(notesFile.toString()).append('\n');
         Files.write(outputFile, builder.toString().getBytes(StandardCharsets.UTF_8),
             StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+    }
+
+    private Path writeTransientReleasePlanBody(ReleasePlan plan) throws IOException {
+        Path bodyFile = repoRoot.resolve("target").resolve("javachanges-release-plan.md");
+        Files.createDirectories(bodyFile.getParent());
+        Files.write(bodyFile, plan.toPullRequestBodyLines(), StandardCharsets.UTF_8);
+        return bodyFile;
     }
 
 }

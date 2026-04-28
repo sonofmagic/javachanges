@@ -39,7 +39,7 @@ flowchart TD
 mvn javachanges:status
 mvn javachanges:plan -Djavachanges.apply=true
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
-mvn javachanges:manifest-field -Djavachanges.field=releaseVersion
+mvn javachanges:manifest-field -Djavachanges.field=releaseVersion -Djavachanges.fresh=true
 ```
 
 说明：

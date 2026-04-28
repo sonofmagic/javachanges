@@ -56,7 +56,7 @@ flowchart TD
 `release-plan.yml` 的核心逻辑是：
 
 ```bash
-mvn -B -DskipTests exec:java -Dexec.args="github-release-plan --directory $GITHUB_WORKSPACE --execute true"
+mvn -B -DskipTests exec:java -Dexec.args="github-release-plan --directory $GITHUB_WORKSPACE --write-plan-files false --execute true"
 ```
 
 它会：
@@ -65,7 +65,7 @@ mvn -B -DskipTests exec:java -Dexec.args="github-release-plan --directory $GITHU
 | --- | --- |
 | 读取 `.changesets/*.md` | 收集待发布变更 |
 | 计算发布版本 | 生成 `releaseVersion` 和 `nextSnapshotVersion` |
-| 应用发布计划 | 更新 `<revision>`、`CHANGELOG.md`、`.changesets/release-plan.json` |
+| 应用发布计划 | 更新 `<revision>` 和 `CHANGELOG.md`，不提交生成的 plan 文件 |
 | 删除已消费的 changeset | 避免重复发布 |
 
 工作流随后会把这些变更提交到：
@@ -219,7 +219,7 @@ add GitHub Actions release automation
 
 | 阶段 | 版本 |
 | --- | --- |
-| 发布版本 | 从 `.changesets/release-plan.json` 读取，例如 `1.0.0` |
+| 发布版本 | 通过 `manifest-field --fresh true` 推导，例如 `1.0.0` |
 | 主干版本 | 已提前推进到下一个快照，例如 `1.0.1-SNAPSHOT` |
 
 publish workflow 会在真正部署时使用：

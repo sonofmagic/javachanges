@@ -13,24 +13,30 @@ When you run:
 mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo --apply true"
 ```
 
-`javachanges` writes two generated files:
+`javachanges` can write two generated files:
 
 | File | Purpose |
 | --- | --- |
 | `.changesets/release-plan.json` | Machine-readable release manifest |
 | `.changesets/release-plan.md` | Human-readable release PR body |
 
-This page explains what is inside those files and how CI/CD usually consumes them.
+These files are compatibility artifacts. New CI/CD automation should prefer
+`--fresh true` and `--write-plan-files false` so the release branch does not
+carry stale generated metadata.
 
 ## 2. Generation Timing
 
-These files are generated only when `plan --apply true` succeeds.
+These files are generated when `plan --apply true` succeeds. Platform automation
+can opt out with `github-release-plan --write-plan-files false` or
+`gitlab-release-plan --write-plan-files false`.
 
 That means:
 
 - `status` does not write them
 - `plan` without `--apply true` does not write them
 - they represent the currently applied release plan, not just a preview
+- they are ignored by this repository by default because fresh release metadata
+  is derived from the current applied version state
 
 ## 3. `release-plan.json`
 
@@ -122,24 +128,25 @@ Read a field with:
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /path/to/repo --field releaseVersion"
+mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /path/to/repo --field releaseVersion --fresh true"
 ```
 
 ### 5.2 GitHub Actions
 
 Typical uses:
 
-- read `releaseVersion` for the PR title
-- read `tags` or `releaseTargets` when creating the final release tag set
-- attach `.changesets/release-plan.md` as the PR body
+- derive `releaseVersion` with `manifest-field --fresh true`
+- derive the final release tag set with `github-tag-from-plan --fresh true`
+- generate a transient PR body with `github-release-plan --write-plan-files false`
 - for Gradle repositories, pass `releaseVersion` to `./gradlew publish -Pversion=...` if your publishing job needs an explicit release version
 
 ### 5.3 GitLab CI/CD
 
 Typical uses:
 
-- detect whether `release-plan.json` changed between commits
+- detect whether the version file or `CHANGELOG.md` changed when `gitlab-tag-from-plan --fresh true` is used
 - generate the final tag set only when a new applied plan exists
-- create or update the release-plan merge request body
+- create or update the release-plan merge request body without committing generated plan files
 
 ## 6. Related Files Updated At The Same Time
 
@@ -149,8 +156,8 @@ When the manifest is generated, these files are usually updated in the same comm
 | --- | --- |
 | `pom.xml` or `gradle.properties` | Root Maven `<revision>` or Gradle version advances to the next snapshot |
 | `CHANGELOG.md` | A new release section is inserted |
-| `.changesets/release-plan.json` | Machine-readable release data |
-| `.changesets/release-plan.md` | Human-readable release PR body |
+| `.changesets/release-plan.json` | Machine-readable release data when compatibility manifest output is enabled |
+| `.changesets/release-plan.md` | Human-readable release PR body when compatibility manifest output is enabled |
 
 At the same time, the consumed `.changesets/*.md` entries are deleted.
 
@@ -158,10 +165,10 @@ At the same time, the consumed `.changesets/*.md` entries are deleted.
 
 | Problem | Cause | Fix |
 | --- | --- | --- |
-| `manifest-field` fails | `plan --apply true` has not been run yet | generate and apply the release plan first |
-| No tag is created in CI | `release-plan.json` did not change | confirm a new plan was applied and committed |
-| Release PR body is stale | `.changesets/release-plan.md` was not regenerated | rerun the release-plan job |
-| Version mismatch in CI | workflow reads `pom.xml` or `gradle.properties` instead of the manifest | use `manifest-field --field releaseVersion` |
+| `manifest-field` fails | the compatibility manifest was not written | use `manifest-field --fresh true` or generate and apply the release plan first |
+| No tag is created in CI | release state did not change | confirm a release plan updated the version file and `CHANGELOG.md` |
+| Release PR body is stale | generated plan files were committed and not regenerated | use `--write-plan-files false` so the body is regenerated transiently |
+| Version mismatch in CI | workflow reads stale generated files | use `manifest-field --field releaseVersion --fresh true` |
 
 ## 8. Related Guides
 

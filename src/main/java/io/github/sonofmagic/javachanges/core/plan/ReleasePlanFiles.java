@@ -18,14 +18,21 @@ final class ReleasePlanFiles {
     }
 
     static void applyPlan(Path repoRoot, ReleasePlan plan) throws IOException {
+        applyPlan(repoRoot, plan, true);
+    }
+
+    static void applyPlan(Path repoRoot, ReleasePlan plan, boolean writeReleasePlanFiles) throws IOException {
         updateRootRevision(repoRoot, plan.getNextSnapshotVersion());
         updateChangelog(repoRoot.resolve("CHANGELOG.md"), plan);
-        Files.write(repoRoot.resolve(ChangesetPaths.DIR).resolve(ChangesetPaths.RELEASE_PLAN_JSON),
-            Collections.singletonList(plan.toJson()),
-            StandardCharsets.UTF_8);
-        Files.write(repoRoot.resolve(ChangesetPaths.DIR).resolve(ChangesetPaths.RELEASE_PLAN_MD),
-            plan.toPullRequestBodyLines(),
-            StandardCharsets.UTF_8);
+        Path releasePlanJson = repoRoot.resolve(ChangesetPaths.DIR).resolve(ChangesetPaths.RELEASE_PLAN_JSON);
+        Path releasePlanMarkdown = repoRoot.resolve(ChangesetPaths.DIR).resolve(ChangesetPaths.RELEASE_PLAN_MD);
+        if (writeReleasePlanFiles) {
+            Files.write(releasePlanJson, Collections.singletonList(plan.toJson()), StandardCharsets.UTF_8);
+            Files.write(releasePlanMarkdown, plan.toPullRequestBodyLines(), StandardCharsets.UTF_8);
+        } else {
+            Files.deleteIfExists(releasePlanJson);
+            Files.deleteIfExists(releasePlanMarkdown);
+        }
         for (Changeset changeset : plan.getChangesets()) {
             Files.deleteIfExists(changeset.path);
         }

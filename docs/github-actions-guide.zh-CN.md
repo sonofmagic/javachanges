@@ -26,9 +26,9 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory $PWD"
 | 目标 | 命令 |
 | --- | --- |
 | 查看当前待发布状态 | `status` |
-| 创建或更新 GitHub release PR | `github-release-plan --execute true` |
-| 给合并后的 release commit 打 tag | `github-tag-from-plan --execute true` |
-| 生成发布元数据或同步 GitHub Release | `github-release-from-plan [--execute true]` |
+| 创建或更新 GitHub release PR | `github-release-plan --write-plan-files false --execute true` |
+| 给合并后的 release commit 打 tag | `github-tag-from-plan --fresh true --execute true` |
+| 生成发布元数据或同步 GitHub Release | `github-release-from-plan --fresh true [--execute true]` |
 | 生成起步版 GitHub Actions workflow | `init-github-actions --build-tool auto` |
 | 根据环境变量生成 Maven settings | `write-settings --output .m2/settings.xml` |
 | 渲染 GitHub 需要的变量和 secrets | `render-vars --env-file env/release.env.local --platform github` |
@@ -47,8 +47,6 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory $PWD"
 | 路径 | 作用 |
 | --- | --- |
 | `.changesets/*.md` | 待发布变更意图 |
-| `.changesets/release-plan.json` | 生成后的发布 manifest |
-| `.changesets/release-plan.md` | 生成后的 release PR 正文 |
 | `CHANGELOG.md` | 自动更新的 changelog |
 | `env/release.env.example` | 发布变量模板 |
 | `.github/workflows/*.yml` | CI 与发布工作流 |
@@ -212,7 +210,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >
           mvn -B -DskipTests exec:java
-          -Dexec.args="github-release-plan --directory $GITHUB_WORKSPACE --execute true"
+          -Dexec.args="github-release-plan --directory $GITHUB_WORKSPACE --write-plan-files false --execute true"
 ```
 
 ### 5.3 自动给 release commit 打 tag
@@ -258,7 +256,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >
           mvn -B -DskipTests exec:java
-          -Dexec.args="github-tag-from-plan --directory $GITHUB_WORKSPACE --execute true"
+          -Dexec.args="github-tag-from-plan --directory $GITHUB_WORKSPACE --fresh true --execute true"
 ```
 
 ### 5.4 使用 `javachanges publish` 发布 snapshot
@@ -424,6 +422,7 @@ Gradle 仓库使用正式版 CLI jar，并开启 Gradle cache。release-plan 命
     github-release-plan
     --directory "$GITHUB_WORKSPACE"
     --github-repo "$GITHUB_REPOSITORY"
+    --write-plan-files false
     --execute true
 ```
 

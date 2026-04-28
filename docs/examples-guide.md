@@ -204,7 +204,7 @@ The curated `snapshots/` directory shows the expected generated artifacts:
 For actual artifact publishing, keep using Gradle:
 
 ```bash
-RELEASE_VERSION="$(java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar manifest-field --directory examples/basic-gradle-monorepo --field releaseVersion)"
+RELEASE_VERSION="$(java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar manifest-field --directory examples/basic-gradle-monorepo --field releaseVersion --fresh true)"
 cd examples/basic-gradle-monorepo
 gradle publish -Pversion="$RELEASE_VERSION"
 ```

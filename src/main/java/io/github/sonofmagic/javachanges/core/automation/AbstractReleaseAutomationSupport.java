@@ -47,6 +47,13 @@ public abstract class AbstractReleaseAutomationSupport {
         return release;
     }
 
+    protected final ReleaseAutomationSupport.ReleaseDescriptor descriptorFromFreshPlan(
+        AutomationJsonSupport.AutomationReport report) throws IOException, InterruptedException {
+        ReleaseAutomationSupport.ReleaseDescriptor release = automationSupport.descriptorFromFreshPlan();
+        applyReleaseDescriptor(report, release);
+        return release;
+    }
+
     protected final boolean skipWhenNoPendingChangesets(ReleasePlan plan, AutomationJsonSupport.AutomationReport report,
                                                         boolean textOutput, String message) {
         if (plan.hasPendingChangesets()) {

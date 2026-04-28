@@ -44,4 +44,26 @@ class ReleaseAutomationSupportTest {
         assertEquals("chore(release): release v1.2.3", release.gitlabMergeRequestTitle());
         assertTrue(support.releasePlanMarkdownFile().endsWith(".changesets/release-plan.md"));
     }
+
+    @Test
+    void readsFreshReleaseVersionFromAppliedSnapshot(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot.resolve(".changesets"));
+        Files.write(repoRoot.resolve("pom.xml"), (
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<project xmlns=\"http://maven.apache.org/POM/4.0.0\">\n" +
+                "    <modelVersion>4.0.0</modelVersion>\n" +
+                "    <groupId>example</groupId>\n" +
+                "    <artifactId>fixture-app</artifactId>\n" +
+                "    <version>${revision}</version>\n" +
+                "    <properties>\n" +
+                "        <revision>2.0.0-SNAPSHOT</revision>\n" +
+                "    </properties>\n" +
+                "</project>\n").getBytes(StandardCharsets.UTF_8));
+
+        ReleaseAutomationSupport support = new ReleaseAutomationSupport(repoRoot);
+
+        assertEquals("2.0.0", support.readManifestField("releaseVersion", true));
+        assertEquals("whole-repo", support.readManifestField("tagStrategy", true));
+    }
 }

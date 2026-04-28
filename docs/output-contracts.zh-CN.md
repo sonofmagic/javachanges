@@ -16,8 +16,8 @@
 | 输出 | 面向对象 | 稳定性建议 |
 | --- | --- | --- |
 | `manifest-field` 标准输出 | 脚本和 CI | 优先使用的机器可读接口 |
-| `.changesets/release-plan.json` | 脚本和 CI | 优先使用的机器可读接口 |
-| `.changesets/release-plan.md` | Pull Request / Merge Request 正文 | 面向人阅读，结构可能演进 |
+| `.changesets/release-plan.json` | 兼容脚本和 CI | 开启生成文件时的机器可读接口 |
+| `.changesets/release-plan.md` | 兼容 Pull Request / Merge Request 正文 | 面向人阅读，结构可能演进 |
 | `status` 标准输出 | 本地操作者和审阅者 | 面向人，不要做刚性解析 |
 | `render-vars` 标准输出 | 本地操作者 | 默认面向人 |
 | `render-vars --format json` 标准输出 | 脚本和 CI | 机器可读 JSON 契约 |
@@ -41,7 +41,8 @@
 实际建议：
 
 - 自动化如果只需要一个值，优先用 `manifest-field`
-- 自动化如果需要多个字段，优先读 `.changesets/release-plan.json`
+- CI 里需要 fresh 发布元数据时，优先使用 `--fresh true`
+- 如果需要兼容 manifest，再读取 `.changesets/release-plan.json`
 - 不要把终端标题、列对齐空格或中英文文案当作稳定契约
 
 ## 3. `status` 输出
@@ -89,12 +90,12 @@ Changesets:
 命令：
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /path/to/repo --field releaseVersion"
+mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /path/to/repo --field releaseVersion --fresh true"
 ```
 
 当前行为：
 
-- 读取 `.changesets/release-plan.json`
+- 读取 `.changesets/release-plan.json`；带 `--fresh true` 时从当前仓库状态推导
 - 输出目标字段对应的值
 - 很适合在 CI 里拼 PR 标题、tag 名称和发布元数据
 
@@ -473,10 +474,10 @@ snapshot 专用示例：
 
 对 CI 和脚本来说：
 
-1. 用 `plan --apply true` 生成 manifest
-2. 用 `manifest-field` 或 `release-plan.json` 读取 `releaseVersion`、`releaseLevel` 这类字段
+1. 常规 CI release branch 使用带 `--write-plan-files false` 的平台 release-plan 命令
+2. 用 `manifest-field --fresh true` 读取 `releaseVersion`；只有明确写出了兼容 manifest 时才直接读取它
 3. 如果脚本需要结构化诊断，使用 `render-vars --format json`、`doctor-local --format json`、`doctor-platform --format json`、`audit-vars --format json`
-4. 发布计划相关数据继续优先读 manifest，诊断类 JSON 只用于环境校验与审计流程
+4. 诊断类 JSON 只用于环境校验与审计流程
 
 避免这样做：
 

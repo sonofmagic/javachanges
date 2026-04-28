@@ -4,10 +4,14 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.github.sonofmagic.javachanges.core.config.ChangesetConfigSupport;
 import io.github.sonofmagic.javachanges.core.plan.ReleasePlan;
 import io.github.sonofmagic.javachanges.core.plan.ReleasePlanner;
 import io.github.sonofmagic.javachanges.core.plan.RepoFiles;
@@ -36,8 +40,36 @@ public final class ReleaseAutomationSupport {
         return new ReleaseDescriptor(releaseVersion, tagStrategy, releaseTargets);
     }
 
+    public ReleaseDescriptor descriptorFromFreshPlan() throws IOException, InterruptedException {
+        ReleasePlan plan = plan();
+        if (plan.hasPendingChangesets()) {
+            return descriptorFromPlan(plan);
+        }
+        String releaseVersion = ReleaseTextUtils.stripSnapshot(BuildModelSupport.readRevision(repoRoot));
+        ChangesetConfigSupport.ChangesetConfig config = RepoFiles.readChangesetConfig(repoRoot);
+        if (config.tagStrategy() == ReleaseTagStrategy.PER_MODULE) {
+            throw new IllegalStateException("Fresh release metadata cannot infer per-module release targets after changesets are consumed. "
+                + "Use the committed release plan manifest or run before applying the plan.");
+        }
+        return new ReleaseDescriptor(releaseVersion, config.tagStrategy(),
+            Collections.singletonList(new ReleasePlan.ReleaseTarget(null, "v" + releaseVersion)));
+    }
+
     public String releaseVersionFromManifest() throws IOException {
         return RepoFiles.readManifestField(repoRoot, "releaseVersion");
+    }
+
+    public String readManifestField(String field, boolean fresh) throws IOException, InterruptedException {
+        if (!fresh) {
+            return RepoFiles.readManifestField(repoRoot, field);
+        }
+        ReleasePlan plan = plan();
+        if (plan.hasPendingChangesets()) {
+            JsonNode value = ReleaseJsonUtils.readTree(plan.toJson()).get(field);
+            return requiredManifestFieldText(value, field, "fresh release plan");
+        }
+        JsonNode value = ReleaseJsonUtils.readTree(ReleaseJsonUtils.toPrettyJson(freshAppliedManifest())).get(field);
+        return requiredManifestFieldText(value, field, "fresh applied release metadata");
     }
 
     public String wholeRepoTagFromManifest() throws IOException {
@@ -107,12 +139,52 @@ public final class ReleaseAutomationSupport {
         ));
     }
 
+    private Map<String, Object> freshAppliedManifest() throws IOException {
+        ReleaseDescriptor release;
+        try {
+            release = descriptorFromFreshPlan();
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Interrupted while generating fresh release metadata", exception);
+        }
+        Map<String, Object> payload = new LinkedHashMap<String, Object>();
+        payload.put("releaseVersion", release.releaseVersion);
+        payload.put("nextSnapshotVersion", BuildModelSupport.readRevision(repoRoot));
+        payload.put("releaseLevel", null);
+        payload.put("tagStrategy", release.tagStrategy.id);
+        payload.put("tags", release.tagNames());
+        List<Map<String, Object>> renderedTargets = new ArrayList<Map<String, Object>>();
+        for (ReleasePlan.ReleaseTarget target : release.releaseTargets) {
+            Map<String, Object> entry = new LinkedHashMap<String, Object>();
+            entry.put("module", target.module);
+            entry.put("tag", target.tag);
+            renderedTargets.add(entry);
+        }
+        payload.put("releaseTargets", renderedTargets);
+        payload.put("changesets", Collections.emptyList());
+        return payload;
+    }
+
     private static String requiredText(JsonNode node, String field) {
         String value = textOrNull(node.get(field));
         if (value == null) {
             throw new IllegalStateException("Missing field " + field + " in release manifest");
         }
         return value;
+    }
+
+    private static String requiredManifestFieldText(JsonNode value, String field, String source) {
+        if (value == null || value.isNull()) {
+            throw new IllegalStateException("Missing field `" + field + "` in " + source);
+        }
+        if (value.isArray()) {
+            List<String> values = new ArrayList<String>();
+            for (JsonNode item : value) {
+                values.add(item.asText());
+            }
+            return Arrays.toString(values.toArray(new String[0]));
+        }
+        return value.asText();
     }
 
     private static String textOrNull(JsonNode node) {

@@ -64,7 +64,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo
 
 | 现象 | 原因 | 修复方式 |
 | --- | --- | --- |
-| `manifest-field` 读不到字段 | 当前仓库里还没有已经应用过的 release plan | 先执行 `plan --apply true`，再读取字段 |
+| `manifest-field` 读不到字段 | 没有写出兼容 manifest | 使用 `manifest-field --fresh true`，或在开启生成文件的情况下应用 plan |
 
 ### 2.5 Gradle 仓库根目录无法识别
 
@@ -217,7 +217,7 @@ java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar st
 
 | 现象 | 原因 | 修复方式 |
 | --- | --- | --- |
-| `gitlab-tag-from-plan` 跳过打 tag | `.changesets/release-plan.json` 没变化，或者 `CI_COMMIT_BEFORE_SHA` 不可用 | 检查默认分支 pipeline，确认新的 applied plan 已经被提交 |
+| `gitlab-tag-from-plan` 跳过打 tag | 发布状态没变化，或者 `CI_COMMIT_BEFORE_SHA` 不可用 | 检查默认分支 pipeline，确认版本文件和 changelog 已变化 |
 
 ### 5.3 Release MR push 报 `stale info`
 
@@ -259,7 +259,7 @@ java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar st
 Gradle release handoff：
 
 ```bash
-RELEASE_VERSION="$(java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar manifest-field --directory . --field releaseVersion)"
+RELEASE_VERSION="$(java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar manifest-field --directory . --field releaseVersion --fresh true)"
 ./gradlew publish -Pversion="$RELEASE_VERSION"
 ```
 

@@ -25,7 +25,7 @@ mvn -q -DskipTests install
 mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:status
 mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:plan -Djavachanges.apply=true
 mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
-mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:manifest-field -Djavachanges.field=releaseVersion
+mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:manifest-field -Djavachanges.field=releaseVersion -Djavachanges.fresh=true
 mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:run -Djavachanges.args="release-notes --tag v1.2.3"
 ```
 
@@ -52,7 +52,7 @@ Plugin note:
 - for CI or external repositories, you can call the published plugin directly without a custom runner POM:
 
 ```bash
-mvn -B io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__:run -Djavachanges.args="gitlab-release-plan --directory $CI_PROJECT_DIR --execute true"
+mvn -B io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__:run -Djavachanges.args="gitlab-release-plan --directory $CI_PROJECT_DIR --write-plan-files false --execute true"
 ```
 
 If you declare the plugin in a target repository `pom.xml`, the shortest local form becomes:
@@ -61,7 +61,7 @@ If you declare the plugin in a target repository `pom.xml`, the shortest local f
 mvn javachanges:status
 mvn javachanges:plan -Djavachanges.apply=true
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
-mvn javachanges:manifest-field -Djavachanges.field=releaseVersion
+mvn javachanges:manifest-field -Djavachanges.field=releaseVersion -Djavachanges.fresh=true
 ```
 
 Gradle repositories should use the CLI jar form:
@@ -143,7 +143,7 @@ Rules of thumb:
 | `status` | Show the current release plan | No |
 | `plan` | Render the current release plan | No |
 | `plan --apply true` | Apply the plan and consume changesets | `pom.xml` or `gradle.properties`, `CHANGELOG.md`, `.changesets/release-plan.json`, `.changesets/release-plan.md` |
-| `manifest-field` | Read a field from the generated release manifest | No |
+| `manifest-field` | Read a field from the generated release manifest, or use `--fresh true` to derive it from the current repository state | No |
 | `release-notes` | Generate release notes for a tag | target file |
 | `ensure-gpg-public-key` | Publish and verify the current signing public key on supported keyservers | No |
 | `preflight` | Render publish validation commands | No |
@@ -229,14 +229,20 @@ When `--apply true` is used, `javachanges`:
 4. writes `.changesets/release-plan.md`
 5. deletes the consumed changeset files
 
+Automation commands such as `github-release-plan` and `gitlab-release-plan` can pass
+`--write-plan-files false` to avoid committing the generated `release-plan.json` and
+`release-plan.md` files. In that mode, the PR/MR body is generated as a transient file
+and later tag/release jobs should use `--fresh true`.
+
 ### 5.4 `manifest-field`
 
-Read a field from the generated release manifest.
+Read a field from the generated release manifest, or derive it from the current repository state.
 
 Example:
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /path/to/repo --field releaseVersion"
+mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /path/to/repo --field releaseVersion --fresh true"
 ```
 
 Common fields:
@@ -246,6 +252,10 @@ Common fields:
 | `releaseVersion` | Release version without the leading `v` |
 | `nextSnapshotVersion` | Next root snapshot version |
 | `releaseLevel` | Aggregated release type |
+
+`--fresh true` uses pending changesets when they still exist. After an applied release
+plan has consumed changesets, it infers whole-repo release metadata from the current
+snapshot version, for example `1.2.0-SNAPSHOT` becomes release version `1.2.0`.
 
 ## 6. Repository And Version Commands
 
@@ -475,9 +485,9 @@ Important Gradle repository note:
 Examples:
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="github-release-plan --directory /path/to/repo --github-repo owner/repo --execute true"
-mvn -q -DskipTests compile exec:java -Dexec.args="github-tag-from-plan --directory /path/to/repo --execute true"
-mvn -q -DskipTests compile exec:java -Dexec.args="github-release-from-plan --directory /path/to/repo --release-notes-file target/release-notes.md --execute true"
+mvn -q -DskipTests compile exec:java -Dexec.args="github-release-plan --directory /path/to/repo --github-repo owner/repo --write-plan-files false --execute true"
+mvn -q -DskipTests compile exec:java -Dexec.args="github-tag-from-plan --directory /path/to/repo --fresh true --execute true"
+mvn -q -DskipTests compile exec:java -Dexec.args="github-release-from-plan --directory /path/to/repo --fresh true --release-notes-file target/release-notes.md --execute true"
 mvn -q -DskipTests compile exec:java -Dexec.args="github-release-from-plan --directory /path/to/repo --format json"
 mvn -q -DskipTests compile exec:java -Dexec.args="init-github-actions --directory /path/to/repo --output .github/workflows/javachanges-release.yml --force true"
 mvn -q -DskipTests compile exec:java -Dexec.args="init-github-actions --directory /path/to/gradle-repo --build-tool gradle --output .github/workflows/javachanges-release.yml --force true"
@@ -497,8 +507,8 @@ The GitHub release-plan, tag, and release commands also support `--format json` 
 Examples:
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-release-plan --directory /path/to/repo --project-id 12345 --execute true"
-mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-tag-from-plan --directory /path/to/repo --execute true"
+mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-release-plan --directory /path/to/repo --project-id 12345 --write-plan-files false --execute true"
+mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-tag-from-plan --directory /path/to/repo --fresh true --execute true"
 mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-release --directory /path/to/repo --execute true"
 mvn -q -DskipTests compile exec:java -Dexec.args="init-gitlab-ci --directory /path/to/repo --output .gitlab-ci.yml --force true"
 mvn -q -DskipTests compile exec:java -Dexec.args="init-gitlab-ci --directory /path/to/gradle-repo --build-tool gradle --output .gitlab-ci.yml --force true"

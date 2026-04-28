@@ -12,8 +12,11 @@ public final class JavaChangesManifestFieldMojo extends AbstractJavaChangesMojo 
     @Parameter(property = "javachanges.field", required = true)
     private String field;
 
+    @Parameter(property = "javachanges.fresh", defaultValue = "false")
+    private boolean fresh;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        executeStructuredGoal("manifest-field", "manifest-field", "--field", field);
+        executeStructuredGoal("manifest-field", "manifest-field", "--field", field, "--fresh", Boolean.toString(fresh));
     }
 }

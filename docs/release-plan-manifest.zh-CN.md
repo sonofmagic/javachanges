@@ -13,20 +13,24 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo
 
 | 文件 | 用途 |
 | --- | --- |
-| `.changesets/release-plan.json` | 机器可读的 release manifest |
-| `.changesets/release-plan.md` | 给人看的 release PR 正文 |
+| `.changesets/release-plan.json` | 兼容模式下生成的机器可读 release manifest |
+| `.changesets/release-plan.md` | 兼容模式下生成的 release PR 正文 |
 
-这份文档说明这两个文件里有什么，以及 CI/CD 一般如何消费它们。
+这两个文件是兼容产物。新的 CI/CD 自动化更推荐使用 `--fresh true` 和
+`--write-plan-files false`，避免 release 分支长期携带容易滞后的生成元数据。
 
 ## 2. 生成时机
 
-只有在 `plan --apply true` 成功执行后，这两个文件才会出现或更新。
+`plan --apply true` 成功执行后会生成这两个文件。平台自动化可以通过
+`github-release-plan --write-plan-files false` 或
+`gitlab-release-plan --write-plan-files false` 选择不写入它们。
 
 也就是说：
 
 - `status` 不会写它们
 - 不带 `--apply true` 的 `plan` 也不会写它们
 - 它们表示的是“已经应用”的 release plan，而不是纯预览结果
+- 当前仓库默认忽略它们，因为发布元数据可以从已经应用后的版本状态 fresh 推导
 
 ## 3. `release-plan.json`
 
@@ -100,24 +104,25 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /path/to/repo --field releaseVersion"
+mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /path/to/repo --field releaseVersion --fresh true"
 ```
 
 ### 5.2 GitHub Actions
 
 常见用途：
 
-- 读取 `releaseVersion` 拼 PR 标题
-- 创建最终发布 tag 时读取 `releaseVersion`
-- 把 `.changesets/release-plan.md` 直接作为 PR 正文
+- 用 `manifest-field --fresh true` 推导 `releaseVersion`
+- 用 `github-tag-from-plan --fresh true` 推导最终发布 tag
+- 用 `github-release-plan --write-plan-files false` 生成临时 PR 正文
 - Gradle 仓库可以把 `releaseVersion` 传给 `./gradlew publish -Pversion=...`
 
 ### 5.3 GitLab CI/CD
 
 常见用途：
 
-- 比较两个提交之间 `release-plan.json` 是否发生变化
+- 使用 `gitlab-tag-from-plan --fresh true` 时，比较版本文件或 `CHANGELOG.md` 是否变化
 - 只有在新的已应用 release plan 存在时才创建正式 tag
-- 生成或更新 release-plan merge request 的正文
+- 不提交生成文件也能生成或更新 release-plan merge request 的正文
 
 ## 6. 同时会被更新的文件
 
@@ -127,8 +132,8 @@ mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /pa
 | --- | --- |
 | `pom.xml` 或 `gradle.properties` | 根 Maven `<revision>` 或 Gradle 版本推进到下一个 snapshot |
 | `CHANGELOG.md` | 插入新的 release section |
-| `.changesets/release-plan.json` | 机器可读的发布数据 |
-| `.changesets/release-plan.md` | 给人看的 release PR 正文 |
+| `.changesets/release-plan.json` | 兼容 manifest 输出开启时的机器可读发布数据 |
+| `.changesets/release-plan.md` | 兼容 manifest 输出开启时的 release PR 正文 |
 
 同时，被消费掉的 `.changesets/*.md` 会被删除。
 
@@ -136,10 +141,10 @@ mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /pa
 
 | 问题 | 原因 | 修复方式 |
 | --- | --- | --- |
-| `manifest-field` 失败 | 还没执行 `plan --apply true` | 先生成并应用 release plan |
-| CI 里一直不打 tag | `release-plan.json` 没变化 | 确认新的 plan 已经被应用并提交 |
-| release PR 正文不是最新 | `.changesets/release-plan.md` 没重新生成 | 重跑 release-plan job |
-| CI 里的版本读取错了 | workflow 读的是 `pom.xml` 或 `gradle.properties` 而不是 manifest | 改成 `manifest-field --field releaseVersion` |
+| `manifest-field` 失败 | 没有写出兼容 manifest | 使用 `manifest-field --fresh true`，或先生成并应用 release plan |
+| CI 里一直不打 tag | 发布状态没有变化 | 确认 release plan 更新了版本文件和 `CHANGELOG.md` |
+| release PR 正文不是最新 | 生成文件被提交后没有重新生成 | 使用 `--write-plan-files false`，让正文每次临时生成 |
+| CI 里的版本读取错了 | workflow 读到了滞后的生成文件 | 改成 `manifest-field --field releaseVersion --fresh true` |
 
 ## 8. 相关文档
 

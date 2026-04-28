@@ -99,9 +99,13 @@ final class ManifestFieldCommand extends AbstractCliCommand {
     @Option(names = "--field", required = true, description = "Manifest field name.")
     private String field;
 
+    @Option(names = "--fresh", arity = "0..1", fallbackValue = "true", defaultValue = "false",
+        description = "Derive the field from the current repository state instead of .changesets/release-plan.json.")
+    private boolean fresh;
+
     @Override
     public Integer call() throws Exception {
-        out().println(RepoFiles.readManifestField(repoRoot(), field));
+        out().println(new ReleaseAutomationSupport(repoRoot()).readManifestField(field, fresh));
         return success();
     }
 }

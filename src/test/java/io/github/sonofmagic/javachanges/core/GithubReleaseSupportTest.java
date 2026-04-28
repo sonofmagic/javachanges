@@ -50,6 +50,32 @@ class GithubReleaseSupportTest {
     }
 
     @Test
+    void planPullRequestCanSkipCommittedReleasePlanFiles(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir);
+        Files.write(repoRoot.resolve(".changesets").resolve("release-plan.json"),
+            "{\"releaseVersion\":\"stale\"}\n".getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(".changesets").resolve("release-plan.md"),
+            "stale body\n".getBytes(StandardCharsets.UTF_8));
+        RecordingRuntime runtime = new RecordingRuntime(repoRoot);
+        runtime.noStagedChanges = false;
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("github-repo", "owner/repo");
+        options.put("target-branch", "main");
+        options.put("release-branch", "changeset-release/main");
+        options.put("execute", "true");
+        options.put("write-plan-files", "false");
+
+        new GithubReleaseSupport(repoRoot, new PrintStream(stdout, true), runtime)
+            .planPullRequest(GithubReleasePlanRequest.fromOptions(options));
+
+        assertFalse(Files.exists(repoRoot.resolve(".changesets").resolve("release-plan.json")));
+        assertFalse(Files.exists(repoRoot.resolve(".changesets").resolve("release-plan.md")));
+        assertTrue(runtime.prBodyFile.endsWith("target/javachanges-release-plan.md"));
+        assertTrue(Files.exists(repoRoot.resolve("target").resolve("javachanges-release-plan.md")));
+    }
+
+    @Test
     void tagFromReleasePlanCreatesAndPushesTag(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir);
         Files.write(
@@ -72,6 +98,28 @@ class GithubReleaseSupportTest {
         assertEquals("abc1234", runtime.tagShas.get(0));
         assertEquals("origin", runtime.pushedRemotes.get(0));
         assertEquals("refs/tags/v1.2.0", runtime.pushedRefs.get(0));
+        assertTrue(stdout.toString(StandardCharsets.UTF_8.name()).contains("Created and pushed tag(s) [v1.2.0]"));
+    }
+
+    @Test
+    void tagFromFreshPlanInfersAppliedWholeRepoTag(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir);
+        Files.delete(repoRoot.resolve(".changesets").resolve("minor-release.md"));
+        Files.write(repoRoot.resolve("pom.xml"), singleModulePom("1.2.0-SNAPSHOT").getBytes(StandardCharsets.UTF_8));
+        RecordingRuntime runtime = new RecordingRuntime(repoRoot);
+        runtime.headSha = "abc1234";
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("current-sha", "abc1234");
+        options.put("execute", "true");
+        options.put("fresh", "true");
+
+        new GithubReleaseSupport(repoRoot, new PrintStream(stdout, true), runtime)
+            .tagFromReleasePlan(GithubTagRequest.fromOptions(options));
+
+        assertEquals("v1.2.0", runtime.tagNames.get(0));
+        assertEquals("abc1234", runtime.tagShas.get(0));
         assertTrue(stdout.toString(StandardCharsets.UTF_8.name()).contains("Created and pushed tag(s) [v1.2.0]"));
     }
 
@@ -264,6 +312,10 @@ class GithubReleaseSupportTest {
     }
 
     private static String singleModulePom() {
+        return singleModulePom("1.1.1-SNAPSHOT");
+    }
+
+    private static String singleModulePom(String revision) {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
             + "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n"
             + "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
@@ -273,7 +325,7 @@ class GithubReleaseSupportTest {
             + "    <artifactId>fixture-app</artifactId>\n"
             + "    <version>${revision}</version>\n"
             + "    <properties>\n"
-            + "        <revision>1.1.1-SNAPSHOT</revision>\n"
+            + "        <revision>" + revision + "</revision>\n"
             + "    </properties>\n"
             + "</project>\n";
     }

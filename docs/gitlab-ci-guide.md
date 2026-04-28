@@ -38,8 +38,8 @@ Recommended command mapping:
 | Check platform readiness | `doctor-local`, `doctor-platform` |
 | Sync GitLab variables through `glab` | `sync-vars --platform gitlab` |
 | Audit GitLab variables through `glab variable export` | `audit-vars --platform gitlab` |
-| Create or update a GitLab release MR | `gitlab-release-plan --execute true` |
-| Create and push a release tag after a release plan merge | `gitlab-tag-from-plan --execute true` |
+| Create or update a GitLab release MR | `gitlab-release-plan --write-plan-files false --execute true` |
+| Create and push a release tag after a release plan merge | `gitlab-tag-from-plan --fresh true --execute true` |
 | Validate a publish | `preflight` |
 | Run the real Maven deploy command | `publish --execute true` |
 | Run the real Gradle publish task | `gradle-publish --execute true` |
@@ -154,7 +154,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="init-gitlab-ci --directory /pa
 If you prefer to call the released Maven plugin directly from a business repository, the shortest runnable form is:
 
 ```bash
-mvn -B io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__:run -Djavachanges.args="gitlab-release-plan --directory $CI_PROJECT_DIR --execute true"
+mvn -B io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__:run -Djavachanges.args="gitlab-release-plan --directory $CI_PROJECT_DIR --write-plan-files false --execute true"
 ```
 
 Generated template shape:
@@ -195,7 +195,7 @@ release_plan_mr:
   script:
     - >
       mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run
-      -Djavachanges.args="gitlab-release-plan --directory $CI_PROJECT_DIR --execute true"
+      -Djavachanges.args="gitlab-release-plan --directory $CI_PROJECT_DIR --write-plan-files false --execute true"
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
 
@@ -204,7 +204,7 @@ release_tag:
   script:
     - >
       mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run
-      -Djavachanges.args="gitlab-tag-from-plan --directory $CI_PROJECT_DIR --execute true"
+      -Djavachanges.args="gitlab-tag-from-plan --directory $CI_PROJECT_DIR --fresh true --execute true"
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
 
@@ -304,6 +304,7 @@ release_plan_mr:
       gitlab-release-plan
       --directory "$CI_PROJECT_DIR"
       --project-id "$CI_PROJECT_ID"
+      --write-plan-files false
       --execute true
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
@@ -311,7 +312,7 @@ release_plan_mr:
 release_tag:
   stage: tag
   script:
-    - java -jar ".javachanges/javachanges-${JAVACHANGES_VERSION}.jar" gitlab-tag-from-plan --directory "$CI_PROJECT_DIR" --execute true
+    - java -jar ".javachanges/javachanges-${JAVACHANGES_VERSION}.jar" gitlab-tag-from-plan --directory "$CI_PROJECT_DIR" --fresh true --execute true
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
 
@@ -359,7 +360,7 @@ release_tag:
     - mvn -B -DskipTests compile
     - >
       mvn -B -DskipTests compile exec:java
-      -Dexec.args="gitlab-tag-from-plan --directory $CI_PROJECT_DIR --before-sha $CI_COMMIT_BEFORE_SHA --current-sha $CI_COMMIT_SHA --execute true"
+      -Dexec.args="gitlab-tag-from-plan --directory $CI_PROJECT_DIR --fresh true --before-sha $CI_COMMIT_BEFORE_SHA --current-sha $CI_COMMIT_SHA --execute true"
 ```
 
 Avoid:
@@ -373,7 +374,7 @@ release_tag:
       CI_PROJECT_DIR=$CI_PROJECT_DIR
       CI_COMMIT_SHA=$CI_COMMIT_SHA
       EOF
-      mvn -B -DskipTests compile exec:java -Dexec.args="gitlab-tag-from-plan --directory $CI_PROJECT_DIR --execute true"
+      mvn -B -DskipTests compile exec:java -Dexec.args="gitlab-tag-from-plan --directory $CI_PROJECT_DIR --fresh true --execute true"
 ```
 
 Safer file-generation pattern:
@@ -427,7 +428,7 @@ Important behavior:
 | Condition | Result |
 | --- | --- |
 | `beforeSha` missing or all zeros | Skips tagging |
-| `.changesets/release-plan.json` did not change between commits | Skips tagging |
+| release state did not change between commits | Skips tagging |
 | Tag already exists remotely | Skips tagging |
 | `--execute true` missing | Dry-run only |
 
@@ -573,7 +574,7 @@ Avoid:
 | --- | --- | --- |
 | Release MR job fails to push | `GITLAB_RELEASE_BOT_TOKEN` or `GITLAB_RELEASE_BOT_USERNAME` missing | add the bot credentials as project variables |
 | Release MR job fails with `stale info` | another process updated `changeset-release/*` after javachanges resolved the remote SHA | rerun the pipeline; if the branch is shared by other automation, stop sharing that branch name |
-| Release tag job never tags | `release-plan.json` did not change or `CI_COMMIT_BEFORE_SHA` is unusable | inspect the branch pipeline and the generated release plan |
+| Release tag job never tags | release state did not change or `CI_COMMIT_BEFORE_SHA` is unusable | inspect the branch pipeline, version file, and changelog |
 | Snapshot publish job cannot see Maven credentials or `GITLAB_RELEASE_TOKEN` | the variables are protected but the configured `snapshotBranch` is not a protected branch | protect the `snapshotBranch`, then rerun `doctor-platform --platform gitlab` and the pipeline |
 | GitLab rejects the pipeline before any job starts with `could not find expected ':' while scanning a simple key` | heredoc or other multiline shell content broke YAML indentation rules | replace `script: - |` heredoc blocks with `- >`, `printf`, or a checked-in shell script |
 | Hygiene or secret scan fails on `.gitlab-ci.yml` or `Makefile`, but no real credential was added | the scanner matched rule literals inside its own configuration | move patterns into a dedicated rules file and exclude scanner-owned files from scanning |

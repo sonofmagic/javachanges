@@ -200,7 +200,7 @@ Gradle plan 会更新 `gradle.properties`，而不是 `pom.xml`。GitHub / GitLa
 实际发布 artifact 时继续交给 Gradle：
 
 ```bash
-RELEASE_VERSION="$(java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar manifest-field --directory examples/basic-gradle-monorepo --field releaseVersion)"
+RELEASE_VERSION="$(java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar manifest-field --directory examples/basic-gradle-monorepo --field releaseVersion --fresh true)"
 cd examples/basic-gradle-monorepo
 gradle publish -Pversion="$RELEASE_VERSION"
 ```

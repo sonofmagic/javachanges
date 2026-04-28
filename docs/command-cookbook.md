@@ -208,7 +208,8 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory $REPO --apply
 ### 7.2 Fields commonly consumed in GitHub Actions
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory $REPO --field releaseVersion"
+mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory $REPO --field releaseVersion --fresh true"
+# releaseLevel is available from the compatibility manifest when plan files were written.
 mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory $REPO --field releaseLevel"
 ```
 
@@ -219,8 +220,7 @@ Commit only these generated files:
 - `pom.xml`
 - or `gradle.properties`
 - `CHANGELOG.md`
-- `.changesets/release-plan.json`
-- `.changesets/release-plan.md`
+- generated release-plan files only when compatibility output is enabled
 
 For a full workflow file, see [GitHub Actions Usage Guide](./github-actions-guide.md) and [Examples Guide](./examples-guide.md).
 
@@ -231,13 +231,13 @@ Use this when GitLab should manage the release branch, merge request, and final 
 ### 8.1 Create or update the release MR
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-release-plan --directory $REPO --project-id 12345 --execute true"
+mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-release-plan --directory $REPO --project-id 12345 --write-plan-files false --execute true"
 ```
 
 ### 8.2 Create the final tag from the applied plan
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-tag-from-plan --directory $REPO --before-sha <before-sha> --current-sha <current-sha> --execute true"
+mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-tag-from-plan --directory $REPO --fresh true --before-sha <before-sha> --current-sha <current-sha> --execute true"
 ```
 
 Typical CI variable mapping:

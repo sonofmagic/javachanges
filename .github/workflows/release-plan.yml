@@ -37,4 +37,4 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >
           ./mvnw -B -DskipTests exec:java
-          -Dexec.args="github-release-plan --directory $GITHUB_WORKSPACE --execute true"
+          -Dexec.args="github-release-plan --directory $GITHUB_WORKSPACE --write-plan-files false --execute true"

@@ -55,7 +55,7 @@ Then inside that repository:
 mvn javachanges:status
 mvn javachanges:plan -Djavachanges.apply=true
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
-mvn javachanges:manifest-field -Djavachanges.field=releaseVersion
+mvn javachanges:manifest-field -Djavachanges.field=releaseVersion -Djavachanges.fresh=true
 mvn javachanges:run -Djavachanges.args="release-notes --tag v1.2.3"
 ```
 

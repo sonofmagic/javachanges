@@ -64,7 +64,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo
 
 | Symptom | Cause | Fix |
 | --- | --- | --- |
-| `manifest-field` cannot read a field | no applied release plan exists yet | apply the plan first, then read the field |
+| `manifest-field` cannot read a field | compatibility manifest was not written | use `manifest-field --fresh true`, or apply the plan with generated files enabled |
 
 ### 2.5 Gradle repository root is not detected
 
@@ -217,7 +217,7 @@ Suggested order:
 
 | Symptom | Cause | Fix |
 | --- | --- | --- |
-| `gitlab-tag-from-plan` skips tagging | `.changesets/release-plan.json` did not change, or `CI_COMMIT_BEFORE_SHA` is unusable | inspect the default branch pipeline and confirm a new applied plan was committed |
+| `gitlab-tag-from-plan` skips tagging | release state did not change, or `CI_COMMIT_BEFORE_SHA` is unusable | inspect the default branch pipeline and confirm the version file and changelog changed |
 
 ### 5.3 Release MR push fails with `stale info`
 
@@ -259,7 +259,7 @@ Minimum shared variables:
 Gradle release handoff:
 
 ```bash
-RELEASE_VERSION="$(java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar manifest-field --directory . --field releaseVersion)"
+RELEASE_VERSION="$(java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar manifest-field --directory . --field releaseVersion --fresh true)"
 ./gradlew publish -Pversion="$RELEASE_VERSION"
 ```
 

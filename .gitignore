@@ -10,3 +10,5 @@ website/.vitepress/cache/
 website/.vitepress/dist/
 .wrangler/
 .playwright-cli
+.changesets/release-plan.json
+.changesets/release-plan.md

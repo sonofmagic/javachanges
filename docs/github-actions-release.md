@@ -56,7 +56,7 @@ The repository contains four workflows:
 The core command in `release-plan.yml` is:
 
 ```bash
-mvn -B -DskipTests exec:java -Dexec.args="github-release-plan --directory $GITHUB_WORKSPACE --execute true"
+mvn -B -DskipTests exec:java -Dexec.args="github-release-plan --directory $GITHUB_WORKSPACE --write-plan-files false --execute true"
 ```
 
 It:
@@ -65,7 +65,7 @@ It:
 | --- | --- |
 | Reads `.changesets/*.md` | Collects pending release intent |
 | Computes release versions | Produces `releaseVersion` and `nextSnapshotVersion` |
-| Applies the plan | Updates `<revision>`, `CHANGELOG.md`, and `.changesets/release-plan.json` |
+| Applies the plan | Updates `<revision>` and `CHANGELOG.md` without committing generated plan files |
 | Deletes consumed changesets | Prevents duplicate releases |
 
 The workflow then commits those changes to:
@@ -217,7 +217,7 @@ That means:
 
 | Stage | Version |
 | --- | --- |
-| Published version | Read from `.changesets/release-plan.json`, for example `1.0.0` |
+| Published version | Derived with `manifest-field --fresh true`, for example `1.0.0` |
 | Main branch version | Already advanced to the next snapshot, for example `1.0.1-SNAPSHOT` |
 
 The publish workflow uses:

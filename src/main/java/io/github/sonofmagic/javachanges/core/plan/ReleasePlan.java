@@ -150,7 +150,7 @@ public final class ReleasePlan {
         return builder.toString().trim() + "\n";
     }
 
-    List<String> toPullRequestBodyLines() {
+    public List<String> toPullRequestBodyLines() {
         List<String> lines = new ArrayList<String>();
         lines.add("## Release Plan");
         lines.add("");
@@ -199,7 +199,7 @@ public final class ReleasePlan {
         return lines;
     }
 
-    String toJson() {
+    public String toJson() {
         Map<String, Object> payload = new LinkedHashMap<String, Object>();
         payload.put("releaseVersion", releaseVersion);
         payload.put("nextSnapshotVersion", nextSnapshotVersion);

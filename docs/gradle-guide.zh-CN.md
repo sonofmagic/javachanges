@@ -229,11 +229,11 @@ java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar \
 
 Gradle 仓库的 release-plan 自动化会 stage `gradle.properties`、`CHANGELOG.md` 和 `.changesets/`。
 
-从已应用的 plan 创建 tag 的方式不变：
+从已应用的 plan 创建 tag 时可以使用 fresh 元数据：
 
 ```bash
-$JAVACHANGES github-tag-from-plan --directory . --execute true
-$JAVACHANGES gitlab-tag-from-plan --directory . --execute true
+$JAVACHANGES github-tag-from-plan --directory . --fresh true --execute true
+$JAVACHANGES gitlab-tag-from-plan --directory . --fresh true --execute true
 ```
 
 ## 7. 发布 Gradle artifacts
@@ -270,7 +270,7 @@ $JAVACHANGES gradle-publish --directory . --snapshot true --module api
 $JAVACHANGES gradle-publish --directory . --tag v1.4.0 --task publishAllPublicationsToMavenRepository
 ```
 
-如果你的 Gradle build 已经从 `gradle.properties` 读取 `version`，应用 release plan 后该文件已经推进到下一个 snapshot。release tag 和 release notes 使用 manifest，真正发布逻辑仍放在 Gradle build 内部。
+如果你的 Gradle build 已经从 `gradle.properties` 读取 `version`，应用 release plan 后该文件已经推进到下一个 snapshot。release tag 和 release notes 可以使用 fresh 元数据，真正发布逻辑仍放在 Gradle build 内部。
 
 ## 8. 常见错误
 

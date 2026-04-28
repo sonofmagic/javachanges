@@ -64,11 +64,8 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
 
         runtime.configureBotIdentity();
         runtime.runGit("checkout", "-B", releaseBranch);
-        RepoFiles.applyPlan(repoRoot, plan);
-        String description = new String(
-            Files.readAllBytes(releasePlanMarkdownFile()),
-            StandardCharsets.UTF_8
-        );
+        RepoFiles.applyPlan(repoRoot, plan, request.writePlanFiles);
+        String description = String.join("\n", plan.toPullRequestBodyLines()) + "\n";
         runtime.runGit(concat("add", BuildModelSupport.releasePlanGitAddPaths(repoRoot)));
         if (runtime.hasNoStagedChanges()) {
             report.skipped = true;
@@ -136,16 +133,19 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
             return;
         }
 
-        if (!runtime.changedBetween(beforeSha, currentSha,
-            ChangesetPaths.DIR + "/" + ChangesetPaths.RELEASE_PLAN_JSON)) {
+        if (!releaseMetadataChangedBetween(request, beforeSha, currentSha)) {
             report.skipped = true;
-            report.reason = "No release plan manifest change detected.";
+            report.reason = request.fresh
+                ? "No fresh release state change detected."
+                : "No release plan manifest change detected.";
             AutomationJsonSupport.print(out, textOutput, report,
-                "No release plan manifest change detected. Skip release tag.");
+                report.reason + " Skip release tag.");
             return;
         }
 
-        ReleaseAutomationSupport.ReleaseDescriptor release = descriptorFromManifest(report);
+        ReleaseAutomationSupport.ReleaseDescriptor release = request.fresh
+            ? descriptorFromFreshPlan(report)
+            : descriptorFromManifest(report);
         List<String> tagNames = release.tagNames();
         AutomationJsonSupport.printLines(out, textOutput, "Release tags: " + tagNames);
 
@@ -227,5 +227,19 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
         report.action = "create-release";
         report.reason = "Created GitLab Release.";
         AutomationJsonSupport.print(out, textOutput, report, "Created GitLab Release " + tagName);
+    }
+
+    private boolean releaseMetadataChangedBetween(GitlabTagRequest request, String beforeSha, String currentSha)
+        throws IOException, InterruptedException {
+        if (!request.fresh) {
+            return runtime.changedBetween(beforeSha, currentSha,
+                ChangesetPaths.DIR + "/" + ChangesetPaths.RELEASE_PLAN_JSON);
+        }
+        for (String path : BuildModelSupport.releaseStateGitPaths(repoRoot)) {
+            if (runtime.changedBetween(beforeSha, currentSha, path)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

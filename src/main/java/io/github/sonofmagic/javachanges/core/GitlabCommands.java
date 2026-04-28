@@ -30,6 +30,10 @@ final class GitlabReleasePlanCommand extends AbstractCliCommand {
         description = "Call the GitLab API instead of a dry run.")
     private boolean execute;
 
+    @Option(names = "--write-plan-files", arity = "0..1", fallbackValue = "true", defaultValue = "true",
+        description = "Write .changesets/release-plan.json and .changesets/release-plan.md into the release branch.")
+    private boolean writePlanFiles;
+
     @Option(names = "--format", description = "Output format: text or json.")
     private String format;
 
@@ -40,6 +44,7 @@ final class GitlabReleasePlanCommand extends AbstractCliCommand {
             option("target-branch", targetBranch),
             option("release-branch", releaseBranch),
             flag("execute", execute),
+            flag("write-plan-files", writePlanFiles),
             option("format", format)
         );
         GitlabReleasePlanRequest request = GitlabReleasePlanRequest.fromOptions(options);
@@ -61,6 +66,10 @@ final class GitlabTagFromPlanCommand extends AbstractCliCommand {
         description = "Push tags instead of a dry run.")
     private boolean execute;
 
+    @Option(names = "--fresh", arity = "0..1", fallbackValue = "true", defaultValue = "false",
+        description = "Derive release metadata from the current repository state instead of .changesets/release-plan.json.")
+    private boolean fresh;
+
     @Option(names = "--format", description = "Output format: text or json.")
     private String format;
 
@@ -70,6 +79,7 @@ final class GitlabTagFromPlanCommand extends AbstractCliCommand {
             option("before-sha", beforeSha),
             option("current-sha", currentSha),
             flag("execute", execute),
+            flag("fresh", fresh),
             option("format", format)
         );
         GitlabTagRequest request = GitlabTagRequest.fromOptions(options);
@@ -215,7 +225,7 @@ final class InitGitlabCiCommand extends AbstractCliCommand {
             + "  script:\n"
             + "    - >\n"
             + "      mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run\n"
-            + "      -Djavachanges.args=\"gitlab-release-plan --directory $CI_PROJECT_DIR --execute true\"\n"
+            + "      -Djavachanges.args=\"gitlab-release-plan --directory $CI_PROJECT_DIR --write-plan-files false --execute true\"\n"
             + "  rules:\n"
             + "    - if: $CI_COMMIT_BRANCH == \"" + baseBranch + "\"\n"
             + "\n"
@@ -224,7 +234,7 @@ final class InitGitlabCiCommand extends AbstractCliCommand {
             + "  script:\n"
             + "    - >\n"
             + "      mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run\n"
-            + "      -Djavachanges.args=\"gitlab-tag-from-plan --directory $CI_PROJECT_DIR --execute true\"\n"
+            + "      -Djavachanges.args=\"gitlab-tag-from-plan --directory $CI_PROJECT_DIR --fresh true --execute true\"\n"
             + "  rules:\n"
             + "    - if: $CI_COMMIT_BRANCH == \"" + baseBranch + "\"\n"
             + "\n"
@@ -302,6 +312,7 @@ final class InitGitlabCiCommand extends AbstractCliCommand {
             + "      gitlab-release-plan\n"
             + "      --directory \"$CI_PROJECT_DIR\"\n"
             + "      --project-id \"$CI_PROJECT_ID\"\n"
+            + "      --write-plan-files false\n"
             + "      --execute true\n"
             + "  rules:\n"
             + "    - if: $CI_COMMIT_BRANCH == \"" + baseBranch + "\"\n"
@@ -309,7 +320,7 @@ final class InitGitlabCiCommand extends AbstractCliCommand {
             + "release_tag:\n"
             + "  stage: tag\n"
             + "  script:\n"
-            + "    - java -jar \".javachanges/javachanges-${JAVACHANGES_VERSION}.jar\" gitlab-tag-from-plan --directory \"$CI_PROJECT_DIR\" --execute true\n"
+            + "    - java -jar \".javachanges/javachanges-${JAVACHANGES_VERSION}.jar\" gitlab-tag-from-plan --directory \"$CI_PROJECT_DIR\" --fresh true --execute true\n"
             + "  rules:\n"
             + "    - if: $CI_COMMIT_BRANCH == \"" + baseBranch + "\"\n"
             + "\n"

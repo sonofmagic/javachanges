@@ -9,13 +9,15 @@ public final class GithubReleasePublishRequest {
     public final String releaseNotesFile;
     public final String githubOutputFile;
     public final boolean execute;
+    public final boolean fresh;
     public final OutputFormat format;
 
     private GithubReleasePublishRequest(String releaseNotesFile, String githubOutputFile,
-                                        boolean execute, OutputFormat format) {
+                                        boolean execute, boolean fresh, OutputFormat format) {
         this.releaseNotesFile = releaseNotesFile;
         this.githubOutputFile = githubOutputFile;
         this.execute = execute;
+        this.fresh = fresh;
         this.format = format;
     }
 
@@ -26,6 +28,7 @@ public final class GithubReleasePublishRequest {
             ReleaseTextUtils.firstNonBlank(ReleaseTextUtils.trimToNull(options.get("github-output-file")),
                 System.getenv("GITHUB_OUTPUT")),
             ReleaseTextUtils.isTrue(options.get("execute")),
+            ReleaseTextUtils.isTrue(options.get("fresh")),
             OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );
     }
