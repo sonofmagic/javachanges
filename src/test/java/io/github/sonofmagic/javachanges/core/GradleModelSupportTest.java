@@ -53,6 +53,22 @@ class GradleModelSupportTest {
     }
 
     @Test
+    void detectsGradleModulesFromMultilineSettingsInclude(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot);
+        Files.write(repoRoot.resolve("settings.gradle.kts"), (
+            "rootProject.name = \"fixture-parent\"\n" +
+                "include(\n" +
+                "    \":core\",\n" +
+                "    \":tools:cli\",\n" +
+                ")\n"
+        ).getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve("gradle.properties"), "version=1.0.0-SNAPSHOT\n".getBytes(StandardCharsets.UTF_8));
+
+        assertEquals(Arrays.asList("core", "cli"), ReleaseModuleUtils.detectKnownModules(repoRoot));
+    }
+
+    @Test
     void rendersGradleModuleSelector(@TempDir Path tempDir) throws Exception {
         Path repoRoot = tempDir.resolve("repo");
         Files.createDirectories(repoRoot);

@@ -19,7 +19,7 @@ final class GradleModelSupport {
     private static final Pattern ROOT_PROJECT_NAME = Pattern.compile(
         "(?m)^\\s*rootProject\\.name\\s*=\\s*['\"]([^'\"]+)['\"]"
     );
-    private static final Pattern INCLUDE_CALL = Pattern.compile("(?m)^\\s*include\\s*(?:\\(([^)]*)\\)|(.+))$");
+    private static final Pattern INCLUDE_TOKEN = Pattern.compile("(?m)^\\s*include\\b");
     private static final Pattern QUOTED_VALUE = Pattern.compile("['\"]([^'\"]+)['\"]");
 
     private GradleModelSupport() {
@@ -80,9 +80,7 @@ final class GradleModelSupport {
         }
         String settings = new String(Files.readAllBytes(settingsPath), StandardCharsets.UTF_8);
         Set<String> modules = new LinkedHashSet<String>();
-        Matcher includeMatcher = INCLUDE_CALL.matcher(stripLineComments(settings));
-        while (includeMatcher.find()) {
-            String arguments = includeMatcher.group(1) == null ? includeMatcher.group(2) : includeMatcher.group(1);
+        for (String arguments : includeArguments(settings)) {
             Matcher valueMatcher = QUOTED_VALUE.matcher(arguments);
             while (valueMatcher.find()) {
                 String module = normalizeProjectPath(valueMatcher.group(1));
@@ -173,6 +171,66 @@ final class GradleModelSupport {
         }
         int separator = value.lastIndexOf(':');
         return separator >= 0 ? value.substring(separator + 1) : value;
+    }
+
+    private static List<String> includeArguments(String settings) {
+        String text = stripLineComments(settings);
+        List<String> arguments = new ArrayList<String>();
+        Matcher matcher = INCLUDE_TOKEN.matcher(text);
+        while (matcher.find()) {
+            int cursor = matcher.end();
+            while (cursor < text.length() && Character.isWhitespace(text.charAt(cursor)) && text.charAt(cursor) != '\n') {
+                cursor++;
+            }
+            if (cursor >= text.length()) {
+                continue;
+            }
+            if (text.charAt(cursor) == '(') {
+                int end = closingParenthesis(text, cursor);
+                if (end > cursor) {
+                    arguments.add(text.substring(cursor + 1, end));
+                    matcher.region(end + 1, text.length());
+                }
+                continue;
+            }
+            int end = text.indexOf('\n', cursor);
+            arguments.add(text.substring(cursor, end < 0 ? text.length() : end));
+        }
+        return arguments;
+    }
+
+    private static int closingParenthesis(String text, int openIndex) {
+        int depth = 0;
+        boolean inString = false;
+        char quote = 0;
+        boolean escaped = false;
+        for (int index = openIndex; index < text.length(); index++) {
+            char current = text.charAt(index);
+            if (inString) {
+                if (escaped) {
+                    escaped = false;
+                } else if (current == '\\') {
+                    escaped = true;
+                } else if (current == quote) {
+                    inString = false;
+                }
+                continue;
+            }
+            if (current == '\'' || current == '"') {
+                inString = true;
+                quote = current;
+                continue;
+            }
+            if (current == '(') {
+                depth++;
+            } else if (current == ')') {
+                depth--;
+                if (depth == 0) {
+                    return index;
+                }
+            }
+        }
+        return -1;
     }
 
     private static String stripLineComments(String text) {

@@ -8,7 +8,7 @@
     <packaging>jar</packaging>
 
     <name>javachanges</name>
-    <description>Java Changesets for Maven repositories and release-plan workflows.</description>
+    <description>Java Changesets for Maven and Gradle repositories and release-plan workflows.</description>
     <url>https://github.com/sonofmagic/javachanges</url>
     <inceptionYear>2026</inceptionYear>
 

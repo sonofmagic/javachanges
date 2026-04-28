@@ -132,9 +132,10 @@ public final class ReleasePlan {
             for (Changeset changeset : levelChangesets) {
                 builder.append("- ").append(changeset.summary);
                 builder.append(" (packages: ").append(ReleaseModuleUtils.joinModules(changeset.modules)).append(")");
-                if (!changeset.body.isEmpty()) {
+                String notes = notesLine(changeset);
+                if (!notes.isEmpty()) {
                     builder.append(" ");
-                    builder.append(ReleaseTextUtils.firstBodyLine(changeset.body));
+                    builder.append(notes);
                 }
                 builder.append("\n");
             }
@@ -186,8 +187,9 @@ public final class ReleasePlan {
                 if (!visibleType.isEmpty()) {
                     lines.add("  - Type: `" + visibleType + "`");
                 }
-                if (!changeset.body.isEmpty()) {
-                    lines.add("  - Notes: " + ReleaseTextUtils.firstBodyLine(changeset.body));
+                String notes = notesLine(changeset);
+                if (!notes.isEmpty()) {
+                    lines.add("  - Notes: " + notes);
                 }
             }
             lines.add("");
@@ -225,6 +227,11 @@ public final class ReleasePlan {
         }
         payload.put("changesets", renderedChangesets);
         return ReleaseJsonUtils.toPrettyJson(payload) + "\n";
+    }
+
+    private static String notesLine(Changeset changeset) {
+        String firstBodyLine = ReleaseTextUtils.firstBodyLine(changeset.body);
+        return firstBodyLine.equals(changeset.summary) ? "" : firstBodyLine;
     }
 
     public static final class ReleaseTarget {

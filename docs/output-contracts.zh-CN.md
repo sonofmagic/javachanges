@@ -116,6 +116,14 @@ mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /pa
   "releaseVersion": "0.2.0",
   "nextSnapshotVersion": "0.2.0-SNAPSHOT",
   "releaseLevel": "minor",
+  "tagStrategy": "whole-repo",
+  "tags": ["v0.2.0"],
+  "releaseTargets": [
+    {
+      "module": null,
+      "tag": "v0.2.0"
+    }
+  ],
   "generatedAt": "2026-04-19T13:29:58.202943+08:00",
   "changesets": [
     {
@@ -136,6 +144,10 @@ mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /pa
 | `releaseVersion` | 不带 `v` 前缀的最终发布版本 |
 | `nextSnapshotVersion` | 应用 plan 后推进到的下一个根快照版本 |
 | `releaseLevel` | 本次包含的所有 changeset 聚合后的发布级别 |
+| `tagStrategy` | 当前配置的 tag 策略，值为 `whole-repo` 或 `per-module` |
+| `tags[]` | 本次计划创建的 release tag |
+| `releaseTargets[].module` | 该 tag 对应的模块；整仓发布时为 `null` |
+| `releaseTargets[].tag` | 该 release target 对应的计划 tag |
 | `generatedAt` | manifest 生成时间 |
 | `changesets[].file` | 原始 changeset 文件名 |
 | `changesets[].release` | 该 changeset 的发布升级级别 |
@@ -162,6 +174,8 @@ mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /pa
 | Release type | `minor` |
 | Affected packages | `core, api` |
 | Release version | `v0.2.0` |
+| Tag strategy | `whole-repo` |
+| Planned tags | `v0.2.0` |
 | Next snapshot | `0.2.0-SNAPSHOT` |
 
 ## Included Changesets

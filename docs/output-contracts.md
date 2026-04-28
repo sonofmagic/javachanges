@@ -120,6 +120,14 @@ Current shape:
   "releaseVersion": "0.2.0",
   "nextSnapshotVersion": "0.2.0-SNAPSHOT",
   "releaseLevel": "minor",
+  "tagStrategy": "whole-repo",
+  "tags": ["v0.2.0"],
+  "releaseTargets": [
+    {
+      "module": null,
+      "tag": "v0.2.0"
+    }
+  ],
   "generatedAt": "2026-04-19T13:29:58.202943+08:00",
   "changesets": [
     {
@@ -140,6 +148,10 @@ Field contract:
 | `releaseVersion` | final release version without the `v` prefix |
 | `nextSnapshotVersion` | next root snapshot version after plan application |
 | `releaseLevel` | aggregated release level across all included changesets |
+| `tagStrategy` | configured tag strategy, currently `whole-repo` or `per-module` |
+| `tags[]` | planned release tags |
+| `releaseTargets[].module` | module associated with a planned tag, or `null` for whole-repo releases |
+| `releaseTargets[].tag` | planned tag for this release target |
 | `generatedAt` | manifest generation timestamp |
 | `changesets[].file` | original changeset filename |
 | `changesets[].release` | release bump for that changeset |
@@ -166,6 +178,8 @@ Current structure:
 | Release type | `minor` |
 | Affected packages | `core, api` |
 | Release version | `v0.2.0` |
+| Tag strategy | `whole-repo` |
+| Planned tags | `v0.2.0` |
 | Next snapshot | `0.2.0-SNAPSHOT` |
 
 ## Included Changesets

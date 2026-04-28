@@ -113,6 +113,7 @@ class JavaChangesCliTest {
         assertTrue(read(repoRoot.resolve("CHANGELOG.md")).contains("### Minor Changes"));
         assertTrue(read(repoRoot.resolve("CHANGELOG.md")).contains("(packages: fixture-app)"));
         assertFalse(read(repoRoot.resolve("CHANGELOG.md")).contains("### Other"));
+        assertEquals(1, countOccurrences(read(repoRoot.resolve("CHANGELOG.md")), "automate self release"));
         assertTrue(read(repoRoot.resolve("pom.xml")).contains("<revision>1.2.0-SNAPSHOT</revision>"));
         assertTrue(Files.exists(repoRoot.resolve(".changesets").resolve("release-plan.json")));
         assertTrue(Files.exists(repoRoot.resolve(".changesets").resolve("release-plan.md")));
@@ -122,6 +123,7 @@ class JavaChangesCliTest {
         assertTrue(releasePlanMarkdown.contains("### Minor Changes"));
         assertTrue(releasePlanMarkdown.contains("- **automate self release**"));
         assertTrue(releasePlanMarkdown.contains("  - Packages: `fixture-app`"));
+        assertFalse(releasePlanMarkdown.contains("  - Notes: automate self release"));
         assertFalse(Files.exists(repoRoot.resolve(".changesets").resolve("minor-release.md")));
     }
 
@@ -662,6 +664,16 @@ class JavaChangesCliTest {
 
     private static String read(Path path) throws IOException {
         return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+    }
+
+    private static int countOccurrences(String text, String needle) {
+        int count = 0;
+        int index = 0;
+        while ((index = text.indexOf(needle, index)) >= 0) {
+            count++;
+            index += needle.length();
+        }
+        return count;
     }
 
     private static void run(Path workingDirectory, String... command) throws Exception {
