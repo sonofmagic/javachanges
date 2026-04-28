@@ -146,7 +146,8 @@ jc-version:
 | `release-notes` | 为 tag 生成 release notes | 目标文件 |
 | `ensure-gpg-public-key` | 发布并验证当前签名公钥是否已被支持的 keyserver 发现 | 否 |
 | `preflight` | 输出发布前校验命令 | 否 |
-| `publish` | 输出或执行实际发布命令 | 否 |
+| `publish` | 输出或执行 Maven 发布命令 | 否 |
+| `gradle-publish` | 输出或执行 Gradle 发布命令 | 否 |
 
 ## 5. Changeset 相关命令
 
@@ -296,6 +297,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --directory /path
 | `audit-vars` | 会带上 `platform`、审计分组结果，以及失败时的最终错误信息 |
 | `preflight` | 会带上发布动作元数据，以及 `snapshotVersionMode`、`effectiveVersion`、`snapshotBuildStampApplied` 等 snapshot 模式字段 |
 | `publish` | 会带上 tag、module、releaseVersion、releaseNotesFile 等发布元数据 |
+| `gradle-publish` | 会带上 Gradle 发布动作元数据，例如 tag、module、releaseVersion 和 snapshot mode |
 | `github-release-plan` | 会带上 action、是否 skipped、releaseVersion |
 | `github-tag-from-plan` | 会带上 action、是否 skipped、releaseVersion、tag |
 | `github-release-from-plan` | 会带上 action、tag、releaseVersion、releaseNotesFile |
@@ -383,7 +385,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory $CI_PROJ
 
 ### 8.2 `publish`
 
-只输出发布命令：
+只输出 Maven 发布命令：
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="publish --directory /path/to/repo --tag v1.2.3"
@@ -423,6 +425,34 @@ GitLab CI 默认行为：
 | `--module` | 限制到单个 Maven artifactId 或 Gradle project name |
 | `--allow-dirty` | 允许工作区不干净 |
 | `--execute true` | 真正执行最终发布命令，而不是只打印 |
+
+### 8.3 `gradle-publish`
+
+渲染 Gradle 发布命令：
+
+```bash
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar gradle-publish --directory /path/to/repo --tag v1.2.3
+```
+
+真正执行：
+
+```bash
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar gradle-publish --directory /path/to/repo --tag v1.2.3 --execute true
+```
+
+snapshot 示例：
+
+```bash
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar gradle-publish --directory /path/to/repo --snapshot true
+```
+
+`gradle-publish` 会复用和 `publish` 一样的 release / snapshot 版本解析，然后渲染 `./gradlew --no-daemon publish -Pversion=...`。如果传入 `--module api`，会渲染 `./gradlew --no-daemon :api:publish -Pversion=...`。
+
+Gradle 仓库注意事项：
+
+- 这个命令不会生成 Maven `settings.xml`
+- 仓库地址和凭据仍然应该放在 Gradle build 或 CI 环境里
+- 如果实际任务名不是 `publish`，请直接调用你的自定义 Gradle task
 
 ## 9. 平台发布命令
 

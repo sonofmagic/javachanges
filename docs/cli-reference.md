@@ -147,7 +147,8 @@ Rules of thumb:
 | `release-notes` | Generate release notes for a tag | target file |
 | `ensure-gpg-public-key` | Publish and verify the current signing public key on supported keyservers | No |
 | `preflight` | Render publish validation commands | No |
-| `publish` | Render or execute the actual publish command | No |
+| `publish` | Render or execute the Maven publish command | No |
+| `gradle-publish` | Render or execute the Gradle publish command | No |
 
 ## 5. Changeset Commands
 
@@ -297,6 +298,7 @@ Commands that currently support `--format json`:
 | `audit-vars` | Includes `platform`, audit sections, and final error text on failure |
 | `preflight` | Includes publish action metadata plus snapshot mode fields such as `snapshotVersionMode`, `effectiveVersion`, and `snapshotBuildStampApplied` |
 | `publish` | Includes publish action metadata such as tag, module, release version, and release notes file |
+| `gradle-publish` | Includes Gradle publish action metadata such as tag, module, release version, and snapshot mode |
 | `github-release-plan` | Includes action, skip reason, and release version |
 | `github-tag-from-plan` | Includes action, skip reason, release version, and tag |
 | `github-release-from-plan` | Includes action, tag, release version, and release notes file |
@@ -384,7 +386,7 @@ In plain snapshot mode, `preflight` prints that it is using `plain snapshot` mod
 
 ### 8.2 `publish`
 
-Render the real publish command:
+Render the real Maven publish command:
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="publish --directory /path/to/repo --tag v1.2.3"
@@ -424,6 +426,34 @@ Important flags:
 | `--module` | Restrict to one Maven artifactId or Gradle project name |
 | `--allow-dirty` | Allow a dirty working tree |
 | `--execute true` | Run the final publish command instead of only printing it |
+
+### 8.3 `gradle-publish`
+
+Render the Gradle publish command:
+
+```bash
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar gradle-publish --directory /path/to/repo --tag v1.2.3
+```
+
+Actually execute it:
+
+```bash
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar gradle-publish --directory /path/to/repo --tag v1.2.3 --execute true
+```
+
+Snapshot example:
+
+```bash
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar gradle-publish --directory /path/to/repo --snapshot true
+```
+
+`gradle-publish` resolves the same release or snapshot version as `publish`, then renders `./gradlew --no-daemon publish -Pversion=...`. If `--module api` is provided, it renders `./gradlew --no-daemon :api:publish -Pversion=...`.
+
+Important Gradle repository note:
+
+- this command does not generate Maven `settings.xml`
+- repository URLs and credentials should stay in the Gradle build or CI environment
+- use custom Gradle tasks directly when `publish` is not the right task name
 
 ## 9. Platform Release Commands
 

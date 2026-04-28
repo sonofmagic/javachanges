@@ -99,6 +99,10 @@ public final class ReleaseProcessUtils {
         return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win") ? "mvnw.cmd" : "./mvnw";
     }
 
+    public static String gradleWrapperPath() {
+        return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win") ? "gradlew.bat" : "./gradlew";
+    }
+
     public static MavenCommand resolveMavenCommand(Path repoRoot) throws IOException, InterruptedException {
         return resolveMavenCommand(repoRoot, new MavenCommandProbe() {
             @Override
@@ -120,6 +124,17 @@ public final class ReleaseProcessUtils {
         }
         if (probe.commandAvailable(repoRoot, "mvn", "-q", "-version")) {
             return new MavenCommand("mvn", "system");
+        }
+        return null;
+    }
+
+    public static GradleCommand resolveGradleCommand(Path repoRoot) throws IOException, InterruptedException {
+        Path wrapperPath = repoRoot.resolve(gradleWrapperPath());
+        if (Files.exists(wrapperPath)) {
+            return new GradleCommand(gradleWrapperPath(), "wrapper");
+        }
+        if (runCapture(repoRoot, "gradle", "-q", "--version").exitCode == 0) {
+            return new GradleCommand("gradle", "system");
         }
         return null;
     }

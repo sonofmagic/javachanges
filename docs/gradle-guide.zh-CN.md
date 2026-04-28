@@ -238,21 +238,40 @@ $JAVACHANGES gitlab-tag-from-plan --directory . --execute true
 
 ## 7. 发布 Gradle artifacts
 
-把 release-plan manifest 当成 Gradle 原生发布任务的交接点：
+优先用 `gradle-publish` 作为 Gradle 原生发布任务的 dry-run 交接点：
+
+```bash
+$JAVACHANGES gradle-publish --directory . --tag v1.4.0
+```
+
+确认渲染出的 Gradle 命令后，再执行：
+
+```bash
+$JAVACHANGES gradle-publish --directory . --tag v1.4.0 --execute true
+```
+
+snapshot 发布同理：
+
+```bash
+$JAVACHANGES gradle-publish --directory . --snapshot true
+```
+
+如果只发布某个 Gradle project，传入检测到的 project name：
+
+```bash
+$JAVACHANGES gradle-publish --directory . --snapshot true --module api
+```
+
+这个命令会渲染 `./gradlew --no-daemon publish -Pversion=...`；传入 `--module api` 时会渲染 `./gradlew --no-daemon :api:publish -Pversion=...`。它不接管 Gradle 仓库凭据，凭据和 publication repository 仍然放在 Gradle build 或 CI 环境里。
+
+如果你需要自定义 Gradle task，仍然可以手动消费 release-plan manifest：
 
 ```bash
 RELEASE_VERSION="$($JAVACHANGES manifest-field --directory . --field releaseVersion)"
-./gradlew publish -Pversion="$RELEASE_VERSION"
+./gradlew customPublishTask -Pversion="$RELEASE_VERSION"
 ```
 
-snapshot 发布时可以直接读取当前版本：
-
-```bash
-CURRENT_VERSION="$($JAVACHANGES version --directory .)"
-./gradlew publish -Pversion="$CURRENT_VERSION"
-```
-
-如果你的 Gradle build 已经从 `gradle.properties` 读取 `version`，应用 release plan 后该文件已经推进到下一个 snapshot。release tag 和 release notes 使用 manifest，真正发布仍放在 Gradle build 内部。
+如果你的 Gradle build 已经从 `gradle.properties` 读取 `version`，应用 release plan 后该文件已经推进到下一个 snapshot。release tag 和 release notes 使用 manifest，真正发布逻辑仍放在 Gradle build 内部。
 
 ## 8. 常见错误
 
@@ -261,7 +280,7 @@ CURRENT_VERSION="$($JAVACHANGES version --directory .)"
 | `Cannot find repository root` | 缺少 `gradle.properties`，或没有 Gradle settings/build 文件 | 添加 `gradle.properties` 和 `settings.gradle(.kts)` 或 `build.gradle(.kts)` |
 | `Cannot find version or revision` | `gradle.properties` 没有支持的版本 key | 添加 `version=1.0.0-SNAPSHOT` |
 | `Unknown module` | changeset key 不匹配检测到的 project name | 使用 `include(...)` 的最后一段，例如 `:tools:cli` 对应 `cli` |
-| publish 命令渲染 Maven deploy | `preflight` 和 `publish` 是 Maven 专用辅助命令 | 使用 Gradle `publish` task，并消费 `.changesets/release-plan.json` |
+| `publish` 命令渲染 Maven deploy | `preflight` 和 `publish` 是 Maven 专用辅助命令 | Gradle artifact 发布使用 `gradle-publish` |
 
 ## 9. 相关文档
 

@@ -188,9 +188,8 @@ Expected outputs after `plan --apply true`:
 ### 6.4 Hand off to Gradle publishing
 
 ```bash
-RELEASE_VERSION="$($JAVACHANGES manifest-field --directory $REPO --field releaseVersion)"
-cd "$REPO"
-./gradlew publish -Pversion="$RELEASE_VERSION"
+$JAVACHANGES gradle-publish --directory $REPO --tag v1.2.3
+$JAVACHANGES gradle-publish --directory $REPO --tag v1.2.3 --execute true
 ```
 
 See [Gradle Usage Guide](./gradle-guide.md) for the full Gradle workflow and limitations.

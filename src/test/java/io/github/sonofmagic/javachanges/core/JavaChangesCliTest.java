@@ -38,6 +38,7 @@ class JavaChangesCliTest {
         assertTrue(result.stdout.contains("gitlab-release-plan"));
         assertTrue(result.stdout.contains("gitlab-release"));
         assertTrue(result.stdout.contains("init-gitlab-ci"));
+        assertTrue(result.stdout.contains("gradle-publish"));
     }
 
     @Test
@@ -255,6 +256,30 @@ class JavaChangesCliTest {
         assertTrue(result.stdout.contains("-s .m2/settings.xml"));
         assertFalse(Files.exists(repoRoot.resolve(".m2/settings.xml")));
         assertFalse(Files.exists(repoRoot.resolve(".m2/repository")));
+    }
+
+    @Test
+    void gradlePublishDryRunRendersPublishCommand(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createGradleRepository(tempDir, false);
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.gradleWrapperPath()),
+            "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = execute(
+            "gradle-publish",
+            "--directory", repoRoot.toString(),
+            "--snapshot", "true",
+            "--module", "fixture-app",
+            "--snapshot-build-stamp", "20260428.000000.test",
+            "--allow-dirty", "true"
+        );
+
+        assertEquals(0, result.exitCode, result.stderr);
+        assertTrue(result.stdout.contains("Gradle command: " + ReleaseProcessUtils.gradleWrapperPath() + " (wrapper)"));
+        assertTrue(result.stdout.contains("publish version: 1.1.1-20260428.000000.test-SNAPSHOT"));
+        assertTrue(result.stdout.contains("target module: fixture-app"));
+        assertTrue(result.stdout.contains(ReleaseProcessUtils.gradleWrapperPath()
+            + " --no-daemon :fixture-app:publish -Pversion=1.1.1-20260428.000000.test-SNAPSHOT"));
+        assertTrue(result.stdout.contains("当前为 dry-run，未执行 Gradle。"));
     }
 
     @Test

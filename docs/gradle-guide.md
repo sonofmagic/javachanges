@@ -238,21 +238,40 @@ $JAVACHANGES gitlab-tag-from-plan --directory . --execute true
 
 ## 7. Publishing Gradle artifacts
 
-Use the release-plan manifest as the handoff point to Gradle-native publishing:
+Use `gradle-publish` as the dry-run handoff point to Gradle-native publishing:
+
+```bash
+$JAVACHANGES gradle-publish --directory . --tag v1.4.0
+```
+
+Execute the rendered Gradle command only after reviewing it:
+
+```bash
+$JAVACHANGES gradle-publish --directory . --tag v1.4.0 --execute true
+```
+
+Snapshot publishing works the same way:
+
+```bash
+$JAVACHANGES gradle-publish --directory . --snapshot true
+```
+
+For a single Gradle project, pass the detected project name:
+
+```bash
+$JAVACHANGES gradle-publish --directory . --snapshot true --module api
+```
+
+The command renders `./gradlew --no-daemon publish -Pversion=...`, or `./gradlew --no-daemon :api:publish -Pversion=...` when `--module api` is set. It does not manage Gradle repository credentials; keep credentials and publication repositories in the Gradle build or CI environment.
+
+You can still consume the release-plan manifest manually when you need a custom Gradle task:
 
 ```bash
 RELEASE_VERSION="$($JAVACHANGES manifest-field --directory . --field releaseVersion)"
-./gradlew publish -Pversion="$RELEASE_VERSION"
+./gradlew customPublishTask -Pversion="$RELEASE_VERSION"
 ```
 
-For snapshot publishing, read the current version directly:
-
-```bash
-CURRENT_VERSION="$($JAVACHANGES version --directory .)"
-./gradlew publish -Pversion="$CURRENT_VERSION"
-```
-
-If your Gradle build already reads `version` from `gradle.properties`, the applied release plan has already updated that file to the next snapshot. Use the release manifest for release tags and release notes, and keep the actual publication task inside your Gradle build.
+If your Gradle build already reads `version` from `gradle.properties`, the applied release plan has already updated that file to the next snapshot. Use the release manifest for release tags and release notes, and keep the actual publication logic inside your Gradle build.
 
 ## 8. Common mistakes
 
@@ -261,7 +280,7 @@ If your Gradle build already reads `version` from `gradle.properties`, the appli
 | `Cannot find repository root` | missing `gradle.properties`, or no Gradle settings/build file exists | add `gradle.properties` and `settings.gradle(.kts)` or `build.gradle(.kts)` |
 | `Cannot find version or revision` | `gradle.properties` has no supported version key | add `version=1.0.0-SNAPSHOT` |
 | `Unknown module` | changeset key does not match detected project names | use the final segment of `include(...)`, such as `cli` for `:tools:cli` |
-| publish commands render Maven deploy | `preflight` and `publish` are Maven-specific helpers | use Gradle `publish` tasks and consume `.changesets/release-plan.json` |
+| `publish` renders Maven deploy | `preflight` and `publish` are Maven-specific helpers | use `gradle-publish` for Gradle artifact publishing |
 
 ## 9. Related guides
 

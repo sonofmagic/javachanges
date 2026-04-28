@@ -241,6 +241,7 @@ High-value commands:
 - `audit-vars`
 - `preflight`
 - `publish`
+- `gradle-publish`
 - `release-notes`
 
 GitHub-specific helpers:

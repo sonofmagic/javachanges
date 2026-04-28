@@ -184,9 +184,8 @@ $JAVACHANGES plan --directory $REPO --apply true
 ### 6.4 交给 Gradle 发布
 
 ```bash
-RELEASE_VERSION="$($JAVACHANGES manifest-field --directory $REPO --field releaseVersion)"
-cd "$REPO"
-./gradlew publish -Pversion="$RELEASE_VERSION"
+$JAVACHANGES gradle-publish --directory $REPO --tag v1.2.3
+$JAVACHANGES gradle-publish --directory $REPO --tag v1.2.3 --execute true
 ```
 
 完整 Gradle 流程和限制见 [Gradle 使用指南](./gradle-guide.md)。

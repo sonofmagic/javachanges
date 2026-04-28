@@ -4,6 +4,7 @@ import io.github.sonofmagic.javachanges.core.automation.AutomationJsonSupport;
 import io.github.sonofmagic.javachanges.core.env.ReleaseEnvSupport;
 import io.github.sonofmagic.javachanges.core.github.GithubReleaseSupport;
 import io.github.sonofmagic.javachanges.core.gitlab.GitlabReleaseSupport;
+import io.github.sonofmagic.javachanges.core.publish.GradlePublishSupport;
 import io.github.sonofmagic.javachanges.core.publish.PublishSupport;
 import picocli.CommandLine.ParentCommand;
 
@@ -75,6 +76,10 @@ abstract class AbstractCliCommand implements Callable<Integer> {
 
     final PublishSupport publishSupport() {
         return new PublishSupport(repoRoot(), out());
+    }
+
+    final GradlePublishSupport gradlePublishSupport() {
+        return new GradlePublishSupport(repoRoot(), out());
     }
 
     final Map<String, String> options() {

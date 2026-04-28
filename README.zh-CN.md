@@ -241,6 +241,7 @@ summary: automate javachanges self-release publishing via GitHub Actions
 - `audit-vars`
 - `preflight`
 - `publish`
+- `gradle-publish`
 - `release-notes`
 
 GitHub 相关辅助：

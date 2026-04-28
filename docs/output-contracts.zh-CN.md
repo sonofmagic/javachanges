@@ -30,6 +30,7 @@
 | `audit-vars --format json` 标准输出 | 脚本和 CI | 机器可读 JSON 契约 |
 | `preflight --format json` 标准输出 | 脚本和 CI | 机器可读发布预检查契约 |
 | `publish --format json` 标准输出 | 脚本和 CI | 机器可读发布契约 |
+| `gradle-publish --format json` 标准输出 | 脚本和 CI | 机器可读 Gradle 发布契约 |
 | `github-release-plan --format json` 标准输出 | 脚本和 CI | 机器可读 GitHub release-plan 契约 |
 | `github-tag-from-plan --format json` 标准输出 | 脚本和 CI | 机器可读 GitHub tag 契约 |
 | `github-release-from-plan --format json` 标准输出 | 脚本和 CI | 机器可读 GitHub Release 契约 |

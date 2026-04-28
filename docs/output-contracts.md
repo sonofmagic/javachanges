@@ -34,6 +34,7 @@ Use it when you are:
 | `audit-vars --format json` stdout | scripts and CI | machine-readable JSON contract |
 | `preflight --format json` stdout | scripts and CI | machine-readable publish-preflight contract |
 | `publish --format json` stdout | scripts and CI | machine-readable publish contract |
+| `gradle-publish --format json` stdout | scripts and CI | machine-readable Gradle publish contract |
 | `github-release-plan --format json` stdout | scripts and CI | machine-readable GitHub release-plan contract |
 | `github-tag-from-plan --format json` stdout | scripts and CI | machine-readable GitHub tag contract |
 | `github-release-from-plan --format json` stdout | scripts and CI | machine-readable GitHub Release contract |
