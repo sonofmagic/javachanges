@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.7.0 - 2026-04-28
+
+### Minor Changes
+
+- Support Gradle repositories in release planning, and add Gradle usage docs plus a copy-ready Gradle example repository. (packages: javachanges) Support Gradle repositories in release planning, and add Gradle usage docs plus a copy-ready Gradle example repository.
+
 ## 1.6.1 - 2026-04-28
 
 ### Patch Changes
