@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.9.0 - 2026-04-28
+
+### Minor Changes
+
+- Add fresh release metadata mode so automation can avoid committing generated release-plan files. (packages: javachanges)
+
 ## 1.8.0 - 2026-04-28
 
 ### Minor Changes
