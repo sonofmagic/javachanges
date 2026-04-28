@@ -1,31 +1,73 @@
 {
-  "releaseVersion" : "1.6.0",
-  "nextSnapshotVersion" : "1.6.0-SNAPSHOT",
-  "releaseLevel" : "minor",
+  "releaseVersion" : "1.6.1",
+  "nextSnapshotVersion" : "1.6.1-SNAPSHOT",
+  "releaseLevel" : "patch",
   "tagStrategy" : "whole-repo",
-  "tags" : [ "v1.6.0" ],
+  "tags" : [ "v1.6.1" ],
   "releaseTargets" : [ {
     "module" : null,
-    "tag" : "v1.6.0"
+    "tag" : "v1.6.1"
   } ],
-  "generatedAt" : "2026-04-22T08:15:36.165Z",
+  "generatedAt" : "2026-04-28T04:09:00.957Z",
   "changesets" : [ {
-    "file" : "per-module-tag-strategy.md",
-    "release" : "minor",
-    "type" : "other",
-    "summary" : "Add an optional `per-module` release tag strategy for release-plan automation.",
-    "modules" : [ "javachanges" ]
-  }, {
-    "file" : "plain-snapshot-version-mode.md",
-    "release" : "minor",
-    "type" : "other",
-    "summary" : "Add plain snapshot version mode so snapshot publishes can keep the original `-SNAPSHOT` revision while preserving the existing stamped default.",
-    "modules" : [ "javachanges" ]
-  }, {
-    "file" : "release-pr-markdown-layout.md",
+    "file" : "20260424-streamline-core-release-internals.md",
     "release" : "patch",
     "type" : "other",
-    "summary" : "Improve generated release PR Markdown layout.",
+    "summary" : "Refine release-planning internals and simplify changeset path handling.",
+    "modules" : [ "javachanges" ]
+  }, {
+    "file" : "20260428-add-maven-wrapper.md",
+    "release" : "patch",
+    "type" : "other",
+    "summary" : "Add Maven Wrapper scripts and update local development, CI, and snapshot helper commands to use the repository-pinned Maven runtime.",
+    "modules" : [ "javachanges" ]
+  }, {
+    "file" : "20260428-avoid-dry-run-settings-write.md",
+    "release" : "patch",
+    "type" : "other",
+    "summary" : "Avoid writing real Maven settings or local repository directories during publish dry-runs.",
+    "modules" : [ "javachanges" ]
+  }, {
+    "file" : "20260428-avoid-release-dry-run-artifacts.md",
+    "release" : "patch",
+    "type" : "other",
+    "summary" : "Avoid writing release notes and GitHub output files during release dry-runs.",
+    "modules" : [ "javachanges" ]
+  }, {
+    "file" : "20260428-fail-closed-remote-tag-checks.md",
+    "release" : "patch",
+    "type" : "other",
+    "summary" : "Fail closed when remote release tag lookups cannot reach the configured Git remote.",
+    "modules" : [ "javachanges" ]
+  }, {
+    "file" : "20260428-harden-release-automation.md",
+    "release" : "patch",
+    "type" : "other",
+    "summary" : "Harden release automation by cleaning preflight credential files immediately and making GitLab API calls fail faster on network or empty-error responses.",
+    "modules" : [ "javachanges" ]
+  }, {
+    "file" : "20260428-mask-sync-vars-execute-logs.md",
+    "release" : "patch",
+    "type" : "other",
+    "summary" : "Mask secret values in sync-vars execute logs while still passing real values to platform CLIs.",
+    "modules" : [ "javachanges" ]
+  }, {
+    "file" : "20260428-redact-gitlab-remote-errors.md",
+    "release" : "patch",
+    "type" : "other",
+    "summary" : "Redact authenticated GitLab remote URLs from git failure messages.",
+    "modules" : [ "javachanges" ]
+  }, {
+    "file" : "20260428-restrict-maven-settings.md",
+    "release" : "patch",
+    "type" : "other",
+    "summary" : "Restrict generated Maven settings files to owner-only permissions when the filesystem supports POSIX permissions.",
+    "modules" : [ "javachanges" ]
+  }, {
+    "file" : "20260428-stabilize-gpg-key-check.md",
+    "release" : "patch",
+    "type" : "other",
+    "summary" : "Stabilize GPG public key checks by capturing process output concurrently and reusing the shared temporary-directory cleanup path.",
     "modules" : [ "javachanges" ]
   } ]
 }
