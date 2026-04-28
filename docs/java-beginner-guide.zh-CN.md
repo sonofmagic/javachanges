@@ -6,7 +6,7 @@
 
 你可以把它理解成：
 
-> 用 `javachanges` 当案例，学习 Java 语言、Java 标准库、Maven、CLI 开发、测试和工程实践。
+> 用 `javachanges` 当案例，学习 Java 语言、Java 标准库、Maven、Gradle 模型解析、CLI 开发、测试和工程实践。
 
 这份文档重点覆盖的是“这个项目里确实用到”的知识，而不是泛泛而谈的 Java 全量语法。
 
@@ -16,7 +16,7 @@
 | 抽象能力 | 接口、枚举、结果模型、请求模型 |
 | 异常处理 | `IllegalArgumentException`、`IllegalStateException`、`IOException` |
 | 标准库 | `Path`、`Files`、集合、正则、`ProcessBuilder` |
-| Maven | `pom.xml`、依赖、plugin、Mojo、`revision` |
+| Maven 和 Gradle 模型 | `pom.xml`、`gradle.properties`、依赖、plugin、Mojo、`revision` |
 | 测试 | JUnit 5、`@TempDir`、命令输出断言、文件断言 |
 | 工程实践 | dry-run、文件驱动、小类拆分、命令分层 |
 
@@ -266,6 +266,7 @@ final class ReleaseTextUtils {
 | 场景 | 示例 |
 | --- | --- |
 | 提取 `<revision>` | 从 `pom.xml` 里拿版本 |
+| 提取 Gradle `version` | 从 `gradle.properties` 里拿版本 |
 | 解析 tag | 从 `v1.2.3` 或 `module/v1.2.3` 提取信息 |
 | 解析 `MAVEN_OPTS` | 识别 `-Dmaven.repo.local=...` |
 

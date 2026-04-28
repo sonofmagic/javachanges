@@ -1,5 +1,6 @@
 package io.github.sonofmagic.javachanges.core.gitlab;
 
+import io.github.sonofmagic.javachanges.core.BuildModelSupport;
 import io.github.sonofmagic.javachanges.core.ChangesetPaths;
 import io.github.sonofmagic.javachanges.core.ReleaseAutomationSupport;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
@@ -68,7 +69,7 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
             Files.readAllBytes(releasePlanMarkdownFile()),
             StandardCharsets.UTF_8
         );
-        runtime.runGit("add", "pom.xml", "CHANGELOG.md", ChangesetPaths.DIR);
+        runtime.runGit(concat("add", BuildModelSupport.releasePlanGitAddPaths(repoRoot)));
         if (runtime.hasNoStagedChanges()) {
             report.skipped = true;
             report.reason = "No staged release plan changes.";
@@ -94,6 +95,13 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
         report.action = "update-merge-request";
         report.reason = "Updated GitLab merge request.";
         AutomationJsonSupport.print(out, textOutput, report, "Updated GitLab MR !" + mergeRequestIid);
+    }
+
+    private static String[] concat(String first, String[] rest) {
+        String[] values = new String[rest.length + 1];
+        values[0] = first;
+        System.arraycopy(rest, 0, values, 1, rest.length);
+        return values;
     }
 
     public void tagFromReleasePlan(GitlabTagRequest request) throws IOException, InterruptedException {

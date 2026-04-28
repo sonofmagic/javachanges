@@ -1,7 +1,7 @@
 package io.github.sonofmagic.javachanges.core.plan;
 
 import io.github.sonofmagic.javachanges.core.CommandResult;
-import io.github.sonofmagic.javachanges.core.PomModelSupport;
+import io.github.sonofmagic.javachanges.core.BuildModelSupport;
 import io.github.sonofmagic.javachanges.core.ReleaseLevel;
 import io.github.sonofmagic.javachanges.core.ReleaseProcessUtils;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
@@ -22,7 +22,7 @@ public final class ReleasePlanner {
     }
 
     public ReleasePlan plan() throws IOException, InterruptedException {
-        String currentRevision = PomModelSupport.readRevision(repoRoot.resolve("pom.xml"));
+        String currentRevision = BuildModelSupport.readRevision(repoRoot);
         List<Changeset> changesets = RepoFiles.loadChangesets(repoRoot);
         String latestTag = latestWholeRepoTag();
         ChangesetConfigSupport.ChangesetConfig changesetConfig = RepoFiles.readChangesetConfig(repoRoot);

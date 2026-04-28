@@ -4,13 +4,13 @@
 
 ```mermaid
 flowchart TD
-  A[先把 plugin 加进 pom.xml] --> B[执行 mvn javachanges:add]
-  B --> C[执行 mvn javachanges:status]
-  C --> D[执行 mvn javachanges:plan]
+  A[选择 Maven plugin 或 Gradle CLI jar] --> B[创建 changeset]
+  B --> C[查看 status]
+  C --> D[渲染 plan]
   D --> E{准备应用 plan 了吗?}
-  E -- 是 --> F[执行 mvn javachanges:plan -Djavachanges.apply=true]
+  E -- 是 --> F[应用 plan]
   E -- 否 --> C
-  F --> G[进入 CI 发布或 Maven Central 发布流程]
+  F --> G[进入 CI、Maven 或 Gradle 发布流程]
 ```
 
 ## 1. 推荐用法：在目标仓库里直接用 Maven plugin
@@ -48,7 +48,48 @@ mvn javachanges:manifest-field -Djavachanges.field=releaseVersion
 - plugin 会默认把 `--directory` 设成当前 Maven 项目的 `${project.basedir}`
 - 对还没有独立 goal 的命令，仍然可以继续使用通用的 `run` goal
 
-## 2. 备选用法：当你暂时不能修改 `pom.xml` 时，使用正式发布版 CLI
+完整 Maven 流程见 [Maven 使用指南](./maven-guide.md)。
+
+## 2. Gradle 仓库使用正式发布版 CLI
+
+Gradle 仓库应直接调用 CLI jar。
+
+最小 Gradle 结构：
+
+```text
+your-gradle-repo/
+├── .changesets/
+├── CHANGELOG.md
+├── build.gradle.kts
+├── gradle.properties
+└── settings.gradle.kts
+```
+
+`gradle.properties`：
+
+```properties
+version=1.0.0-SNAPSHOT
+```
+
+`settings.gradle.kts`：
+
+```kotlin
+rootProject.name = "your-gradle-repo"
+include(":core", ":api")
+```
+
+下载并执行：
+
+```bash
+mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__ -DoutputDirectory=.javachanges
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar status --directory .
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar add --directory . --summary "add release notes command" --release minor --modules core
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar plan --directory . --apply true
+```
+
+完整 Gradle 流程见 [Gradle 使用指南](./gradle-guide.md)。
+
+## 3. 备选用法：临时 Maven 场景使用正式发布版 CLI
 
 先把正式发布的 jar 下载到本地：
 
@@ -75,7 +116,7 @@ java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar pl
 - 日常对仓库执行命令时，优先使用 Maven plugin，命令更短，也不需要手动传当前项目目录
 - 正式版 CLI 更适合临时接管一个你还没来得及接入 plugin 的仓库
 
-## 3. 开发当前 `main` 分支时的 plugin 用法
+## 4. 开发当前 `main` 分支时的 plugin 用法
 
 ```bash
 mvn -q -DskipTests install
@@ -90,22 +131,27 @@ mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:ma
 - 现在 `status`、`plan`、`add`、`manifest-field` 都有独立 goal
 - `javachanges:run` 仍然保留，适合配合 `-Djavachanges.args="..."` 传递完整原始参数
 
-## 4. 准备目标仓库
+## 5. 准备目标仓库
 
 你的目标仓库至少需要满足：
 
 - 已初始化 git
-- 有根 `pom.xml`
-- 有 `<revision>` 属性
+- 有带 `<revision>` 属性的根 `pom.xml`，或有带 `version` / `revision` 的 Gradle `gradle.properties`
 - 有 `CHANGELOG.md`，或者让 `javachanges` 在应用 release plan 时自动创建/更新
-- 根 `pom.xml` 中要么有 `<modules>`，要么是单模块根 artifact
+- Maven 根 `pom.xml` 中有 `<modules>`、Gradle `settings.gradle(.kts)` 中有 `include(...)`，或是单模块根 artifact / project
 
-## 5. 创建 changeset
+## 6. 创建 changeset
 
 Monorepo 示例：
 
 ```bash
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor -Djavachanges.modules=core
+```
+
+Gradle CLI 示例：
+
+```bash
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar add --directory . --summary "add release notes command" --release minor --modules core
 ```
 
 单模块示例：
@@ -159,26 +205,38 @@ Improve CLI parsing and release planning.
 - 旧的 `release` / `modules` / `summary` frontmatter 仍然可兼容读取，但新文件建议统一写 package map
 - changelog 会按聚合后的 release level 分成 `major`、`minor`、`patch`
 
-## 6. 查看计划
+## 7. 查看计划
 
 ```bash
 mvn javachanges:plan
 ```
 
-## 7. 应用计划
+Gradle CLI：
+
+```bash
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar plan --directory .
+```
+
+## 8. 应用计划
 
 ```bash
 mvn javachanges:plan -Djavachanges.apply=true
 ```
 
+Gradle CLI：
+
+```bash
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar plan --directory . --apply true
+```
+
 应用后会更新：
 
-- 根 `revision`
+- 根 Maven `revision` 或 Gradle `gradle.properties` 版本
 - `CHANGELOG.md`
 - `.changesets/release-plan.json`
 - `.changesets/release-plan.md`
 
-## 8. 以源码方式进入开发模式
+## 9. 以源码方式进入开发模式
 
 如果你是在开发 `javachanges` 这个仓库本身，才使用源码驱动的开发方式：
 

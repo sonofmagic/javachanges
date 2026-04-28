@@ -1,5 +1,5 @@
 ---
-description: Use javachanges in GitLab CI/CD for validation, release merge requests, tag creation, and Maven publishing.
+description: Use javachanges in GitLab CI/CD for validation, release merge requests, tag creation, and Maven or Gradle publishing.
 ---
 
 # javachanges GitLab CI/CD Usage Guide
@@ -13,8 +13,8 @@ This guide explains how to use `javachanges` in GitLab CI/CD for:
 2. GitLab CI/CD variable management
 3. release merge request generation
 4. release tag creation from the generated release plan
-5. Maven publishing in tag pipelines
-6. Maven dependency caching
+5. Maven or Gradle publishing in tag pipelines
+6. Maven and Gradle dependency caching
 
 `javachanges` now has four GitLab-specific commands:
 
@@ -249,6 +249,82 @@ If `.changesets/config.json` or `.changesets/config.jsonc` contains:
 ```
 
 then the same `publish --directory $CI_PROJECT_DIR --execute true` snapshot job automatically switches to plain snapshot mode on that branch. No extra `if` block or custom `mvn deploy` split is required in the business repository.
+
+### 6.1 Minimal Gradle `.gitlab-ci.yml`
+
+For Gradle repositories, use the CLI jar directly and let Gradle own artifact publishing:
+
+```yaml
+stages:
+  - verify
+  - release-plan
+  - tag
+  - publish
+
+default:
+  image: eclipse-temurin:17
+  cache:
+    key:
+      files:
+        - gradle.properties
+        - settings.gradle.kts
+    paths:
+      - .gradle/caches
+      - .gradle/wrapper
+      - .javachanges
+
+variables:
+  GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
+  JAVACHANGES_VERSION: "__JAVACHANGES_LATEST_RELEASE_VERSION__"
+
+before_script:
+  - ./gradlew --version
+  - mkdir -p .javachanges
+  - >
+    test -f ".javachanges/javachanges-${JAVACHANGES_VERSION}.jar" ||
+    curl -fsSL
+    "https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/${JAVACHANGES_VERSION}/javachanges-${JAVACHANGES_VERSION}.jar"
+    -o ".javachanges/javachanges-${JAVACHANGES_VERSION}.jar"
+
+verify:
+  stage: verify
+  script:
+    - ./gradlew --no-daemon build
+    - java -jar ".javachanges/javachanges-${JAVACHANGES_VERSION}.jar" status --directory "$CI_PROJECT_DIR"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+release_plan_mr:
+  stage: release-plan
+  script:
+    - >
+      java -jar ".javachanges/javachanges-${JAVACHANGES_VERSION}.jar"
+      gitlab-release-plan
+      --directory "$CI_PROJECT_DIR"
+      --project-id "$CI_PROJECT_ID"
+      --execute true
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+release_tag:
+  stage: tag
+  script:
+    - java -jar ".javachanges/javachanges-${JAVACHANGES_VERSION}.jar" gitlab-tag-from-plan --directory "$CI_PROJECT_DIR" --execute true
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+publish_release:
+  stage: publish
+  script:
+    - RELEASE_VERSION="$(java -jar ".javachanges/javachanges-${JAVACHANGES_VERSION}.jar" manifest-field --directory "$CI_PROJECT_DIR" --field releaseVersion)"
+    - ./gradlew --no-daemon publish -Pversion="$RELEASE_VERSION"
+    - java -jar ".javachanges/javachanges-${JAVACHANGES_VERSION}.jar" gitlab-release --directory "$CI_PROJECT_DIR" --execute true
+  rules:
+    - if: $CI_COMMIT_TAG
+```
+
+The release-plan job stages `gradle.properties`, `CHANGELOG.md`, and `.changesets/` for Gradle repositories. For a simpler jar download step, you can also use `mvn dependency:copy` if Maven is available in your runner image.
 
 ## 7. Safe `script:` Patterns For GitLab CI
 

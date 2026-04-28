@@ -4,8 +4,8 @@ title: javachanges
 titleTemplate: false
 hero:
   name: javachanges
-  text: 面向 Maven 仓库的发布规划
-  tagline: 用文件记录 changesets，自动生成 changelog，并接入 CI/CD 友好的 Maven 发布流程。
+  text: 面向 Java 仓库的发布规划
+  tagline: 用文件记录 changesets，自动生成 changelog，并接入 Maven 和 Gradle 仓库的 CI/CD 流程。
   image:
     src: /logo-horizontal.svg
     alt: javachanges logo
@@ -19,8 +19,8 @@ hero:
 features:
   - title: 文件驱动的发布意图
     details: 用官方 Changesets 风格的 `.changesets/*.md` package map 记录发布内容，而不是散落在表格、聊天或脚本里。
-  - title: 面向 Maven 的工作流
-    details: 围绕根 `revision` 规划版本、生成 changelog，并兼容 monorepo 与单模块仓库。
+  - title: Maven 和 Gradle 工作流
+    details: 围绕 Maven `revision` 或 Gradle `gradle.properties` 规划版本、生成 changelog，并兼容 monorepo 与单模块仓库。
   - title: 易于自动化
     details: 可接入 GitHub Actions、GitLab CI/CD、Maven Central 发布和变量同步流程。
 ---
@@ -28,14 +28,14 @@ features:
 # javachanges
 
 
-`javachanges` 是一个面向 Maven Monorepo 和单模块 Maven 仓库的发布规划 CLI。
+`javachanges` 是一个面向 Maven 和 Gradle 仓库的发布规划 CLI。
 
 整个工作流保持简单：
 
 1. 开发者在 `.changesets/*.md` 中记录准备发布的变更
 2. CI 或维护者查看生成的 release plan
 3. release plan 更新根版本和 changelog
-4. 发布辅助命令准备 Maven settings 和部署命令
+4. CI 使用 Maven deploy 或 Gradle 原生 publishing task 发布
 
 这个工具保持文件驱动，不依赖数据库或托管服务。
 
@@ -45,10 +45,10 @@ features:
 flowchart TD
   A[编写 .changesets 文件] --> B[查看 status 和 release plan]
   B --> C[应用 plan]
-  C --> D[更新 revision 与 changelog]
+  C --> D[更新版本与 changelog]
   D --> E[选择发布路径]
   E --> F[走 GitHub Actions 自动发布]
-  E --> G[走 Maven Central 手动发布]
+  E --> G[走 Maven 或 Gradle 发布]
 ```
 
 ## 核心理念
@@ -60,15 +60,17 @@ flowchart TD
 
 ## CLI 假设
 
-- 一个带根 `pom.xml` 的 Maven 仓库
-- 根 `pom.xml` 中要么有 `<modules>`，要么是单模块根 artifact
-- 用于版本管理的根 `revision` 属性
+- 一个带根 `pom.xml` 的 Maven 仓库，或一个带 `gradle.properties` 的 Gradle 仓库
+- Maven `<modules>`、Gradle `include(...)`，或单模块根 artifact / project
+- 用于版本管理的根 Maven `revision` 或 Gradle `version`
 - 用来存放进行中发布记录的 `.changesets/` 目录
 
 ## 指南
 
 - [AI 文档入口](./llms-access.md)
 - [Getting Started](./getting-started.md)
+- [Maven 使用指南](./maven-guide.md)
+- [Gradle 使用指南](./gradle-guide.md)
 - [Examples Guide 使用指南](./examples-guide.md)
 - [命令实战手册](./command-cookbook.md)
 - [配置参考大全](./configuration-reference.md)

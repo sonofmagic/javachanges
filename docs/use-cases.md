@@ -1,5 +1,5 @@
 ---
-description: Practical release-planning and publishing scenarios where javachanges fits Maven repositories and CI systems.
+description: Practical release-planning and publishing scenarios where javachanges fits Maven and Gradle repositories.
 ---
 
 # Use Cases
@@ -12,6 +12,16 @@ Use `javachanges` to manage version bumps across multiple artifacts while keepin
 ## Single-module Maven CLI or library
 
 Use `javachanges` to keep a file-based release workflow even when the repository only has one publishable Maven artifact.
+
+## Gradle multi-project build
+
+Use `javachanges` to manage release intent across Gradle projects declared by `include(...)`, update `gradle.properties`, and generate a release-plan manifest before Gradle publishing runs.
+
+For setup details, see [Gradle Usage Guide](./gradle-guide.md).
+
+## Single-project Gradle library or application
+
+Use `javachanges` when a Gradle repository has one root project and still needs reviewed release notes, changelog generation, and CI-friendly release tags.
 
 ## Internal platform release automation
 
@@ -28,3 +38,5 @@ For a full GitLab pipeline example, see [GitLab CI/CD Usage Guide](./gitlab-ci-g
 ## Safer publish dry-runs
 
 Use `preflight` and `publish --execute false` to preview the exact Maven deploy command and generated settings before touching a real repository.
+
+For Gradle artifacts, use the release-plan manifest as input to `./gradlew publish` and keep publication logic inside Gradle.

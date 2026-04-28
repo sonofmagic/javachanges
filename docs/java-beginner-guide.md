@@ -1,5 +1,5 @@
 ---
-description: Learn Java, Maven, CLI, and plugin concepts used in javachanges through a concrete real-world codebase.
+description: Learn Java, Maven, Gradle model parsing, CLI, and plugin concepts used in javachanges through a concrete real-world codebase.
 ---
 
 # Java Concepts Guide For Beginners
@@ -16,7 +16,7 @@ Instead, it uses `javachanges` as a concrete case study to explain the Java conc
 | Type modeling | interfaces, enums, request/result models |
 | Exceptions | argument errors, state errors, IO errors |
 | Standard library | `Path`, `Files`, collections, regex, `ProcessBuilder` |
-| Maven | `pom.xml`, plugins, `revision`, Mojos |
+| Maven and Gradle models | `pom.xml`, `gradle.properties`, plugins, `revision`, Mojos |
 | Testing | JUnit 5, temp directories, output assertions |
 | Engineering | dry runs, file-driven workflows, small classes |
 
@@ -177,6 +177,7 @@ Typical tasks:
 | Task | Example |
 | --- | --- |
 | extract `<revision>` | from `pom.xml` |
+| extract Gradle `version` | from `gradle.properties` |
 | parse tags | `v1.2.3` or `module/v1.2.3` |
 | parse simple JSON | lightweight machine-readable output |
 | rewrite XML fragments | updating `revision` |

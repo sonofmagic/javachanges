@@ -1,5 +1,5 @@
 ---
-description: Copy-ready javachanges command sequences for common Maven release planning, CI, and publishing workflows.
+description: Copy-ready javachanges command sequences for common Maven and Gradle release planning, CI, and publishing workflows.
 ---
 
 # javachanges Command Cookbook
@@ -14,8 +14,8 @@ Use it when you do not want to piece together commands from multiple pages and i
 The recipes below assume:
 
 - `javachanges` is run from source with Maven
-- your target repository has a root `pom.xml`
-- the target repository uses a root `<revision>`
+- your target repository has either a Maven `pom.xml` or a Gradle `gradle.properties`
+- Maven repositories use root `<revision>`; Gradle repositories use `version` or `revision` in `gradle.properties`
 
 ## 2. Shared setup
 
@@ -146,46 +146,96 @@ mvn -q -DskipTests compile exec:java -Dexec.args="audit-vars --directory $REPO -
 
 Use these when a shell step needs structured diagnostics instead of parsing aligned terminal columns.
 
-## 6. Recipe: GitHub Actions release PR flow
+## 6. Recipe: Gradle release planning
+
+Use this when the target repository is a Gradle single-project or multi-project build.
+
+### 6.1 Minimal Gradle setup
+
+```properties
+# gradle.properties
+version=1.1.0-SNAPSHOT
+```
+
+```kotlin
+// settings.gradle.kts
+rootProject.name = "sample-gradle-library"
+include(":core", ":api")
+```
+
+### 6.2 Run the released CLI jar
+
+```bash
+mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__ -DoutputDirectory=.javachanges
+export JAVACHANGES="java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar"
+```
+
+### 6.3 Add, inspect, and apply a Gradle changeset
+
+```bash
+$JAVACHANGES add --directory $REPO --summary "add retry metadata" --release minor --modules core,api
+$JAVACHANGES status --directory $REPO
+$JAVACHANGES plan --directory $REPO --apply true
+```
+
+Expected outputs after `plan --apply true`:
+
+- `gradle.properties` version advances to the next snapshot
+- `CHANGELOG.md` gets a new release section
+- `.changesets/release-plan.json` is written
+- `.changesets/release-plan.md` is written
+
+### 6.4 Hand off to Gradle publishing
+
+```bash
+RELEASE_VERSION="$($JAVACHANGES manifest-field --directory $REPO --field releaseVersion)"
+cd "$REPO"
+./gradlew publish -Pversion="$RELEASE_VERSION"
+```
+
+See [Gradle Usage Guide](./gradle-guide.md) for the full Gradle workflow and limitations.
+
+## 7. Recipe: GitHub Actions release PR flow
 
 Use this when `main` accumulates `.changesets/*.md` files and a workflow should open one reviewed release PR.
 
-### 6.1 Local dry-run before CI
+### 7.1 Local dry-run before CI
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="status --directory $REPO"
 mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory $REPO --apply true"
 ```
 
-### 6.2 Fields commonly consumed in GitHub Actions
+### 7.2 Fields commonly consumed in GitHub Actions
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory $REPO --field releaseVersion"
 mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory $REPO --field releaseLevel"
 ```
 
-### 6.3 What the workflow usually commits
+### 7.3 What the workflow usually commits
 
 Commit only these generated files:
 
 - `pom.xml`
+- or `gradle.properties`
 - `CHANGELOG.md`
 - `.changesets/release-plan.json`
 - `.changesets/release-plan.md`
 
 For a full workflow file, see [GitHub Actions Usage Guide](./github-actions-guide.md) and [Examples Guide](./examples-guide.md).
 
-## 7. Recipe: GitLab release MR and tag flow
+## 8. Recipe: GitLab release MR and tag flow
 
 Use this when GitLab should manage the release branch, merge request, and final tag from changesets.
 
-### 7.1 Create or update the release MR
+### 8.1 Create or update the release MR
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-release-plan --directory $REPO --project-id 12345 --execute true"
 ```
 
-### 7.2 Create the final tag from the applied plan
+### 8.2 Create the final tag from the applied plan
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-tag-from-plan --directory $REPO --before-sha <before-sha> --current-sha <current-sha> --execute true"
@@ -201,23 +251,25 @@ Typical CI variable mapping:
 
 For the full pipeline layout, see [GitLab CI/CD Usage Guide](./gitlab-ci-guide.md).
 
-## 8. Recipe: safe local publish dry-run
+## 9. Recipe: safe local publish dry-run
 
 Use this before enabling real publish execution.
 
-### 8.1 Validate snapshot publishing
+This recipe is Maven-specific. For Gradle artifact publishing, use Gradle's `publish` task and consume the release-plan manifest as shown in Section 6.
+
+### 9.1 Validate snapshot publishing
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory $REPO --snapshot"
 ```
 
-### 8.2 Validate a tagged release publish
+### 9.2 Validate a tagged release publish
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory $REPO --tag v1.2.3"
 ```
 
-### 8.3 Render the actual publish command without executing it
+### 9.3 Render the actual publish command without executing it
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="publish --directory $REPO --tag v1.2.3"
@@ -225,23 +277,23 @@ mvn -q -DskipTests compile exec:java -Dexec.args="publish --directory $REPO --ta
 
 Only add `--execute true` after the printed command, generated settings, and credentials all look correct.
 
-## 9. Recipe: this repository publishing to Maven Central
+## 10. Recipe: this repository publishing to Maven Central
 
 This recipe is specific to the `javachanges` repository itself, not every downstream repository.
 
-### 9.1 Verify Central publishing prerequisites
+### 10.1 Verify Central publishing prerequisites
 
 ```bash
 mvn -Pcentral-publish -Dgpg.skip=true verify
 ```
 
-### 9.2 Run the real deployment
+### 10.2 Run the real deployment
 
 ```bash
 mvn -Pcentral-publish clean deploy
 ```
 
-### 9.3 Publish a repository-local snapshot through Central
+### 10.3 Publish a repository-local snapshot through Central
 
 ```bash
 pnpm snapshot:publish:local
@@ -249,15 +301,16 @@ pnpm snapshot:publish:local
 
 If you only need the generic repository publish helper instead of Sonatype Central publishing, use the `preflight` and `publish` recipes above.
 
-## 10. Quick decision map
+## 11. Quick decision map
 
 | Goal | Start here |
 | --- | --- |
 | One root artifact, local release plan | Section 3 |
 | Monorepo package release planning | Section 4 |
 | CI variable preparation | Section 5 |
-| GitHub release PR automation | Section 6 |
-| GitLab release MR and tag automation | Section 7 |
+| Gradle release planning | Section 6 |
+| GitHub release PR automation | Section 7 |
+| GitLab release MR and tag automation | Section 8 |
 | Safe publish rehearsal | Section 8 |
 | This repository's Central release | Section 9 |
 
@@ -266,6 +319,8 @@ If you only need the generic repository publish helper instead of Sonatype Centr
 | Need | Document |
 | --- | --- |
 | Full command catalog | [CLI Reference](./cli-reference.md) |
+| Maven command flow | [Maven Usage Guide](./maven-guide.md) |
+| Gradle command flow | [Gradle Usage Guide](./gradle-guide.md) |
 | Example repository structure | [Examples Guide](./examples-guide.md) |
 | Variable catalog | [Configuration Reference](./configuration-reference.md) |
 | Applied manifest fields | [Release Plan Manifest](./release-plan-manifest.md) |

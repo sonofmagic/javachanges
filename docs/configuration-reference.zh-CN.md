@@ -22,7 +22,7 @@
 | 发布 env 模板 | `env/release.env.example` | 维护者 |
 | 平台变量与 secrets | GitHub Actions / GitLab CI/CD 设置页 | 仓库管理员 |
 | Maven 发布凭据 | 本地 env、CI secrets、生成后的 `settings.xml` | 发布维护者 |
-| 仓库版本模型 | 根 `pom.xml` 的 `<revision>` | 维护者 |
+| 仓库版本模型 | Maven 根 `pom.xml` 的 `<revision>`，或 Gradle `gradle.properties` 的 `version` | 维护者 |
 
 ## 3. Changeset 文件配置
 
@@ -53,7 +53,7 @@ Improve CLI parsing and release planning.
 
 | 部分 | 含义 |
 | --- | --- |
-| frontmatter key | Maven artifactId |
+| frontmatter key | Maven artifactId 或 Gradle project name |
 | frontmatter value | `patch`、`minor`、`major` |
 | Markdown 正文 | 面向用户的变更说明和补充备注 |
 
@@ -130,7 +130,7 @@ summary: automate javachanges self-release publishing via GitHub Actions
 | --- | --- | --- |
 | `--summary` | 生成文件正文第一行 | 不传时进入交互输入 |
 | `--release` | 为每个选中 package 写入的发布类型 | 不传时进入交互输入 |
-| `--modules` | 逗号分隔的 Maven artifactId，或 `all` | `all` |
+| `--modules` | 逗号分隔的 Maven artifactId、Gradle project name，或 `all` | `all` |
 | `--body` | summary 之后追加的 Markdown 正文 | 空 |
 | `--type` | 旧版兼容元数据 | 默认不写 |
 
@@ -149,7 +149,7 @@ summary: automate javachanges self-release publishing via GitHub Actions
 | `--snapshot-version-mode` | snapshot 版本策略：`stamped` 或 `plain` | 配置文件值，再回退到 `stamped` |
 | `--snapshot-build-stamp` | 显式指定 snapshot 发布标识 | 自动生成 |
 | `--tag` | 发布正式 tag，例如 `v1.2.3` | 无 |
-| `--module` | 把发布限制到单个 Maven artifactId | 所有 package |
+| `--module` | 把发布限制到单个 Maven artifactId 或 Gradle project name | 所有 package |
 | `--allow-dirty` | 跳过工作区脏检查 | `false` |
 | `--execute` | 真正执行发布命令，而不是只打印 | `false` |
 
@@ -279,11 +279,11 @@ GitLab release 自动化还依赖这些运行时变量：
 | `GITLAB_RELEASE_BOT_USERNAME` | 你自行提供的项目变量 |
 | `GITLAB_RELEASE_BOT_TOKEN` | 你自行提供的项目变量 |
 
-## 8. Maven 发布运行时配置
+## 8. 仓库版本与发布运行时配置
 
 ### 8.1 仓库版本模型
 
-推荐的根 `pom.xml` 写法：
+推荐的 Maven 根 `pom.xml` 写法：
 
 ```xml
 <version>${revision}</version>
@@ -294,6 +294,14 @@ GitLab release 自动化还依赖这些运行时变量：
 ```xml
 <revision>1.2.3-SNAPSHOT</revision>
 ```
+
+推荐的 Gradle `gradle.properties` 写法：
+
+```properties
+version=1.2.3-SNAPSHOT
+```
+
+`javachanges` 也接受 `gradle.properties` 中的 `revision=1.2.3-SNAPSHOT`，但 Gradle 构建建议优先使用 `version`。
 
 ### 8.2 本地 Maven 仓库覆盖
 
@@ -326,6 +334,12 @@ export MAVEN_OPTS="-Dmaven.repo.local=.m2/repository"
 - Maven / Nexus snapshot 仓库通常仍然会把最终保存的 snapshot 产物文件名展开成带时间戳的形式
 - 这属于仓库端的标准 snapshot 行为，不是 `javachanges` 的二次改写
 
+Gradle 说明：
+
+- `preflight` 和 `publish` 是 Maven 专用
+- Gradle 构建应使用 `manifest-field --field releaseVersion`，再执行 `./gradlew publish -Pversion=...`
+- Gradle release planning 仍然会写入 `gradle.properties`、`CHANGELOG.md` 和 `.changesets/release-plan.*`
+
 ## 9. 不同场景下的推荐默认值
 
 ### 9.1 单模块库
@@ -346,13 +360,23 @@ export MAVEN_OPTS="-Dmaven.repo.local=.m2/repository"
 | release tag | 默认 whole-repo `v1.2.3`，除非你有意使用 module tag |
 | publish 目标 | 默认所有 package，需要时再用 `--module` 限制 |
 
-### 9.3 为什么 Maven monorepo 默认推荐 whole-repo tag
+### 9.3 Gradle 单项目或多项目构建
 
-`javachanges` 对 Maven monorepo 默认采用 `v1.2.3` 这种 whole-repo tag，这是有意的设计。
+| 配置面 | 建议 |
+| --- | --- |
+| 版本文件 | `gradle.properties`，并使用 `version=...-SNAPSHOT` |
+| project 检测 | `settings.gradle(.kts)` 中的 `include(...)` |
+| changeset 文件 | 每个受影响 Gradle project name 各写一条 frontmatter entry |
+| `--modules` | 传 project name，例如 `core,api`，或使用 `all` |
+| publish 目标 | Gradle `publish` task，并把 manifest 字段作为输入 |
+
+### 9.4 为什么 Java monorepo 默认推荐 whole-repo tag
+
+`javachanges` 对 Java monorepo 默认采用 `v1.2.3` 这种 whole-repo tag，这是有意的设计。
 
 原因主要有这些：
 
-- 很多 Maven monorepo 实际上是在发一趟统一版本的 release train，多个 artifact 会一起升到同一个版本
+- 很多 Maven 和 Gradle monorepo 实际上是在发一趟统一版本的 release train，多个 artifact 会一起升到同一个版本
 - release PR、changelog、release notes、签名和 Maven Central 发布，通常也是一次仓库级发布动作
 - Java 使用者更常按“这一版仓库 / 这一版平台是否兼容”来理解版本，而不只是看某个单独包
 

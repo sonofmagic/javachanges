@@ -102,7 +102,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /pa
 | 字段 | 含义 |
 | --- | --- |
 | `releaseVersion` | 不带 `v` 的正式发布版本 |
-| `nextSnapshotVersion` | 写回 `pom.xml` 的下一个快照版本 |
+| `nextSnapshotVersion` | 写回 `pom.xml` 或 `gradle.properties` 的下一个快照版本 |
 | `releaseLevel` | 聚合后的发布级别 |
 
 ## 5. `.changesets/release-plan.json`
@@ -141,7 +141,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /pa
 | `changesets[].release` | 该 changeset 的发布升级级别 |
 | `changesets[].type` | 兼容旧格式保留的字段，常见值是 `other` |
 | `changesets[].summary` | 从 changeset 正文或旧元数据推导出的摘要 |
-| `changesets[].modules` | 受影响的 Maven artifactId |
+| `changesets[].modules` | 受影响的 Maven artifactId 或 Gradle project name |
 
 需要注意：
 

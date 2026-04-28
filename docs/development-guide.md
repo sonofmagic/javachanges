@@ -1,5 +1,5 @@
 ---
-description: Set up a local Java and Maven environment, run javachanges from source, and validate current development workflows.
+description: Set up a local Java and Maven environment, run javachanges from source, and validate Maven or Gradle target repositories.
 ---
 
 # javachanges Development Guide
@@ -7,7 +7,7 @@ description: Set up a local Java and Maven environment, run javachanges from sou
 
 ## 1. Overview
 
-`javachanges` is a Java CLI for Maven monorepos and single-module Maven repositories.
+`javachanges` is a Java CLI for Maven and Gradle repositories.
 
 This repository is not currently distributed as:
 
@@ -34,7 +34,7 @@ According to [pom.xml](../pom.xml), the current project expects:
 | JDK | Java 8+ |
 | Maven | Wrapper-provided 3.9.15, or system Maven 3.8+ |
 | Git | Required |
-| Target repository | Must have a root `pom.xml`, and either `<modules>` or a single root artifact |
+| Target repository | Maven root `pom.xml`, or Gradle `gradle.properties` plus Gradle settings/build files |
 
 ### 2.2 Recommended development environment
 
@@ -288,7 +288,7 @@ High-value commands include:
 
 1. Install JDK and Git
 2. Run `./mvnw -q test`
-3. Prepare a Maven repository for testing
+3. Prepare a Maven or Gradle repository for testing
 4. Edit `src/main/java`
 5. Validate behavior with `./mvnw -q -DskipTests compile exec:java -Dexec.args="..."`
 6. Run `./mvnw test` or `./mvnw package` before finalizing
@@ -330,9 +330,9 @@ The target repository must have at least:
 | Requirement | Meaning |
 | --- | --- |
 | Git repository | Must be initialized |
-| Root `pom.xml` | Must exist |
-| `<modules>` or a single root artifact | Either is acceptable |
-| `<revision>` | Required for version calculation |
+| Maven version model | root `pom.xml` with `<revision>` |
+| Gradle version model | `gradle.properties` with `version` or `revision` |
+| Module model | Maven `<modules>`, Gradle `include(...)`, or a single root artifact/project |
 | `.changesets/` | Stores changesets |
 
 ### 8.4 Why there is no hot reload

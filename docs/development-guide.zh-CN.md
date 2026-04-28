@@ -1,5 +1,5 @@
 ---
-description: 配置本地 Java 与 Maven 环境，从源码运行 javachanges，并验证当前开发流程。
+description: 配置本地 Java 与 Maven 环境，从源码运行 javachanges，并验证 Maven 或 Gradle 目标仓库。
 ---
 
 # javachanges 开发使用指南
@@ -7,7 +7,7 @@ description: 配置本地 Java 与 Maven 环境，从源码运行 javachanges，
 
 ## 1. 概述
 
-`javachanges` 是一个面向 Maven Monorepo 和单模块 Maven 仓库的 Java CLI 工具。
+`javachanges` 是一个面向 Maven 和 Gradle 仓库的 Java CLI 工具。
 
 这个仓库当前的使用方式不是：
 
@@ -34,7 +34,7 @@ description: 配置本地 Java 与 Maven 环境，从源码运行 javachanges，
 | JDK | Java 8+ |
 | Maven | 仓库 Maven Wrapper 提供 3.9.15；不用 Wrapper 时需要系统 Maven 3.8+ |
 | Git | 需要 |
-| 目标仓库 | 必须有根 `pom.xml`，并且要么包含 `<modules>`，要么是单模块根 artifact |
+| 目标仓库 | Maven 根 `pom.xml`，或 Gradle `gradle.properties` 加 Gradle settings/build 文件 |
 
 ### 2.2 开发环境建议
 
@@ -298,7 +298,7 @@ add release notes command
 
 1. 安装好 JDK 和 Git
 2. 运行 `./mvnw -q test`，确认仓库能编译
-3. 准备一个用于测试的 Maven 仓库
+3. 准备一个用于测试的 Maven 或 Gradle 仓库
 4. 修改 `src/main/java` 下的源码
 5. 用 `./mvnw -q -DskipTests compile exec:java -Dexec.args="..."` 验证行为
 6. 确认无误后，再执行 `./mvnw test` 或 `./mvnw package`
@@ -340,9 +340,9 @@ add release notes command
 | 要求 | 说明 |
 | --- | --- |
 | Git 仓库 | 必须已初始化 |
-| 根 `pom.xml` | 必须存在 |
-| `<modules>` 或单模块根 artifact | 二选一即可 |
-| `<revision>` | 用于版本计算 |
+| Maven 版本模型 | 根 `pom.xml` 中有 `<revision>` |
+| Gradle 版本模型 | `gradle.properties` 中有 `version` 或 `revision` |
+| 模块模型 | Maven `<modules>`、Gradle `include(...)`，或单模块根 artifact / project |
 | `.changesets/` | 用于记录 changeset |
 
 ### 8.4 为什么没有热更新

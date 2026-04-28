@@ -1,5 +1,5 @@
 ---
-description: 排查 javachanges 在本地开发、CI、Maven 发布和 Maven Central 发布中的常见故障。
+description: 排查 javachanges 在本地开发、CI、Maven、Gradle 和 Maven Central 发布中的常见故障。
 ---
 
 # javachanges 故障排查指南
@@ -7,7 +7,7 @@ description: 排查 javachanges 在本地开发、CI、Maven 发布和 Maven Cen
 
 ## 1. 概述
 
-这篇文档集中整理了 `javachanges` 在本地开发、GitHub Actions、GitLab CI/CD 和 Maven 发布里最常见的问题。
+这篇文档集中整理了 `javachanges` 在本地开发、GitHub Actions、GitLab CI/CD、Maven 仓库、Gradle 仓库和 Maven 发布里最常见的问题。
 
 适合这些场景：
 
@@ -65,6 +65,43 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo
 | 现象 | 原因 | 修复方式 |
 | --- | --- | --- |
 | `manifest-field` 读不到字段 | 当前仓库里还没有已经应用过的 release plan | 先执行 `plan --apply true`，再读取字段 |
+
+### 2.5 Gradle 仓库根目录无法识别
+
+| 现象 | 原因 | 修复方式 |
+| --- | --- | --- |
+| Gradle 仓库里出现 `Cannot find repository root` | 缺少 `gradle.properties`，或根目录没有 Gradle settings/build 文件 | 添加 `gradle.properties`，并添加 `settings.gradle(.kts)` 或 `build.gradle(.kts)` |
+
+最小 Gradle 文件：
+
+```text
+gradle.properties
+settings.gradle.kts
+build.gradle.kts
+```
+
+`gradle.properties` 必须包含一个支持的版本 key：
+
+```properties
+version=1.0.0-SNAPSHOT
+```
+
+### 2.6 Gradle changeset 的 package key 写错
+
+| 现象 | 原因 | 修复方式 |
+| --- | --- | --- |
+| Gradle 多项目构建里出现 `Unknown module` | changeset key 不匹配 `include(...)` project path 的最后一段 | `:api` 用 `api`，`:core` 用 `core`，`:tools:cli` 用 `cli` |
+
+检查 `settings.gradle(.kts)` 并对齐 frontmatter：
+
+```md
+---
+"api": minor
+"core": patch
+---
+
+Improve Gradle release planning.
+```
 
 ## 3. Java 和 Maven 环境问题
 
@@ -128,6 +165,18 @@ JAVACHANGES_VERSION: "REPLACE_WITH_PUBLISHED_VERSION"
 - 正确：`./mvnw -q -DskipTests compile exec:java -Dexec.args="version --directory $PWD"`
 - 错误：先定义一个以裸 `-Dexec.args=` 结尾的前缀，再在后面追加 `"version --directory ..."`
 
+### 3.6 Gradle 用户误用了 Maven plugin
+
+| 现象 | 原因 | 修复方式 |
+| --- | --- | --- |
+| Gradle 仓库示例里 `mvn javachanges:...` 不可用 | Maven plugin goal 语法只适用于 Maven | 下载 CLI jar，并执行 `java -jar .javachanges/javachanges-<version>.jar ...` |
+
+Gradle 命令形态：
+
+```bash
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar status --directory .
+```
+
 ## 4. GitHub Actions 问题
 
 ### 4.1 `sync-vars` 或 `audit-vars` 提示缺变量
@@ -148,7 +197,7 @@ JAVACHANGES_VERSION: "REPLACE_WITH_PUBLISHED_VERSION"
 
 | 现象 | 原因 | 修复方式 |
 | --- | --- | --- |
-| release 分支里混入额外噪音文件 | workflow 提交范围过大，或者顺手跑了别的生成器 | 把提交范围限制在 `pom.xml`、`CHANGELOG.md` 和 `.changesets` |
+| release 分支里混入额外噪音文件 | workflow 提交范围过大，或者顺手跑了别的生成器 | 把提交范围限制在 `pom.xml` 或 `gradle.properties`、`CHANGELOG.md` 和 `.changesets` |
 
 ### 4.3 开了 cache，Maven 还是在下载依赖
 
@@ -200,6 +249,19 @@ JAVACHANGES_VERSION: "REPLACE_WITH_PUBLISHED_VERSION"
 | `MAVEN_SNAPSHOT_REPOSITORY_ID` |
 | `MAVEN_REPOSITORY_USERNAME` |
 | `MAVEN_REPOSITORY_PASSWORD` |
+
+### 6.1.1 Gradle 发布不应该使用 `publish`
+
+| 现象 | 原因 | 修复方式 |
+| --- | --- | --- |
+| Gradle 仓库运行 `publish` 后看到 Maven deploy 输出 | `preflight` 和 `publish` 是 Maven 专用辅助命令 | 用 `manifest-field` 读取 release version，再执行 `./gradlew publish` |
+
+Gradle release handoff：
+
+```bash
+RELEASE_VERSION="$(java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar manifest-field --directory . --field releaseVersion)"
+./gradlew publish -Pversion="$RELEASE_VERSION"
+```
 
 ### 6.2 工作区不干净导致发布失败
 
@@ -273,6 +335,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="ensure-gpg-public-key --direct
 | --- | --- |
 | Java 版本 | `java -version` |
 | Maven 版本 | `mvn -v` |
+| Gradle 版本 | `./gradlew -v` |
 | 是否存在待发布 changeset | `status` |
 | 是否已有 applied manifest | `.changesets/release-plan.json` |
 | CI 变量是否正确 | `render-vars` / `audit-vars` |
@@ -285,6 +348,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="ensure-gpg-public-key --direct
 | --- | --- |
 | 本地开发环境 | [Development Guide](./development-guide.md) |
 | 示例仓库讲解 | [Examples Guide](./examples-guide.md) |
+| Gradle 配置 | [Gradle 使用指南](./gradle-guide.md) |
 | CLI 命令列表 | [CLI Reference](./cli-reference.md) |
 | Manifest 字段说明 | [Release Plan Manifest](./release-plan-manifest.md) |
 | GitHub Actions 自动化 | [GitHub Actions Usage Guide](./github-actions-guide.md) |

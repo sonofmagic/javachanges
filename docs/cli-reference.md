@@ -44,7 +44,7 @@ Common parts:
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:run -Djavachanges.args="..."` | Use the generic bridge goal for commands without a dedicated goal |
 | `mvn -q -DskipTests compile exec:java` | Build the CLI and run the Java entrypoint |
 | `-Dexec.args="..."` | Pass `javachanges` CLI arguments |
-| `--directory /path/to/repo` | Target Maven repository root or a subdirectory inside it |
+| `--directory /path/to/repo` | Target Maven or Gradle repository root, or a subdirectory inside it |
 
 Plugin note:
 
@@ -63,6 +63,16 @@ mvn javachanges:plan -Djavachanges.apply=true
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
 mvn javachanges:manifest-field -Djavachanges.field=releaseVersion
 ```
+
+Gradle repositories should use the CLI jar form:
+
+```bash
+mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__ -DoutputDirectory=.javachanges
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar status --directory /path/to/gradle-repo
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar plan --directory /path/to/gradle-repo --apply true
+```
+
+Gradle detection requires `gradle.properties` with `version` or `revision`, plus `settings.gradle(.kts)` or `build.gradle(.kts)`.
 
 > Note: some commands do not require a repository, for example `release-version-from-tag`.
 
@@ -132,7 +142,7 @@ Rules of thumb:
 | `add` | Create a changeset | `.changesets/*.md` |
 | `status` | Show the current release plan | No |
 | `plan` | Render the current release plan | No |
-| `plan --apply true` | Apply the plan and consume changesets | `pom.xml`, `CHANGELOG.md`, `.changesets/release-plan.json`, `.changesets/release-plan.md` |
+| `plan --apply true` | Apply the plan and consume changesets | `pom.xml` or `gradle.properties`, `CHANGELOG.md`, `.changesets/release-plan.json`, `.changesets/release-plan.md` |
 | `manifest-field` | Read a field from the generated release manifest | No |
 | `release-notes` | Generate release notes for a tag | target file |
 | `ensure-gpg-public-key` | Publish and verify the current signing public key on supported keyservers | No |
@@ -157,7 +167,7 @@ Behavior:
 | --- | --- |
 | `--summary` | First line of the generated markdown body |
 | `--release` | `patch`, `minor`, or `major` |
-| `--modules` | Comma-separated Maven artifactIds or `all` |
+| `--modules` | Comma-separated Maven artifactIds, Gradle project names, or `all` |
 | `--body` | Optional extra markdown content after the summary |
 
 Generated file shape:
@@ -212,7 +222,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo
 
 When `--apply true` is used, `javachanges`:
 
-1. updates the root `<revision>`
+1. updates the root Maven `<revision>` or Gradle `gradle.properties` version
 2. prepends a new section to `CHANGELOG.md`
 3. writes `.changesets/release-plan.json`
 4. writes `.changesets/release-plan.md`
@@ -243,10 +253,13 @@ Common fields:
 | `version` | Print the current root revision | `version --directory /path/to/repo` |
 | `release-version-from-tag` | Extract `1.2.3` from `v1.2.3` or `core/v1.2.3` | `release-version-from-tag --tag v1.2.3` |
 | `release-module-from-tag` | Extract the package/module name from `core/v1.2.3` | `release-module-from-tag --tag core/v1.2.3` |
-| `assert-module` | Validate a Maven artifactId exists | `assert-module --directory /path/to/repo --module core` |
+| `assert-module` | Validate a Maven artifactId or Gradle project name exists | `assert-module --directory /path/to/repo --module core` |
 | `assert-snapshot` | Ensure the current revision is a snapshot | `assert-snapshot --directory /path/to/repo` |
 | `assert-release-tag` | Ensure a tag matches the current repository version | `assert-release-tag --directory /path/to/repo --tag v1.2.3` |
-| `module-selector-args` | Print Maven `-pl` selector args | `module-selector-args --directory /path/to/repo --module core` |
+| `module-selector-args` | Print build-tool selector args | `module-selector-args --directory /path/to/repo --module core` |
+
+For Maven repositories, `module-selector-args --module core` prints Maven `-pl :core -am`.
+For Gradle repositories, it prints the Gradle project selector `:core`.
 
 ## 7. Environment And Settings Commands
 
@@ -408,7 +421,7 @@ Important flags:
 | `--snapshot-version-mode` | Snapshot version strategy: `stamped` or `plain` |
 | `--snapshot-build-stamp` | Explicit snapshot publish stamp, overriding the default UTC timestamp + git short sha |
 | `--tag` | Target release tag |
-| `--module` | Restrict to one Maven artifactId |
+| `--module` | Restrict to one Maven artifactId or Gradle project name |
 | `--allow-dirty` | Allow a dirty working tree |
 | `--execute true` | Run the final publish command instead of only printing it |
 

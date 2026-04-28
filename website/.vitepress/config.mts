@@ -72,6 +72,8 @@ const guideItems: DefaultTheme.SidebarItem[] = [
     items: [
       { text: 'Overview', link: '/' },
       { text: 'Getting Started', link: '/getting-started' },
+      { text: 'Maven Usage Guide', link: '/maven-guide' },
+      { text: 'Gradle Usage Guide', link: '/gradle-guide' },
       { text: 'Development Guide', link: '/development-guide' },
     ],
   },
@@ -117,6 +119,8 @@ const zhGuideItems: DefaultTheme.SidebarItem[] = [
     items: [
       { text: '概览', link: '/zh-CN/' },
       { text: '快速开始', link: '/zh-CN/getting-started' },
+      { text: 'Maven 使用指南', link: '/zh-CN/maven-guide' },
+      { text: 'Gradle 使用指南', link: '/zh-CN/gradle-guide' },
       { text: '开发指南', link: '/zh-CN/development-guide' },
     ],
   },
@@ -259,7 +263,7 @@ export default defineConfigWithTheme<DefaultTheme.Config>({
   rewrites: zhRewrites,
   title: 'javachanges',
   titleTemplate: ':title | javachanges',
-  description: 'Changesets-style release planning for Maven repositories.',
+  description: 'Changesets-style release planning for Maven and Gradle repositories.',
   head: [
     ['link', { rel: 'icon', href: '/mark.svg' }],
     ['meta', { name: 'theme-color', content: '#b54a1d' }],
@@ -269,13 +273,13 @@ export default defineConfigWithTheme<DefaultTheme.Config>({
       label: 'English',
       lang: 'en-US',
       title: 'javachanges',
-      description: 'Changesets-style release planning for Maven repositories.',
+      description: 'Changesets-style release planning for Maven and Gradle repositories.',
     },
     'zh-CN': {
       label: '简体中文',
       lang: 'zh-CN',
       title: 'javachanges',
-      description: '面向 Maven 仓库的 Changesets 风格发布规划工具。',
+      description: '面向 Maven 和 Gradle 仓库的 Changesets 风格发布规划工具。',
       themeConfig: zhThemeConfig,
     },
   },

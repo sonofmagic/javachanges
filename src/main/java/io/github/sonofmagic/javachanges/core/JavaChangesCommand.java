@@ -14,7 +14,7 @@ import java.nio.file.Path;
 @Command(
     name = "javachanges",
     mixinStandardHelpOptions = true,
-    description = "Java Changesets for Maven repositories and release-plan workflows.",
+    description = "Java Changesets for Maven and Gradle repositories and release-plan workflows.",
     subcommands = {
         AddCommand.class,
         StatusCommand.class,

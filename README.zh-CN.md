@@ -2,7 +2,7 @@
 
 [English](./README.md) | [简体中文](./README.zh-CN.md)
 
-`javachanges` 是一个轻量的 Java CLI，为 Maven Monorepo 和单模块 Maven 仓库提供类似 Changesets 的发布规划工作流。
+`javachanges` 是一个轻量的 Java CLI，为 Maven 和 Gradle 仓库提供类似 Changesets 的发布规划工作流。
 
 文档站点：`https://javachanges.icebreaker.top`
 
@@ -22,7 +22,7 @@
 
 - changeset 的添加与校验
 - release plan 的生成
-- 根 `revision` 的推进
+- 根 Maven `revision` 或 Gradle `gradle.properties` 版本的推进
 - changelog 和 release notes 的生成
 - 基于环境变量的 Maven settings 生成
 - 发布前检查和发布辅助
@@ -36,8 +36,8 @@
 - Java 8+
 - Maven 3.8+
 - 一个 git 仓库
-- 一个带根 `pom.xml` 的 Maven 仓库
-- 根 `pom.xml` 中要么有 `<modules>`，要么是单模块根 artifact
+- 一个带根 `pom.xml` 的 Maven 仓库，或一个带 `gradle.properties` 的 Gradle 仓库
+- Maven 根 `pom.xml` 中有 `<modules>`、Gradle `settings.gradle(.kts)` 中有 `include(...)`，或是单模块根 artifact / project
 
 目标仓库里的推荐用法：先声明 Maven plugin，再直接执行最短 goal：
 
@@ -61,7 +61,7 @@ mvn javachanges:run -Djavachanges.args="release-notes --tag v1.2.3"
 
 这个 plugin 会默认把 `--directory` 设成当前 Maven 项目的 `${project.basedir}`，所以如果你就是在目标仓库里执行，通常不需要再手动写 `--directory`。通用的 `run` goal 也仍然保留，方便覆盖还没有拆成独立 goal 的命令。
 
-如果你暂时不能修改目标仓库 `pom.xml`，再使用正式发布版 CLI：
+如果你暂时不能修改目标仓库 `pom.xml`，或者目标仓库使用 Gradle，再使用正式发布版 CLI：
 
 ```bash
 mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:<released-version> -DoutputDirectory=.javachanges
@@ -123,6 +123,10 @@ java -jar .javachanges/javachanges-<released-version>.jar plan --directory /path
 
 如果你要开发这个仓库本身，请看 [Development Guide](docs/development-guide.md)。
 
+Maven 仓库请看 [Maven 使用指南](docs/maven-guide.zh-CN.md)。最短规则是：把根版本维护在 `<revision>` 属性中，日常命令优先使用 Maven plugin，不能修改目标 `pom.xml` 时再使用正式发布版 CLI jar。
+
+Gradle 仓库请看 [Gradle 使用指南](docs/gradle-guide.zh-CN.md)。最短规则是：在 `gradle.properties` 中维护 `version=...-SNAPSHOT`，在 `settings.gradle(.kts)` 中声明 projects，并直接运行正式发布版 CLI jar。
+
 ## Changeset 格式
 
 `javachanges` 现在默认使用与 Node.js Changesets 相同的核心 Markdown 结构：
@@ -148,14 +152,14 @@ Improve CLI parsing and release planning.
 
 它的含义是：
 
-- frontmatter 里的每个 key 都是一个 Maven artifactId
+- frontmatter 里的每个 key 都是一个 Maven artifactId 或 Gradle project name
 - 每个 value 都是这个模块对应的语义化版本升级级别：`patch`、`minor`、`major`
 - Markdown 正文就是面向用户的变更说明与补充备注
 
 默认行为：
 
 - `javachanges add` 默认会生成这种官方 package-map 风格
-- 如果使用 `--modules all`，会为当前仓库检测到的所有 Maven artifactId 写入对应条目
+- 如果使用 `--modules all`，会为当前仓库检测到的所有 Maven artifactId 或 Gradle project name 写入对应条目
 - 正文第一条非空行会被复用为 `status`、release PR、changelog 和 release notes 里的 summary
 - changelog 仍然按聚合后的 release level 分成 `major`、`minor`、`patch`
 
@@ -187,10 +191,10 @@ summary: automate javachanges self-release publishing via GitHub Actions
 
 字段说明：
 
-- `"artifactId"`
+- `"artifactId"` / `"projectName"`
   新格式必填。
-  每个 frontmatter key 都是一个 Maven artifactId，通常建议像官方 Changesets 一样加双引号。
-  对于单模块仓库，一般就是根 artifactId。
+  每个 frontmatter key 都是一个 Maven artifactId 或 Gradle project name，通常建议像官方 Changesets 一样加双引号。
+  对于单模块仓库，一般就是根 artifactId 或 root project name。
   对于 monorepo，则为每个受影响模块写一条。
 - `patch` / `minor` / `major`
   每个 artifactId 对应的必填值。
@@ -254,6 +258,10 @@ GitLab 相关辅助：
 - [Overview (zh-CN)](docs/index.zh-CN.md)
 - [Getting Started](docs/getting-started.md)
 - [Getting Started (zh-CN)](docs/getting-started.zh-CN.md)
+- [Maven 使用指南](docs/maven-guide.md)
+- [Maven 使用指南（zh-CN）](docs/maven-guide.zh-CN.md)
+- [Gradle 使用指南](docs/gradle-guide.md)
+- [Gradle 使用指南（zh-CN）](docs/gradle-guide.zh-CN.md)
 - [Examples Guide 使用指南](docs/examples-guide.md)
 - [Examples Guide 使用指南（zh-CN）](docs/examples-guide.zh-CN.md)
 - [命令实战手册](docs/command-cookbook.md)

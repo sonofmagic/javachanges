@@ -1,5 +1,5 @@
 ---
-description: Diagnose the most common javachanges setup, CI, Maven, and Maven Central publishing failures.
+description: Diagnose the most common javachanges setup, CI, Maven, Gradle, and Maven Central publishing failures.
 ---
 
 # javachanges Troubleshooting Guide
@@ -7,7 +7,7 @@ description: Diagnose the most common javachanges setup, CI, Maven, and Maven Ce
 
 ## 1. Overview
 
-This guide collects the most common problems people hit when adopting `javachanges` in local development, GitHub Actions, GitLab CI/CD, and Maven publishing.
+This guide collects the most common problems people hit when adopting `javachanges` in local development, GitHub Actions, GitLab CI/CD, Maven repositories, Gradle repositories, and Maven publishing.
 
 Use it when:
 
@@ -65,6 +65,43 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo
 | Symptom | Cause | Fix |
 | --- | --- | --- |
 | `manifest-field` cannot read a field | no applied release plan exists yet | apply the plan first, then read the field |
+
+### 2.5 Gradle repository root is not detected
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| `Cannot find repository root` in a Gradle repository | the repository does not have `gradle.properties`, or it has no Gradle settings/build file at the root | add `gradle.properties` plus `settings.gradle(.kts)` or `build.gradle(.kts)` |
+
+Minimum Gradle files:
+
+```text
+gradle.properties
+settings.gradle.kts
+build.gradle.kts
+```
+
+`gradle.properties` must contain one supported version key:
+
+```properties
+version=1.0.0-SNAPSHOT
+```
+
+### 2.6 Gradle changeset uses the wrong package key
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| `Unknown module` for a Gradle multi-project build | the changeset key does not match the final segment of an `include(...)` project path | use `api` for `:api`, `core` for `:core`, and `cli` for `:tools:cli` |
+
+Check `settings.gradle(.kts)` and align the changeset frontmatter:
+
+```md
+---
+"api": minor
+"core": patch
+---
+
+Improve Gradle release planning.
+```
 
 ## 3. Java and Maven environment problems
 
@@ -128,6 +165,18 @@ Recommended direction:
 - good: `./mvnw -q -DskipTests compile exec:java -Dexec.args="version --directory $PWD"`
 - bad: define a prefix ending in bare `-Dexec.args=` and append `"version --directory ..."` later
 
+### 3.6 Gradle users are calling the Maven plugin by mistake
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| Gradle repository examples fail because `mvn javachanges:...` is unavailable | the Maven plugin goal syntax only works inside Maven | download the CLI jar and run `java -jar .javachanges/javachanges-<version>.jar ...` |
+
+Gradle command shape:
+
+```bash
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar status --directory .
+```
+
 ## 4. GitHub Actions problems
 
 ### 4.1 `sync-vars` or `audit-vars` says values are missing
@@ -148,7 +197,7 @@ Suggested order:
 
 | Symptom | Cause | Fix |
 | --- | --- | --- |
-| the release branch includes extra noise | the workflow stages too much or runs additional generators | limit the commit scope to `pom.xml`, `CHANGELOG.md`, and `.changesets` |
+| the release branch includes extra noise | the workflow stages too much or runs additional generators | limit the commit scope to `pom.xml` or `gradle.properties`, `CHANGELOG.md`, and `.changesets` |
 
 ### 4.3 Maven downloads still happen even with cache enabled
 
@@ -200,6 +249,19 @@ Minimum shared variables:
 | `MAVEN_SNAPSHOT_REPOSITORY_ID` |
 | `MAVEN_REPOSITORY_USERNAME` |
 | `MAVEN_REPOSITORY_PASSWORD` |
+
+### 6.1.1 Gradle publish should not use `publish`
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| a Gradle repository sees Maven deploy output from `publish` | `preflight` and `publish` are Maven-specific helpers | use `manifest-field` to get the release version, then run `./gradlew publish` |
+
+Gradle release handoff:
+
+```bash
+RELEASE_VERSION="$(java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar manifest-field --directory . --field releaseVersion)"
+./gradlew publish -Pversion="$RELEASE_VERSION"
+```
 
 ### 6.2 Publish fails on a dirty worktree
 
@@ -273,6 +335,7 @@ If you use the official package-map changeset format, `type` is not the release 
 | --- | --- |
 | Java version | `java -version` |
 | Maven version | `mvn -v` |
+| Gradle version | `./gradlew -v` |
 | Pending changesets | `status` |
 | Applied manifest exists | `.changesets/release-plan.json` |
 | CI variables look correct | `render-vars` / `audit-vars` |
@@ -285,6 +348,7 @@ If you use the official package-map changeset format, `type` is not the release 
 | --- | --- |
 | Local setup | [Development Guide](./development-guide.md) |
 | Example repository walkthrough | [Examples Guide](./examples-guide.md) |
+| Gradle setup | [Gradle Usage Guide](./gradle-guide.md) |
 | Full CLI command list | [CLI Reference](./cli-reference.md) |
 | Generated manifest fields | [Release Plan Manifest](./release-plan-manifest.md) |
 | GitHub Actions automation | [GitHub Actions Usage Guide](./github-actions-guide.md) |

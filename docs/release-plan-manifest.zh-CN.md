@@ -55,7 +55,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
 | `releaseVersion` | string | 不带 `v` 前缀的正式发布版本 |
-| `nextSnapshotVersion` | string | 应用计划后写回 `pom.xml` 的下一个根快照版本 |
+| `nextSnapshotVersion` | string | 应用计划后写回 `pom.xml` 或 `gradle.properties` 的下一个根快照版本 |
 | `releaseLevel` | string | 当前所有待发布 changeset 聚合后的发布类型 |
 | `generatedAt` | string | manifest 生成时间 |
 | `changesets` | array | 本次被消费的 changeset 列表 |
@@ -68,7 +68,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo
 | `release` | string | 这个 changeset 声明的发布类型 |
 | `type` | string | 为兼容旧格式保留的字段，常见值是 `other`，新集成里可以忽略 |
 | `summary` | string | 从正文第一行或旧 frontmatter 派生出的用户可见摘要 |
-| `modules` | array | 这个 changeset 影响到的 Maven artifactId |
+| `modules` | array | 这个 changeset 影响到的 Maven artifactId 或 Gradle project name |
 
 > **注意**：当前 JSON 字段名仍然叫 `modules`，这是为了兼容现有实现；用户可见文档层面现在更推荐使用 `packages` 这个术语。
 >
@@ -109,6 +109,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /pa
 - 读取 `releaseVersion` 拼 PR 标题
 - 创建最终发布 tag 时读取 `releaseVersion`
 - 把 `.changesets/release-plan.md` 直接作为 PR 正文
+- Gradle 仓库可以把 `releaseVersion` 传给 `./gradlew publish -Pversion=...`
 
 ### 5.3 GitLab CI/CD
 
@@ -124,7 +125,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /pa
 
 | 文件 | 原因 |
 | --- | --- |
-| `pom.xml` | 根 `<revision>` 推进到下一个 snapshot |
+| `pom.xml` 或 `gradle.properties` | 根 Maven `<revision>` 或 Gradle 版本推进到下一个 snapshot |
 | `CHANGELOG.md` | 插入新的 release section |
 | `.changesets/release-plan.json` | 机器可读的发布数据 |
 | `.changesets/release-plan.md` | 给人看的 release PR 正文 |
@@ -138,7 +139,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /pa
 | `manifest-field` 失败 | 还没执行 `plan --apply true` | 先生成并应用 release plan |
 | CI 里一直不打 tag | `release-plan.json` 没变化 | 确认新的 plan 已经被应用并提交 |
 | release PR 正文不是最新 | `.changesets/release-plan.md` 没重新生成 | 重跑 release-plan job |
-| CI 里的版本读取错了 | workflow 读的是 `pom.xml` 而不是 manifest | 改成 `manifest-field --field releaseVersion` |
+| CI 里的版本读取错了 | workflow 读的是 `pom.xml` 或 `gradle.properties` 而不是 manifest | 改成 `manifest-field --field releaseVersion` |
 
 ## 8. 相关文档
 
@@ -146,5 +147,6 @@ mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /pa
 | --- | --- |
 | 读取 manifest 字段的命令 | [CLI 命令参考](./cli-reference.md) |
 | 首次使用 `plan --apply true` | [Getting Started](./getting-started.md) |
+| Gradle release handoff | [Gradle 使用指南](./gradle-guide.md) |
 | GitHub Actions 如何消费 manifest | [GitHub Actions Usage Guide](./github-actions-guide.md) |
 | GitLab CI/CD 如何消费 manifest | [GitLab CI/CD Usage Guide](./gitlab-ci-guide.md) |

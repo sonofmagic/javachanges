@@ -1,6 +1,6 @@
 package io.github.sonofmagic.javachanges.core.github;
 
-import io.github.sonofmagic.javachanges.core.ChangesetPaths;
+import io.github.sonofmagic.javachanges.core.BuildModelSupport;
 import io.github.sonofmagic.javachanges.core.ReleaseAutomationSupport;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import io.github.sonofmagic.javachanges.core.automation.AbstractReleaseAutomationSupport;
@@ -62,7 +62,7 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
         runtime.configureBotIdentity();
         runtime.runGit("switch", "-C", releaseBranch);
         RepoFiles.applyPlan(repoRoot, plan);
-        runtime.runGit("add", "pom.xml", "CHANGELOG.md", ChangesetPaths.DIR);
+        runtime.runGit(concat("add", BuildModelSupport.releasePlanGitAddPaths(repoRoot)));
         if (runtime.hasNoStagedChanges()) {
             report.skipped = true;
             report.reason = "No staged release plan changes.";
@@ -88,6 +88,13 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
         runtime.updatePullRequest(request.githubRepo, prNumber, title,
             releasePlanMarkdownFile());
         AutomationJsonSupport.print(out, textOutput, report, "Updated GitHub PR #" + prNumber);
+    }
+
+    private static String[] concat(String first, String[] rest) {
+        String[] values = new String[rest.length + 1];
+        values[0] = first;
+        System.arraycopy(rest, 0, values, 1, rest.length);
+        return values;
     }
 
     public void tagFromReleasePlan(GithubTagRequest request) throws IOException, InterruptedException {

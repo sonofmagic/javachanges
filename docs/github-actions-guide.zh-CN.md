@@ -9,7 +9,7 @@
 2. release plan 生成
 3. GitHub Actions variables / secrets 管理
 4. 发布前检查与正式发布
-5. Maven 依赖缓存
+5. Maven / Gradle 依赖缓存
 
 本文所有示例都使用直接的 CLI 命令，例如：
 
@@ -36,6 +36,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory $PWD"
 | 回读审计 GitHub Actions variables / secrets | `audit-vars --platform github` |
 | 做发布前检查 | `preflight` |
 | 执行真正的 Maven deploy | `publish --execute true` |
+| Gradle 发布 | 读取 manifest 后执行 `./gradlew publish` |
 | 直接生成 release notes | `release-notes --tag vX.Y.Z --output target/release-notes.md` |
 
 ## 3. 推荐的仓库文件布局
@@ -384,7 +385,45 @@ jobs:
 > **注意**：这两条通用 `publish` 流程都依赖 `env/release.env.example` 里的 release / snapshot 仓库变量。  
 > 如果你要做的是 Maven Central 发布，请结合阅读 [Publish To Maven Central](./publish-to-maven-central.md) 和 [GitHub Actions Release Flow](./github-actions-release.md)。
 
-## 6. GitHub Actions 里的 Maven Cache 行为
+### 5.6 Gradle release-plan workflow
+
+Gradle 仓库使用正式版 CLI jar，并开启 Gradle cache。release-plan 命令不变，只是构建和调用方式不同：
+
+```yaml
+- uses: actions/setup-java@v5
+  with:
+    distribution: corretto
+    java-version: '17'
+    cache: gradle
+
+- name: Verify Gradle build
+  run: ./gradlew build
+
+- name: Download javachanges
+  run: >
+    mvn -q dependency:copy
+    -Dartifact=io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__
+    -DoutputDirectory=.javachanges
+
+- name: Create or update release PR
+  env:
+    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  run: >
+    java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar
+    github-release-plan
+    --directory "$GITHUB_WORKSPACE"
+    --github-repo "$GITHUB_REPOSITORY"
+    --execute true
+```
+
+Gradle artifact 发布时，把 manifest 交给 Gradle：
+
+```bash
+RELEASE_VERSION="$(java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar manifest-field --directory "$GITHUB_WORKSPACE" --field releaseVersion)"
+./gradlew publish -Pversion="$RELEASE_VERSION"
+```
+
+## 6. GitHub Actions 里的 Maven / Gradle Cache 行为
 
 推荐配置如下：
 

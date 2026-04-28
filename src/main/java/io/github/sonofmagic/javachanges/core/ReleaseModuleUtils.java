@@ -15,6 +15,10 @@ public final class ReleaseModuleUtils {
     }
 
     public static List<String> detectKnownModules(Path repoRoot) {
+        return BuildModelSupport.detectKnownModules(repoRoot);
+    }
+
+    static List<String> detectMavenModules(Path repoRoot) {
         try {
             Path pomPath = repoRoot.resolve("pom.xml");
             if (!java.nio.file.Files.exists(pomPath)) {
@@ -59,6 +63,10 @@ public final class ReleaseModuleUtils {
             return "";
         }
         assertKnownModule(repoRoot, module);
+        BuildModelSupport.BuildModel model = BuildModelSupport.detect(repoRoot);
+        if (model != null && model.type == BuildModelSupport.BuildType.GRADLE) {
+            return ":" + module;
+        }
         return "-pl :" + module + " -am";
     }
 

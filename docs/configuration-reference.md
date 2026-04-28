@@ -26,7 +26,7 @@ Use it when you need one place to look up:
 | Release env template | `env/release.env.example` | Maintainers |
 | Platform variables and secrets | GitHub Actions / GitLab CI/CD settings | Repository admins |
 | Maven publish credentials | local env, CI secrets, generated `settings.xml` | Release maintainers |
-| Repository version model | root `pom.xml` `<revision>` | Maintainers |
+| Repository version model | Maven root `pom.xml` `<revision>` or Gradle `gradle.properties` `version` | Maintainers |
 
 ## 3. Changeset File Configuration
 
@@ -57,7 +57,7 @@ Rules:
 
 | Part | Meaning |
 | --- | --- |
-| frontmatter key | Maven artifactId |
+| frontmatter key | Maven artifactId or Gradle project name |
 | frontmatter value | `patch`, `minor`, or `major` |
 | markdown body | user-facing summary and notes |
 
@@ -134,7 +134,7 @@ Compatibility status:
 | --- | --- | --- |
 | `--summary` | First line of the generated markdown body | interactive prompt if omitted |
 | `--release` | Release type to write for each selected package | interactive prompt if omitted |
-| `--modules` | Comma-separated Maven artifactIds or `all` | `all` |
+| `--modules` | Comma-separated Maven artifactIds, Gradle project names, or `all` | `all` |
 | `--body` | Extra markdown body after the summary | empty |
 | `--type` | Legacy metadata only | omitted |
 
@@ -153,7 +153,7 @@ Compatibility status:
 | `--snapshot-version-mode` | Snapshot version strategy: `stamped` or `plain` | config value, then `stamped` |
 | `--snapshot-build-stamp` | Explicit snapshot publish stamp | auto-generated |
 | `--tag` | Publish a release tag like `v1.2.3` | none |
-| `--module` | Restrict publish to one Maven artifactId | all packages |
+| `--module` | Restrict publish to one Maven artifactId or Gradle project name | all packages |
 | `--allow-dirty` | Skip dirty worktree protection | `false` |
 | `--execute` | Run the final publish command instead of only printing it | `false` |
 
@@ -283,11 +283,11 @@ These are expected by the GitLab release automation:
 | `GITLAB_RELEASE_BOT_USERNAME` | Project variable you provide |
 | `GITLAB_RELEASE_BOT_TOKEN` | Project variable you provide |
 
-## 8. Maven Publish Runtime Configuration
+## 8. Repository Version And Publish Configuration
 
 ### 8.1 Repository version model
 
-Recommended root `pom.xml` pattern:
+Recommended Maven root `pom.xml` pattern:
 
 ```xml
 <version>${revision}</version>
@@ -298,6 +298,14 @@ And the mutable version field:
 ```xml
 <revision>1.2.3-SNAPSHOT</revision>
 ```
+
+Recommended Gradle `gradle.properties` pattern:
+
+```properties
+version=1.2.3-SNAPSHOT
+```
+
+`javachanges` also accepts `revision=1.2.3-SNAPSHOT` in `gradle.properties`, but `version` is preferred for Gradle builds.
 
 ### 8.2 Local Maven repository override
 
@@ -330,6 +338,12 @@ Important note:
 - Maven or Nexus snapshot repositories still typically store expanded timestamped filenames for uploaded snapshot artifacts
 - that filename expansion is standard repository behavior, not an extra rewrite by `javachanges`
 
+Gradle note:
+
+- `preflight` and `publish` are Maven-specific
+- Gradle builds should use `manifest-field --field releaseVersion` and run `./gradlew publish -Pversion=...`
+- Gradle release planning still writes `gradle.properties`, `CHANGELOG.md`, and `.changesets/release-plan.*`
+
 ## 9. Recommended Defaults By Scenario
 
 ### 9.1 Single-module library
@@ -350,13 +364,23 @@ Important note:
 | release tagging | whole-repo `v1.2.3` unless you intentionally use module tags elsewhere |
 | publish target | all packages, or one `--module` when needed |
 
-### 9.3 Why whole-repo tags are the default for Maven monorepos
+### 9.3 Gradle single-project or multi-project build
 
-`javachanges` intentionally defaults to whole-repo tags such as `v1.2.3` for Maven monorepos.
+| Surface | Recommendation |
+| --- | --- |
+| Version file | `gradle.properties` with `version=...-SNAPSHOT` |
+| Project detection | `settings.gradle(.kts)` `include(...)` entries |
+| Changeset file | one frontmatter entry per affected Gradle project name |
+| `--modules` | pass project names such as `core,api`, or `all` |
+| publish target | Gradle `publish` tasks, using manifest fields as inputs |
+
+### 9.4 Why whole-repo tags are the default for Maven and Gradle monorepos
+
+`javachanges` intentionally defaults to whole-repo tags such as `v1.2.3` for Java monorepos.
 
 Reasoning:
 
-- many Maven monorepos publish a coordinated release train where multiple artifacts move to the same version together
+- many Maven and Gradle monorepos publish a coordinated release train where multiple artifacts move to the same version together
 - the release PR, changelog, release notes, signing, and Maven Central deploy steps are commonly handled as one repository-level release operation
 - Java consumers often reason about compatibility as "this repository release" or "this platform version", not only as isolated package versions
 

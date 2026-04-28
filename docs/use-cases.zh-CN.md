@@ -9,6 +9,16 @@
 
 即使仓库里只有一个可发布的 Maven artifact，也可以用 `javachanges` 保持文件驱动的发布工作流。
 
+## Gradle 多项目构建
+
+用 `javachanges` 管理 `include(...)` 声明的多个 Gradle project，推进 `gradle.properties` 版本，并在 Gradle 发布前生成 release-plan manifest。
+
+配置细节见 [Gradle 使用指南](./gradle-guide.md)。
+
+## 单项目 Gradle 库或应用
+
+即使 Gradle 仓库只有一个 root project，也可以用 `javachanges` 获得可审阅的 release notes、changelog 和 CI tag 流程。
+
 ## 内部平台发布自动化
 
 使用 `write-settings`、`render-vars`、`doctor-platform` 和 `audit-vars`，在多个仓库之间统一 CI 变量和 Maven 凭据配置。
@@ -24,3 +34,5 @@
 ## 更安全的发布 dry-run
 
 使用 `preflight` 和 `publish --execute false`，在真正触达目标仓库之前先预览准确的 Maven deploy 命令和生成的 settings 文件。
+
+Gradle artifacts 请把 release-plan manifest 作为 `./gradlew publish` 的输入，发布逻辑仍然保留在 Gradle 构建里。

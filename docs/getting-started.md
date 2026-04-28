@@ -1,5 +1,5 @@
 ---
-description: Install and use javachanges as a Maven plugin or released CLI for day-to-day release planning.
+description: Install and use javachanges as a Maven plugin or released CLI for day-to-day Maven and Gradle release planning.
 ---
 
 # Getting Started
@@ -8,13 +8,13 @@ description: Install and use javachanges as a Maven plugin or released CLI for d
 
 ```mermaid
 flowchart TD
-  A[Add plugin to pom.xml] --> B[mvn javachanges:add]
-  B --> C[mvn javachanges:status]
-  C --> D[mvn javachanges:plan]
+  A[Choose Maven plugin or Gradle CLI jar] --> B[Create changeset]
+  B --> C[Inspect status]
+  C --> D[Render plan]
   D --> E{Ready to apply?}
-  E -- Yes --> F[mvn javachanges:plan -Djavachanges.apply=true]
+  E -- Yes --> F[Apply plan]
   E -- No --> C
-  F --> G[Publish with CI or Maven Central flow]
+  F --> G[Publish with CI, Maven, or Gradle flow]
 ```
 
 ## 1. Recommended: use the Maven plugin inside the target repository
@@ -52,7 +52,48 @@ Notes:
 - the plugin defaults `--directory` to the current Maven project's `${project.basedir}`
 - the generic `run` goal still exists for commands that do not have a dedicated goal yet
 
-## 2. Alternative: use the released CLI when you cannot edit `pom.xml`
+For the complete Maven workflow, see [Maven Usage Guide](./maven-guide.md).
+
+## 2. Use the released CLI for Gradle
+
+Gradle repositories should call the CLI jar directly.
+
+Minimum Gradle shape:
+
+```text
+your-gradle-repo/
+├── .changesets/
+├── CHANGELOG.md
+├── build.gradle.kts
+├── gradle.properties
+└── settings.gradle.kts
+```
+
+`gradle.properties`:
+
+```properties
+version=1.0.0-SNAPSHOT
+```
+
+`settings.gradle.kts`:
+
+```kotlin
+rootProject.name = "your-gradle-repo"
+include(":core", ":api")
+```
+
+Download and run:
+
+```bash
+mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__ -DoutputDirectory=.javachanges
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar status --directory .
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar add --directory . --summary "add release notes command" --release minor --modules core
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar plan --directory . --apply true
+```
+
+For the complete Gradle workflow, see [Gradle Usage Guide](./gradle-guide.md).
+
+## 3. Alternative: use the released CLI for temporary Maven usage
 
 Download the released jar:
 
@@ -76,10 +117,10 @@ java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar pl
 
 Notes:
 
-- prefer the Maven plugin for day-to-day repository usage because it keeps commands short and auto-detects the current project directory
-- keep the released CLI for temporary usage against repositories where you cannot add the plugin yet
+- prefer the Maven plugin for Maven repositories because it keeps commands short and auto-detects the current project directory
+- use the released CLI for Gradle repositories or for temporary usage against Maven repositories where you cannot add the plugin yet
 
-## 3. Working on the current `main` branch
+## 4. Working on the current `main` branch
 
 ```bash
 mvn -q -DskipTests install
@@ -94,22 +135,27 @@ Notes:
 - dedicated goals now exist for `status`, `plan`, `add`, and `manifest-field`
 - `javachanges:run` is still available with `-Djavachanges.args="..."`
 
-## 4. Prepare a target repository
+## 5. Prepare a target repository
 
 Your target repository should have:
 
 - git initialized
-- a root `pom.xml`
-- a `<revision>` property
+- a root `pom.xml` with a `<revision>` property, or a Gradle `gradle.properties` with `version` or `revision`
 - a `CHANGELOG.md` file, or let `javachanges` create/update it during plan application
-- either `<modules>` in the root pom, or a single root artifact
+- either Maven `<modules>`, Gradle `include(...)` entries in `settings.gradle(.kts)`, or a single root artifact/project
 
-## 5. Create a changeset
+## 6. Create a changeset
 
 Monorepo example:
 
 ```bash
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor -Djavachanges.modules=core
+```
+
+Gradle CLI example:
+
+```bash
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar add --directory . --summary "add release notes command" --release minor --modules core
 ```
 
 Single-module example:
@@ -163,26 +209,38 @@ Notes:
 - legacy `release` / `modules` / `summary` frontmatter is still read for compatibility, but new files should use the package-map form
 - changelog sections are grouped by the aggregated release level: `major`, `minor`, `patch`
 
-## 6. Inspect the plan
+## 7. Inspect the plan
 
 ```bash
 mvn javachanges:plan
 ```
 
-## 7. Apply the plan
+Gradle CLI:
+
+```bash
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar plan --directory .
+```
+
+## 8. Apply the plan
 
 ```bash
 mvn javachanges:plan -Djavachanges.apply=true
 ```
 
+Gradle CLI:
+
+```bash
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar plan --directory . --apply true
+```
+
 That updates:
 
-- the root `revision`
+- the root Maven `revision` or Gradle `gradle.properties` version
 - `CHANGELOG.md`
 - `.changesets/release-plan.json`
 - `.changesets/release-plan.md`
 
-## 8. Running from source during development
+## 9. Running from source during development
 
 If you are working on the `javachanges` repository itself, use the source-driven development flow instead:
 

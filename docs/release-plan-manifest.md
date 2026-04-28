@@ -67,7 +67,7 @@ Field reference:
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `releaseVersion` | string | Final release version without the leading `v` |
-| `nextSnapshotVersion` | string | Root version written back into `pom.xml` after plan application |
+| `nextSnapshotVersion` | string | Root version written back into `pom.xml` or `gradle.properties` after plan application |
 | `releaseLevel` | string | Aggregated release type across all pending changesets |
 | `tagStrategy` | string | `whole-repo` or `per-module` |
 | `tags` | array | Planned tags derived from the selected tag strategy |
@@ -83,7 +83,7 @@ Changeset item fields:
 | `release` | string | Declared release type for that changeset |
 | `type` | string | Legacy compatibility field, often `other`, safe to ignore in new integrations |
 | `summary` | string | User-facing summary derived from the changeset body or legacy frontmatter |
-| `modules` | array | Maven artifactIds affected by that changeset |
+| `modules` | array | Maven artifactIds or Gradle project names affected by that changeset |
 
 Release target item fields:
 
@@ -131,6 +131,7 @@ Typical uses:
 - read `releaseVersion` for the PR title
 - read `tags` or `releaseTargets` when creating the final release tag set
 - attach `.changesets/release-plan.md` as the PR body
+- for Gradle repositories, pass `releaseVersion` to `./gradlew publish -Pversion=...` if your publishing job needs an explicit release version
 
 ### 5.3 GitLab CI/CD
 
@@ -146,7 +147,7 @@ When the manifest is generated, these files are usually updated in the same comm
 
 | File | Why it changes |
 | --- | --- |
-| `pom.xml` | Root `<revision>` advances to the next snapshot |
+| `pom.xml` or `gradle.properties` | Root Maven `<revision>` or Gradle version advances to the next snapshot |
 | `CHANGELOG.md` | A new release section is inserted |
 | `.changesets/release-plan.json` | Machine-readable release data |
 | `.changesets/release-plan.md` | Human-readable release PR body |
@@ -160,7 +161,7 @@ At the same time, the consumed `.changesets/*.md` entries are deleted.
 | `manifest-field` fails | `plan --apply true` has not been run yet | generate and apply the release plan first |
 | No tag is created in CI | `release-plan.json` did not change | confirm a new plan was applied and committed |
 | Release PR body is stale | `.changesets/release-plan.md` was not regenerated | rerun the release-plan job |
-| Version mismatch in CI | workflow reads `pom.xml` instead of the manifest | use `manifest-field --field releaseVersion` |
+| Version mismatch in CI | workflow reads `pom.xml` or `gradle.properties` instead of the manifest | use `manifest-field --field releaseVersion` |
 
 ## 8. Related Guides
 
@@ -168,5 +169,6 @@ At the same time, the consumed `.changesets/*.md` entries are deleted.
 | --- | --- |
 | Command to read manifest fields | [CLI Reference](./cli-reference.md) |
 | First-time use of `plan --apply true` | [Getting Started](./getting-started.md) |
+| Gradle release handoff | [Gradle Usage Guide](./gradle-guide.md) |
 | GitHub workflow consumption | [GitHub Actions Usage Guide](./github-actions-guide.md) |
 | GitLab workflow consumption | [GitLab CI/CD Usage Guide](./gitlab-ci-guide.md) |

@@ -106,7 +106,7 @@ Common fields:
 | Field | Meaning |
 | --- | --- |
 | `releaseVersion` | Release version without the leading `v` |
-| `nextSnapshotVersion` | Next snapshot version written back into `pom.xml` |
+| `nextSnapshotVersion` | Next snapshot version written back into `pom.xml` or `gradle.properties` |
 | `releaseLevel` | Aggregated release level |
 
 ## 5. `.changesets/release-plan.json`
@@ -145,7 +145,7 @@ Field contract:
 | `changesets[].release` | release bump for that changeset |
 | `changesets[].type` | legacy compatibility field, often `other` |
 | `changesets[].summary` | summary derived from the changeset body or legacy metadata |
-| `changesets[].modules` | affected Maven artifactIds |
+| `changesets[].modules` | affected Maven artifactIds or Gradle project names |
 
 Important caveats:
 

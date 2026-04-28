@@ -10,8 +10,8 @@
 下面这些 recipe 默认假设：
 
 - 你是通过 Maven 从源码运行 `javachanges`
-- 目标仓库有根 `pom.xml`
-- 目标仓库使用根 `<revision>` 维护版本
+- 目标仓库有 Maven `pom.xml` 或 Gradle `gradle.properties`
+- Maven 仓库用根 `<revision>` 维护版本，Gradle 仓库用 `gradle.properties` 中的 `version` 或 `revision`
 
 ## 2. 共享准备
 
@@ -142,44 +142,94 @@ mvn -q -DskipTests compile exec:java -Dexec.args="audit-vars --directory $REPO -
 
 当 shell 步骤需要结构化诊断信息，而不是解析对齐表格文本时，用这两个命令更合适。
 
-## 6. Recipe：GitHub Actions release PR 流程
+## 6. Recipe：Gradle release planning
+
+适用于目标仓库是 Gradle 单项目或多项目构建的场景。
+
+### 6.1 最小 Gradle 设置
+
+```properties
+# gradle.properties
+version=1.1.0-SNAPSHOT
+```
+
+```kotlin
+// settings.gradle.kts
+rootProject.name = "sample-gradle-library"
+include(":core", ":api")
+```
+
+### 6.2 使用正式版 CLI jar
+
+```bash
+mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__ -DoutputDirectory=.javachanges
+export JAVACHANGES="java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar"
+```
+
+### 6.3 添加、查看并应用 Gradle changeset
+
+```bash
+$JAVACHANGES add --directory $REPO --summary "add retry metadata" --release minor --modules core,api
+$JAVACHANGES status --directory $REPO
+$JAVACHANGES plan --directory $REPO --apply true
+```
+
+执行 `plan --apply true` 后通常会看到：
+
+- `gradle.properties` 版本推进到下一个 snapshot
+- `CHANGELOG.md` 插入新的发布记录
+- 写出 `.changesets/release-plan.json`
+- 写出 `.changesets/release-plan.md`
+
+### 6.4 交给 Gradle 发布
+
+```bash
+RELEASE_VERSION="$($JAVACHANGES manifest-field --directory $REPO --field releaseVersion)"
+cd "$REPO"
+./gradlew publish -Pversion="$RELEASE_VERSION"
+```
+
+完整 Gradle 流程和限制见 [Gradle 使用指南](./gradle-guide.md)。
+
+## 7. Recipe：GitHub Actions release PR 流程
 
 适用于 `main` 持续累积 `.changesets/*.md`，然后由 workflow 自动创建一份可审阅 release PR 的场景。
 
-### 6.1 本地先 dry-run 一次
+### 7.1 本地先 dry-run 一次
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="status --directory $REPO"
 mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory $REPO --apply true"
 ```
 
-### 6.2 GitHub Actions 最常消费的字段
+### 7.2 GitHub Actions 最常消费的字段
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory $REPO --field releaseVersion"
 mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory $REPO --field releaseLevel"
 ```
 
-### 6.3 workflow 通常只提交这些文件
+### 7.3 workflow 通常只提交这些文件
 
 - `pom.xml`
+- 或 `gradle.properties`
 - `CHANGELOG.md`
 - `.changesets/release-plan.json`
 - `.changesets/release-plan.md`
 
 完整 workflow 示例请看 [GitHub Actions Usage Guide](./github-actions-guide.md) 和 [Examples Guide](./examples-guide.md)。
 
-## 7. Recipe：GitLab release MR 和 tag 流程
+## 8. Recipe：GitLab release MR 和 tag 流程
 
 适用于 GitLab 统一管理 release branch、merge request 和最终 tag 的场景。
 
-### 7.1 创建或更新 release MR
+### 8.1 创建或更新 release MR
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-release-plan --directory $REPO --project-id 12345 --execute true"
 ```
 
-### 7.2 根据 applied plan 创建最终 tag
+### 8.2 根据 applied plan 创建最终 tag
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-tag-from-plan --directory $REPO --before-sha <before-sha> --current-sha <current-sha> --execute true"
@@ -195,23 +245,25 @@ CI 里最常见的映射如下：
 
 完整 pipeline 结构请看 [GitLab CI/CD Usage Guide](./gitlab-ci-guide.md)。
 
-## 8. Recipe：本地安全预演发布
+## 9. Recipe：本地安全预演发布
 
 在真正打开发布执行前，建议先跑这组 dry-run。
 
-### 8.1 校验 snapshot 发布
+这一节是 Maven 专用。Gradle artifact 发布请使用 Gradle `publish` task，并按第 6 节消费 release-plan manifest。
+
+### 9.1 校验 snapshot 发布
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory $REPO --snapshot"
 ```
 
-### 8.2 校验 tag 发布
+### 9.2 校验 tag 发布
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory $REPO --tag v1.2.3"
 ```
 
-### 8.3 渲染真实 publish 命令，但先不执行
+### 9.3 渲染真实 publish 命令，但先不执行
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="publish --directory $REPO --tag v1.2.3"
@@ -219,23 +271,23 @@ mvn -q -DskipTests compile exec:java -Dexec.args="publish --directory $REPO --ta
 
 只有在打印出来的命令、生成的 settings 和凭据都确认正确之后，才加上 `--execute true`。
 
-## 9. Recipe：当前仓库发布到 Maven Central
+## 10. Recipe：当前仓库发布到 Maven Central
 
 这一节只针对 `javachanges` 仓库自身，不适用于所有下游仓库。
 
-### 9.1 校验 Central 发布前置条件
+### 10.1 校验 Central 发布前置条件
 
 ```bash
 mvn -Pcentral-publish -Dgpg.skip=true verify
 ```
 
-### 9.2 执行正式发布
+### 10.2 执行正式发布
 
 ```bash
 mvn -Pcentral-publish clean deploy
 ```
 
-### 9.3 通过 Central 发布当前仓库的本地 snapshot
+### 10.3 通过 Central 发布当前仓库的本地 snapshot
 
 ```bash
 pnpm snapshot:publish:local
@@ -243,23 +295,26 @@ pnpm snapshot:publish:local
 
 如果你需要的不是 Sonatype Central 发布，而是通用 Maven 仓库发布，就看上面的 `preflight` / `publish` recipe。
 
-## 10. 快速决策表
+## 11. 快速决策表
 
 | 目标 | 从这里开始 |
 | --- | --- |
 | 单模块仓库，本地生成 release plan | 第 3 节 |
 | monorepo 包级发布规划 | 第 4 节 |
 | 先准备 CI 变量 | 第 5 节 |
-| GitHub release PR 自动化 | 第 6 节 |
-| GitLab release MR / tag 自动化 | 第 7 节 |
-| 安全预演发布 | 第 8 节 |
-| 当前仓库自身发布到 Central | 第 9 节 |
+| Gradle release planning | 第 6 节 |
+| GitHub release PR 自动化 | 第 7 节 |
+| GitLab release MR / tag 自动化 | 第 8 节 |
+| 安全预演发布 | 第 9 节 |
+| 当前仓库自身发布到 Central | 第 10 节 |
 
-## 11. 相关阅读
+## 12. 相关阅读
 
 | 需求 | 文档 |
 | --- | --- |
 | 完整命令目录 | [CLI Reference](./cli-reference.md) |
+| Maven 命令流程 | [Maven 使用指南](./maven-guide.md) |
+| Gradle 命令流程 | [Gradle 使用指南](./gradle-guide.md) |
 | 示例仓库结构 | [Examples Guide](./examples-guide.md) |
 | 变量总表 | [Configuration Reference](./configuration-reference.md) |
 | applied manifest 字段 | [Release Plan Manifest](./release-plan-manifest.md) |

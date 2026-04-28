@@ -2,7 +2,7 @@
 
 [English](./README.md) | [简体中文](./README.zh-CN.md)
 
-`javachanges` is a small Java CLI that brings a Changesets-like release planning workflow to Maven monorepos and single-module Maven repositories.
+`javachanges` is a small Java CLI that brings a Changesets-like release planning workflow to Maven and Gradle repositories.
 
 Documentation site: `https://javachanges.icebreaker.top`
 
@@ -22,7 +22,7 @@ The current codebase focuses on:
 
 - adding and validating changesets
 - generating release plans
-- updating the root `revision`
+- updating the root Maven `revision` or Gradle `gradle.properties` version
 - generating changelog and release notes
 - preparing Maven settings from environment variables
 - release preflight and publish helpers
@@ -36,8 +36,8 @@ Requirements:
 - Java 8+
 - Maven 3.8+
 - a git repository
-- a Maven repository with a root `pom.xml`
-- either `<modules>` in the root pom, or a single root artifact
+- a Maven repository with a root `pom.xml`, or a Gradle repository with `gradle.properties`
+- either Maven `<modules>`, Gradle `include(...)` entries in `settings.gradle(.kts)`, or a single root artifact/project
 
 Recommended for target repositories: declare the Maven plugin and run the short local goals:
 
@@ -61,7 +61,7 @@ mvn javachanges:run -Djavachanges.args="release-notes --tag v1.2.3"
 
 The plugin defaults `--directory` to the current Maven project's `${project.basedir}`, so if you run it inside the target repository you usually do not need to pass `--directory` explicitly. The generic `run` goal still exists for commands that do not have a dedicated goal yet.
 
-If you cannot modify the target repository `pom.xml`, use the released CLI from Maven Central instead:
+If you cannot modify the target repository `pom.xml`, or you are using Gradle, use the released CLI from Maven Central instead:
 
 ```bash
 mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:<released-version> -DoutputDirectory=.javachanges
@@ -123,6 +123,10 @@ java -jar .javachanges/javachanges-<released-version>.jar plan --directory /path
 
 If you want to work on this repository itself from source, see [Development Guide](docs/development-guide.md).
 
+For Maven repositories, see [Maven Usage Guide](docs/maven-guide.md). The short version is: keep the root version in a `<revision>` property, use the Maven plugin for day-to-day commands, and use the released CLI jar when you cannot change the target `pom.xml`.
+
+For Gradle repositories, see [Gradle Usage Guide](docs/gradle-guide.md). The short version is: keep `version=...-SNAPSHOT` in `gradle.properties`, define projects in `settings.gradle(.kts)`, and run the released CLI jar directly.
+
 ## Changeset Format
 
 `javachanges` now defaults to the same core markdown shape used by Node.js Changesets:
@@ -148,14 +152,14 @@ Improve CLI parsing and release planning.
 
 How to read it:
 
-- each frontmatter key is a Maven artifactId
+- each frontmatter key is a Maven artifactId or Gradle project name
 - each value is the semver bump for that artifact: `patch`, `minor`, `major`
 - the markdown body is the user-facing summary and notes
 
 Defaults and behavior:
 
 - `javachanges add` writes the official package-map style by default
-- if you use `--modules all`, `javachanges` writes all detected Maven artifactIds
+- if you use `--modules all`, `javachanges` writes all detected Maven artifactIds or Gradle project names
 - the first non-empty body line becomes the summary shown in `status`, release PRs, changelogs, and release notes
 - changelog sections are grouped by the aggregated release level: `major`, `minor`, `patch`
 
@@ -187,10 +191,10 @@ summary: automate javachanges self-release publishing via GitHub Actions
 
 Field reference:
 
-- `"artifactId"`
+- `"artifactId"` / `"projectName"`
   Required in the new format.
-  Each frontmatter key is a Maven artifactId, usually quoted to match official Changesets style.
-  For single-module repositories, this is typically the root artifactId.
+  Each frontmatter key is a Maven artifactId or Gradle project name, usually quoted to match official Changesets style.
+  For single-module repositories, this is typically the root artifactId or root project name.
   For monorepos, add one entry per affected module.
 - `patch` / `minor` / `major`
   Required value for each artifactId entry.
@@ -254,6 +258,10 @@ GitLab-specific helpers:
 - [Overview (zh-CN)](docs/index.zh-CN.md)
 - [Getting Started](docs/getting-started.md)
 - [Getting Started (zh-CN)](docs/getting-started.zh-CN.md)
+- [Maven Usage Guide](docs/maven-guide.md)
+- [Maven Usage Guide (zh-CN)](docs/maven-guide.zh-CN.md)
+- [Gradle Usage Guide](docs/gradle-guide.md)
+- [Gradle Usage Guide (zh-CN)](docs/gradle-guide.zh-CN.md)
 - [Examples Guide](docs/examples-guide.md)
 - [Examples Guide (zh-CN)](docs/examples-guide.zh-CN.md)
 - [Command Cookbook](docs/command-cookbook.md)

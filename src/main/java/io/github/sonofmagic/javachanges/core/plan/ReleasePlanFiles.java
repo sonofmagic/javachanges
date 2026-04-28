@@ -1,7 +1,7 @@
 package io.github.sonofmagic.javachanges.core.plan;
 
 import io.github.sonofmagic.javachanges.core.ChangesetPaths;
-import io.github.sonofmagic.javachanges.core.PomModelSupport;
+import io.github.sonofmagic.javachanges.core.BuildModelSupport;
 import io.github.sonofmagic.javachanges.core.changeset.Changeset;
 
 import java.io.IOException;
@@ -18,7 +18,7 @@ final class ReleasePlanFiles {
     }
 
     static void applyPlan(Path repoRoot, ReleasePlan plan) throws IOException {
-        updateRootRevision(repoRoot.resolve("pom.xml"), plan.getNextSnapshotVersion());
+        updateRootRevision(repoRoot, plan.getNextSnapshotVersion());
         updateChangelog(repoRoot.resolve("CHANGELOG.md"), plan);
         Files.write(repoRoot.resolve(ChangesetPaths.DIR).resolve(ChangesetPaths.RELEASE_PLAN_JSON),
             Collections.singletonList(plan.toJson()),
@@ -31,8 +31,8 @@ final class ReleasePlanFiles {
         }
     }
 
-    private static void updateRootRevision(Path pomPath, String newSnapshotVersion) throws IOException {
-        PomModelSupport.writeRevision(pomPath, newSnapshotVersion);
+    private static void updateRootRevision(Path repoRoot, String newSnapshotVersion) throws IOException {
+        BuildModelSupport.writeRevision(repoRoot, newSnapshotVersion);
     }
 
     private static void updateChangelog(Path changelogPath, ReleasePlan plan) throws IOException {

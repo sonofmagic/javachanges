@@ -126,6 +126,26 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void planApplyUpdatesGradleProperties(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createGradleRepository(tempDir, true);
+        writeChangeset(repoRoot,
+            "minor-release.md",
+            "---\n" +
+                "\"fixture-app\": minor\n" +
+                "---\n" +
+                "\n" +
+                "support gradle release plans\n");
+
+        ExecutionResult result = execute("plan", "--directory", repoRoot.toString(), "--apply", "true");
+
+        assertEquals(0, result.exitCode);
+        assertTrue(result.stdout.contains("Applied release plan for v1.2.0"));
+        assertTrue(read(repoRoot.resolve("gradle.properties")).contains("version=1.2.0-SNAPSHOT"));
+        assertTrue(read(repoRoot.resolve("CHANGELOG.md")).contains("support gradle release plans"));
+        assertFalse(Files.exists(repoRoot.resolve(".changesets").resolve("minor-release.md")));
+    }
+
+    @Test
     void legacyFrontmatterStillWorks(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, true);
         writeChangeset(repoRoot,
@@ -557,6 +577,18 @@ class JavaChangesCliTest {
         Files.write(repoRoot.resolve("pom.xml"), monorepoPom().getBytes(StandardCharsets.UTF_8));
         Files.write(repoRoot.resolve("core").resolve("pom.xml"), childModulePom("core").getBytes(StandardCharsets.UTF_8));
         Files.write(repoRoot.resolve("cli").resolve("pom.xml"), childModulePom("cli").getBytes(StandardCharsets.UTF_8));
+        if (git) {
+            run(repoRoot, "git", "init", "-q");
+        }
+        return repoRoot;
+    }
+
+    private static Path createGradleRepository(Path tempDir, boolean git) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot);
+        Files.write(repoRoot.resolve("settings.gradle"), "rootProject.name = 'fixture-app'\n".getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve("build.gradle"), "plugins { id 'java-library' }\n".getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve("gradle.properties"), "version=1.1.1-SNAPSHOT\n".getBytes(StandardCharsets.UTF_8));
         if (git) {
             run(repoRoot, "git", "init", "-q");
         }

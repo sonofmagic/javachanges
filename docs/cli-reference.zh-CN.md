@@ -43,7 +43,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/re
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:run -Djavachanges.args="..."` | 对还没有独立 goal 的命令继续走通用桥接 goal |
 | `mvn -q -DskipTests compile exec:java` | 编译 CLI 并运行 Java 入口 |
 | `-Dexec.args="..."` | 传递 `javachanges` 命令行参数 |
-| `--directory /path/to/repo` | 指定目标 Maven 仓库根目录或其子目录 |
+| `--directory /path/to/repo` | 指定目标 Maven 或 Gradle 仓库根目录，或其子目录 |
 
 plugin 说明：
 
@@ -62,6 +62,16 @@ mvn javachanges:plan -Djavachanges.apply=true
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
 mvn javachanges:manifest-field -Djavachanges.field=releaseVersion
 ```
+
+Gradle 仓库应使用 CLI jar：
+
+```bash
+mvn -q dependency:copy -Dartifact=io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__ -DoutputDirectory=.javachanges
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar status --directory /path/to/gradle-repo
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar plan --directory /path/to/gradle-repo --apply true
+```
+
+Gradle 检测要求 `gradle.properties` 中有 `version` 或 `revision`，并且仓库根目录有 `settings.gradle(.kts)` 或 `build.gradle(.kts)`。
 
 > **注意**：有些命令不依赖仓库，例如 `release-version-from-tag`。
 
@@ -131,7 +141,7 @@ jc-version:
 | `add` | 创建 changeset | `.changesets/*.md` |
 | `status` | 查看当前 release plan | 否 |
 | `plan` | 计算当前 release plan | 否 |
-| `plan --apply true` | 应用 release plan 并消费 changesets | `pom.xml`、`CHANGELOG.md`、`.changesets/release-plan.json`、`.changesets/release-plan.md` |
+| `plan --apply true` | 应用 release plan 并消费 changesets | `pom.xml` 或 `gradle.properties`、`CHANGELOG.md`、`.changesets/release-plan.json`、`.changesets/release-plan.md` |
 | `manifest-field` | 读取生成后的 release manifest 字段 | 否 |
 | `release-notes` | 为 tag 生成 release notes | 目标文件 |
 | `ensure-gpg-public-key` | 发布并验证当前签名公钥是否已被支持的 keyserver 发现 | 否 |
@@ -156,7 +166,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="add --directory /path/to/repo 
 | --- | --- |
 | `--summary` | 生成文件正文第一行 |
 | `--release` | `patch`、`minor`、`major` |
-| `--modules` | 逗号分隔的 Maven artifactId，或 `all` |
+| `--modules` | 逗号分隔的 Maven artifactId、Gradle project name，或 `all` |
 | `--body` | summary 之后追加的 Markdown 正文 |
 
 生成文件的默认结构：
@@ -211,7 +221,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo
 
 加上 `--apply true` 之后，`javachanges` 会：
 
-1. 更新根 `<revision>`
+1. 更新根 Maven `<revision>` 或 Gradle `gradle.properties` 版本
 2. 往 `CHANGELOG.md` 前面插入新的 release section
 3. 写入 `.changesets/release-plan.json`
 4. 写入 `.changesets/release-plan.md`
@@ -239,13 +249,16 @@ mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /pa
 
 | 命令 | 作用 | 示例 |
 | --- | --- | --- |
-| `version` | 输出当前根 `revision` | `version --directory /path/to/repo` |
+| `version` | 输出当前根版本 | `version --directory /path/to/repo` |
 | `release-version-from-tag` | 从 `v1.2.3` 或 `core/v1.2.3` 里取出 `1.2.3` | `release-version-from-tag --tag v1.2.3` |
 | `release-module-from-tag` | 从 `core/v1.2.3` 里取出 package/module 名称 | `release-module-from-tag --tag core/v1.2.3` |
-| `assert-module` | 校验某个 Maven artifactId 是否存在 | `assert-module --directory /path/to/repo --module core` |
+| `assert-module` | 校验某个 Maven artifactId 或 Gradle project name 是否存在 | `assert-module --directory /path/to/repo --module core` |
 | `assert-snapshot` | 确认当前版本仍然是 snapshot | `assert-snapshot --directory /path/to/repo` |
 | `assert-release-tag` | 校验 tag 是否和当前仓库版本一致 | `assert-release-tag --directory /path/to/repo --tag v1.2.3` |
-| `module-selector-args` | 输出 Maven `-pl` 参数 | `module-selector-args --directory /path/to/repo --module core` |
+| `module-selector-args` | 输出构建工具模块选择参数 | `module-selector-args --directory /path/to/repo --module core` |
+
+Maven 仓库中，`module-selector-args --module core` 输出 Maven `-pl :core -am`。
+Gradle 仓库中，它输出 Gradle project selector `:core`。
 
 ## 7. 环境与 settings 相关命令
 
@@ -407,7 +420,7 @@ GitLab CI 默认行为：
 | `--snapshot-version-mode` | snapshot 版本策略：`stamped` 或 `plain` |
 | `--snapshot-build-stamp` | 显式指定 snapshot 发布标识，覆盖默认的 UTC 时间戳 + git short sha |
 | `--tag` | 目标发布 tag |
-| `--module` | 限制到单个 Maven artifactId |
+| `--module` | 限制到单个 Maven artifactId 或 Gradle project name |
 | `--allow-dirty` | 允许工作区不干净 |
 | `--execute true` | 真正执行最终发布命令，而不是只打印 |
 

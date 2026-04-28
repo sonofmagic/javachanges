@@ -9,8 +9,8 @@
 2. GitLab CI/CD 变量管理
 3. release merge request 生成
 4. 基于生成后的 release plan 创建正式 tag
-5. 在 tag pipeline 中执行 Maven 发布
-6. Maven 依赖缓存
+5. 在 tag pipeline 中执行 Maven 或 Gradle 发布
+6. Maven / Gradle 依赖缓存
 
 `javachanges` 现在有四个 GitLab 专用命令：
 
@@ -38,6 +38,7 @@
 | 在 release plan 落地后创建并推送 tag | `gitlab-tag-from-plan --execute true` |
 | 做发布前检查 | `preflight` |
 | 执行真正的 Maven deploy | `publish --execute true` |
+| Gradle 发布 | 读取 manifest 后执行 `./gradlew publish` |
 | 在 tag pipeline 中创建或更新 GitLab Release | `gitlab-release --execute true` |
 
 ## 3. 变量模型
@@ -245,6 +246,72 @@ publish_release:
 ```
 
 那么同一条 `publish --directory $CI_PROJECT_DIR --execute true` snapshot job，在命中该分支时就会自动切到 plain snapshot 模式。业务仓库不需要再额外拆成自定义 `mvn deploy` 或 shell 条件判断。
+
+### 6.1 最小 Gradle `.gitlab-ci.yml`
+
+Gradle 仓库应直接调用 CLI jar，并把 artifact 发布保留在 Gradle：
+
+```yaml
+stages:
+  - verify
+  - release-plan
+  - tag
+  - publish
+
+default:
+  image: eclipse-temurin:17
+  cache:
+    key:
+      files:
+        - gradle.properties
+        - settings.gradle.kts
+    paths:
+      - .gradle/caches
+      - .gradle/wrapper
+      - .javachanges
+
+variables:
+  GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
+  JAVACHANGES_VERSION: "__JAVACHANGES_LATEST_RELEASE_VERSION__"
+
+before_script:
+  - ./gradlew --version
+  - mkdir -p .javachanges
+  - >
+    test -f ".javachanges/javachanges-${JAVACHANGES_VERSION}.jar" ||
+    curl -fsSL
+    "https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/${JAVACHANGES_VERSION}/javachanges-${JAVACHANGES_VERSION}.jar"
+    -o ".javachanges/javachanges-${JAVACHANGES_VERSION}.jar"
+
+verify:
+  stage: verify
+  script:
+    - ./gradlew --no-daemon build
+    - java -jar ".javachanges/javachanges-${JAVACHANGES_VERSION}.jar" status --directory "$CI_PROJECT_DIR"
+
+release_plan_mr:
+  stage: release-plan
+  script:
+    - >
+      java -jar ".javachanges/javachanges-${JAVACHANGES_VERSION}.jar"
+      gitlab-release-plan
+      --directory "$CI_PROJECT_DIR"
+      --project-id "$CI_PROJECT_ID"
+      --execute true
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+publish_release:
+  stage: publish
+  script:
+    - RELEASE_VERSION="$(java -jar ".javachanges/javachanges-${JAVACHANGES_VERSION}.jar" manifest-field --directory "$CI_PROJECT_DIR" --field releaseVersion)"
+    - ./gradlew --no-daemon publish -Pversion="$RELEASE_VERSION"
+    - java -jar ".javachanges/javachanges-${JAVACHANGES_VERSION}.jar" gitlab-release --directory "$CI_PROJECT_DIR" --execute true
+  rules:
+    - if: $CI_COMMIT_TAG
+```
+
+Gradle 仓库的 release-plan job 会 stage `gradle.properties`、`CHANGELOG.md` 和 `.changesets/`。
 
 ## 7. GitLab CI 中更安全的 `script:` 写法
 

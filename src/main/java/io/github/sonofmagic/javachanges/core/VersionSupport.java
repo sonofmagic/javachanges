@@ -17,9 +17,9 @@ public final class VersionSupport {
 
     public String readRevision() throws IOException {
         try {
-            return PomModelSupport.readRevision(repoRoot.resolve("pom.xml"));
+            return BuildModelSupport.readRevision(repoRoot);
         } catch (IllegalStateException exception) {
-            throw new IllegalStateException("未在 pom.xml 中找到 <revision> 配置", exception);
+            throw new IllegalStateException("未在 Maven pom.xml 或 Gradle gradle.properties 中找到版本配置", exception);
         }
     }
 

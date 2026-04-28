@@ -3,7 +3,7 @@
 
 ## 1. 概述
 
-这篇文档说明仓库里已经提交好的示例工程 `examples/basic-monorepo/` 应该怎么使用。
+这篇文档说明仓库里已经提交好的 Maven 示例工程 `examples/basic-monorepo/` 应该怎么使用，并说明同样流程如何迁移到 Gradle。
 
 这个示例刻意保持很小，但已经覆盖了 `javachanges` 的完整链路：
 
@@ -133,21 +133,79 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory examples/basi
 - snapshot pipeline 和 tag pipeline 都直接执行 `publish --execute true`，由命令内部处理 preflight、tag 判定、snapshotBranch 判定和 settings 生成
 - 正式版 tag 发布成功后，再执行 `gitlab-release --execute true` 创建或更新 GitLab Release
 
-## 7. 如何改造成真实仓库
+## 7. Gradle 等价写法
+
+Gradle 仓库继续使用同样的 `.changesets/`、`CHANGELOG.md` 和 release-plan 文件，只是构建模型文件不同：
+
+```text
+sample-gradle-monorepo/
+├── .changesets/
+├── modules/
+│   ├── api/
+│   └── core/
+├── CHANGELOG.md
+├── build.gradle.kts
+├── gradle.properties
+└── settings.gradle.kts
+```
+
+`gradle.properties`：
+
+```properties
+version=0.2.0-SNAPSHOT
+```
+
+`settings.gradle.kts`：
+
+```kotlin
+rootProject.name = "sample-gradle-monorepo"
+include(":core", ":api")
+```
+
+等价 Gradle changeset：
+
+```md
+---
+"core": minor
+"api": minor
+---
+
+Add release notes generation workflow.
+```
+
+使用正式版 CLI jar 运行：
+
+```bash
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar status --directory sample-gradle-monorepo
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar plan --directory sample-gradle-monorepo --apply true
+```
+
+Gradle plan 会更新 `gradle.properties`，而不是 `pom.xml`。GitHub / GitLab release-plan 自动化会 stage `gradle.properties`、`CHANGELOG.md` 和 `.changesets/`。
+
+实际发布 artifact 时继续交给 Gradle：
+
+```bash
+RELEASE_VERSION="$(java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar manifest-field --directory sample-gradle-monorepo --field releaseVersion)"
+cd sample-gradle-monorepo
+./gradlew publish -Pversion="$RELEASE_VERSION"
+```
+
+## 8. 如何改造成真实仓库
 
 把这个示例复制到真实项目时，建议按这个顺序调整：
 
 1. 替换示例里的 `groupId`、artifactId 和模块路径
-2. 把 `.changesets/*.md` 里的包名改成你的真实 Maven artifactId
+2. 把 `.changesets/*.md` 里的包名改成你的真实 Maven artifactId 或 Gradle project name
 3. 更新 `env/release.env.example` 里的仓库地址和认证信息
 4. 固定 CI 中要使用的 `JAVACHANGES_VERSION`
 5. 在真正开启自动发布前，先本地运行一次 `status` 和 `plan`
 
-## 8. 相关阅读
+## 9. 相关阅读
 
 | 需求 | 文档 |
 | --- | --- |
 | 本地初始化和第一次生成 release plan | [Getting Started](./getting-started.md) |
+| Gradle 仓库配置 | [Gradle 使用指南](./gradle-guide.md) |
 | CLI 命令细节 | [CLI Reference](./cli-reference.md) |
 | 生成的 manifest 字段说明 | [Release Plan Manifest](./release-plan-manifest.md) |
 | GitHub Actions 完整配置 | [GitHub Actions Usage Guide](./github-actions-guide.md) |

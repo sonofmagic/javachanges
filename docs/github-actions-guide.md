@@ -1,5 +1,5 @@
 ---
-description: Use javachanges in GitHub Actions for CI validation, release planning, variable sync, and Maven publishing workflows.
+description: Use javachanges in GitHub Actions for CI validation, release planning, variable sync, and Maven or Gradle publishing workflows.
 ---
 
 # javachanges GitHub Actions Usage Guide
@@ -13,7 +13,7 @@ This guide explains how to use `javachanges` in GitHub Actions for:
 2. release-plan generation
 3. GitHub Actions variable and secret management
 4. publish preflight and real publishing
-5. Maven dependency caching
+5. Maven and Gradle dependency caching
 
 The examples in this guide use direct CLI commands such as:
 
@@ -388,7 +388,65 @@ jobs:
 > Note: these generic `publish` flows use the repository URLs and credentials from `env/release.env.example`.  
 > If you are publishing to Maven Central with a `central-publish` Maven profile, see [Publish To Maven Central](./publish-to-maven-central.md) and [GitHub Actions Release Flow](./github-actions-release.md).
 
-## 6. Maven Cache Behavior In GitHub Actions
+### 5.6 Gradle release-plan workflow
+
+For Gradle repositories, use the released CLI jar and Gradle caching. The release-plan command is the same; only the invocation and build steps change.
+
+```yaml
+name: Gradle Release Plan
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: corretto
+          java-version: '17'
+          cache: gradle
+
+      - name: Verify Gradle build
+        run: ./gradlew build
+
+      - name: Download javachanges
+        run: >
+          mvn -q dependency:copy
+          -Dartifact=io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__
+          -DoutputDirectory=.javachanges
+
+      - name: Create or update release PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar
+          github-release-plan
+          --directory "$GITHUB_WORKSPACE"
+          --github-repo "$GITHUB_REPOSITORY"
+          --execute true
+```
+
+For Gradle artifact publishing after a release tag, read the manifest and hand off to Gradle:
+
+```bash
+RELEASE_VERSION="$(java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar manifest-field --directory "$GITHUB_WORKSPACE" --field releaseVersion)"
+./gradlew publish -Pversion="$RELEASE_VERSION"
+```
+
+## 6. Maven And Gradle Cache Behavior In GitHub Actions
 
 The recommended configuration is:
 
@@ -437,6 +495,7 @@ Use this order:
 | Problem | Cause | Fix |
 | --- | --- | --- |
 | Release PR keeps changing unexpectedly | release workflow edits files outside `.changesets`, `pom.xml`, or `CHANGELOG.md` | limit the release-plan commit scope |
+| Gradle release PR keeps changing unexpectedly | release workflow edits files outside `.changesets`, `gradle.properties`, or `CHANGELOG.md` | limit the release-plan commit scope |
 | Publish job says repository credentials are missing | required vars or secrets were never synced | run `render-vars`, `sync-vars`, then `audit-vars` |
 | Snapshot workflow keeps producing the same visible version | the build stamp was fixed or never updated | set `JAVACHANGES_SNAPSHOT_BUILD_STAMP` or derive one from run id and commit sha |
 | Maven downloads still appear after enabling cache | new cache key or first run | let one successful run warm the cache |

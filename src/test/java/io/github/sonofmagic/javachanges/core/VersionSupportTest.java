@@ -53,6 +53,18 @@ class VersionSupportTest {
         assertEquals("1.2.3-SNAPSHOT", support.snapshotRevision());
     }
 
+    @Test
+    void snapshotRevisionReadsGradleProperties(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot);
+        Files.write(repoRoot.resolve("settings.gradle"), "rootProject.name = 'fixture-app'\n".getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve("gradle.properties"), "version=3.2.1-SNAPSHOT\n".getBytes(StandardCharsets.UTF_8));
+
+        VersionSupport support = new VersionSupport(repoRoot);
+
+        assertEquals("3.2.1-SNAPSHOT", support.snapshotRevision());
+    }
+
     private static Path createRepository(Path tempDir, String revision) throws Exception {
         Path repoRoot = tempDir.resolve("repo");
         Files.createDirectories(repoRoot);

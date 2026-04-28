@@ -33,7 +33,7 @@ final class AddCommand extends AbstractCliCommand {
         description = "Legacy change type metadata. Accepted for compatibility but not written in the default official-style format.")
     private String type;
 
-    @Option(names = "--modules", description = "Comma-separated Maven artifactIds or all. Written as official Changesets package keys.")
+    @Option(names = "--modules", description = "Comma-separated Maven artifactIds, Gradle project names, or all. Written as official Changesets package keys.")
     private String modules;
 
     @Option(names = "--body", description = "Optional Markdown body after the summary paragraph.")
@@ -107,7 +107,7 @@ final class ManifestFieldCommand extends AbstractCliCommand {
 }
 
 @Command(name = "version", mixinStandardHelpOptions = true,
-    description = "Print the current Maven revision.")
+    description = "Print the current Maven or Gradle revision.")
 final class VersionCommand extends AbstractCliCommand {
     @Override
     public Integer call() throws Exception {
@@ -130,7 +130,7 @@ final class ReleaseVersionFromTagCommand extends AbstractCliCommand {
 }
 
 @Command(name = "release-module-from-tag", mixinStandardHelpOptions = true,
-    description = "Extract the Maven module from a module release tag.")
+    description = "Extract the module from a module release tag.")
 final class ReleaseModuleFromTagCommand extends AbstractCliCommand {
     @Option(names = "--tag", required = true, description = "Module tag like sample-module/v1.2.3.")
     private String tag;
@@ -146,7 +146,7 @@ final class ReleaseModuleFromTagCommand extends AbstractCliCommand {
 @Command(name = "assert-module", mixinStandardHelpOptions = true,
     description = "Validate that a module exists in the repository.")
 final class AssertModuleCommand extends AbstractCliCommand {
-    @Option(names = "--module", required = true, description = "Maven artifactId to validate.")
+    @Option(names = "--module", required = true, description = "Maven artifactId or Gradle project name to validate.")
     private String module;
 
     @Override
@@ -183,7 +183,7 @@ final class AssertReleaseTagCommand extends AbstractCliCommand {
 }
 
 @Command(name = "module-selector-args", mixinStandardHelpOptions = true,
-    description = "Print Maven -pl selector arguments for a module.")
+    description = "Print build-tool module selector arguments for a module.")
 final class ModuleSelectorArgsCommand extends AbstractCliCommand {
     @Option(names = "--module", description = "Maven artifactId or all.")
     private String module;
