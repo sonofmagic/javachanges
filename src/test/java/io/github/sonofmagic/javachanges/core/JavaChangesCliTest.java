@@ -398,6 +398,39 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void initGitlabCiWritesGradleTemplate(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createGradleRepository(tempDir, false);
+        Files.createDirectories(repoRoot.resolve(".changesets"));
+        Files.write(repoRoot.resolve(".changesets").resolve("config.json"), (
+            "{\n" +
+                "  \"baseBranch\": \"develop\",\n" +
+                "  \"snapshotBranch\": \"snapshot-dev\"\n" +
+                "}\n").getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = execute(
+            "init-gitlab-ci",
+            "--directory", repoRoot.toString(),
+            "--output", ".gitlab-ci.gradle.yml",
+            "--javachanges-version", "1.8.0",
+            "--build-tool", "gradle"
+        );
+
+        assertEquals(0, result.exitCode);
+        String yaml = read(repoRoot.resolve(".gitlab-ci.gradle.yml"));
+        assertTrue(yaml.contains("image: eclipse-temurin:17"));
+        assertTrue(yaml.contains("GRADLE_USER_HOME: \"$CI_PROJECT_DIR/.gradle\""));
+        assertTrue(yaml.contains("curl -fsSL"));
+        assertTrue(yaml.contains("./gradlew --no-daemon build"));
+        assertTrue(yaml.contains("gitlab-release-plan"));
+        assertTrue(yaml.contains("gradle-publish --directory \"$CI_PROJECT_DIR\" --execute true"));
+        assertTrue(yaml.contains("gitlab-release --directory \"$CI_PROJECT_DIR\" --execute true"));
+        assertTrue(yaml.contains("$CI_COMMIT_BRANCH == \"develop\""));
+        assertTrue(yaml.contains("$CI_COMMIT_BRANCH == \"snapshot-dev\""));
+        assertFalse(yaml.contains("io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run"));
+        assertFalse(yaml.contains("publish --directory $CI_PROJECT_DIR --execute true"));
+    }
+
+    @Test
     void preflightHelpListsSnapshotVersionModeFlag() {
         ExecutionResult result = execute("preflight", "--help");
 

@@ -38,7 +38,7 @@
 | 在 release plan 落地后创建并推送 tag | `gitlab-tag-from-plan --execute true` |
 | 做发布前检查 | `preflight` |
 | 执行真正的 Maven deploy | `publish --execute true` |
-| Gradle 发布 | 读取 manifest 后执行 `./gradlew publish` |
+| 执行真正的 Gradle publish task | `gradle-publish --execute true` |
 | 在 tag pipeline 中创建或更新 GitLab Release | `gitlab-release --execute true` |
 
 ## 3. 变量模型
@@ -304,14 +304,13 @@ release_plan_mr:
 publish_release:
   stage: publish
   script:
-    - RELEASE_VERSION="$(java -jar ".javachanges/javachanges-${JAVACHANGES_VERSION}.jar" manifest-field --directory "$CI_PROJECT_DIR" --field releaseVersion)"
-    - ./gradlew --no-daemon publish -Pversion="$RELEASE_VERSION"
+    - java -jar ".javachanges/javachanges-${JAVACHANGES_VERSION}.jar" gradle-publish --directory "$CI_PROJECT_DIR" --execute true
     - java -jar ".javachanges/javachanges-${JAVACHANGES_VERSION}.jar" gitlab-release --directory "$CI_PROJECT_DIR" --execute true
   rules:
     - if: $CI_COMMIT_TAG
 ```
 
-Gradle 仓库的 release-plan job 会 stage `gradle.properties`、`CHANGELOG.md` 和 `.changesets/`。
+Gradle 仓库的 release-plan job 会 stage `gradle.properties`、`CHANGELOG.md` 和 `.changesets/`。`gradle-publish` 会用同一份 manifest 解析 release 或 snapshot 版本，再渲染并执行 Gradle `publish` task。
 
 ## 7. GitLab CI 中更安全的 `script:` 写法
 

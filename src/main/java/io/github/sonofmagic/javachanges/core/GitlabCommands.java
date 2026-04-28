@@ -131,6 +131,9 @@ final class InitGitlabCiCommand extends AbstractCliCommand {
         description = "Released javachanges Maven plugin version used by the generated pipeline.")
     private String javachangesVersion;
 
+    @Option(names = "--build-tool", description = "Build tool template: auto, maven, or gradle.", defaultValue = "auto")
+    private String buildTool;
+
     @Override
     public Integer call() throws Exception {
         Path repoRoot = repoRoot();
@@ -143,7 +146,7 @@ final class InitGitlabCiCommand extends AbstractCliCommand {
         if (parent != null) {
             Files.createDirectories(parent);
         }
-        Files.write(target, renderTemplate(config, effectiveVersion()).getBytes(StandardCharsets.UTF_8));
+        Files.write(target, renderTemplate(repoRoot, config, effectiveVersion(), buildTool).getBytes(StandardCharsets.UTF_8));
         out().println("Generated GitLab CI template: " + repoRoot.relativize(target));
         return success();
     }
@@ -160,7 +163,28 @@ final class InitGitlabCiCommand extends AbstractCliCommand {
         return "1.4.1";
     }
 
-    private String renderTemplate(ChangesetConfigSupport.ChangesetConfig config, String version) {
+    private String renderTemplate(Path repoRoot, ChangesetConfigSupport.ChangesetConfig config, String version, String buildTool) {
+        String resolvedBuildTool = resolveBuildTool(repoRoot, buildTool);
+        if ("gradle".equals(resolvedBuildTool)) {
+            return renderGradleTemplate(config, version);
+        }
+        return renderMavenTemplate(config, version);
+    }
+
+    private String resolveBuildTool(Path repoRoot, String buildTool) {
+        String explicit = ReleaseTextUtils.trimToNull(buildTool);
+        if (explicit == null || "auto".equalsIgnoreCase(explicit)) {
+            BuildModelSupport.BuildModel model = BuildModelSupport.detect(repoRoot);
+            return model != null && model.type == BuildModelSupport.BuildType.GRADLE ? "gradle" : "maven";
+        }
+        String normalized = explicit.toLowerCase(java.util.Locale.ROOT);
+        if (!"maven".equals(normalized) && !"gradle".equals(normalized)) {
+            throw new IllegalArgumentException("Unsupported build tool: " + buildTool);
+        }
+        return normalized;
+    }
+
+    private String renderMavenTemplate(ChangesetConfigSupport.ChangesetConfig config, String version) {
         String baseBranch = config.baseBranch();
         String snapshotBranch = config.snapshotBranch();
         return ""
@@ -230,6 +254,85 @@ final class InitGitlabCiCommand extends AbstractCliCommand {
             + "    - >\n"
             + "      mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run\n"
             + "      -Djavachanges.args=\"gitlab-release --directory $CI_PROJECT_DIR --execute true\"\n"
+            + "  rules:\n"
+            + "    - if: $CI_COMMIT_TAG\n";
+    }
+
+    private String renderGradleTemplate(ChangesetConfigSupport.ChangesetConfig config, String version) {
+        String baseBranch = config.baseBranch();
+        String snapshotBranch = config.snapshotBranch();
+        return ""
+            + "stages:\n"
+            + "  - verify\n"
+            + "  - release-plan\n"
+            + "  - tag\n"
+            + "  - publish\n"
+            + "\n"
+            + "default:\n"
+            + "  image: eclipse-temurin:17\n"
+            + "  cache:\n"
+            + "    key:\n"
+            + "      files:\n"
+            + "        - gradle.properties\n"
+            + "        - settings.gradle.kts\n"
+            + "    paths:\n"
+            + "      - .gradle/caches\n"
+            + "      - .gradle/wrapper\n"
+            + "      - .javachanges\n"
+            + "\n"
+            + "variables:\n"
+            + "  GRADLE_USER_HOME: \"$CI_PROJECT_DIR/.gradle\"\n"
+            + "  JAVACHANGES_VERSION: \"" + version + "\"\n"
+            + "\n"
+            + "before_script:\n"
+            + "  - ./gradlew --version\n"
+            + "  - mkdir -p .javachanges\n"
+            + "  - >\n"
+            + "    test -f \".javachanges/javachanges-${JAVACHANGES_VERSION}.jar\" ||\n"
+            + "    curl -fsSL\n"
+            + "    \"https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/${JAVACHANGES_VERSION}/javachanges-${JAVACHANGES_VERSION}.jar\"\n"
+            + "    -o \".javachanges/javachanges-${JAVACHANGES_VERSION}.jar\"\n"
+            + "\n"
+            + "verify:\n"
+            + "  stage: verify\n"
+            + "  script:\n"
+            + "    - ./gradlew --no-daemon build\n"
+            + "    - java -jar \".javachanges/javachanges-${JAVACHANGES_VERSION}.jar\" status --directory \"$CI_PROJECT_DIR\"\n"
+            + "  rules:\n"
+            + "    - if: $CI_PIPELINE_SOURCE == \"merge_request_event\"\n"
+            + "    - if: $CI_COMMIT_BRANCH\n"
+            + "\n"
+            + "release_plan_mr:\n"
+            + "  stage: release-plan\n"
+            + "  script:\n"
+            + "    - >\n"
+            + "      java -jar \".javachanges/javachanges-${JAVACHANGES_VERSION}.jar\"\n"
+            + "      gitlab-release-plan\n"
+            + "      --directory \"$CI_PROJECT_DIR\"\n"
+            + "      --project-id \"$CI_PROJECT_ID\"\n"
+            + "      --execute true\n"
+            + "  rules:\n"
+            + "    - if: $CI_COMMIT_BRANCH == \"" + baseBranch + "\"\n"
+            + "\n"
+            + "release_tag:\n"
+            + "  stage: tag\n"
+            + "  script:\n"
+            + "    - java -jar \".javachanges/javachanges-${JAVACHANGES_VERSION}.jar\" gitlab-tag-from-plan --directory \"$CI_PROJECT_DIR\" --execute true\n"
+            + "  rules:\n"
+            + "    - if: $CI_COMMIT_BRANCH == \"" + baseBranch + "\"\n"
+            + "\n"
+            + "publish_snapshot:\n"
+            + "  stage: publish\n"
+            + "  script:\n"
+            + "    - java -jar \".javachanges/javachanges-${JAVACHANGES_VERSION}.jar\" gradle-publish --directory \"$CI_PROJECT_DIR\" --execute true\n"
+            + "  rules:\n"
+            + "    - if: $CI_COMMIT_BRANCH == \"" + snapshotBranch + "\"\n"
+            + "\n"
+            + "publish_release:\n"
+            + "  stage: publish\n"
+            + "  script:\n"
+            + "    - java -jar \".javachanges/javachanges-${JAVACHANGES_VERSION}.jar\" gradle-publish --directory \"$CI_PROJECT_DIR\" --execute true\n"
+            + "    - java -jar \".javachanges/javachanges-${JAVACHANGES_VERSION}.jar\" gitlab-release --directory \"$CI_PROJECT_DIR\" --execute true\n"
             + "  rules:\n"
             + "    - if: $CI_COMMIT_TAG\n";
     }

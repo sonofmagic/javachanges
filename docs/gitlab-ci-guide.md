@@ -42,6 +42,7 @@ Recommended command mapping:
 | Create and push a release tag after a release plan merge | `gitlab-tag-from-plan --execute true` |
 | Validate a publish | `preflight` |
 | Run the real Maven deploy command | `publish --execute true` |
+| Run the real Gradle publish task | `gradle-publish --execute true` |
 | Create or update a GitLab Release from the tag pipeline | `gitlab-release --execute true` |
 
 ## 3. Variable Model
@@ -317,14 +318,13 @@ release_tag:
 publish_release:
   stage: publish
   script:
-    - RELEASE_VERSION="$(java -jar ".javachanges/javachanges-${JAVACHANGES_VERSION}.jar" manifest-field --directory "$CI_PROJECT_DIR" --field releaseVersion)"
-    - ./gradlew --no-daemon publish -Pversion="$RELEASE_VERSION"
+    - java -jar ".javachanges/javachanges-${JAVACHANGES_VERSION}.jar" gradle-publish --directory "$CI_PROJECT_DIR" --execute true
     - java -jar ".javachanges/javachanges-${JAVACHANGES_VERSION}.jar" gitlab-release --directory "$CI_PROJECT_DIR" --execute true
   rules:
     - if: $CI_COMMIT_TAG
 ```
 
-The release-plan job stages `gradle.properties`, `CHANGELOG.md`, and `.changesets/` for Gradle repositories. For a simpler jar download step, you can also use `mvn dependency:copy` if Maven is available in your runner image.
+The release-plan job stages `gradle.properties`, `CHANGELOG.md`, and `.changesets/` for Gradle repositories. `gradle-publish` renders and executes the Gradle `publish` task with the release or snapshot version resolved from the same manifest. For a simpler jar download step, you can also use `mvn dependency:copy` if Maven is available in your runner image.
 
 ## 7. Safe `script:` Patterns For GitLab CI
 
