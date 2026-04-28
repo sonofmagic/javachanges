@@ -37,9 +37,8 @@ public final class PublishRuntime {
         return timestamp + "." + shortSha;
     }
 
-    public Path ensureLocalMavenRepositoryDirectory() throws IOException {
+    public Path localMavenRepositoryPath() {
         Path defaultLocalRepo = repoRoot.resolve(".m2/repository").normalize();
-        Files.createDirectories(defaultLocalRepo);
 
         String mavenOpts = ReleaseTextUtils.trimToNull(System.getenv("MAVEN_OPTS"));
         if (mavenOpts == null) {
@@ -61,6 +60,11 @@ public final class PublishRuntime {
         if (!localRepoPath.isAbsolute()) {
             localRepoPath = repoRoot.resolve(localRepoPath).normalize();
         }
+        return localRepoPath;
+    }
+
+    public Path ensureLocalMavenRepositoryDirectory() throws IOException {
+        Path localRepoPath = localMavenRepositoryPath();
         Files.createDirectories(localRepoPath);
         return localRepoPath;
     }

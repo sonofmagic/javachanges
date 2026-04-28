@@ -47,16 +47,21 @@ public final class PublishSupport {
         AutomationJsonSupport.AutomationReport report = planSupport.buildReport("publish", request, publishTarget);
         preflight(request, publishTarget, report);
 
-        Files.createDirectories(repoRoot.resolve(".m2"));
-        Path localMavenRepo = runtime.ensureLocalMavenRepositoryDirectory();
-        Files.createDirectories(repoRoot.resolve("target"));
-        MavenSettingsWriter.write(repoRoot.resolve(".m2/settings.xml"),
-            request.snapshot ? MavenSettingsWriter.RepositoryMode.SNAPSHOT : MavenSettingsWriter.RepositoryMode.RELEASE);
+        Path localMavenRepo = request.execute
+            ? runtime.ensureLocalMavenRepositoryDirectory()
+            : runtime.localMavenRepositoryPath();
+        boolean releaseNotesAvailable = !request.snapshot && runtime.gitRefExists(request.tag);
+        if (request.execute) {
+            Files.createDirectories(repoRoot.resolve(".m2"));
+            Files.createDirectories(repoRoot.resolve("target"));
+            MavenSettingsWriter.write(repoRoot.resolve(".m2/settings.xml"),
+                request.snapshot ? MavenSettingsWriter.RepositoryMode.SNAPSHOT : MavenSettingsWriter.RepositoryMode.RELEASE);
 
-        if (!request.snapshot && runtime.gitRefExists(request.tag)) {
-            Path releaseNotesFile = repoRoot.resolve("target/release-notes.md");
-            releaseNotesGenerator.writeReleaseNotes(request.tag, releaseNotesFile);
-            report.releaseNotesFile = releaseNotesFile.toString();
+            if (releaseNotesAvailable) {
+                Path releaseNotesFile = repoRoot.resolve("target/release-notes.md");
+                releaseNotesGenerator.writeReleaseNotes(request.tag, releaseNotesFile);
+                report.releaseNotesFile = releaseNotesFile.toString();
+            }
         }
 
         MavenCommand mavenCommand = ReleaseProcessUtils.resolveMavenCommand(repoRoot);
@@ -70,7 +75,9 @@ public final class PublishSupport {
         if (request.format != io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
             out.println();
             out.println("== Dry Run 输出 ==");
-            out.println("已生成 .m2/settings.xml");
+            out.println(request.execute
+                ? "已生成 .m2/settings.xml"
+                : "Maven settings 生成校验通过；执行时将写入 .m2/settings.xml");
             out.println("Maven 命令: " + mavenCommand.command + " (" + mavenCommand.source + ")");
             if (localMavenRepo != null) {
                 out.println("本地 Maven 仓库: " + localMavenRepo);
@@ -84,8 +91,10 @@ public final class PublishSupport {
                 out.println("snapshot version mode: " + publishTarget.snapshotVersionMode.id);
                 out.println("snapshot build stamp applied: " + publishTarget.snapshotBuildStampApplied);
             }
-            if (!request.snapshot && Files.exists(repoRoot.resolve("target/release-notes.md"))) {
-                out.println("已生成 target/release-notes.md");
+            if (releaseNotesAvailable) {
+                out.println(request.execute
+                    ? "已生成 target/release-notes.md"
+                    : "release notes 生成校验通过；执行时将写入 target/release-notes.md");
             }
             out.println(publishTarget.resolvedModule == null ? "目标模块: all" : "目标模块: " + publishTarget.resolvedModule);
             out.println();

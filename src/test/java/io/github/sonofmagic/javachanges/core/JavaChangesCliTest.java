@@ -5,11 +5,17 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -201,6 +207,32 @@ class JavaChangesCliTest {
         assertTrue(result.stdout.contains("Release branch: changeset-release/main"));
         assertTrue(result.stdout.contains("Release version: 1.2.0"));
         assertTrue(result.stdout.contains("Dry-run only."));
+    }
+
+    @Test
+    void publishDryRunDoesNotWriteMavenSettings(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.mavenWrapperPath()),
+            "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+
+        Map<String, String> environment = new LinkedHashMap<String, String>();
+        environment.put("MAVEN_SNAPSHOT_REPOSITORY_URL", "https://repo.example.com/snapshots");
+        environment.put("MAVEN_SNAPSHOT_REPOSITORY_USERNAME", "tester");
+        environment.put("MAVEN_SNAPSHOT_REPOSITORY_PASSWORD", "secret");
+
+        ExecutionResult result = executeProcess(environment,
+            "publish",
+            "--directory", repoRoot.toString(),
+            "--snapshot", "true",
+            "--snapshot-build-stamp", "20260428.000000.test",
+            "--allow-dirty", "true"
+        );
+
+        assertEquals(0, result.exitCode, result.stderr);
+        assertTrue(result.stdout.contains("Maven settings 生成校验通过；执行时将写入 .m2/settings.xml"));
+        assertTrue(result.stdout.contains("-s .m2/settings.xml"));
+        assertFalse(Files.exists(repoRoot.resolve(".m2/settings.xml")));
+        assertFalse(Files.exists(repoRoot.resolve(".m2/repository")));
     }
 
     @Test
@@ -470,6 +502,41 @@ class JavaChangesCliTest {
             new String(stdout.toByteArray(), StandardCharsets.UTF_8),
             new String(stderr.toByteArray(), StandardCharsets.UTF_8)
         );
+    }
+
+    private static ExecutionResult executeProcess(Map<String, String> environment, String... args) throws Exception {
+        List<String> command = new ArrayList<String>();
+        command.add(javaCommand());
+        command.add("-cp");
+        command.add(System.getProperty("surefire.test.class.path", System.getProperty("java.class.path")));
+        command.add(JavaChangesCli.class.getName());
+        command.addAll(Arrays.asList(args));
+
+        ProcessBuilder builder = new ProcessBuilder(command);
+        builder.environment().remove("MAVEN_OPTS");
+        builder.environment().putAll(environment);
+        Process process = builder.start();
+        int exitCode = process.waitFor();
+        return new ExecutionResult(
+            exitCode,
+            new String(readAll(process.getInputStream()), StandardCharsets.UTF_8),
+            new String(readAll(process.getErrorStream()), StandardCharsets.UTF_8)
+        );
+    }
+
+    private static String javaCommand() {
+        String binary = System.getProperty("os.name", "").toLowerCase().contains("win") ? "java.exe" : "java";
+        return Paths.get(System.getProperty("java.home"), "bin", binary).toString();
+    }
+
+    private static byte[] readAll(InputStream inputStream) throws IOException {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        byte[] buffer = new byte[8192];
+        int read;
+        while ((read = inputStream.read(buffer)) != -1) {
+            output.write(buffer, 0, read);
+        }
+        return output.toByteArray();
     }
 
     private static Path createRepository(Path tempDir, boolean git) throws Exception {
