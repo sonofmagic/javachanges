@@ -37,7 +37,7 @@ jobs:
         run: ./mvnw -B -DskipTests compile exec:java -Dexec.args="status --directory $GITHUB_WORKSPACE"
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           run_install: false
 
