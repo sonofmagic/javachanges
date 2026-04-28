@@ -38,9 +38,10 @@ public class GitlabReleaseRuntime {
     public String remoteBranchHead(String branchName, String remoteUrl) throws IOException, InterruptedException {
         CommandResult result = runGitCapture("ls-remote", "--heads", remoteUrl, "refs/heads/" + branchName);
         if (result.exitCode != 0) {
-            String error = ReleaseTextUtils.trimToNull(result.stderrText());
+            String error = ReleaseTextUtils.trimToNull(ReleaseTextUtils.redactSensitiveText(result.stderrText()));
             throw new IllegalStateException(error == null
-                ? "git command failed: [ls-remote, --heads, " + remoteUrl + ", refs/heads/" + branchName + "]"
+                ? "git command failed: [ls-remote, --heads, "
+                    + ReleaseTextUtils.redactSensitiveText(remoteUrl) + ", refs/heads/" + branchName + "]"
                 : error);
         }
         String stdout = ReleaseTextUtils.trimToNull(result.stdoutText());
@@ -72,8 +73,10 @@ public class GitlabReleaseRuntime {
     public void runGit(String... args) throws IOException, InterruptedException {
         CommandResult result = runGitCapture(args);
         if (result.exitCode != 0) {
-            String error = ReleaseTextUtils.trimToNull(result.stderrText());
-            throw new IllegalStateException(error == null ? "git command failed: " + Arrays.asList(args) : error);
+            String error = ReleaseTextUtils.trimToNull(ReleaseTextUtils.redactSensitiveText(result.stderrText()));
+            throw new IllegalStateException(error == null
+                ? "git command failed: " + ReleaseTextUtils.redactSensitiveText(Arrays.asList(args).toString())
+                : error);
         }
     }
 

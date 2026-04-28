@@ -98,6 +98,13 @@ public final class ReleaseTextUtils {
         return builder.toString();
     }
 
+    public static String redactSensitiveText(String value) {
+        if (value == null) {
+            return null;
+        }
+        return value.replaceAll("([A-Za-z][A-Za-z0-9+.-]*://)([^/@\\s]+)@", "$1****@");
+    }
+
     static String shellEscape(String value) {
         if (value.matches("[A-Za-z0-9_./:=+-]+")) {
             return value;
