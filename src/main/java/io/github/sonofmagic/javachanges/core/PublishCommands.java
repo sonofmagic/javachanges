@@ -123,6 +123,9 @@ final class GradlePublishCommand extends AbstractCliCommand {
     @Option(names = "--module", description = "Target Gradle project name.")
     private String module;
 
+    @Option(names = "--task", description = "Gradle publish task name. Defaults to publish.")
+    private String task;
+
     @Option(names = "--snapshot-build-stamp",
         description = "Explicit snapshot build stamp used to derive the publish version.")
     private String snapshotBuildStamp;
@@ -148,6 +151,6 @@ final class GradlePublishCommand extends AbstractCliCommand {
         );
         PublishRequest request = PublishRequest.fromOptions(options, true);
         return runAutomationCommand("gradle-publish", request.format,
-            () -> gradlePublishSupport().publish(request));
+            () -> gradlePublishSupport().publish(request, task));
     }
 }

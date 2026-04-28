@@ -264,11 +264,10 @@ $JAVACHANGES gradle-publish --directory . --snapshot true --module api
 
 这个命令会渲染 `./gradlew --no-daemon publish -Pversion=...`；传入 `--module api` 时会渲染 `./gradlew --no-daemon :api:publish -Pversion=...`。它不接管 Gradle 仓库凭据，凭据和 publication repository 仍然放在 Gradle build 或 CI 环境里。
 
-如果你需要自定义 Gradle task，仍然可以手动消费 release-plan manifest：
+如果你的 Gradle publication task 不是默认的 `publish`，传入 `--task`：
 
 ```bash
-RELEASE_VERSION="$($JAVACHANGES manifest-field --directory . --field releaseVersion)"
-./gradlew customPublishTask -Pversion="$RELEASE_VERSION"
+$JAVACHANGES gradle-publish --directory . --tag v1.4.0 --task publishAllPublicationsToMavenRepository
 ```
 
 如果你的 Gradle build 已经从 `gradle.properties` 读取 `version`，应用 release plan 后该文件已经推进到下一个 snapshot。release tag 和 release notes 使用 manifest，真正发布逻辑仍放在 Gradle build 内部。

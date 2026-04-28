@@ -446,13 +446,19 @@ snapshot 示例：
 java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar gradle-publish --directory /path/to/repo --snapshot true
 ```
 
-`gradle-publish` 会复用和 `publish` 一样的 release / snapshot 版本解析，然后渲染 `./gradlew --no-daemon publish -Pversion=...`。如果传入 `--module api`，会渲染 `./gradlew --no-daemon :api:publish -Pversion=...`。
+自定义 task 示例：
+
+```bash
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar gradle-publish --directory /path/to/repo --tag v1.2.3 --task publishAllPublicationsToMavenRepository
+```
+
+`gradle-publish` 会复用和 `publish` 一样的 release / snapshot 版本解析，然后渲染 `./gradlew --no-daemon publish -Pversion=...`。如果传入 `--module api`，会渲染 `./gradlew --no-daemon :api:publish -Pversion=...`。使用 `--task` 可以替换最终 Gradle task name。
 
 Gradle 仓库注意事项：
 
 - 这个命令不会生成 Maven `settings.xml`
 - 仓库地址和凭据仍然应该放在 Gradle build 或 CI 环境里
-- 如果实际任务名不是 `publish`，请直接调用你的自定义 Gradle task
+- 如果实际 publication task 名不是 `publish`，请传入 `--task`
 
 ## 9. 平台发布命令
 

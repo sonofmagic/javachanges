@@ -275,11 +275,34 @@ class JavaChangesCliTest {
 
         assertEquals(0, result.exitCode, result.stderr);
         assertTrue(result.stdout.contains("Gradle command: " + ReleaseProcessUtils.gradleWrapperPath() + " (wrapper)"));
+        assertTrue(result.stdout.contains("Gradle task: publish"));
         assertTrue(result.stdout.contains("publish version: 1.1.1-20260428.000000.test-SNAPSHOT"));
         assertTrue(result.stdout.contains("target module: fixture-app"));
         assertTrue(result.stdout.contains(ReleaseProcessUtils.gradleWrapperPath()
             + " --no-daemon :fixture-app:publish -Pversion=1.1.1-20260428.000000.test-SNAPSHOT"));
         assertTrue(result.stdout.contains("当前为 dry-run，未执行 Gradle。"));
+    }
+
+    @Test
+    void gradlePublishDryRunRendersCustomTask(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createGradleRepository(tempDir, false);
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.gradleWrapperPath()),
+            "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = execute(
+            "gradle-publish",
+            "--directory", repoRoot.toString(),
+            "--snapshot", "true",
+            "--module", "fixture-app",
+            "--task", "publishAllPublicationsToMavenRepository",
+            "--snapshot-version-mode", "plain",
+            "--allow-dirty", "true"
+        );
+
+        assertEquals(0, result.exitCode, result.stderr);
+        assertTrue(result.stdout.contains("Gradle task: publishAllPublicationsToMavenRepository"));
+        assertTrue(result.stdout.contains(ReleaseProcessUtils.gradleWrapperPath()
+            + " --no-daemon :fixture-app:publishAllPublicationsToMavenRepository -Pversion=1.1.1-SNAPSHOT"));
     }
 
     @Test

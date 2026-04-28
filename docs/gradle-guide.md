@@ -264,11 +264,10 @@ $JAVACHANGES gradle-publish --directory . --snapshot true --module api
 
 The command renders `./gradlew --no-daemon publish -Pversion=...`, or `./gradlew --no-daemon :api:publish -Pversion=...` when `--module api` is set. It does not manage Gradle repository credentials; keep credentials and publication repositories in the Gradle build or CI environment.
 
-You can still consume the release-plan manifest manually when you need a custom Gradle task:
+If your Gradle publication task has a different name, pass `--task`:
 
 ```bash
-RELEASE_VERSION="$($JAVACHANGES manifest-field --directory . --field releaseVersion)"
-./gradlew customPublishTask -Pversion="$RELEASE_VERSION"
+$JAVACHANGES gradle-publish --directory . --tag v1.4.0 --task publishAllPublicationsToMavenRepository
 ```
 
 If your Gradle build already reads `version` from `gradle.properties`, the applied release plan has already updated that file to the next snapshot. Use the release manifest for release tags and release notes, and keep the actual publication logic inside your Gradle build.

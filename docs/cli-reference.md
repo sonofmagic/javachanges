@@ -447,13 +447,19 @@ Snapshot example:
 java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar gradle-publish --directory /path/to/repo --snapshot true
 ```
 
-`gradle-publish` resolves the same release or snapshot version as `publish`, then renders `./gradlew --no-daemon publish -Pversion=...`. If `--module api` is provided, it renders `./gradlew --no-daemon :api:publish -Pversion=...`.
+Custom task example:
+
+```bash
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar gradle-publish --directory /path/to/repo --tag v1.2.3 --task publishAllPublicationsToMavenRepository
+```
+
+`gradle-publish` resolves the same release or snapshot version as `publish`, then renders `./gradlew --no-daemon publish -Pversion=...`. If `--module api` is provided, it renders `./gradlew --no-daemon :api:publish -Pversion=...`. Use `--task` to replace the final Gradle task name.
 
 Important Gradle repository note:
 
 - this command does not generate Maven `settings.xml`
 - repository URLs and credentials should stay in the Gradle build or CI environment
-- use custom Gradle tasks directly when `publish` is not the right task name
+- pass `--task` when the publication task is not named `publish`
 
 ## 9. Platform Release Commands
 

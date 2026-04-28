@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class GradlePublishSupport {
+    private static final String DEFAULT_TASK = "publish";
     private final Path repoRoot;
     private final PrintStream out;
     private final PublishRuntime runtime;
@@ -29,6 +30,11 @@ public final class GradlePublishSupport {
     }
 
     public void publish(PublishRequest request) throws IOException, InterruptedException {
+        publish(request, DEFAULT_TASK);
+    }
+
+    public void publish(PublishRequest request, String task) throws IOException, InterruptedException {
+        String resolvedTask = normalizeTask(task);
         PublishPlanSupport.PublishTarget publishTarget = planSupport.resolvePublishTarget(request);
         AutomationJsonSupport.AutomationReport report = planSupport.buildReport("gradle-publish", request, publishTarget);
         preflight(request);
@@ -39,11 +45,12 @@ public final class GradlePublishSupport {
                 + ReleaseProcessUtils.gradleWrapperPath() + " 或系统中可用 gradle");
         }
 
-        List<String> command = buildPublishCommand(publishTarget, gradleCommand);
+        List<String> command = buildPublishCommand(publishTarget, gradleCommand, resolvedTask);
         if (request.format != OutputFormat.JSON) {
             out.println();
             out.println("== Gradle Publish Dry Run ==");
             out.println("Gradle command: " + gradleCommand.command + " (" + gradleCommand.source + ")");
+            out.println("Gradle task: " + resolvedTask);
             out.println("publish version: " + publishTarget.publishVersion);
             if (request.snapshot) {
                 out.println("snapshot version mode: " + publishTarget.snapshotVersionMode.id);
@@ -81,17 +88,37 @@ public final class GradlePublishSupport {
     }
 
     List<String> buildPublishCommand(PublishPlanSupport.PublishTarget publishTarget, GradleCommand gradleCommand) {
+        return buildPublishCommand(publishTarget, gradleCommand, DEFAULT_TASK);
+    }
+
+    List<String> buildPublishCommand(PublishPlanSupport.PublishTarget publishTarget, GradleCommand gradleCommand,
+                                     String task) {
+        String resolvedTask = normalizeTask(task);
         List<String> command = new ArrayList<String>();
         command.add(gradleCommand.command);
         command.add("--no-daemon");
         if (publishTarget.resolvedModule == null) {
-            command.add("publish");
+            command.add(resolvedTask);
         } else {
             ReleaseModuleUtils.assertKnownModule(repoRoot, publishTarget.resolvedModule);
-            command.add(":" + publishTarget.resolvedModule + ":publish");
+            if (resolvedTask.indexOf(':') >= 0) {
+                throw new IllegalArgumentException("--task must be a task name, not a project path, when --module is set: " + task);
+            }
+            command.add(":" + publishTarget.resolvedModule + ":" + resolvedTask);
         }
         command.add("-Pversion=" + publishTarget.publishVersion);
         return command;
+    }
+
+    private static String normalizeTask(String task) {
+        String value = ReleaseTextUtils.trimToNull(task);
+        if (value == null) {
+            return DEFAULT_TASK;
+        }
+        if (!value.matches(":?[A-Za-z][A-Za-z0-9_.:-]*")) {
+            throw new IllegalArgumentException("Unsupported Gradle task: " + task);
+        }
+        return value;
     }
 
     private void preflight(PublishRequest request) throws IOException, InterruptedException {
