@@ -26,7 +26,10 @@ public class GithubReleaseRuntime {
 
     public boolean remoteTagExists(String tagName, String remoteName) throws IOException, InterruptedException {
         CommandResult result = runGitCapture("ls-remote", "--tags", remoteName, "refs/tags/" + tagName);
-        return result.exitCode == 0 && ReleaseTextUtils.trimToNull(result.stdoutText()) != null;
+        if (result.exitCode != 0) {
+            throw gitCommandException(result, "ls-remote", "--tags", remoteName, "refs/tags/" + tagName);
+        }
+        return ReleaseTextUtils.trimToNull(result.stdoutText()) != null;
     }
 
     public String headSha() throws IOException, InterruptedException {
@@ -109,8 +112,7 @@ public class GithubReleaseRuntime {
     public void runGit(String... args) throws IOException, InterruptedException {
         CommandResult result = runGitCapture(args);
         if (result.exitCode != 0) {
-            String error = ReleaseTextUtils.trimToNull(result.stderrText());
-            throw new IllegalStateException(error == null ? "git command failed: " + Arrays.asList(args) : error);
+            throw gitCommandException(result, args);
         }
     }
 
@@ -139,5 +141,12 @@ public class GithubReleaseRuntime {
         command[0] = executable;
         System.arraycopy(args, 0, command, 1, args.length);
         return ReleaseProcessUtils.runCapture(repoRoot, command);
+    }
+
+    private IllegalStateException gitCommandException(CommandResult result, String... args) {
+        String error = ReleaseTextUtils.trimToNull(ReleaseTextUtils.redactSensitiveText(result.stderrText()));
+        return new IllegalStateException(error == null
+            ? "git command failed: " + ReleaseTextUtils.redactSensitiveText(Arrays.asList(args).toString())
+            : error);
     }
 }

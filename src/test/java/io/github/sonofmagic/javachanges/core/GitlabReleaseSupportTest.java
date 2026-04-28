@@ -271,6 +271,11 @@ class GitlabReleaseSupportTest {
         }
 
         @Override
+        public boolean remoteTagExists(String tagName, String remoteUrl) {
+            return false;
+        }
+
+        @Override
         public String remoteBranchHead(String branchName, String remoteUrl) {
             remoteBranchHeadBranch = branchName;
             return remoteBranchHead;

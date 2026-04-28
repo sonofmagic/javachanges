@@ -32,7 +32,10 @@ public class GitlabReleaseRuntime {
 
     public boolean remoteTagExists(String tagName, String remoteUrl) throws IOException, InterruptedException {
         CommandResult result = runGitCapture("ls-remote", "--tags", remoteUrl, "refs/tags/" + tagName);
-        return result.exitCode == 0 && ReleaseTextUtils.trimToNull(result.stdoutText()) != null;
+        if (result.exitCode != 0) {
+            throw gitCommandException(result, "ls-remote", "--tags", remoteUrl, "refs/tags/" + tagName);
+        }
+        return ReleaseTextUtils.trimToNull(result.stdoutText()) != null;
     }
 
     public String remoteBranchHead(String branchName, String remoteUrl) throws IOException, InterruptedException {
@@ -73,10 +76,7 @@ public class GitlabReleaseRuntime {
     public void runGit(String... args) throws IOException, InterruptedException {
         CommandResult result = runGitCapture(args);
         if (result.exitCode != 0) {
-            String error = ReleaseTextUtils.trimToNull(ReleaseTextUtils.redactSensitiveText(result.stderrText()));
-            throw new IllegalStateException(error == null
-                ? "git command failed: " + ReleaseTextUtils.redactSensitiveText(Arrays.asList(args).toString())
-                : error);
+            throw gitCommandException(result, args);
         }
     }
 
@@ -89,6 +89,13 @@ public class GitlabReleaseRuntime {
         command[0] = "git";
         System.arraycopy(args, 0, command, 1, args.length);
         return ReleaseProcessUtils.runCapture(repoRoot, command);
+    }
+
+    private IllegalStateException gitCommandException(CommandResult result, String... args) {
+        String error = ReleaseTextUtils.trimToNull(ReleaseTextUtils.redactSensitiveText(result.stderrText()));
+        return new IllegalStateException(error == null
+            ? "git command failed: " + ReleaseTextUtils.redactSensitiveText(Arrays.asList(args).toString())
+            : error);
     }
 
     private String firstNonBlank(String... values) {

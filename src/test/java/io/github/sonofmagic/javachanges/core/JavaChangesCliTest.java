@@ -238,6 +238,9 @@ class JavaChangesCliTest {
     @Test
     void githubTagFromPlanDryRunPrintsPlannedTag(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, true);
+        Path remoteRepo = tempDir.resolve("remote.git");
+        run(repoRoot, "git", "init", "-q", "--bare", remoteRepo.toString());
+        run(repoRoot, "git", "remote", "add", "origin", remoteRepo.toString());
         run(repoRoot, "git", "config", "user.name", "tester");
         run(repoRoot, "git", "config", "user.email", "tester@example.com");
         run(repoRoot, "git", "add", "pom.xml");

@@ -11,8 +11,18 @@ import java.nio.file.Path;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class GitlabReleaseRuntimeTest {
+
+    @Test
+    void remoteTagExistsFailsClosedWhenRemoteLookupFails(@TempDir Path tempDir) {
+        GitlabReleaseRuntime runtime = new GitlabReleaseRuntime(tempDir);
+        Path missingRemote = tempDir.resolve("missing.git");
+
+        assertThrows(IllegalStateException.class,
+            () -> runtime.remoteTagExists("v1.2.0", missingRemote.toString()));
+    }
 
     @Test
     void pushReleaseBranchUsesExplicitLeaseAgainstExistingRemoteBranch(@TempDir Path tempDir) throws Exception {
