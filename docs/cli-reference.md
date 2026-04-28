@@ -52,7 +52,7 @@ Plugin note:
 - for CI or external repositories, you can call the published plugin directly without a custom runner POM:
 
 ```bash
-mvn -B io.github.sonofmagic:javachanges:1.4.1:run -Djavachanges.args="gitlab-release-plan --directory $CI_PROJECT_DIR --execute true"
+mvn -B io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__:run -Djavachanges.args="gitlab-release-plan --directory $CI_PROJECT_DIR --execute true"
 ```
 
 If you declare the plugin in a target repository `pom.xml`, the shortest local form becomes:

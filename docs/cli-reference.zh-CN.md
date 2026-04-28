@@ -51,7 +51,7 @@ plugin 说明：
 - 对业务仓库或 CI 来说，也可以直接调用已发布的官方 Maven plugin，不需要额外维护 runner POM：
 
 ```bash
-mvn -B io.github.sonofmagic:javachanges:1.4.1:run -Djavachanges.args="gitlab-release-plan --directory $CI_PROJECT_DIR --execute true"
+mvn -B io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__:run -Djavachanges.args="gitlab-release-plan --directory $CI_PROJECT_DIR --execute true"
 ```
 
 如果你已经在目标仓库的 `pom.xml` 里声明了 plugin，本地最短写法就是：

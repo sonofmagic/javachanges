@@ -399,6 +399,28 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void initCiTemplatesShareDefaultJavachangesVersion(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+
+        ExecutionResult gitlabResult = execute(
+            "init-gitlab-ci",
+            "--directory", repoRoot.toString(),
+            "--output", ".gitlab-ci.generated.yml"
+        );
+        ExecutionResult githubResult = execute(
+            "init-github-actions",
+            "--directory", repoRoot.toString(),
+            "--output", ".github/workflows/generated-release.yml"
+        );
+
+        assertEquals(0, gitlabResult.exitCode);
+        assertEquals(0, githubResult.exitCode);
+        String expectedVersion = "JAVACHANGES_VERSION: \"" + JavaChangesVersion.FALLBACK_RELEASED_VERSION + "\"";
+        assertTrue(read(repoRoot.resolve(".gitlab-ci.generated.yml")).contains(expectedVersion));
+        assertTrue(read(repoRoot.resolve(".github/workflows/generated-release.yml")).contains(expectedVersion));
+    }
+
+    @Test
     void initGithubActionsWritesMavenWorkflow(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, false);
         Files.createDirectories(repoRoot.resolve(".changesets"));

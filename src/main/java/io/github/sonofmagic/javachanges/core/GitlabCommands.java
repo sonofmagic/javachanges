@@ -152,15 +152,7 @@ final class InitGitlabCiCommand extends AbstractCliCommand {
     }
 
     private String effectiveVersion() {
-        String explicit = ReleaseTextUtils.trimToNull(javachangesVersion);
-        if (explicit != null) {
-            return explicit;
-        }
-        String implementationVersion = ReleaseTextUtils.trimToNull(JavaChangesCli.class.getPackage().getImplementationVersion());
-        if (implementationVersion != null) {
-            return implementationVersion;
-        }
-        return "1.4.1";
+        return JavaChangesVersion.releasedVersion(javachangesVersion);
     }
 
     private String renderTemplate(Path repoRoot, ChangesetConfigSupport.ChangesetConfig config, String version, String buildTool) {

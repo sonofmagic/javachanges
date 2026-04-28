@@ -150,7 +150,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="init-gitlab-ci --directory /pa
 如果业务仓库不想维护额外 runner POM，最短可执行 Maven 命令范式是：
 
 ```bash
-mvn -B io.github.sonofmagic:javachanges:1.4.1:run -Djavachanges.args="gitlab-release-plan --directory $CI_PROJECT_DIR --execute true"
+mvn -B io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__:run -Djavachanges.args="gitlab-release-plan --directory $CI_PROJECT_DIR --execute true"
 ```
 
 生成后的模板大致如下：
@@ -173,7 +173,7 @@ default:
 
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
-  JAVACHANGES_VERSION: "1.4.1"
+  JAVACHANGES_VERSION: "__JAVACHANGES_LATEST_RELEASE_VERSION__"
 
 verify:
   stage: verify
