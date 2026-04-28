@@ -8,7 +8,7 @@ cd "$repo_root"
 local_repo=".m2/repository"
 
 current_revision="$(
-  mvn -q -DskipTests -Dmaven.repo.local="$local_repo" compile exec:java \
+  ./mvnw -q -DskipTests -Dmaven.repo.local="$local_repo" compile exec:java \
     -Dexec.args="version --directory $repo_root" | tail -n 1
 )"
 
@@ -26,7 +26,7 @@ resolved_revision="${base_revision}-${snapshot_build_stamp}-SNAPSHOT"
 
 echo "Publishing snapshot revision: $resolved_revision"
 
-mvn -B \
+./mvnw -B \
   -Dmaven.repo.local="$local_repo" \
   -Pcentral-snapshot-publish \
   -Drevision="$resolved_revision" \

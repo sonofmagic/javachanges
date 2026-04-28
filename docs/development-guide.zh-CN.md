@@ -17,11 +17,11 @@ description: 配置本地 Java 与 Maven 环境，从源码运行 javachanges，
 
 这个仓库当前的使用方式是：
 
-- 安装本机开发依赖：JDK + Maven
+- 安装本机开发依赖：JDK + Git
 - 拉取源码仓库
-- 用 Maven 编译并直接运行入口类
+- 用 Maven Wrapper 编译并直接运行入口类
 
-> **注意**：仓库根目录目前没有 `mvnw`，所以你需要先在本机安装 Maven。
+> **注意**：仓库根目录已包含 Maven Wrapper，源码仓库内的命令优先使用 `./mvnw`，不依赖本机预装 Maven。
 
 ## 2. 环境要求
 
@@ -32,7 +32,7 @@ description: 配置本地 Java 与 Maven 环境，从源码运行 javachanges，
 | 项目 | 要求 |
 | --- | --- |
 | JDK | Java 8+ |
-| Maven | 3.8+ |
+| Maven | 仓库 Maven Wrapper 提供 3.9.15；不用 Wrapper 时需要系统 Maven 3.8+ |
 | Git | 需要 |
 | 目标仓库 | 必须有根 `pom.xml`，并且要么包含 `<modules>`，要么是单模块根 artifact |
 
@@ -42,9 +42,9 @@ description: 配置本地 Java 与 Maven 环境，从源码运行 javachanges，
 
 | 场景 | 建议 |
 | --- | --- |
-| 日常开发 | JDK 8 + Maven 3.9.x |
+| 日常开发 | JDK 8 + 仓库自带 Maven Wrapper |
 | 本地默认环境 | 与 `pom.xml` 的 Java 8 编译目标保持一致 |
-| 命令执行 | 使用系统安装的 `mvn` |
+| 命令执行 | 在仓库根目录使用 `./mvnw` |
 
 > **提示**：仓库当前 `source/target` 是 Java 8，日常开发也建议直接使用 Java 8，减少环境差异。
 
@@ -52,21 +52,20 @@ description: 配置本地 Java 与 Maven 环境，从源码运行 javachanges，
 
 ### 3.1 macOS
 
-如果你使用 Homebrew，可以先安装 Java 8 和 Maven：
+如果你使用 Homebrew，可以先安装 Java 8：
 
 ```bash
 # 安装 Java 8（推荐 Corretto 8）
 brew install --cask corretto@8
 
-# 安装 Maven
-brew install maven
+# Maven 由仓库里的 ./mvnw 提供
 ```
 
 安装后确认命令可用：
 
 ```bash
 java -version
-mvn -v
+./mvnw -v
 ```
 
 如果你希望新开终端默认就是 Java 8，可以追加：
@@ -105,7 +104,7 @@ sudo dnf install java-1.8.0-openjdk-devel maven
 
 ```bash
 java -version
-mvn -v
+./mvnw -v
 ```
 
 ## 4. 获取源码并安装项目
@@ -122,7 +121,7 @@ cd javachanges
 第一次进入仓库后，先跑一遍构建：
 
 ```bash
-mvn -q test
+./mvnw -q test
 ```
 
 这个命令会做两件事：
@@ -132,14 +131,14 @@ mvn -q test
 | 下载依赖 | 初始化本地 Maven 缓存 |
 | 编译项目 | 确认源码可正常构建 |
 
-> **说明**：当前仓库已经包含面向 CLI 的单元测试，因此 `mvn test` 现在既会验证编译，也会验证命令行为。
+> **说明**：当前仓库已经包含面向 CLI 的单元测试，因此 `./mvnw test` 现在既会验证编译，也会验证命令行为。
 
 ### 4.3 安装到本地 Maven 仓库（可选）
 
 如果你希望把这个项目产物安装到本地 Maven 仓库，可以执行：
 
 ```bash
-mvn install
+./mvnw install
 ```
 
 这一步的作用是把构建产物写入 `~/.m2/repository`，但它不会自动给你生成全局 `javachanges` 命令。
@@ -166,7 +165,7 @@ mvn install
 在仓库根目录执行：
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/your/repo"
+./mvnw -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/your/repo"
 ```
 
 这条命令的含义如下：
@@ -183,7 +182,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/yo
 如果你想直接验证面向开发者的 Maven plugin 体验，可以先把当前 SNAPSHOT 安装到本地：
 
 ```bash
-mvn -q -DskipTests install
+./mvnw -q -DskipTests install
 ```
 
 等价的仓库快捷入口：
@@ -233,13 +232,13 @@ pnpm docs:deploy:local
 ### 6.1 查看状态
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/your/repo"
+./mvnw -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/your/repo"
 ```
 
 ### 6.2 添加 changeset
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="add --directory /path/to/your/repo --summary 'add release notes command' --release minor"
+./mvnw -q -DskipTests compile exec:java -Dexec.args="add --directory /path/to/your/repo --summary 'add release notes command' --release minor"
 ```
 
 这条命令现在默认会写出官方 Changesets 风格的文件，例如：
@@ -257,13 +256,13 @@ add release notes command
 ### 6.3 生成发布计划
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/your/repo"
+./mvnw -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/your/repo"
 ```
 
 ### 6.4 应用发布计划
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/your/repo --apply true"
+./mvnw -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/your/repo --apply true"
 ```
 
 ### 6.5 输出帮助信息
@@ -271,7 +270,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/your
 如果你只是想先看支持哪些命令，可以先触发内置 usage 输出，例如：
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="help"
+./mvnw -q -DskipTests compile exec:java -Dexec.args="help"
 ```
 
 当前源码中实际支持的高价值命令包括：
@@ -297,32 +296,32 @@ mvn -q -DskipTests compile exec:java -Dexec.args="help"
 
 ### 7.1 本地迭代流程
 
-1. 安装好 JDK 和 Maven
-2. 运行 `mvn -q test`，确认仓库能编译
+1. 安装好 JDK 和 Git
+2. 运行 `./mvnw -q test`，确认仓库能编译
 3. 准备一个用于测试的 Maven 仓库
 4. 修改 `src/main/java` 下的源码
-5. 用 `mvn -q -DskipTests compile exec:java -Dexec.args="..."` 验证行为
-6. 确认无误后，再执行 `mvn test` 或 `mvn package`
+5. 用 `./mvnw -q -DskipTests compile exec:java -Dexec.args="..."` 验证行为
+6. 确认无误后，再执行 `./mvnw test` 或 `./mvnw package`
 
 ### 7.2 调试建议
 
 | 方式 | 适用场景 |
 | --- | --- |
-| `mvn ... exec:java` | 最接近命令行真实使用方式 |
+| `./mvnw ... exec:java` | 最接近命令行真实使用方式 |
 | IDE 直接运行 `JavaChangesCli` | 需要断点调试时 |
-| `mvn package` 后再验证 | 需要确认打包结果时 |
+| `./mvnw package` 后再验证 | 需要确认打包结果时 |
 
 ## 8. 常见问题
 
-### 8.1 `mvn: command not found`
+### 8.1 `./mvnw: Permission denied`
 
-原因：本机没有安装 Maven，或者 Maven 没有加入 `PATH`。
+原因：检出仓库后 Maven Wrapper 脚本没有可执行权限。
 
 处理方式：
 
-1. 安装 Maven
-2. 重新打开终端
-3. 执行 `mvn -v` 确认
+1. 执行 `chmod +x ./mvnw`
+2. 重新执行 `./mvnw -v` 确认
+3. 如果 Git 客户端清掉了可执行位，把可执行位一起提交
 
 ### 8.2 `Unable to locate a Java Runtime`
 
@@ -332,7 +331,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="help"
 
 1. 安装 JDK
 2. 执行 `java -version`
-3. 再执行 `mvn -v`
+3. 再执行 `./mvnw -v`
 
 ### 8.3 运行后提示仓库结构不符合要求
 
@@ -351,7 +350,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="help"
 因为这是一个 Java CLI 项目，不是前端或服务端常驻进程项目。常见做法是每次修改后重新执行一遍：
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/your/repo"
+./mvnw -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/your/repo"
 ```
 
 ### 8.5 现在可以直接全局安装成一个命令吗？
@@ -360,7 +359,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/yo
 
 当前更稳定的使用方式是：
 
-- 用 `mvn ... exec:java` 直接从源码运行
+- 用 `./mvnw ... exec:java` 直接从源码运行
 - 用 Maven 打 jar，再通过 `java -jar ...` 运行
 - 在已经发布之后，由 CI 从 Maven Central 下载 jar 使用
 
@@ -384,11 +383,11 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/yo
 
 | 目标 | 命令 |
 | --- | --- |
-| 安装本机依赖 | `brew install --cask corretto@8 && brew install maven` |
-| 验证环境 | `java -version && mvn -v` |
+| 安装本机依赖 | `brew install --cask corretto@8` |
+| 验证环境 | `java -version && ./mvnw -v` |
 | 拉取项目 | `git clone https://github.com/sonofmagic/javachanges.git` |
-| 首次构建 | `mvn -q test` |
-| 进入开发模式 | `mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/your/repo"` |
+| 首次构建 | `./mvnw -q test` |
+| 进入开发模式 | `./mvnw -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/your/repo"` |
 
 ## 10. 参考资源
 

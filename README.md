@@ -71,7 +71,7 @@ java -jar .javachanges/javachanges-<released-version>.jar --help
 On the current `main` branch, after installing the snapshot locally, you can also run `javachanges` as a Maven plugin:
 
 ```bash
-mvn -q -DskipTests install
+./mvnw -q -DskipTests install
 mvn io.github.sonofmagic:javachanges:1.6.0-SNAPSHOT:status
 mvn io.github.sonofmagic:javachanges:1.6.0-SNAPSHOT:plan -Djavachanges.apply=true
 mvn io.github.sonofmagic:javachanges:1.6.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
@@ -81,8 +81,8 @@ mvn io.github.sonofmagic:javachanges:1.6.0-SNAPSHOT:manifest-field -Djavachanges
 Repository-local shortcuts for working on `javachanges` itself:
 
 ```bash
-mvn -B test
-mvn -B -Pcoverage -Dmaven.repo.local=.m2/repository test
+./mvnw -B test
+./mvnw -B -Pcoverage -Dmaven.repo.local=.m2/repository test
 pnpm snapshot:install
 pnpm snapshot:preflight
 pnpm snapshot:publish:local
@@ -91,8 +91,8 @@ pnpm docs:deploy:local
 
 These map to the same phases used elsewhere in the docs:
 
-- `mvn -B test` runs the default test suite with build prerequisite checks
-- `mvn -B -Pcoverage -Dmaven.repo.local=.m2/repository test` also generates a JaCoCo HTML report under `target/site/jacoco/`
+- `./mvnw -B test` runs the default test suite with build prerequisite checks
+- `./mvnw -B -Pcoverage -Dmaven.repo.local=.m2/repository test` also generates a JaCoCo HTML report under `target/site/jacoco/`
 - `snapshot:install` installs the current `1.6.0-SNAPSHOT` into local Maven
 - `snapshot:preflight` previews a local snapshot publish with `local.dev.001`
 - `snapshot:publish:local` publishes a unique snapshot through `central-publishing-maven-plugin`

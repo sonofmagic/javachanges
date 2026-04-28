@@ -28,13 +28,13 @@ jobs:
           cache-dependency-path: pom.xml
 
       - name: Verify default build
-        run: mvn -B verify
+        run: ./mvnw -B verify
 
       - name: Verify Central publish profile
-        run: mvn -B -Pcentral-publish -Dgpg.skip=true verify
+        run: ./mvnw -B -Pcentral-publish -Dgpg.skip=true verify
 
       - name: Verify javachanges can plan this repository
-        run: mvn -B -DskipTests compile exec:java -Dexec.args="status --directory $GITHUB_WORKSPACE"
+        run: ./mvnw -B -DskipTests compile exec:java -Dexec.args="status --directory $GITHUB_WORKSPACE"
 
       - name: Set up Node
         uses: actions/setup-node@v5

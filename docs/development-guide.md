@@ -17,11 +17,11 @@ This repository is not currently distributed as:
 
 Instead, the current workflow is:
 
-- install local prerequisites: JDK + Maven
+- install local prerequisites: JDK + Git
 - clone the source repository
-- compile and run the CLI directly with Maven
+- compile and run the CLI directly with the Maven Wrapper
 
-> Note: the repository does not include `mvnw`, so you need a local Maven installation.
+> Note: the repository includes Maven Wrapper scripts, so most source-repository commands should use `./mvnw` instead of a system Maven.
 
 ## 2. Requirements
 
@@ -32,7 +32,7 @@ According to [pom.xml](../pom.xml), the current project expects:
 | Item | Requirement |
 | --- | --- |
 | JDK | Java 8+ |
-| Maven | 3.8+ |
+| Maven | Wrapper-provided 3.9.15, or system Maven 3.8+ |
 | Git | Required |
 | Target repository | Must have a root `pom.xml`, and either `<modules>` or a single root artifact |
 
@@ -42,9 +42,9 @@ The repository currently develops and validates against Java 8:
 
 | Scenario | Recommendation |
 | --- | --- |
-| Day-to-day development | JDK 8 + Maven 3.9.x |
+| Day-to-day development | JDK 8 + the repository Maven Wrapper |
 | Local default environment | Match the Java 8 compiler target in `pom.xml` |
-| Command execution | Use a system-installed `mvn` |
+| Command execution | Use `./mvnw` from the repository root |
 
 > Tip: since the repository targets Java 8, using Java 8 locally reduces environment drift.
 
@@ -58,15 +58,14 @@ With Homebrew:
 # Install Java 8 (Corretto 8 is recommended)
 brew install --cask corretto@8
 
-# Install Maven
-brew install maven
+# Maven is provided by ./mvnw in this repository
 ```
 
 Then verify:
 
 ```bash
 java -version
-mvn -v
+./mvnw -v
 ```
 
 If you want new terminals to default to Java 8:
@@ -105,7 +104,7 @@ Verify with:
 
 ```bash
 java -version
-mvn -v
+./mvnw -v
 ```
 
 ## 4. Get the source and build it
@@ -122,7 +121,7 @@ cd javachanges
 Run:
 
 ```bash
-mvn -q test
+./mvnw -q test
 ```
 
 This mainly does two things:
@@ -132,12 +131,12 @@ This mainly does two things:
 | Download dependencies | Prime the local Maven cache |
 | Compile the project | Confirm the source builds cleanly |
 
-> Note: the repository now includes CLI-focused unit tests, so `mvn test` validates both compilation and command behavior.
+> Note: the repository now includes CLI-focused unit tests, so `./mvnw test` validates both compilation and command behavior.
 
 ### 4.3 Install into the local Maven repository (optional)
 
 ```bash
-mvn install
+./mvnw install
 ```
 
 This writes artifacts to `~/.m2/repository`, but it does not create a global `javachanges` command.
@@ -160,7 +159,7 @@ For this repository, “development mode” usually means:
 ### 5.2 Most common development command
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/your/repo"
+./mvnw -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/your/repo"
 ```
 
 | Segment | Meaning |
@@ -175,7 +174,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/yo
 If you want to validate the developer-facing plugin UX itself, first install the current snapshot locally:
 
 ```bash
-mvn -q -DskipTests install
+./mvnw -q -DskipTests install
 ```
 
 Equivalent repository shortcut:
@@ -225,13 +224,13 @@ Use them like this:
 ### 6.1 Show status
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/your/repo"
+./mvnw -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/your/repo"
 ```
 
 ### 6.2 Add a changeset
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="add --directory /path/to/your/repo --summary 'add release notes command' --release minor"
+./mvnw -q -DskipTests compile exec:java -Dexec.args="add --directory /path/to/your/repo --summary 'add release notes command' --release minor"
 ```
 
 That command now writes an official Changesets-style file, for example:
@@ -249,19 +248,19 @@ add release notes command
 ### 6.3 Generate a release plan
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/your/repo"
+./mvnw -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/your/repo"
 ```
 
 ### 6.4 Apply a release plan
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/your/repo --apply true"
+./mvnw -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/your/repo --apply true"
 ```
 
 ### 6.5 Print help
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="help"
+./mvnw -q -DskipTests compile exec:java -Dexec.args="help"
 ```
 
 High-value commands include:
@@ -287,32 +286,32 @@ High-value commands include:
 
 ### 7.1 Iteration loop
 
-1. Install JDK and Maven
-2. Run `mvn -q test`
+1. Install JDK and Git
+2. Run `./mvnw -q test`
 3. Prepare a Maven repository for testing
 4. Edit `src/main/java`
-5. Validate behavior with `mvn -q -DskipTests compile exec:java -Dexec.args="..."`
-6. Run `mvn test` or `mvn package` before finalizing
+5. Validate behavior with `./mvnw -q -DskipTests compile exec:java -Dexec.args="..."`
+6. Run `./mvnw test` or `./mvnw package` before finalizing
 
 ### 7.2 Debugging options
 
 | Method | Best for |
 | --- | --- |
-| `mvn ... exec:java` | Closest to real CLI usage |
+| `./mvnw ... exec:java` | Closest to real CLI usage |
 | Run `JavaChangesCli` in an IDE | Breakpoint debugging |
-| `mvn package` then verify | Packaging validation |
+| `./mvnw package` then verify | Packaging validation |
 
 ## 8. FAQ
 
-### 8.1 `mvn: command not found`
+### 8.1 `./mvnw: Permission denied`
 
-Cause: Maven is not installed or not in `PATH`.
+Cause: the Maven Wrapper script is not executable after checkout.
 
 Fix:
 
-1. install Maven
-2. reopen the terminal
-3. run `mvn -v`
+1. run `chmod +x ./mvnw`
+2. rerun `./mvnw -v`
+3. commit the executable bit if your Git client removed it
 
 ### 8.2 `Unable to locate a Java Runtime`
 
@@ -322,7 +321,7 @@ Fix:
 
 1. install a JDK
 2. run `java -version`
-3. run `mvn -v`
+3. run `./mvnw -v`
 
 ### 8.3 Target repository structure errors
 
@@ -341,7 +340,7 @@ The target repository must have at least:
 Because this is a Java CLI project, not a long-running frontend or backend service. The normal flow is to rerun commands after editing:
 
 ```bash
-mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/your/repo"
+./mvnw -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/your/repo"
 ```
 
 ### 8.5 Can I install `javachanges` as a global command today?
@@ -350,7 +349,7 @@ Not from this source repository directly.
 
 Current supported workflows are:
 
-- run from source with `mvn ... exec:java`
+- run from source with `./mvnw ... exec:java`
 - build the jar with Maven and run `java -jar ...`
 - consume a published jar from Maven Central in CI after a release exists
 
@@ -374,11 +373,11 @@ Shortest path:
 
 | Goal | Command |
 | --- | --- |
-| Install local dependencies | `brew install --cask corretto@8 && brew install maven` |
-| Verify environment | `java -version && mvn -v` |
+| Install local dependencies | `brew install --cask corretto@8` |
+| Verify environment | `java -version && ./mvnw -v` |
 | Clone the project | `git clone https://github.com/sonofmagic/javachanges.git` |
-| Initial build | `mvn -q test` |
-| Enter development mode | `mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/your/repo"` |
+| Initial build | `./mvnw -q test` |
+| Enter development mode | `./mvnw -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/your/repo"` |
 
 ## 10. References
 

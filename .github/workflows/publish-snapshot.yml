@@ -127,11 +127,11 @@ jobs:
           ' "$settings_path"
 
       - name: Build CLI
-        run: mvn -B -DskipTests compile
+        run: ./mvnw -B -DskipTests compile
 
       - name: Ensure signing public key is discoverable
         run: >
-          mvn -B -DskipTests exec:java
+          ./mvnw -B -DskipTests exec:java
           -Dexec.args="ensure-gpg-public-key --directory $GITHUB_WORKSPACE"
 
       - name: Resolve snapshot build stamp
@@ -150,7 +150,7 @@ jobs:
         env:
           JAVACHANGES_SNAPSHOT_BUILD_STAMP: ${{ steps.snapshot_build_stamp.outputs.value }}
         run: |
-          mvn -B -DskipTests compile exec:java \
+          ./mvnw -B -DskipTests compile exec:java \
             -Dexec.args="assert-snapshot --directory $GITHUB_WORKSPACE"
 
       - name: Resolve snapshot publish revision
@@ -158,7 +158,7 @@ jobs:
         env:
           JAVACHANGES_SNAPSHOT_BUILD_STAMP: ${{ steps.snapshot_build_stamp.outputs.value }}
         run: |
-          current_revision="$(mvn -q -DskipTests compile exec:java -Dexec.args="version --directory $GITHUB_WORKSPACE" | tail -n 1)"
+          current_revision="$(./mvnw -q -DskipTests compile exec:java -Dexec.args="version --directory $GITHUB_WORKSPACE" | tail -n 1)"
           base_revision="${current_revision%-SNAPSHOT}"
           resolved_revision="${base_revision}-${JAVACHANGES_SNAPSHOT_BUILD_STAMP}-SNAPSHOT"
           echo "value=${resolved_revision}" >> "$GITHUB_OUTPUT"
@@ -168,7 +168,7 @@ jobs:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
           SNAPSHOT_REVISION: ${{ steps.snapshot_revision.outputs.value }}
         run: |
-          mvn -B \
+          ./mvnw -B \
             -s "$MAVEN_CENTRAL_SETTINGS" \
             -Pcentral-snapshot-publish \
             -Drevision="${SNAPSHOT_REVISION}" \

@@ -30,11 +30,11 @@ jobs:
           cache-dependency-path: pom.xml
 
       - name: Build CLI
-        run: mvn -B -DskipTests compile
+        run: ./mvnw -B -DskipTests compile
 
       - name: Create or update release pull request
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >
-          mvn -B -DskipTests exec:java
+          ./mvnw -B -DskipTests exec:java
           -Dexec.args="github-release-plan --directory $GITHUB_WORKSPACE --execute true"

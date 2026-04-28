@@ -81,28 +81,28 @@ jobs:
 
       - name: Build workflow tools CLI
         working-directory: .workflow-tools
-        run: mvn -B -DskipTests compile
+        run: ./mvnw -B -DskipTests compile
 
       - name: Ensure signing public key is discoverable
         working-directory: .workflow-tools
         run: >
-          mvn -B -DskipTests exec:java
+          ./mvnw -B -DskipTests exec:java
           -Dexec.args="ensure-gpg-public-key --directory $GITHUB_WORKSPACE"
 
       - name: Build CLI
-        run: mvn -B -DskipTests compile
+        run: ./mvnw -B -DskipTests compile
 
       - name: Create and push release tag
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >
-          mvn -B -DskipTests exec:java
+          ./mvnw -B -DskipTests exec:java
           -Dexec.args="github-tag-from-plan --directory $GITHUB_WORKSPACE --current-sha $(git rev-parse HEAD) --execute true"
 
       - name: Prepare GitHub release metadata
         id: github_release
         run: >
-          mvn -B -DskipTests exec:java
+          ./mvnw -B -DskipTests exec:java
           -Dexec.args="github-release-from-plan --directory $GITHUB_WORKSPACE --release-notes-file target/release-notes.md --github-output-file $GITHUB_OUTPUT"
 
       - name: Publish to Maven Central
@@ -112,7 +112,7 @@ jobs:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
           RELEASE_VERSION: ${{ steps.github_release.outputs.release_version }}
         run: |
-          mvn -B \
+          ./mvnw -B \
             -Pcentral-publish \
             -Drevision="${RELEASE_VERSION}" \
             -Dcentral.autoPublish=true \
@@ -123,5 +123,5 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >
-          mvn -B -DskipTests exec:java
+          ./mvnw -B -DskipTests exec:java
           -Dexec.args="github-release-from-plan --directory $GITHUB_WORKSPACE --release-notes-file target/release-notes.md --execute true"
