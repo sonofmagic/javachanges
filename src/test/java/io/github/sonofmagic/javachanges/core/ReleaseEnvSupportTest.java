@@ -163,4 +163,29 @@ class ReleaseEnvSupportTest {
         assertTrue(text.contains("glab variable set MAVEN_REPOSITORY_USERNAME"));
         assertTrue(text.contains("--masked --protected"));
     }
+
+    @Test
+    void syncVarsExecuteMasksSecretsInLogs(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        ReleaseEnvTestFixtures.writeLocalEnv(repoRoot, ReleaseEnvTestFixtures.supportEnvFile());
+
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        ReleaseEnvTestFixtures.FakeReleaseEnvRuntime runtime = new ReleaseEnvTestFixtures.FakeReleaseEnvRuntime(repoRoot);
+        ReleaseEnvSupport support = new ReleaseEnvSupport(repoRoot, new PrintStream(stdout, true), runtime);
+        Map<String, String> options = new LinkedHashMap<String, String>();
+        options.put("env-file", "env/release.env.local");
+        options.put("platform", "all");
+        options.put("repo", "owner/repo");
+        options.put("execute", "true");
+
+        support.syncVars(SyncVarsRequest.fromOptions(options));
+        String text = stdout.toString(StandardCharsets.UTF_8.name());
+
+        assertFalse(text.contains("ci-password"));
+        assertFalse(text.contains("glrt-token"));
+        assertTrue(text.contains("ci****rd"));
+        assertTrue(text.contains("gl****en"));
+        assertTrue(runtime.executedCommands.toString().contains("ci-password"));
+        assertTrue(runtime.executedCommands.toString().contains("glrt-token"));
+    }
 }

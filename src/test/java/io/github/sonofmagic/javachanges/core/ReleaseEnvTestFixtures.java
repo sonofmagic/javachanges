@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 final class ReleaseEnvTestFixtures {
     private ReleaseEnvTestFixtures() {
@@ -40,6 +42,8 @@ final class ReleaseEnvTestFixtures {
     }
 
     static final class FakeReleaseEnvRuntime extends ReleaseEnvRuntime {
+        final List<List<String>> executedCommands = new ArrayList<List<String>>();
+
         FakeReleaseEnvRuntime(Path repoRoot) {
             super(repoRoot);
         }
@@ -56,6 +60,12 @@ final class ReleaseEnvTestFixtures {
         @Override
         public boolean runQuietly(java.util.List<String> command) {
             return true;
+        }
+
+        @Override
+        public int runCommand(java.util.List<String> command) {
+            executedCommands.add(new ArrayList<String>(command));
+            return 0;
         }
 
         @Override

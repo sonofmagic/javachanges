@@ -1,6 +1,5 @@
 package io.github.sonofmagic.javachanges.core.env;
 
-import io.github.sonofmagic.javachanges.core.ReleaseProcessUtils;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.io.IOException;
@@ -9,12 +8,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 final class ReleaseEnvSyncSupport {
-    private final java.nio.file.Path repoRoot;
     private final PrintStream out;
     private final ReleaseEnvRuntime runtime;
 
     ReleaseEnvSyncSupport(java.nio.file.Path repoRoot, PrintStream out, ReleaseEnvRuntime runtime) {
-        this.repoRoot = repoRoot;
         this.out = out;
         this.runtime = runtime;
     }
@@ -75,10 +72,11 @@ final class ReleaseEnvSyncSupport {
             command.add(request.repo);
         }
         if (request.execute) {
-            out.println("执行: " + ReleaseTextUtils.renderCommand(command));
-            int exitCode = ReleaseProcessUtils.runCommand(command, repoRoot);
+            String displayCommand = ReleaseTextUtils.renderCommand(maskedCommand(command, "--body", value, secret));
+            out.println("执行: " + displayCommand);
+            int exitCode = runtime.runCommand(command);
             if (exitCode != 0) {
-                throw new IllegalStateException("命令执行失败: " + ReleaseTextUtils.renderCommand(command));
+                throw new IllegalStateException("命令执行失败: " + displayCommand);
             }
             return;
         }
@@ -112,10 +110,11 @@ final class ReleaseEnvSyncSupport {
             command.add(request.repo);
         }
         if (request.execute) {
-            out.println("执行: " + ReleaseTextUtils.renderCommand(command));
-            int exitCode = ReleaseProcessUtils.runCommand(command, repoRoot);
+            String displayCommand = ReleaseTextUtils.renderCommand(maskedCommand(command, "--value", value, entry.secret));
+            out.println("执行: " + displayCommand);
+            int exitCode = runtime.runCommand(command);
             if (exitCode != 0) {
-                throw new IllegalStateException("命令执行失败: " + ReleaseTextUtils.renderCommand(command));
+                throw new IllegalStateException("命令执行失败: " + displayCommand);
             }
             return;
         }
@@ -124,5 +123,18 @@ final class ReleaseEnvSyncSupport {
             + (entry.secret ? " --masked" : "")
             + (entry.protectedValue ? " --protected" : "")
             + runtime.repoFlagPreview(request.repo));
+    }
+
+    private List<String> maskedCommand(List<String> command, String valueOption, EnvValue value, boolean secret) {
+        if (!secret) {
+            return command;
+        }
+        int valueOptionIndex = command.indexOf(valueOption);
+        if (valueOptionIndex < 0 || valueOptionIndex + 1 >= command.size()) {
+            return command;
+        }
+        List<String> masked = new ArrayList<String>(command);
+        masked.set(valueOptionIndex + 1, value.renderMasked(false));
+        return masked;
     }
 }

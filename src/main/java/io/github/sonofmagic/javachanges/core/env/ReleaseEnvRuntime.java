@@ -74,6 +74,10 @@ public class ReleaseEnvRuntime {
         return result.exitCode == 0;
     }
 
+    public int runCommand(List<String> command) throws IOException, InterruptedException {
+        return ReleaseProcessUtils.runCommand(command, repoRoot);
+    }
+
     public CommandResult runAndCapture(List<String> command) throws IOException, InterruptedException {
         return ReleaseProcessUtils.runCapture(repoRoot, command);
     }
