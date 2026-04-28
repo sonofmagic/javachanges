@@ -1,0 +1,43 @@
+name: Tag Release
+
+on:
+  pull_request:
+    types:
+      - closed
+
+permissions:
+  contents: write
+
+env:
+  JAVACHANGES_VERSION: "REPLACE_WITH_PUBLISHED_VERSION"
+
+jobs:
+  tag:
+    if: >
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'main' &&
+      github.event.pull_request.head.ref == 'changeset-release/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: corretto
+          java-version: '17'
+
+      - name: Download javachanges CLI
+        run: |
+          mkdir -p .tools
+          curl -fsSL -o .tools/javachanges-${JAVACHANGES_VERSION}.jar https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/${JAVACHANGES_VERSION}/javachanges-${JAVACHANGES_VERSION}.jar
+
+      - name: Create and push release tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          java -jar .tools/javachanges-${JAVACHANGES_VERSION}.jar
+          github-tag-from-plan --directory "$GITHUB_WORKSPACE" --execute true

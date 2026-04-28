@@ -1,0 +1,42 @@
+name: Publish Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+env:
+  JAVACHANGES_VERSION: "REPLACE_WITH_PUBLISHED_VERSION"
+  MAVEN_RELEASE_REPOSITORY_URL: ${{ vars.MAVEN_RELEASE_REPOSITORY_URL }}
+  MAVEN_SNAPSHOT_REPOSITORY_URL: ${{ vars.MAVEN_SNAPSHOT_REPOSITORY_URL }}
+  MAVEN_REPOSITORY_USERNAME: ${{ secrets.MAVEN_REPOSITORY_USERNAME }}
+  MAVEN_REPOSITORY_PASSWORD: ${{ secrets.MAVEN_REPOSITORY_PASSWORD }}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: corretto
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Download javachanges CLI
+        run: |
+          mkdir -p .tools
+          curl -fsSL -o .tools/javachanges-${JAVACHANGES_VERSION}.jar https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/${JAVACHANGES_VERSION}/javachanges-${JAVACHANGES_VERSION}.jar
+
+      - name: Publish with Gradle
+        run: |
+          RELEASE_VERSION="$(java -jar .tools/javachanges-${JAVACHANGES_VERSION}.jar manifest-field --directory "$GITHUB_WORKSPACE" --field releaseVersion)"
+          gradle publish -Pversion="$RELEASE_VERSION"

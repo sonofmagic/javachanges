@@ -219,7 +219,8 @@ Field reference:
 
 - `src/main/java`: the CLI source code
 - `docs/`: public documentation pages
-- `examples/basic-monorepo/`: a minimal example target repository with CI templates and generated release-plan snapshots
+- `examples/basic-monorepo/`: a minimal Maven example repository with CI templates and generated release-plan snapshots
+- `examples/basic-gradle-monorepo/`: a minimal Gradle example repository with CI templates and generated release-plan snapshots
 - `website/`: the VitePress site published as static assets with Workers + Wrangler
 - Cloudflare can connect this repository directly through Workers Builds, so GitHub does not need a dedicated docs deploy workflow
 - `env/release.env.example`: a generic env template for release automation

@@ -3,7 +3,7 @@
 
 ## 1. 概述
 
-这篇文档说明仓库里已经提交好的 Maven 示例工程 `examples/basic-monorepo/` 应该怎么使用，并说明同样流程如何迁移到 Gradle。
+这篇文档说明仓库里已经提交好的 Maven 示例工程 `examples/basic-monorepo/` 和 Gradle 示例工程 `examples/basic-gradle-monorepo/` 应该怎么使用。
 
 这个示例刻意保持很小，但已经覆盖了 `javachanges` 的完整链路：
 
@@ -14,6 +14,7 @@
 | `examples/basic-monorepo/snapshots/` | `plan --apply true` 之后的整理结果 |
 | `examples/basic-monorepo/.github/workflows/` | 最小 GitHub Actions 模板 |
 | `examples/basic-monorepo/.gitlab-ci.yml` | 最小 GitLab CI 模板 |
+| `examples/basic-gradle-monorepo/` | 等价 Gradle monorepo 示例，并交给 Gradle 原生 publishing |
 
 如果你不想只看零散文档，而是想直接参考一套完整的最小项目，就从这个示例开始。
 
@@ -133,16 +134,21 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory examples/basi
 - snapshot pipeline 和 tag pipeline 都直接执行 `publish --execute true`，由命令内部处理 preflight、tag 判定、snapshotBranch 判定和 settings 生成
 - 正式版 tag 发布成功后，再执行 `gitlab-release --execute true` 创建或更新 GitLab Release
 
-## 7. Gradle 等价写法
+## 7. Gradle 示例
 
-Gradle 仓库继续使用同样的 `.changesets/`、`CHANGELOG.md` 和 release-plan 文件，只是构建模型文件不同：
+仓库里也包含了一个可以直接复制的 Gradle monorepo：`examples/basic-gradle-monorepo/`。
+它继续使用同样的 `.changesets/`、`CHANGELOG.md` 和 release-plan 文件，只是构建模型文件不同：
 
 ```text
-sample-gradle-monorepo/
+examples/basic-gradle-monorepo/
 ├── .changesets/
+├── .github/workflows/
+├── env/
 ├── modules/
 │   ├── api/
 │   └── core/
+├── snapshots/
+├── .gitlab-ci.yml
 ├── CHANGELOG.md
 ├── build.gradle.kts
 ├── gradle.properties
@@ -158,7 +164,7 @@ version=0.2.0-SNAPSHOT
 `settings.gradle.kts`：
 
 ```kotlin
-rootProject.name = "sample-gradle-monorepo"
+rootProject.name = "basic-gradle-monorepo"
 include(":core", ":api")
 ```
 
@@ -173,21 +179,30 @@ include(":core", ":api")
 Add release notes generation workflow.
 ```
 
-使用正式版 CLI jar 运行：
+在 `javachanges` 源码仓库根目录运行这个已提交示例：
 
 ```bash
-java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar status --directory sample-gradle-monorepo
-java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar plan --directory sample-gradle-monorepo --apply true
+mvn -q -DskipTests compile exec:java -Dexec.args="status --directory examples/basic-gradle-monorepo"
+mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory examples/basic-gradle-monorepo"
 ```
 
 Gradle plan 会更新 `gradle.properties`，而不是 `pom.xml`。GitHub / GitLab release-plan 自动化会 stage `gradle.properties`、`CHANGELOG.md` 和 `.changesets/`。
 
+`snapshots/` 目录里整理了预期生成结果：
+
+| 快照文件 | 展示内容 |
+| --- | --- |
+| `examples/basic-gradle-monorepo/snapshots/release-plan.json` | 机器可读的发布元数据 |
+| `examples/basic-gradle-monorepo/snapshots/release-plan.md` | release PR 正文 |
+| `examples/basic-gradle-monorepo/snapshots/CHANGELOG.after.md` | 本次发布生成的 changelog 片段 |
+| `examples/basic-gradle-monorepo/snapshots/gradle.properties.after` | 发布后推进到下一个快照版本的根 `version` |
+
 实际发布 artifact 时继续交给 Gradle：
 
 ```bash
-RELEASE_VERSION="$(java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar manifest-field --directory sample-gradle-monorepo --field releaseVersion)"
-cd sample-gradle-monorepo
-./gradlew publish -Pversion="$RELEASE_VERSION"
+RELEASE_VERSION="$(java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar manifest-field --directory examples/basic-gradle-monorepo --field releaseVersion)"
+cd examples/basic-gradle-monorepo
+gradle publish -Pversion="$RELEASE_VERSION"
 ```
 
 ## 8. 如何改造成真实仓库

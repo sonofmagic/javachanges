@@ -7,7 +7,7 @@ description: Walk through Maven and Gradle javachanges examples and map each fil
 
 ## 1. Overview
 
-This guide explains how to use the checked-in Maven example repository under `examples/basic-monorepo/` and how to translate the same flow to Gradle.
+This guide explains how to use the checked-in Maven example repository under `examples/basic-monorepo/` and the Gradle example repository under `examples/basic-gradle-monorepo/`.
 
 The example is intentionally small, but it covers the whole `javachanges` flow:
 
@@ -18,6 +18,7 @@ The example is intentionally small, but it covers the whole `javachanges` flow:
 | `examples/basic-monorepo/snapshots/` | Curated outputs after `plan --apply true` |
 | `examples/basic-monorepo/.github/workflows/` | Minimal GitHub Actions templates |
 | `examples/basic-monorepo/.gitlab-ci.yml` | Minimal GitLab CI template |
+| `examples/basic-gradle-monorepo/` | Equivalent Gradle monorepo example with Gradle-native publishing handoff |
 
 Use this example when you want a concrete reference instead of reading each guide in isolation.
 
@@ -137,16 +138,21 @@ The checked-in template now uses the official Maven plugin entrypoint directly, 
 - `publish --execute true` for both snapshot and tag pipelines, with preflight, tag detection, snapshot-branch detection, and settings generation handled inside the command
 - `gitlab-release --execute true` to create or update the GitLab Release after a successful tag publish
 
-## 7. Gradle equivalent
+## 7. Gradle example
 
-A Gradle repository uses the same `.changesets/`, `CHANGELOG.md`, and release-plan files. The build model files change:
+The repository also includes a copy-ready Gradle monorepo under `examples/basic-gradle-monorepo/`.
+It uses the same `.changesets/`, `CHANGELOG.md`, and release-plan files. The build model files change:
 
 ```text
-sample-gradle-monorepo/
+examples/basic-gradle-monorepo/
 ├── .changesets/
+├── .github/workflows/
+├── env/
 ├── modules/
 │   ├── api/
 │   └── core/
+├── snapshots/
+├── .gitlab-ci.yml
 ├── CHANGELOG.md
 ├── build.gradle.kts
 ├── gradle.properties
@@ -162,7 +168,7 @@ version=0.2.0-SNAPSHOT
 `settings.gradle.kts`:
 
 ```kotlin
-rootProject.name = "sample-gradle-monorepo"
+rootProject.name = "basic-gradle-monorepo"
 include(":core", ":api")
 ```
 
@@ -177,21 +183,30 @@ Equivalent Gradle changeset:
 Add release notes generation workflow.
 ```
 
-Run with the released CLI jar:
+Run the checked-in example from the `javachanges` source repository root:
 
 ```bash
-java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar status --directory sample-gradle-monorepo
-java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar plan --directory sample-gradle-monorepo --apply true
+mvn -q -DskipTests compile exec:java -Dexec.args="status --directory examples/basic-gradle-monorepo"
+mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory examples/basic-gradle-monorepo"
 ```
 
 The Gradle plan updates `gradle.properties` instead of `pom.xml`. GitHub/GitLab release-plan automation stages `gradle.properties`, `CHANGELOG.md`, and `.changesets/`.
 
+The curated `snapshots/` directory shows the expected generated artifacts:
+
+| Snapshot file | What it shows |
+| --- | --- |
+| `examples/basic-gradle-monorepo/snapshots/release-plan.json` | Machine-readable release metadata |
+| `examples/basic-gradle-monorepo/snapshots/release-plan.md` | The release PR body |
+| `examples/basic-gradle-monorepo/snapshots/CHANGELOG.after.md` | The changelog section produced for the release |
+| `examples/basic-gradle-monorepo/snapshots/gradle.properties.after` | The root `version` after the release and next snapshot bump |
+
 For actual artifact publishing, keep using Gradle:
 
 ```bash
-RELEASE_VERSION="$(java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar manifest-field --directory sample-gradle-monorepo --field releaseVersion)"
-cd sample-gradle-monorepo
-./gradlew publish -Pversion="$RELEASE_VERSION"
+RELEASE_VERSION="$(java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar manifest-field --directory examples/basic-gradle-monorepo --field releaseVersion)"
+cd examples/basic-gradle-monorepo
+gradle publish -Pversion="$RELEASE_VERSION"
 ```
 
 ## 8. How to adapt the example

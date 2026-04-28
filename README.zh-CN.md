@@ -219,7 +219,8 @@ summary: automate javachanges self-release publishing via GitHub Actions
 
 - `src/main/java`: CLI 源码
 - `docs/`: 文档
-- `examples/basic-monorepo/`: 带 CI 模板和 release-plan 快照的最小 Maven 目标仓库示例
+- `examples/basic-monorepo/`: 带 CI 模板和 release-plan 快照的最小 Maven 示例仓库
+- `examples/basic-gradle-monorepo/`: 带 CI 模板和 release-plan 快照的最小 Gradle 示例仓库
 - `website/`: 使用 Workers + Wrangler 部署静态资源的 VitePress 文档站
 - Cloudflare 可以直接通过 Workers Builds 连接这个仓库，因此 GitHub 不再需要单独负责 docs 部署的 workflow
 - `env/release.env.example`: 通用发布环境变量模板

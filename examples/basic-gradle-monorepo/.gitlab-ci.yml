@@ -1,0 +1,67 @@
+stages:
+  - verify
+  - release-plan
+  - tag
+  - publish
+
+default:
+  image: gradle:8.10.2-jdk17
+  cache:
+    key:
+      files:
+        - settings.gradle.kts
+        - build.gradle.kts
+        - gradle.properties
+    paths:
+      - .gradle/caches
+      - .gradle/wrapper
+
+variables:
+  GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
+  JAVACHANGES_VERSION: "REPLACE_WITH_PUBLISHED_VERSION"
+
+.download_javachanges:
+  before_script:
+    - mkdir -p .tools
+    - >
+      curl -fsSL -o .tools/javachanges-${JAVACHANGES_VERSION}.jar
+      https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/${JAVACHANGES_VERSION}/javachanges-${JAVACHANGES_VERSION}.jar
+
+verify:
+  stage: verify
+  extends: .download_javachanges
+  script:
+    - gradle build
+    - java -jar .tools/javachanges-${JAVACHANGES_VERSION}.jar status --directory "$CI_PROJECT_DIR"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+release_plan_mr:
+  stage: release-plan
+  extends: .download_javachanges
+  script:
+    - >
+      java -jar .tools/javachanges-${JAVACHANGES_VERSION}.jar
+      gitlab-release-plan --directory "$CI_PROJECT_DIR" --execute true
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+release_tag:
+  stage: tag
+  extends: .download_javachanges
+  script:
+    - >
+      java -jar .tools/javachanges-${JAVACHANGES_VERSION}.jar
+      gitlab-tag-from-plan --directory "$CI_PROJECT_DIR" --execute true
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+publish_release:
+  stage: publish
+  extends: .download_javachanges
+  script:
+    - RELEASE_VERSION="$(java -jar .tools/javachanges-${JAVACHANGES_VERSION}.jar manifest-field --directory "$CI_PROJECT_DIR" --field releaseVersion)"
+    - gradle publish -Pversion="$RELEASE_VERSION"
+  rules:
+    - if: $CI_COMMIT_TAG

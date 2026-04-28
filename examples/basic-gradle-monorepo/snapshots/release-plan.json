@@ -1,0 +1,15 @@
+{
+  "releaseVersion": "0.2.0",
+  "nextSnapshotVersion": "0.2.0-SNAPSHOT",
+  "releaseLevel": "minor",
+  "generatedAt": "2026-04-22T00:59:04.459+08:00",
+  "changesets": [
+    {
+      "file": "20260418-add-release-notes.md",
+      "release": "minor",
+      "type": "other",
+      "summary": "Add release notes generation workflow.",
+      "modules": ["core", "api"]
+    }
+  ]
+}
