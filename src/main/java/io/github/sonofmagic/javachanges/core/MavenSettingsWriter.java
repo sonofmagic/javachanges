@@ -79,6 +79,7 @@ public final class MavenSettingsWriter {
         xml.append("  </servers>\n");
         xml.append("</settings>\n");
         Files.write(outputPath, Collections.singletonList(xml.toString()), StandardCharsets.UTF_8);
+        ReleaseProcessUtils.restrictOwnerOnly(outputPath);
     }
 
     public static String releaseServerId() {
