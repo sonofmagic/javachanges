@@ -6,6 +6,7 @@ import io.github.sonofmagic.javachanges.core.ReleaseProcessUtils;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -16,6 +17,41 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class GitlabApiClient implements GitlabMergeRequestClient {
+    private static final int DEFAULT_TIMEOUT_MILLIS = 30000;
+    private final int connectTimeoutMillis;
+    private final int readTimeoutMillis;
+    private final Env env;
+
+    public GitlabApiClient() {
+        this(DEFAULT_TIMEOUT_MILLIS, DEFAULT_TIMEOUT_MILLIS, new Env() {
+            @Override
+            public String get(String name) {
+                return System.getenv(name);
+            }
+        });
+    }
+
+    GitlabApiClient(int connectTimeoutMillis, int readTimeoutMillis) {
+        this(connectTimeoutMillis, readTimeoutMillis, new Env() {
+            @Override
+            public String get(String name) {
+                return System.getenv(name);
+            }
+        });
+    }
+
+    GitlabApiClient(int connectTimeoutMillis, int readTimeoutMillis, Env env) {
+        if (connectTimeoutMillis < 0) {
+            throw new IllegalArgumentException("connectTimeoutMillis must be 0 or greater");
+        }
+        if (readTimeoutMillis < 0) {
+            throw new IllegalArgumentException("readTimeoutMillis must be 0 or greater");
+        }
+        this.connectTimeoutMillis = connectTimeoutMillis;
+        this.readTimeoutMillis = readTimeoutMillis;
+        this.env = env;
+    }
+
     public Integer findOpenMergeRequestIid(String projectId, String sourceBranch, String targetBranch) throws IOException {
         String response = request(
             "GET",
@@ -59,10 +95,10 @@ public final class GitlabApiClient implements GitlabMergeRequestClient {
     }
 
     public String authenticatedRemoteUrl() {
-        String host = ReleaseTextUtils.requireEnv("CI_SERVER_HOST");
-        String projectPath = ReleaseTextUtils.requireEnv("CI_PROJECT_PATH");
-        return "https://" + urlEncode(ReleaseTextUtils.requireEnv("GITLAB_RELEASE_BOT_USERNAME"))
-            + ":" + urlEncode(ReleaseTextUtils.requireEnv("GITLAB_RELEASE_BOT_TOKEN"))
+        String host = requireEnv("CI_SERVER_HOST");
+        String projectPath = requireEnv("CI_PROJECT_PATH");
+        return "https://" + urlEncode(requireEnv("GITLAB_RELEASE_BOT_USERNAME"))
+            + ":" + urlEncode(requireEnv("GITLAB_RELEASE_BOT_TOKEN"))
             + "@" + host + "/" + projectPath + ".git";
     }
 
@@ -112,12 +148,14 @@ public final class GitlabApiClient implements GitlabMergeRequestClient {
     }
 
     private String requestAllowNotFound(String method, String path, String body) throws IOException {
-        String serverUrl = ReleaseTextUtils.firstNonBlank(System.getenv("CI_SERVER_URL"),
-            "https://" + ReleaseTextUtils.requireEnv("CI_SERVER_HOST"));
+        String serverUrl = ReleaseTextUtils.firstNonBlank(env.get("CI_SERVER_URL"),
+            "https://" + requireEnv("CI_SERVER_HOST"));
         URL url = new URL(serverUrl + "/api/v4" + path);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod(method);
-        connection.setRequestProperty("PRIVATE-TOKEN", ReleaseTextUtils.requireEnv("GITLAB_RELEASE_BOT_TOKEN"));
+        connection.setConnectTimeout(connectTimeoutMillis);
+        connection.setReadTimeout(readTimeoutMillis);
+        connection.setRequestProperty("PRIVATE-TOKEN", requireEnv("GITLAB_RELEASE_BOT_TOKEN"));
         connection.setRequestProperty("Accept", "application/json");
         if (body != null) {
             byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
@@ -125,20 +163,54 @@ public final class GitlabApiClient implements GitlabMergeRequestClient {
             connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
             connection.setRequestProperty("Content-Length", String.valueOf(bytes.length));
             OutputStream output = connection.getOutputStream();
-            output.write(bytes);
-            output.close();
+            try {
+                output.write(bytes);
+            } finally {
+                output.close();
+            }
         }
-        byte[] responseBytes = ReleaseProcessUtils.readAllBytes(connection.getResponseCode() >= 400
-            ? connection.getErrorStream()
-            : connection.getInputStream());
+        int responseCode = connection.getResponseCode();
+        InputStream responseStream = responseCode >= 400 ? connection.getErrorStream() : connection.getInputStream();
+        byte[] responseBytes;
+        try {
+            responseBytes = responseStream == null ? new byte[0] : ReleaseProcessUtils.readAllBytes(responseStream);
+        } finally {
+            if (responseStream != null) {
+                responseStream.close();
+            }
+        }
         String response = new String(responseBytes, StandardCharsets.UTF_8);
-        if (connection.getResponseCode() == 404) {
+        if (responseCode == 404) {
             return null;
         }
-        if (connection.getResponseCode() >= 400) {
-            throw new IllegalStateException("GitLab API " + method + " " + path + " failed: " + response);
+        if (responseCode >= 400) {
+            String detail = ReleaseTextUtils.trimToNull(response);
+            if (detail == null) {
+                detail = "HTTP " + responseCode;
+            }
+            throw new IllegalStateException("GitLab API " + method + " " + path + " failed: " + detail);
         }
         return response;
+    }
+
+    int connectTimeoutMillis() {
+        return connectTimeoutMillis;
+    }
+
+    int readTimeoutMillis() {
+        return readTimeoutMillis;
+    }
+
+    private String requireEnv(String name) {
+        String value = ReleaseTextUtils.trimToNull(env.get(name));
+        if (value == null) {
+            throw new IllegalStateException("缺少环境变量: " + name);
+        }
+        return value;
+    }
+
+    interface Env {
+        String get(String name);
     }
 
     private String formBody(Map<String, String> fields) {

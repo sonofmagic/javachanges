@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 public final class PublishSupport {
@@ -122,6 +121,18 @@ public final class PublishSupport {
 
     private void preflight(PublishRequest request, PublishPlanSupport.PublishTarget publishTarget,
                            AutomationJsonSupport.AutomationReport report) throws IOException, InterruptedException {
+        Path tempDir = Files.createTempDirectory("javachanges-preflight-");
+        ReleaseProcessUtils.restrictOwnerOnly(tempDir);
+        try {
+            preflight(request, publishTarget, report, tempDir);
+        } finally {
+            ReleaseProcessUtils.deleteRecursively(tempDir);
+        }
+    }
+
+    private void preflight(PublishRequest request, PublishPlanSupport.PublishTarget publishTarget,
+                           AutomationJsonSupport.AutomationReport report, Path tempDir)
+        throws IOException, InterruptedException {
         if (request.module != null) {
             ReleaseModuleUtils.assertKnownModule(repoRoot, request.module);
         }
@@ -177,8 +188,10 @@ public final class PublishSupport {
             out.println();
             out.println("== 凭据检查 ==");
         }
-        MavenSettingsWriter.write(Paths.get("/tmp/javachanges-preflight-settings.xml"),
+        Path settingsFile = tempDir.resolve("settings.xml");
+        MavenSettingsWriter.write(settingsFile,
             request.snapshot ? MavenSettingsWriter.RepositoryMode.SNAPSHOT : MavenSettingsWriter.RepositoryMode.RELEASE);
+        ReleaseProcessUtils.restrictOwnerOnly(settingsFile);
         if (request.format != io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
             out.println("Maven settings 生成校验通过");
         }
@@ -189,9 +202,8 @@ public final class PublishSupport {
                 out.println("== Release Notes 预检查 ==");
             }
             if (runtime.gitRefExists(request.tag)) {
-                Path releaseNotesFile = Paths.get("/tmp/javachanges-release-notes.md");
+                Path releaseNotesFile = tempDir.resolve("release-notes.md");
                 releaseNotesGenerator.writeReleaseNotes(request.tag, releaseNotesFile);
-                report.releaseNotesFile = releaseNotesFile.toString();
                 if (request.format != io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
                     out.println("release notes 生成校验通过");
                 }
