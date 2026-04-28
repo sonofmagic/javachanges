@@ -36,15 +36,17 @@ jobs:
       - name: Verify javachanges can plan this repository
         run: ./mvnw -B -DskipTests compile exec:java -Dexec.args="status --directory $GITHUB_WORKSPACE"
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
       - name: Set up Node
         uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
-
-      - name: Enable Corepack
-        run: corepack enable
 
       - name: Install docs dependencies
         run: pnpm install --frozen-lockfile
