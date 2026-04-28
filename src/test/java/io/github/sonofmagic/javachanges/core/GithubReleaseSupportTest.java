@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -242,6 +243,7 @@ class GithubReleaseSupportTest {
         assertTrue(json.contains("\"releaseVersion\":\"1.2.0\""));
         assertTrue(json.contains("\"releaseNotesFile\":"));
         assertTrue(json.contains("\"reason\":\"Dry-run only.\""));
+        assertFalse(Files.exists(repoRoot.resolve("target").resolve("release-notes.md")));
     }
 
     private static Path createRepository(Path tempDir) throws IOException {

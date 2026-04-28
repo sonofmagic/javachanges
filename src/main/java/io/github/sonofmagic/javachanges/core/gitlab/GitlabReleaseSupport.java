@@ -182,9 +182,6 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
 
         Path notesFile = artifactSupport.resolveReleaseNotesFile(request.releaseNotesFile);
         report.releaseNotesFile = notesFile.toString();
-        Files.createDirectories(notesFile.getParent());
-        new ReleaseNotesGenerator(repoRoot).writeReleaseNotes(tagName, notesFile);
-        String description = new String(Files.readAllBytes(notesFile), StandardCharsets.UTF_8);
         String releaseName = tagInfo.releaseDisplayName();
 
         AutomationJsonSupport.printLines(out, textOutput,
@@ -205,6 +202,10 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
                 "Dry-run only. Use --execute true to create/update the GitLab Release.");
             return;
         }
+
+        Files.createDirectories(notesFile.getParent());
+        new ReleaseNotesGenerator(repoRoot).writeReleaseNotes(tagName, notesFile);
+        String description = new String(Files.readAllBytes(notesFile), StandardCharsets.UTF_8);
 
         if (exists) {
             apiClient.updateRelease(request.projectId, tagName, releaseName, description);

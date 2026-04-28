@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class GitlabReleaseSupportTest {
@@ -129,6 +130,7 @@ class GitlabReleaseSupportTest {
         assertTrue(json.contains("\"tag\":\"fixture-app/v1.1.1\""));
         assertTrue(json.contains("\"projectId\":\"123\""));
         assertTrue(json.contains("\"releaseNotesFile\":"));
+        assertFalse(Files.exists(repoRoot.resolve("target").resolve("release-notes.md")));
     }
 
     @Test

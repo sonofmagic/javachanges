@@ -260,7 +260,7 @@ class JavaChangesCliTest {
     }
 
     @Test
-    void githubReleaseFromPlanDryRunWritesNotesAndGithubOutputs(@TempDir Path tempDir) throws Exception {
+    void githubReleaseFromPlanDryRunDoesNotWriteNotesOrGithubOutputs(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, true);
         Path githubOutputFile = tempDir.resolve("github-output.txt");
         run(repoRoot, "git", "config", "user.name", "tester");
@@ -290,12 +290,10 @@ class JavaChangesCliTest {
         assertEquals(0, result.exitCode);
         assertTrue(result.stdout.contains("Release version: 1.2.0"));
         assertTrue(result.stdout.contains("Release tag: v1.2.0"));
-        assertTrue(result.stdout.contains("GitHub output file: " + githubOutputFile));
+        assertTrue(result.stdout.contains("GitHub output file: " + githubOutputFile + " (execute only)"));
         assertTrue(result.stdout.contains("Dry-run only."));
-        assertTrue(read(repoRoot.resolve("target").resolve("release-notes.md")).contains("## 1.2.0 - "));
-        assertTrue(read(githubOutputFile).contains("release_version=1.2.0"));
-        assertTrue(read(githubOutputFile).contains("release_tag=v1.2.0"));
-        assertTrue(read(githubOutputFile).contains("release_notes_file="));
+        assertFalse(Files.exists(repoRoot.resolve("target").resolve("release-notes.md")));
+        assertFalse(Files.exists(githubOutputFile));
     }
 
     @Test

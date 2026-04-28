@@ -133,7 +133,6 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
         String tagName = release.primaryTagName();
         Path notesFile = artifactSupport.resolveReleaseNotesFile(request.releaseNotesFile);
         report.releaseNotesFile = notesFile.toString();
-        new ReleaseNotesGenerator(repoRoot).writeReleaseNotes(tagName, notesFile);
 
         AutomationJsonSupport.printLines(out, textOutput,
             "Release version: " + releaseVersion,
@@ -143,12 +142,19 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
 
         Path githubOutputFile = artifactSupport.resolveOptionalPath(request.githubOutputFile);
         if (githubOutputFile != null) {
-            appendGithubOutputs(githubOutputFile, releaseVersion, tagName, notesFile);
-            AutomationJsonSupport.printLines(out, textOutput, "GitHub output file: " + githubOutputFile);
+            AutomationJsonSupport.printLines(out, textOutput,
+                request.execute
+                    ? "GitHub output file: " + githubOutputFile
+                    : "GitHub output file: " + githubOutputFile + " (execute only)");
         }
 
         if (skipDryRun(report, textOutput, "Dry-run only. Use --execute true to create/update the GitHub Release.")) {
             return;
+        }
+
+        new ReleaseNotesGenerator(repoRoot).writeReleaseNotes(tagName, notesFile);
+        if (githubOutputFile != null) {
+            appendGithubOutputs(githubOutputFile, releaseVersion, tagName, notesFile);
         }
 
         boolean existed = runtime.releaseExists(tagName);
