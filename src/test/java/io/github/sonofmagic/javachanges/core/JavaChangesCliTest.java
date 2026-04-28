@@ -34,6 +34,7 @@ class JavaChangesCliTest {
         assertTrue(result.stdout.contains("github-release-plan"));
         assertTrue(result.stdout.contains("github-release-from-plan"));
         assertTrue(result.stdout.contains("github-tag-from-plan"));
+        assertTrue(result.stdout.contains("init-github-actions"));
         assertTrue(result.stdout.contains("release-version-from-tag"));
         assertTrue(result.stdout.contains("gitlab-release-plan"));
         assertTrue(result.stdout.contains("gitlab-release"));
@@ -395,6 +396,73 @@ class JavaChangesCliTest {
         assertTrue(yaml.contains("gitlab-release --directory $CI_PROJECT_DIR --execute true"));
         assertTrue(yaml.contains("$CI_COMMIT_BRANCH == \"develop\""));
         assertTrue(yaml.contains("$CI_COMMIT_BRANCH == \"snapshot-dev\""));
+    }
+
+    @Test
+    void initGithubActionsWritesMavenWorkflow(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+        Files.createDirectories(repoRoot.resolve(".changesets"));
+        Files.write(repoRoot.resolve(".changesets").resolve("config.json"), (
+            "{\n" +
+                "  \"baseBranch\": \"develop\",\n" +
+                "  \"releaseBranch\": \"changeset-release/develop\"\n" +
+                "}\n").getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = execute(
+            "init-github-actions",
+            "--directory", repoRoot.toString(),
+            "--output", ".github/workflows/generated-release.yml",
+            "--javachanges-version", "1.8.0",
+            "--build-tool", "maven"
+        );
+
+        assertEquals(0, result.exitCode);
+        String yaml = read(repoRoot.resolve(".github/workflows/generated-release.yml"));
+        assertTrue(yaml.contains("JAVACHANGES_VERSION: \"1.8.0\""));
+        assertTrue(yaml.contains("pull-requests: write"));
+        assertTrue(yaml.contains("mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run"));
+        assertTrue(yaml.contains("github-release-plan --directory $GITHUB_WORKSPACE --execute true"));
+        assertTrue(yaml.contains("github-tag-from-plan --directory $GITHUB_WORKSPACE"));
+        assertTrue(yaml.contains("manifest-field --directory $GITHUB_WORKSPACE --field releaseVersion"));
+        assertTrue(yaml.contains("publish --directory $GITHUB_WORKSPACE --tag v${{ steps.release_meta.outputs.release_version }} --execute true"));
+        assertTrue(yaml.contains("github-release-from-plan --directory $GITHUB_WORKSPACE"));
+        assertTrue(yaml.contains("github.event.pull_request.base.ref == 'develop'"));
+        assertTrue(yaml.contains("github.event.pull_request.head.ref == 'changeset-release/develop'"));
+        assertFalse(yaml.contains("gradle-publish"));
+    }
+
+    @Test
+    void initGithubActionsWritesGradleWorkflow(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createGradleRepository(tempDir, false);
+        Files.createDirectories(repoRoot.resolve(".changesets"));
+        Files.write(repoRoot.resolve(".changesets").resolve("config.json"), (
+            "{\n" +
+                "  \"baseBranch\": \"develop\",\n" +
+                "  \"releaseBranch\": \"changeset-release/develop\"\n" +
+                "}\n").getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = execute(
+            "init-github-actions",
+            "--directory", repoRoot.toString(),
+            "--output", ".github/workflows/generated-release.yml",
+            "--javachanges-version", "1.8.0",
+            "--build-tool", "gradle"
+        );
+
+        assertEquals(0, result.exitCode);
+        String yaml = read(repoRoot.resolve(".github/workflows/generated-release.yml"));
+        assertTrue(yaml.contains("JAVACHANGES_JAR: .javachanges/javachanges-${{ env.JAVACHANGES_VERSION }}.jar"));
+        assertTrue(yaml.contains("distribution: temurin"));
+        assertTrue(yaml.contains("cache: gradle"));
+        assertTrue(yaml.contains("./gradlew --no-daemon build"));
+        assertTrue(yaml.contains("curl -fsSL"));
+        assertTrue(yaml.contains("github-release-plan --directory \"$GITHUB_WORKSPACE\" --execute true"));
+        assertTrue(yaml.contains("manifest-field --directory \"$GITHUB_WORKSPACE\" --field releaseVersion"));
+        assertTrue(yaml.contains("gradle-publish --directory \"$GITHUB_WORKSPACE\" --tag \"v${{ steps.release_meta.outputs.release_version }}\" --execute true"));
+        assertTrue(yaml.contains("github-release-from-plan --directory \"$GITHUB_WORKSPACE\""));
+        assertTrue(yaml.contains("github.event.pull_request.base.ref == 'develop'"));
+        assertTrue(yaml.contains("github.event.pull_request.head.ref == 'changeset-release/develop'"));
+        assertFalse(yaml.contains("io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run"));
     }
 
     @Test

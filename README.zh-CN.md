@@ -248,6 +248,8 @@ GitHub 相关辅助：
 
 - `github-release-plan`
 - `github-tag-from-plan`
+- `github-release-from-plan`
+- `init-github-actions`
 
 GitLab 相关辅助：
 

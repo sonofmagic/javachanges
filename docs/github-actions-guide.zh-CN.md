@@ -29,6 +29,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory $PWD"
 | 创建或更新 GitHub release PR | `github-release-plan --execute true` |
 | 给合并后的 release commit 打 tag | `github-tag-from-plan --execute true` |
 | 生成发布元数据或同步 GitHub Release | `github-release-from-plan [--execute true]` |
+| 生成起步版 GitHub Actions workflow | `init-github-actions --build-tool auto` |
 | 根据环境变量生成 Maven settings | `write-settings --output .m2/settings.xml` |
 | 渲染 GitHub 需要的变量和 secrets | `render-vars --env-file env/release.env.local --platform github` |
 | 检查本地 / 平台就绪状态 | `doctor-local`、`doctor-platform` |
@@ -36,7 +37,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory $PWD"
 | 回读审计 GitHub Actions variables / secrets | `audit-vars --platform github` |
 | 做发布前检查 | `preflight` |
 | 执行真正的 Maven deploy | `publish --execute true` |
-| Gradle 发布 | 读取 manifest 后执行 `./gradlew publish` |
+| 执行真正的 Gradle publish | `gradle-publish --execute true` |
 | 直接生成 release notes | `release-notes --tag vX.Y.Z --output target/release-notes.md` |
 
 ## 3. 推荐的仓库文件布局
@@ -120,6 +121,16 @@ mvn -q -DskipTests compile exec:java -Dexec.args="audit-vars --env-file env/rele
 | --- | --- |
 | GitHub Actions variables | `MAVEN_RELEASE_REPOSITORY_URL`、`MAVEN_SNAPSHOT_REPOSITORY_URL`、`MAVEN_RELEASE_REPOSITORY_ID`、`MAVEN_SNAPSHOT_REPOSITORY_ID` |
 | GitHub Actions secrets | `MAVEN_REPOSITORY_USERNAME`、`MAVEN_REPOSITORY_PASSWORD`、`MAVEN_RELEASE_REPOSITORY_USERNAME`、`MAVEN_RELEASE_REPOSITORY_PASSWORD`、`MAVEN_SNAPSHOT_REPOSITORY_USERNAME`、`MAVEN_SNAPSHOT_REPOSITORY_PASSWORD` |
+
+### 4.6 生成起步版 workflow
+
+当你希望直接在目标仓库写入一个最小可用的发布 workflow 时，可以使用 `init-github-actions`：
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="init-github-actions --directory /path/to/repo --build-tool auto --force true"
+```
+
+对于 Gradle 仓库，`--build-tool auto` 会检测 `settings.gradle`、`settings.gradle.kts`、`build.gradle` 或 `build.gradle.kts`，并写出一个先下载正式版 CLI jar、再串起 `github-release-plan`、`github-tag-from-plan`、`gradle-publish` 和 `github-release-from-plan` 的 workflow。
 
 ## 5. GitHub Actions 工作流模式
 
@@ -416,11 +427,14 @@ Gradle 仓库使用正式版 CLI jar，并开启 Gradle cache。release-plan 命
     --execute true
 ```
 
-Gradle artifact 发布时，把 manifest 交给 Gradle：
+Gradle artifact 发布时，使用 `gradle-publish`，让 `javachanges` 读取 release tag、解析 Gradle 命令并把版本交给 Gradle：
 
 ```bash
-RELEASE_VERSION="$(java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar manifest-field --directory "$GITHUB_WORKSPACE" --field releaseVersion)"
-./gradlew publish -Pversion="$RELEASE_VERSION"
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar \
+  gradle-publish \
+  --directory "$GITHUB_WORKSPACE" \
+  --tag "$GITHUB_REF_NAME" \
+  --execute true
 ```
 
 ## 6. GitHub Actions 里的 Maven / Gradle Cache 行为

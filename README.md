@@ -248,6 +248,8 @@ GitHub-specific helpers:
 
 - `github-release-plan`
 - `github-tag-from-plan`
+- `github-release-from-plan`
+- `init-github-actions`
 
 GitLab-specific helpers:
 

@@ -470,6 +470,7 @@ Important Gradle repository note:
 | `github-release-plan` | Create or update a GitHub release-plan pull request |
 | `github-tag-from-plan` | Create and push the final release tag from a generated release plan |
 | `github-release-from-plan` | Generate release metadata and optionally create or update the GitHub Release |
+| `init-github-actions` | Write a minimal GitHub Actions workflow that wires release-plan, tag, publish, and GitHub Release jobs |
 
 Examples:
 
@@ -478,9 +479,11 @@ mvn -q -DskipTests compile exec:java -Dexec.args="github-release-plan --director
 mvn -q -DskipTests compile exec:java -Dexec.args="github-tag-from-plan --directory /path/to/repo --execute true"
 mvn -q -DskipTests compile exec:java -Dexec.args="github-release-from-plan --directory /path/to/repo --release-notes-file target/release-notes.md --execute true"
 mvn -q -DskipTests compile exec:java -Dexec.args="github-release-from-plan --directory /path/to/repo --format json"
+mvn -q -DskipTests compile exec:java -Dexec.args="init-github-actions --directory /path/to/repo --output .github/workflows/javachanges-release.yml --force true"
+mvn -q -DskipTests compile exec:java -Dexec.args="init-github-actions --directory /path/to/gradle-repo --build-tool gradle --output .github/workflows/javachanges-release.yml --force true"
 ```
 
-All three GitHub release commands also support `--format json` for CI-safe machine-readable output.
+The GitHub release-plan, tag, and release commands also support `--format json` for CI-safe machine-readable output.
 
 ### 9.2 GitLab Release Commands
 

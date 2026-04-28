@@ -33,6 +33,7 @@ Recommended command mapping:
 | Create or update a GitHub release PR | `github-release-plan --execute true` |
 | Tag the merged release commit | `github-tag-from-plan --execute true` |
 | Generate release metadata or sync the GitHub Release | `github-release-from-plan [--execute true]` |
+| Generate a starter GitHub Actions workflow | `init-github-actions --build-tool auto` |
 | Generate Maven settings from env vars | `write-settings --output .m2/settings.xml` |
 | Render required GitHub variables and secrets | `render-vars --env-file env/release.env.local --platform github` |
 | Check local/platform readiness | `doctor-local`, `doctor-platform` |
@@ -40,6 +41,7 @@ Recommended command mapping:
 | Audit remote GitHub Actions variables and secrets | `audit-vars --platform github` |
 | Validate a release publish locally or in CI | `preflight` |
 | Run the actual Maven deploy command | `publish --execute true` |
+| Run the actual Gradle publish command | `gradle-publish --execute true` |
 | Generate release notes directly | `release-notes --tag vX.Y.Z --output target/release-notes.md` |
 
 ## 3. Recommended Repository Layout
@@ -123,6 +125,16 @@ mvn -q -DskipTests compile exec:java -Dexec.args="audit-vars --env-file env/rele
 | --- | --- |
 | GitHub Actions variables | `MAVEN_RELEASE_REPOSITORY_URL`, `MAVEN_SNAPSHOT_REPOSITORY_URL`, `MAVEN_RELEASE_REPOSITORY_ID`, `MAVEN_SNAPSHOT_REPOSITORY_ID` |
 | GitHub Actions secrets | `MAVEN_REPOSITORY_USERNAME`, `MAVEN_REPOSITORY_PASSWORD`, `MAVEN_RELEASE_REPOSITORY_USERNAME`, `MAVEN_RELEASE_REPOSITORY_PASSWORD`, `MAVEN_SNAPSHOT_REPOSITORY_USERNAME`, `MAVEN_SNAPSHOT_REPOSITORY_PASSWORD` |
+
+### 4.6 Generate a starter workflow
+
+Use `init-github-actions` when you want a minimal release workflow committed into the target repository:
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="init-github-actions --directory /path/to/repo --build-tool auto --force true"
+```
+
+For Gradle repositories, `--build-tool auto` detects `settings.gradle`, `settings.gradle.kts`, `build.gradle`, or `build.gradle.kts` and writes a workflow that downloads the released CLI jar before running `github-release-plan`, `github-tag-from-plan`, `gradle-publish`, and `github-release-from-plan`.
 
 ## 5. GitHub Actions Workflow Patterns
 
@@ -439,11 +451,14 @@ jobs:
           --execute true
 ```
 
-For Gradle artifact publishing after a release tag, read the manifest and hand off to Gradle:
+For Gradle artifact publishing after a release tag, use `gradle-publish` so `javachanges` can read the release tag, resolve the Gradle command, and hand off the version:
 
 ```bash
-RELEASE_VERSION="$(java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar manifest-field --directory "$GITHUB_WORKSPACE" --field releaseVersion)"
-./gradlew publish -Pversion="$RELEASE_VERSION"
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar \
+  gradle-publish \
+  --directory "$GITHUB_WORKSPACE" \
+  --tag "$GITHUB_REF_NAME" \
+  --execute true
 ```
 
 ## 6. Maven And Gradle Cache Behavior In GitHub Actions

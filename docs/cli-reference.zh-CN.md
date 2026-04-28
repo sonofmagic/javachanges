@@ -469,6 +469,7 @@ Gradle 仓库注意事项：
 | `github-release-plan` | 创建或更新 GitHub release-plan pull request |
 | `github-tag-from-plan` | 根据已生成的 release plan 创建并推送正式 tag |
 | `github-release-from-plan` | 生成发布元数据，并可选创建或更新 GitHub Release |
+| `init-github-actions` | 生成最小可用的 GitHub Actions workflow，串起 release-plan、tag、publish 和 GitHub Release job |
 
 示例：
 
@@ -477,9 +478,11 @@ mvn -q -DskipTests compile exec:java -Dexec.args="github-release-plan --director
 mvn -q -DskipTests compile exec:java -Dexec.args="github-tag-from-plan --directory /path/to/repo --execute true"
 mvn -q -DskipTests compile exec:java -Dexec.args="github-release-from-plan --directory /path/to/repo --release-notes-file target/release-notes.md --execute true"
 mvn -q -DskipTests compile exec:java -Dexec.args="github-release-from-plan --directory /path/to/repo --format json"
+mvn -q -DskipTests compile exec:java -Dexec.args="init-github-actions --directory /path/to/repo --output .github/workflows/javachanges-release.yml --force true"
+mvn -q -DskipTests compile exec:java -Dexec.args="init-github-actions --directory /path/to/gradle-repo --build-tool gradle --output .github/workflows/javachanges-release.yml --force true"
 ```
 
-这三个 GitHub 发布命令也都支持 `--format json`，方便在 CI 里直接消费机器可读输出。
+GitHub 的 release-plan、tag 和 release 命令也都支持 `--format json`，方便在 CI 里直接消费机器可读输出。
 
 ### 9.2 GitLab 发布命令
 
