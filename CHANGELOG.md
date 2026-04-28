@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.6.1 - 2026-04-28
+
+### Patch Changes
+
+- Refine release-planning internals and simplify changeset path handling. (packages: javachanges) Refine release-planning internals and simplify changeset path handling.
+- Add Maven Wrapper scripts and update local development, CI, and snapshot helper commands to use the repository-pinned Maven runtime. (packages: javachanges) Add Maven Wrapper scripts and update local development, CI, and snapshot helper commands to use the repository-pinned Maven runtime.
+- Avoid writing real Maven settings or local repository directories during publish dry-runs. (packages: javachanges) Avoid writing real Maven settings or local repository directories during publish dry-runs.
+- Avoid writing release notes and GitHub output files during release dry-runs. (packages: javachanges) Avoid writing release notes and GitHub output files during release dry-runs.
+- Fail closed when remote release tag lookups cannot reach the configured Git remote. (packages: javachanges) Fail closed when remote release tag lookups cannot reach the configured Git remote.
+- Harden release automation by cleaning preflight credential files immediately and making GitLab API calls fail faster on network or empty-error responses. (packages: javachanges) Harden release automation by cleaning preflight credential files immediately and making GitLab API calls fail faster on network or empty-error responses.
+- Mask secret values in sync-vars execute logs while still passing real values to platform CLIs. (packages: javachanges) Mask secret values in sync-vars execute logs while still passing real values to platform CLIs.
+- Redact authenticated GitLab remote URLs from git failure messages. (packages: javachanges) Redact authenticated GitLab remote URLs from git failure messages.
+- Restrict generated Maven settings files to owner-only permissions when the filesystem supports POSIX permissions. (packages: javachanges) Restrict generated Maven settings files to owner-only permissions when the filesystem supports POSIX permissions.
+- Stabilize GPG public key checks by capturing process output concurrently and reusing the shared temporary-directory cleanup path. (packages: javachanges) Stabilize GPG public key checks by capturing process output concurrently and reusing the shared temporary-directory cleanup path.
+
 ## 1.6.0 - 2026-04-22
 
 ### Minor Changes
