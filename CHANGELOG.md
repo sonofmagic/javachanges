@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.8.0 - 2026-04-28
+
+### Minor Changes
+
+- Add `gradle-publish` to render or execute Gradle-native publish commands from the same release and snapshot version metadata used by the Maven publish helper. (packages: javachanges)
+- Add `init-github-actions` to generate Maven or Gradle GitHub Actions release workflows. (packages: javachanges)
+- Add Gradle template support to `init-gitlab-ci`, including auto build-tool detection and generated pipelines that call `gradle-publish`. (packages: javachanges)
+
+### Patch Changes
+
+- Avoid duplicating official changeset summaries in generated changelog and release-plan notes, and support multiline Gradle `include(...)` module declarations. (packages: javachanges)
+- Keep generated GitHub Actions and GitLab CI templates on the same default javachanges version. (packages: javachanges)
+
 ## 1.7.0 - 2026-04-28
 
 ### Minor Changes
