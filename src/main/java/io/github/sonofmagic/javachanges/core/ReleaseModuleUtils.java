@@ -47,10 +47,7 @@ public final class ReleaseModuleUtils {
 
             return modules;
         } catch (IOException exception) {
-            throw new IllegalStateException(ReleaseMessages.text(
-                "Failed to detect Maven modules from " + repoRoot,
-                "检测 Maven 模块失败: " + repoRoot
-            ), exception);
+            throw new IllegalStateException(ReleaseMessages.failedToDetectMavenModules(repoRoot), exception);
         }
     }
 

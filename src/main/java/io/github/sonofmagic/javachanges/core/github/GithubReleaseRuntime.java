@@ -41,15 +41,12 @@ public class GithubReleaseRuntime {
         CommandResult result = runGitCapture("rev-parse", "HEAD");
         if (result.exitCode != 0) {
             throw new IllegalStateException(ReleaseTextUtils.trimToNull(result.stderrText()) == null
-                ? ReleaseMessages.text("git rev-parse HEAD failed", "git rev-parse HEAD 执行失败")
+                ? ReleaseMessages.gitRevParseHeadFailed()
                 : result.stderrText().trim());
         }
         String sha = ReleaseTextUtils.trimToNull(result.stdoutText());
         if (sha == null) {
-            throw new IllegalStateException(ReleaseMessages.text(
-                "Current HEAD SHA is empty",
-                "当前 HEAD SHA 为空"
-            ));
+            throw new IllegalStateException(ReleaseMessages.currentHeadShaEmpty());
         }
         return sha;
     }
@@ -87,7 +84,7 @@ public class GithubReleaseRuntime {
         if (result.exitCode != 0) {
             String error = ReleaseTextUtils.trimToNull(result.stderrText());
             throw new IllegalStateException(error == null
-                ? ReleaseMessages.text("gh pr list failed", "gh pr list 执行失败")
+                ? ReleaseMessages.ghPrListFailed()
                 : error);
         }
         return ReleaseTextUtils.trimToNull(result.stdoutText());
@@ -127,10 +124,7 @@ public class GithubReleaseRuntime {
         if (result.exitCode != 0) {
             String error = ReleaseTextUtils.trimToNull(result.stderrText());
             throw new IllegalStateException(error == null
-                ? ReleaseMessages.text(
-                    "gh command failed: " + Arrays.asList(args),
-                    "gh 命令执行失败: " + Arrays.asList(args)
-                )
+                ? ReleaseMessages.ghCommandFailed(Arrays.asList(args))
                 : error);
         }
     }
@@ -157,10 +151,7 @@ public class GithubReleaseRuntime {
     private IllegalStateException gitCommandException(CommandResult result, String... args) {
         String error = ReleaseTextUtils.trimToNull(ReleaseTextUtils.redactSensitiveText(result.stderrText()));
         return new IllegalStateException(error == null
-            ? ReleaseMessages.text(
-                "git command failed: " + ReleaseTextUtils.redactSensitiveText(Arrays.asList(args).toString()),
-                "git 命令执行失败: " + ReleaseTextUtils.redactSensitiveText(Arrays.asList(args).toString())
-            )
+            ? ReleaseMessages.gitCommandFailed(ReleaseTextUtils.redactSensitiveText(Arrays.asList(args).toString()))
             : error);
     }
 }

@@ -80,10 +80,7 @@ public final class RequestConfigSupport {
     }
 
     private static IllegalStateException failedToReadConfig(IOException exception) {
-        return new IllegalStateException(ReleaseMessages.text(
-            "Failed to read changeset config",
-            "读取 changeset 配置失败"
-        ), exception);
+        return new IllegalStateException(ReleaseMessages.failedToReadChangesetConfig(), exception);
     }
 
     private static Path resolveConfigRoot(String directoryOption) {

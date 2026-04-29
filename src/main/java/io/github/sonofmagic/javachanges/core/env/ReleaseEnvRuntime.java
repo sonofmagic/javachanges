@@ -22,16 +22,10 @@ public class ReleaseEnvRuntime {
     public Path resolveEnvFile(String envFile) throws IOException {
         Path path = resolvePath(envFile);
         if (!Files.exists(path)) {
-            throw new IllegalStateException(ReleaseMessages.text(
-                "Env file not found: " + relativizePath(path),
-                "未找到 env 文件: " + relativizePath(path)
-            ));
+            throw new IllegalStateException(ReleaseMessages.envFileNotFound(relativizePath(path)));
         }
         if (isExampleFile(path)) {
-            throw new IllegalStateException(ReleaseMessages.text(
-                "Do not use the example env file directly: " + relativizePath(path),
-                "请不要直接使用示例文件: " + relativizePath(path)
-            ));
+            throw new IllegalStateException(ReleaseMessages.doNotUseExampleEnvFile(relativizePath(path)));
         }
         return path;
     }
@@ -72,10 +66,7 @@ public class ReleaseEnvRuntime {
 
     public void requireCommand(String command) {
         if (!commandExists(command)) {
-            throw new IllegalStateException(ReleaseMessages.text(
-                command + " CLI was not found",
-                "未找到 " + command + " CLI"
-            ));
+            throw new IllegalStateException(ReleaseMessages.cliNotFound(command));
         }
     }
 

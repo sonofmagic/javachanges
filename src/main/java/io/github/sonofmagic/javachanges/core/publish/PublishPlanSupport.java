@@ -44,10 +44,7 @@ public final class PublishPlanSupport {
         if (resolvedModule == null) {
             resolvedModule = tagModule;
         } else if (tagModule != null && !resolvedModule.equals(tagModule)) {
-            throw new IllegalStateException(ReleaseMessages.text(
-                "Explicit module " + resolvedModule + " does not match module " + tagModule + " from tag.",
-                "显式指定的模块 " + resolvedModule + " 与 tag 中的模块 " + tagModule + " 不一致"
-            ));
+            throw new IllegalStateException(ReleaseMessages.explicitModuleDoesNotMatchTagModule(resolvedModule, tagModule));
         }
         return new PublishTarget(releaseVersion, resolvedModule, null, false);
     }

@@ -35,10 +35,7 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
         AutomationJsonSupport.AutomationReport report =
             newAutomationReport("github-release-plan", "plan-pull-request", request.execute);
         if (ReleaseTextUtils.trimToNull(request.githubRepo) == null) {
-            throw new IllegalArgumentException(ReleaseMessages.text(
-                "Missing GitHub repo. Pass --github-repo or set GITHUB_REPOSITORY.",
-                "缺少 GitHub repo。请传入 --github-repo 或设置 GITHUB_REPOSITORY。"
-            ));
+            throw new IllegalArgumentException(ReleaseMessages.missingGithubRepo());
         }
 
         ReleasePlan plan = automationSupport.plan();

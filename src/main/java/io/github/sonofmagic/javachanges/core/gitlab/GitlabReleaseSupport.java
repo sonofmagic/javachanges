@@ -39,10 +39,7 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
             newAutomationReport("gitlab-release-plan", "plan-merge-request", request.execute);
         report.projectId = request.projectId;
         if (ReleaseTextUtils.trimToNull(request.projectId) == null) {
-            throw new IllegalArgumentException(ReleaseMessages.text(
-                "Missing GitLab project id. Pass --project-id or set CI_PROJECT_ID.",
-                "缺少 GitLab project id。请传入 --project-id 或设置 CI_PROJECT_ID。"
-            ));
+            throw new IllegalArgumentException(ReleaseMessages.missingGitlabProjectId());
         }
 
         ReleasePlan plan = automationSupport.plan();
@@ -182,16 +179,10 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
 
         String tagName = ReleaseTextUtils.trimToNull(request.tag);
         if (tagName == null) {
-            throw new IllegalArgumentException(ReleaseMessages.text(
-                "Missing GitLab tag. Pass --tag or set CI_COMMIT_TAG.",
-                "缺少 GitLab tag。请传入 --tag 或设置 CI_COMMIT_TAG。"
-            ));
+            throw new IllegalArgumentException(ReleaseMessages.missingGitlabTag());
         }
         if (ReleaseTextUtils.trimToNull(request.projectId) == null) {
-            throw new IllegalArgumentException(ReleaseMessages.text(
-                "Missing GitLab project id. Pass --project-id or set CI_PROJECT_ID.",
-                "缺少 GitLab project id。请传入 --project-id 或设置 CI_PROJECT_ID。"
-            ));
+            throw new IllegalArgumentException(ReleaseMessages.missingGitlabProjectId());
         }
         ReleaseArtifactSupport.ReleaseTagInfo tagInfo = artifactSupport.describeTag(tagName);
         report.tag = tagInfo.tag;

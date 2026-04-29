@@ -85,10 +85,7 @@ final class JavaChangesMavenPluginSupport {
             tokenStarted = true;
         }
         if (quote != null) {
-            throw new IllegalArgumentException(ReleaseMessages.text(
-                "Unterminated quoted argument in javachanges.args",
-                "javachanges.args 中存在未闭合的引号参数"
-            ));
+            throw new IllegalArgumentException(ReleaseMessages.unterminatedJavachangesArgsQuote());
         }
         if (escaping) {
             current.append('\\');

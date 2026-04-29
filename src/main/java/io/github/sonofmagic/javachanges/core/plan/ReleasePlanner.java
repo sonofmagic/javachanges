@@ -49,10 +49,7 @@ public final class ReleasePlanner {
             if (error.contains("not a git repository")) {
                 return null;
             }
-            throw new IllegalStateException(ReleaseMessages.text(
-                "git tag failed: " + error,
-                "git tag 执行失败: " + error
-            ));
+            throw new IllegalStateException(ReleaseMessages.gitTagFailed(error));
         }
         String output = result.stdoutText().trim();
         if (output.isEmpty()) {

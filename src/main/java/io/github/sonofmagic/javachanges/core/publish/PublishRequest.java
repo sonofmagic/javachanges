@@ -46,16 +46,10 @@ public final class PublishRequest {
             snapshot = true;
         }
         if (!snapshot && tag == null) {
-            throw new IllegalArgumentException(ReleaseMessages.text(
-                "Pass --snapshot true or --tag <value>.",
-                "必须指定 --snapshot true 或 --tag <value>"
-            ));
+            throw new IllegalArgumentException(ReleaseMessages.missingSnapshotOrTag());
         }
         if (snapshot && tag != null) {
-            throw new IllegalArgumentException(ReleaseMessages.text(
-                "--snapshot and --tag cannot be used together.",
-                "--snapshot 和 --tag 不能同时使用"
-            ));
+            throw new IllegalArgumentException(ReleaseMessages.snapshotAndTagMutuallyExclusive());
         }
         return new PublishRequest(
             snapshot,

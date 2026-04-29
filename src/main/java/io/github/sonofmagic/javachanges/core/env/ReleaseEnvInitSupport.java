@@ -21,26 +21,14 @@ final class ReleaseEnvInitSupport {
         Path template = runtime.resolvePath(request.template);
         Path target = runtime.resolvePath(request.target);
         if (!Files.exists(template)) {
-            throw new IllegalStateException(ReleaseMessages.text(
-                "Template file not found: " + runtime.relativizePath(template),
-                "未找到模板文件: " + runtime.relativizePath(template)
-            ));
+            throw new IllegalStateException(ReleaseMessages.templateFileNotFound(runtime.relativizePath(template)));
         }
         if (target.getFileName().toString().endsWith(".example")) {
-            throw new IllegalStateException(ReleaseMessages.text(
-                "Target file cannot be an example file: " + runtime.relativizePath(target),
-                "目标文件不能是示例文件: " + runtime.relativizePath(target)
-            ));
+            throw new IllegalStateException(ReleaseMessages.targetFileCannotBeExample(runtime.relativizePath(target)));
         }
         if (Files.exists(target) && !request.force) {
-            out.println(ReleaseMessages.text(
-                "Target file already exists; kept unchanged: " + runtime.relativizePath(target),
-                "目标文件已存在，未做覆盖: " + runtime.relativizePath(target)
-            ));
-            out.println(ReleaseMessages.text(
-                "To recreate it, run: make env-init RELEASE_ENV_FILE=" + runtime.relativizePath(target) + " FORCE=true",
-                "如果你确实要重建，请执行: make env-init RELEASE_ENV_FILE=" + runtime.relativizePath(target) + " FORCE=true"
-            ));
+            out.println(ReleaseMessages.targetFileKept(runtime.relativizePath(target)));
+            out.println(ReleaseMessages.recreateEnvFileCommand(runtime.relativizePath(target)));
             return;
         }
         Path parent = target.getParent();
@@ -55,13 +43,7 @@ final class ReleaseEnvInitSupport {
             target.toFile().setWritable(true, true);
         } catch (SecurityException ignored) {
         }
-        out.println(ReleaseMessages.text(
-            "Generated local env file: " + runtime.relativizePath(target),
-            "已生成本地 env 文件: " + runtime.relativizePath(target)
-        ));
-        out.println(ReleaseMessages.text(
-            "Next, edit the real repository addresses and credentials, then run: make readiness",
-            "下一步请编辑真实仓库地址和凭据，然后执行: make readiness"
-        ));
+        out.println(ReleaseMessages.generatedLocalEnvFile(runtime.relativizePath(target)));
+        out.println(ReleaseMessages.editEnvFileNextStep());
     }
 }

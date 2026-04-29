@@ -57,17 +57,11 @@ public final class GitlabProtectionSupport {
             if (metadata == null) {
                 status = "MISSING_REMOTE";
                 result.failed = true;
-                result.suggestions.add(ReleaseMessages.text(
-                    "Create GitLab project variable " + entry.name + " and mark it protected",
-                    "在 GitLab 项目变量中创建 " + entry.name + "，并勾选 protected"
-                ));
+                result.suggestions.add(ReleaseMessages.createGitlabProtectedVariable(entry.name));
             } else if (!metadata.protectedValue) {
                 status = "NOT_PROTECTED";
                 result.failed = true;
-                result.suggestions.add(ReleaseMessages.text(
-                    "Mark GitLab project variable " + entry.name + " as protected",
-                    "把 GitLab 项目变量 " + entry.name + " 改为 protected"
-                ));
+                result.suggestions.add(ReleaseMessages.markGitlabVariableProtected(entry.name));
             } else {
                 status = "PROTECTED";
             }
@@ -92,22 +86,11 @@ public final class GitlabProtectionSupport {
             if (hasProtectedSecrets && !protectedBranch) {
                 status = "UNPROTECTED_WITH_PROTECTED_VARIABLES";
                 result.failed = true;
-                result.suggestions.add(ReleaseMessages.text(
-                    "Protect GitLab branch " + snapshotBranch
-                        + " so protected variables are injected into that branch pipeline",
-                    "保护 GitLab 分支 " + snapshotBranch + "，否则 protected variables 不会注入该分支的 pipeline"
-                ));
-                result.suggestions.add(ReleaseMessages.text(
-                    "Alternatively, remove protected from the related Maven / release variables, with lower security",
-                    "或者取消相关 Maven / release 变量的 protected 标记，但这会降低安全性"
-                ));
+                result.suggestions.add(ReleaseMessages.protectGitlabBranchForProtectedVariables(snapshotBranch));
+                result.suggestions.add(ReleaseMessages.removeProtectedVariableFlagWithLowerSecurity());
             } else if (!protectedBranch) {
                 result.failed = true;
-                result.suggestions.add(ReleaseMessages.text(
-                    "Protect GitLab branch " + snapshotBranch
-                        + " so snapshot publishing matches protected variable behavior",
-                    "保护 GitLab 分支 " + snapshotBranch + "，让 snapshot 发布与 protected variables 行为一致"
-                ));
+                result.suggestions.add(ReleaseMessages.protectGitlabBranchForSnapshot(snapshotBranch));
             }
             protectedBranchesSection.add(snapshotBranch, status);
             if (textOutput) {
@@ -207,10 +190,7 @@ public final class GitlabProtectionSupport {
         try {
             return URLEncoder.encode(value, "UTF-8");
         } catch (Exception exception) {
-            throw new IllegalStateException(ReleaseMessages.text(
-                "Failed to encode GitLab project path",
-                "GitLab 项目路径编码失败"
-            ), exception);
+            throw new IllegalStateException(ReleaseMessages.failedToEncodeGitlabProjectPath(), exception);
         }
     }
 

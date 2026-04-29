@@ -74,10 +74,7 @@ public final class BuildModelSupport {
         try {
             return GradleModelSupport.detectModules(repoRoot);
         } catch (IOException exception) {
-            throw new IllegalStateException(ReleaseMessages.text(
-                "Failed to detect Gradle modules from " + repoRoot,
-                "检测 Gradle 模块失败: " + repoRoot
-            ), exception);
+            throw new IllegalStateException(ReleaseMessages.failedToDetectGradleModules(repoRoot), exception);
         }
     }
 
@@ -113,10 +110,7 @@ public final class BuildModelSupport {
     private static BuildModel require(Path repoRoot) {
         BuildModel model = detect(repoRoot);
         if (model == null) {
-            throw new IllegalStateException(ReleaseMessages.text(
-                "Cannot find supported Maven or Gradle build model in " + repoRoot,
-                "无法在 " + repoRoot + " 中找到支持的 Maven 或 Gradle 构建模型"
-            ));
+            throw new IllegalStateException(ReleaseMessages.cannotFindSupportedBuildModel(repoRoot));
         }
         return model;
     }

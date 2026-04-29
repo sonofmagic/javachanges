@@ -53,10 +53,7 @@ abstract class AbstractJavaChangesMojo extends AbstractMojo {
         if (exitCode != 0) {
             ReleaseLanguageContext.set(mojoLanguage());
             try {
-                throw new MojoFailureException(ReleaseMessages.text(
-                    "javachanges failed with exit code " + exitCode,
-                    "javachanges 执行失败，退出码: " + exitCode
-                ));
+                throw new MojoFailureException(ReleaseMessages.javachangesFailed(exitCode));
             } finally {
                 ReleaseLanguageContext.clear();
             }

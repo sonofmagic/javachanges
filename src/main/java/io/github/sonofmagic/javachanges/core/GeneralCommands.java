@@ -61,14 +61,11 @@ final class InitCommand extends AbstractCliCommand {
                 printPathAction(hadConfig ? "Replaced" : "Created", repoRoot, configPath);
             } else {
                 printPathAction("Kept", repoRoot, configPath);
-                out().println(ReleaseMessages.text(
-                    "  Use --force to replace it with the default template.",
-                    "  使用 --force 可替换为默认模板。"
-                ));
+                out().println(ReleaseMessages.useForceToReplaceDefaultTemplate());
             }
         } else {
             out().println(ReleaseMessages.pathAction("Skipped") + ": " + ChangesetPaths.DIR + "/" + ChangesetPaths.CONFIG_JSONC
-                + ReleaseMessages.text(" (use --config to write the default template)", " (使用 --config 写入默认模板)"));
+                + ReleaseMessages.useConfigToWriteDefaultTemplate());
         }
 
         String repoArg = CliOutputSupport.shellQuote(repoRoot.toString());
@@ -321,17 +318,14 @@ final class ModulesCommand extends AbstractCliCommand {
         Path repoRoot = repoRoot();
         BuildModelSupport.BuildModel model = BuildModelSupport.detect(repoRoot);
         if (model == null) {
-            throw new IllegalStateException(ReleaseMessages.text(
-                "Cannot find supported Maven or Gradle build model in " + repoRoot,
-                "无法在 " + repoRoot + " 中找到支持的 Maven 或 Gradle 构建模型"
-            ));
+            throw new IllegalStateException(ReleaseMessages.cannotFindSupportedBuildModel(repoRoot));
         }
         List<String> modules = ReleaseModuleUtils.detectKnownModules(repoRoot);
         out().println(ReleaseMessages.repository() + ": " + repoRoot);
-        out().println(ReleaseMessages.text("Build tool", "构建工具") + ": " + model.type.name().toLowerCase(java.util.Locale.ROOT));
-        out().println(ReleaseMessages.text("Version file", "版本文件") + ": " + BuildModelSupport.revisionFileLabel(repoRoot));
+        out().println(ReleaseMessages.buildTool() + ": " + model.type.name().toLowerCase(java.util.Locale.ROOT));
+        out().println(ReleaseMessages.versionFile() + ": " + BuildModelSupport.revisionFileLabel(repoRoot));
         out().println(ReleaseMessages.currentRevision() + ": " + BuildModelSupport.readRevision(repoRoot));
-        out().println(ReleaseMessages.text("Modules", "模块") + ":");
+        out().println(ReleaseMessages.modules() + ":");
         for (String module : modules) {
             out().println("  - " + module);
         }
@@ -389,7 +383,7 @@ final class AssertModuleCommand extends AbstractCliCommand {
     @Override
     public Integer call() {
         assertKnownModule(repoRoot(), module);
-        out().println(ReleaseMessages.text("module ok", "模块校验通过"));
+        out().println(ReleaseMessages.moduleOk());
         return success();
     }
 }
@@ -400,7 +394,7 @@ final class AssertSnapshotCommand extends AbstractCliCommand {
     @Override
     public Integer call() throws Exception {
         new VersionSupport(repoRoot()).assertSnapshot();
-        out().println(ReleaseMessages.text("snapshot ok", "snapshot 校验通过"));
+        out().println(ReleaseMessages.snapshotOk());
         return success();
     }
 }
@@ -414,7 +408,7 @@ final class AssertReleaseTagCommand extends AbstractCliCommand {
     @Override
     public Integer call() throws Exception {
         new VersionSupport(repoRoot()).assertReleaseTag(tag);
-        out().println(ReleaseMessages.text("release tag ok", "release tag 校验通过"));
+        out().println(ReleaseMessages.releaseTagOk());
         return success();
     }
 }
@@ -441,7 +435,7 @@ final class WriteSettingsCommand extends AbstractCliCommand {
     @Override
     public Integer call() throws Exception {
         MavenSettingsWriter.write(Paths.get(output));
-        out().println(ReleaseMessages.text("Generated Maven settings: ", "已生成 Maven settings: ") + output);
+        out().println(ReleaseMessages.generatedMavenSettings(output));
         return success();
     }
 }
@@ -460,7 +454,7 @@ final class ReleaseNotesCommand extends AbstractCliCommand {
         Path repoRoot = repoRoot();
         Path target = RepoPathSupport.resolveOutputPath(repoRoot, output, "--output");
         new ReleaseNotesGenerator(repoRoot).writeReleaseNotes(tag, target);
-        out().println(ReleaseMessages.text("Generated release notes: ", "已生成 release notes: ") + output);
+        out().println(ReleaseMessages.generatedReleaseNotes(output));
         return success();
     }
 }
@@ -495,7 +489,7 @@ final class EnsureGpgPublicKeyCommand extends AbstractCliCommand {
             out(),
             err()
         );
-        out().println(ReleaseMessages.text("gpg public key ok: ", "gpg 公钥校验通过: ") + fingerprint);
+        out().println(ReleaseMessages.gpgPublicKeyOk(fingerprint));
         return success();
     }
 }

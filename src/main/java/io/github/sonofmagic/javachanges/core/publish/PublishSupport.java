@@ -67,29 +67,20 @@ public final class PublishSupport {
 
         MavenCommand mavenCommand = ReleaseProcessUtils.resolveMavenCommand(repoRoot);
         if (mavenCommand == null) {
-            throw new IllegalStateException(ReleaseMessages.text(
-                "No Maven command found. Expected " + ReleaseProcessUtils.mavenWrapperPath()
-                    + " in the repository or mvn on PATH.",
-                "未找到可用的 Maven 命令，期望仓库内存在 "
-                    + ReleaseProcessUtils.mavenWrapperPath() + " 或系统中可用 mvn"
-            ));
+            throw new IllegalStateException(ReleaseMessages.noMavenCommandFound());
         }
 
         List<String> command = planSupport.buildDeployCommand(request, publishTarget, mavenCommand, localMavenRepo);
 
         if (request.format != io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
             out.println();
-            out.println(ReleaseMessages.text("== Dry Run Output ==", "== Dry Run 输出 =="));
+            out.println(ReleaseMessages.dryRunOutputHeading());
             out.println(request.execute
-                ? ReleaseMessages.text("Generated .m2/settings.xml", "已生成 .m2/settings.xml")
-                : ReleaseMessages.text(
-                    "Maven settings generation check passed; execution will write .m2/settings.xml",
-                    "Maven settings 生成校验通过；执行时将写入 .m2/settings.xml"
-                ));
-            out.println(ReleaseMessages.text("Maven command: ", "Maven 命令: ")
-                + mavenCommand.command + " (" + mavenCommand.source + ")");
+                ? ReleaseMessages.generatedMavenSettingsFile()
+                : ReleaseMessages.mavenSettingsWillBeWritten());
+            out.println(ReleaseMessages.mavenCommandLabel(mavenCommand.command, mavenCommand.source));
             if (localMavenRepo != null) {
-                out.println(ReleaseMessages.text("Local Maven repository: ", "本地 Maven 仓库: ") + localMavenRepo);
+                out.println(ReleaseMessages.localMavenRepository(localMavenRepo));
             }
             if (publishTarget.publishVersion != null) {
                 out.println(request.snapshot
@@ -102,17 +93,12 @@ public final class PublishSupport {
             }
             if (releaseNotesAvailable) {
                 out.println(request.execute
-                    ? ReleaseMessages.text("Generated target/release-notes.md", "已生成 target/release-notes.md")
-                    : ReleaseMessages.text(
-                        "release notes generation check passed; execution will write target/release-notes.md",
-                        "release notes 生成校验通过；执行时将写入 target/release-notes.md"
-                    ));
+                    ? ReleaseMessages.generatedReleaseNotesFile()
+                    : ReleaseMessages.releaseNotesWillBeWritten());
             }
-            out.println(publishTarget.resolvedModule == null
-                ? ReleaseMessages.text("target module: all", "目标模块: all")
-                : ReleaseMessages.text("target module: ", "目标模块: ") + publishTarget.resolvedModule);
+            out.println(ReleaseMessages.targetModule(publishTarget.resolvedModule));
             out.println();
-            out.println(ReleaseMessages.text("Command to run:", "将执行的命令:"));
+            out.println(ReleaseMessages.commandToRun());
             out.println(ReleaseTextUtils.renderCommand(command));
         }
 
@@ -122,24 +108,18 @@ public final class PublishSupport {
                 out.println(report.toJson());
             } else {
                 out.println();
-                out.println(ReleaseMessages.text(
-                    "Dry-run only. Pass --execute true to run Maven publish.",
-                    "当前为 dry-run，未执行 Maven。传入 --execute true 才会真正发布。"
-                ));
+                out.println(ReleaseMessages.dryRunOnlyMavenPublish());
             }
             return;
         }
 
         if (request.format != io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
             out.println();
-            out.println(ReleaseMessages.text("== Running Maven ==", "== 开始执行 =="));
+            out.println(ReleaseMessages.runningMavenHeading());
         }
         int exitCode = ReleaseProcessUtils.runCommand(command, repoRoot);
         if (exitCode != 0) {
-            throw new IllegalStateException(ReleaseMessages.text(
-                "Maven deploy failed with exit code " + exitCode,
-                "Maven deploy 失败，退出码: " + exitCode
-            ));
+            throw new IllegalStateException(ReleaseMessages.mavenDeployFailed(exitCode));
         }
         report.action = request.snapshot ? "publish-snapshot" : "publish-release";
         report.reason = "Publish completed.";
@@ -167,35 +147,26 @@ public final class PublishSupport {
         }
 
         if (!request.allowDirty && runtime.hasDirtyWorktree()) {
-            throw new IllegalStateException(ReleaseMessages.text(
-                "Working tree has uncommitted changes. Use --allow-dirty true to skip this check when intentional.",
-                "工作区存在未提交修改。若这是预期行为，可使用 --allow-dirty true 跳过检查。"
-            ));
+            throw new IllegalStateException(ReleaseMessages.dirtyWorktree());
         }
 
         if (request.format != io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
-            out.println(ReleaseMessages.text("== Version Check ==", "== 版本检查 =="));
+            out.println(ReleaseMessages.versionCheckHeading());
         }
         String currentVersion = versionSupport.readRevision();
         if (request.format != io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
-            out.println(ReleaseMessages.text("Current revision: ", "当前 revision: ") + currentVersion);
+            out.println(ReleaseMessages.currentRevisionValue(currentVersion));
             out.println();
-            out.println(ReleaseMessages.text("== Publish Mode Check ==", "== 发布模式检查 =="));
+            out.println(ReleaseMessages.publishModeCheckHeading());
         }
 
         if (request.snapshot) {
             if (request.format != io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
-                out.println(ReleaseMessages.text("snapshot check passed", "snapshot 校验通过"));
+                out.println(ReleaseMessages.snapshotCheckPassed());
                 out.println("snapshot version mode: " + publishTarget.snapshotVersionMode.id);
                 out.println(publishTarget.snapshotVersionMode == SnapshotVersionMode.PLAIN
-                    ? ReleaseMessages.text(
-                        "plain snapshot: project version keeps the original -SNAPSHOT revision from pom.xml",
-                        "plain snapshot: 项目版本号保持 pom.xml 中的原始 -SNAPSHOT revision"
-                    )
-                    : ReleaseMessages.text(
-                        "stamped snapshot: project version appends the build stamp before publishing",
-                        "stamped snapshot: 项目版本号会追加 build stamp 后再发布"
-                    ));
+                    ? ReleaseMessages.plainSnapshotDescription()
+                    : ReleaseMessages.stampedSnapshotDescription());
                 out.println("snapshot publish version: " + publishTarget.publishVersion);
             }
         } else {
@@ -208,7 +179,7 @@ public final class PublishSupport {
         if (request.format != io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
             out.println(publishTarget.resolvedModule == null ? "target module: all" : "target module: " + publishTarget.resolvedModule);
             out.println();
-            out.println(ReleaseMessages.text("== Repository Variable Check ==", "== 仓库变量检查 =="));
+            out.println(ReleaseMessages.repositoryVariableCheckHeading());
         }
         if (request.snapshot) {
             String ignored = ReleaseTextUtils.requireEnv("MAVEN_SNAPSHOT_REPOSITORY_URL");
@@ -224,42 +195,36 @@ public final class PublishSupport {
 
         if (request.format != io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
             out.println();
-            out.println(ReleaseMessages.text("== Credential Check ==", "== 凭据检查 =="));
+            out.println(ReleaseMessages.credentialCheckHeading());
         }
         Path settingsFile = tempDir.resolve("settings.xml");
         MavenSettingsWriter.write(settingsFile,
             request.snapshot ? MavenSettingsWriter.RepositoryMode.SNAPSHOT : MavenSettingsWriter.RepositoryMode.RELEASE);
         ReleaseProcessUtils.restrictOwnerOnly(settingsFile);
         if (request.format != io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
-            out.println(ReleaseMessages.text("Maven settings generation check passed", "Maven settings 生成校验通过"));
+            out.println(ReleaseMessages.mavenSettingsGenerationPassed());
         }
 
         if (!request.snapshot) {
             if (request.format != io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
                 out.println();
-                out.println(ReleaseMessages.text("== Release Notes Preflight ==", "== Release Notes 预检查 =="));
+                out.println(ReleaseMessages.releaseNotesPreflightHeading());
             }
             if (runtime.gitRefExists(request.tag)) {
                 Path releaseNotesFile = tempDir.resolve("release-notes.md");
                 releaseNotesGenerator.writeReleaseNotes(request.tag, releaseNotesFile);
                 if (request.format != io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
-                    out.println(ReleaseMessages.text(
-                        "release notes generation check passed",
-                        "release notes 生成校验通过"
-                    ));
+                    out.println(ReleaseMessages.releaseNotesGenerationPassed());
                 }
             } else if (request.format != io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
-                out.println(ReleaseMessages.text(
-                    "Local tag " + request.tag + " was not found; skipping release notes generation check",
-                    "本地尚未找到 tag " + request.tag + "，跳过 release notes 生成检查"
-                ));
+                out.println(ReleaseMessages.localTagMissingSkipReleaseNotes(request.tag));
             }
         }
 
         report.reason = "Preflight checks passed.";
         if (request.format != io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
             out.println();
-            out.println(ReleaseMessages.text("Preflight checks passed", "发布前检查通过"));
+            out.println(ReleaseMessages.preflightChecksPassed());
         }
     }
 }

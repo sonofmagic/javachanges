@@ -35,17 +35,11 @@ public final class PomModelSupport {
         Element project = document.getDocumentElement();
         Element properties = directChild(project, "properties");
         if (properties == null) {
-            throw new IllegalStateException(ReleaseMessages.text(
-                "Cannot find <properties> in " + pomPath,
-                "无法在 " + pomPath + " 中找到 <properties>"
-            ));
+            throw new IllegalStateException(ReleaseMessages.cannotFindPomProperties(pomPath));
         }
         String revision = directChildText(properties, "revision");
         if (revision == null) {
-            throw new IllegalStateException(ReleaseMessages.text(
-                "Cannot find <revision> in " + pomPath,
-                "无法在 " + pomPath + " 中找到 <revision>"
-            ));
+            throw new IllegalStateException(ReleaseMessages.cannotFindPomRevision(pomPath));
         }
         return revision;
     }
@@ -55,17 +49,11 @@ public final class PomModelSupport {
         Element project = document.getDocumentElement();
         Element properties = directChild(project, "properties");
         if (properties == null) {
-            throw new IllegalStateException(ReleaseMessages.text(
-                "Cannot find <properties> in " + pomPath,
-                "无法在 " + pomPath + " 中找到 <properties>"
-            ));
+            throw new IllegalStateException(ReleaseMessages.cannotFindPomProperties(pomPath));
         }
         Element revisionElement = directChild(properties, "revision");
         if (revisionElement == null) {
-            throw new IllegalStateException(ReleaseMessages.text(
-                "Cannot find <revision> in " + pomPath,
-                "无法在 " + pomPath + " 中找到 <revision>"
-            ));
+            throw new IllegalStateException(ReleaseMessages.cannotFindPomRevision(pomPath));
         }
         revisionElement.setTextContent(revision);
         write(pomPath, document);
@@ -101,15 +89,9 @@ public final class PomModelSupport {
             DocumentBuilder builder = newDocumentBuilder();
             return builder.parse(inputStream);
         } catch (ParserConfigurationException exception) {
-            throw new IllegalStateException(ReleaseMessages.text(
-                "Failed to configure XML parser for " + pomPath,
-                "配置 XML parser 失败: " + pomPath
-            ), exception);
+            throw new IllegalStateException(ReleaseMessages.failedToConfigureXmlParser(pomPath), exception);
         } catch (SAXException exception) {
-            throw new IllegalStateException(ReleaseMessages.text(
-                "Failed to parse pom.xml: " + pomPath,
-                "解析 pom.xml 失败: " + pomPath
-            ), exception);
+            throw new IllegalStateException(ReleaseMessages.failedToParsePom(pomPath), exception);
         }
     }
 
@@ -123,10 +105,7 @@ public final class PomModelSupport {
             transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
             transformer.transform(new DOMSource(document), new StreamResult(outputStream));
         } catch (TransformerException exception) {
-            throw new IllegalStateException(ReleaseMessages.text(
-                "Failed to write pom.xml: " + pomPath,
-                "写入 pom.xml 失败: " + pomPath
-            ), exception);
+            throw new IllegalStateException(ReleaseMessages.failedToWritePom(pomPath), exception);
         }
     }
 
