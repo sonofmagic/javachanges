@@ -225,7 +225,8 @@ final class ReleaseNotesCommand extends AbstractCliCommand {
     @Override
     public Integer call() throws Exception {
         Path repoRoot = repoRoot();
-        new ReleaseNotesGenerator(repoRoot).writeReleaseNotes(tag, repoRoot.resolve(output).normalize());
+        Path target = RepoPathSupport.resolveOutputPath(repoRoot, output, "--output");
+        new ReleaseNotesGenerator(repoRoot).writeReleaseNotes(tag, target);
         out().println("Generated release notes: " + output);
         return success();
     }

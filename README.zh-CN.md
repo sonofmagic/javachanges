@@ -72,10 +72,10 @@ java -jar .javachanges/javachanges-<released-version>.jar --help
 
 ```bash
 ./mvnw -q -DskipTests install
-mvn io.github.sonofmagic:javachanges:1.6.0-SNAPSHOT:status
-mvn io.github.sonofmagic:javachanges:1.6.0-SNAPSHOT:plan -Djavachanges.apply=true
-mvn io.github.sonofmagic:javachanges:1.6.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
-mvn io.github.sonofmagic:javachanges:1.6.0-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
+mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:status
+mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:plan -Djavachanges.apply=true
+mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
 ```
 
 如果你是在开发 `javachanges` 仓库本身，可以直接用这些本地快捷入口：
@@ -93,7 +93,7 @@ pnpm docs:deploy:local
 
 - `./mvnw -B test` 运行默认测试集，并带上构建前置环境检查
 - `./mvnw -B -Pcoverage -Dmaven.repo.local=.m2/repository test` 会额外生成 `target/site/jacoco/` 下的 JaCoCo HTML 覆盖率报告
-- `snapshot:install` 把当前 `1.6.0-SNAPSHOT` 安装到本地 Maven 仓库
+- `snapshot:install` 把当前 `1.8.0-SNAPSHOT` 安装到本地 Maven 仓库
 - `snapshot:preflight` 用 `local.dev.001` 预演一次本地 snapshot 发布检查
 - `snapshot:publish:local` 通过 `central-publishing-maven-plugin` 发布一个唯一 snapshot 版本
 - `docs:deploy:local` 会重新构建 `website/dist`，再通过 Wrangler 在本地启动预览部署

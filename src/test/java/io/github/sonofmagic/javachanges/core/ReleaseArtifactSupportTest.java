@@ -7,6 +7,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ReleaseArtifactSupportTest {
 
@@ -33,5 +34,15 @@ class ReleaseArtifactSupportTest {
         assertEquals("2.0.0", tagInfo.releaseVersion);
         assertEquals("demo-app v2.0.0", tagInfo.releaseDisplayName());
         assertEquals(tempDir.resolve("target").resolve("release-notes.md").normalize(), notesFile);
+    }
+
+    @Test
+    void releaseNotesFileMustStayInsideRepository(@TempDir Path tempDir) {
+        ReleaseArtifactSupport support = new ReleaseArtifactSupport(tempDir);
+
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+            () -> support.resolveReleaseNotesFile("../release-notes.md"));
+
+        assertEquals("--release-notes-file must stay inside repository: ../release-notes.md", error.getMessage());
     }
 }

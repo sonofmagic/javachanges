@@ -147,7 +147,7 @@ final class InitGitlabCiCommand extends AbstractCliCommand {
     @Override
     public Integer call() throws Exception {
         Path repoRoot = repoRoot();
-        Path target = repoRoot.resolve(output).normalize();
+        Path target = RepoPathSupport.resolveOutputPath(repoRoot, output, "--output");
         if (Files.exists(target) && !force) {
             throw new IllegalStateException("Target file already exists. Pass --force true to overwrite: " + target);
         }

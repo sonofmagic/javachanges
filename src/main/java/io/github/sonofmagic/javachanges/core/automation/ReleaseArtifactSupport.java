@@ -1,5 +1,7 @@
 package io.github.sonofmagic.javachanges.core.automation;
 
+import io.github.sonofmagic.javachanges.core.RepoPathSupport;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -23,7 +25,7 @@ public final class ReleaseArtifactSupport {
         if (resolved == null) {
             return repoRoot.resolve("target").resolve("release-notes.md").normalize();
         }
-        return resolvePath(resolved);
+        return RepoPathSupport.resolveOutputPath(repoRoot, resolved, "--release-notes-file");
     }
 
     public Path resolvePath(String value) {

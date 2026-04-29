@@ -234,6 +234,40 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void githubReleasePlanFailsOnMalformedChangesetConfig(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+        Files.createDirectories(repoRoot.resolve(".changesets"));
+        Files.write(repoRoot.resolve(".changesets").resolve("config.json"),
+            "{ invalid json\n".getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = execute(
+            "github-release-plan",
+            "--directory", repoRoot.toString(),
+            "--github-repo", "owner/repo"
+        );
+
+        assertNotEquals(0, result.exitCode);
+        assertEquals("", result.stdout);
+        assertTrue(result.stderr.contains("Failed to parse JSON"));
+    }
+
+    @Test
+    void releaseNotesRejectsOutputOutsideRepository(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+
+        ExecutionResult result = execute(
+            "release-notes",
+            "--directory", repoRoot.toString(),
+            "--tag", "v1.2.3",
+            "--output", "../release-notes.md"
+        );
+
+        assertNotEquals(0, result.exitCode);
+        assertTrue(result.stderr.contains("--output must stay inside repository: ../release-notes.md"));
+        assertFalse(Files.exists(tempDir.resolve("release-notes.md")));
+    }
+
+    @Test
     void publishDryRunDoesNotWriteMavenSettings(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, false);
         Files.write(repoRoot.resolve(ReleaseProcessUtils.mavenWrapperPath()),
@@ -418,6 +452,28 @@ class JavaChangesCliTest {
         String expectedVersion = "JAVACHANGES_VERSION: \"" + JavaChangesVersion.FALLBACK_RELEASED_VERSION + "\"";
         assertTrue(read(repoRoot.resolve(".gitlab-ci.generated.yml")).contains(expectedVersion));
         assertTrue(read(repoRoot.resolve(".github/workflows/generated-release.yml")).contains(expectedVersion));
+    }
+
+    @Test
+    void initCiTemplatesRejectOutputOutsideRepository(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+
+        ExecutionResult gitlabResult = execute(
+            "init-gitlab-ci",
+            "--directory", repoRoot.toString(),
+            "--output", "../generated.yml"
+        );
+        ExecutionResult githubResult = execute(
+            "init-github-actions",
+            "--directory", repoRoot.toString(),
+            "--output", "../generated.yml"
+        );
+
+        assertNotEquals(0, gitlabResult.exitCode);
+        assertNotEquals(0, githubResult.exitCode);
+        assertTrue(gitlabResult.stderr.contains("--output must stay inside repository: ../generated.yml"));
+        assertTrue(githubResult.stderr.contains("--output must stay inside repository: ../generated.yml"));
+        assertFalse(Files.exists(tempDir.resolve("generated.yml")));
     }
 
     @Test

@@ -14,40 +14,68 @@ public final class RequestConfigSupport {
     public static ChangesetConfigSupport.ChangesetConfig readConfiguredChangesetConfig(String directoryOption) throws IOException {
         Path configuredRoot = resolveConfigRoot(directoryOption);
         if (configuredRoot != null) {
-            try {
-                return RepoFiles.readChangesetConfig(configuredRoot);
-            } catch (Exception ignored) {
-            }
+            return RepoFiles.readChangesetConfig(configuredRoot);
         }
         return RepoFiles.readChangesetConfig(RepoFiles.resolveRepoRoot(directoryOption));
     }
 
     public static ChangesetConfigSupport.ChangesetConfig readConfiguredChangesetConfigOrDefaults(String directoryOption) {
+        Path configuredRoot = resolveConfigRoot(directoryOption);
+        if (configuredRoot != null) {
+            return readConfigUnchecked(configuredRoot);
+        }
         try {
-            return readConfiguredChangesetConfig(directoryOption);
-        } catch (Exception ignored) {
+            return RepoFiles.readChangesetConfig(RepoFiles.resolveRepoRoot(directoryOption));
+        } catch (IllegalStateException exception) {
             return ChangesetConfigSupport.ChangesetConfig.defaults();
+        } catch (IOException exception) {
+            throw new IllegalStateException("Failed to read changeset config", exception);
         }
     }
 
     public static String readConfiguredBaseBranch(String directoryOption) {
+        Path configuredRoot = resolveConfigRoot(directoryOption);
+        if (configuredRoot != null) {
+            return readConfigUnchecked(configuredRoot).baseBranch();
+        }
         try {
-            return readConfiguredChangesetConfig(directoryOption).baseBranch();
-        } catch (Exception ignored) {
+            return RepoFiles.readChangesetConfig(RepoFiles.resolveRepoRoot(directoryOption)).baseBranch();
+        } catch (IllegalStateException exception) {
             return "main";
+        } catch (IOException exception) {
+            throw new IllegalStateException("Failed to read changeset config", exception);
         }
     }
 
     public static String readConfiguredReleaseBranch(String directoryOption, String targetBranch) {
-        try {
-            ChangesetConfigSupport.ChangesetConfig config = readConfiguredChangesetConfig(directoryOption);
+        Path configuredRoot = resolveConfigRoot(directoryOption);
+        ChangesetConfigSupport.ChangesetConfig config = null;
+        if (configuredRoot != null) {
+            config = readConfigUnchecked(configuredRoot);
+        } else {
+            try {
+                config = RepoFiles.readChangesetConfig(RepoFiles.resolveRepoRoot(directoryOption));
+            } catch (IllegalStateException exception) {
+                // Fall back when no repository is available.
+            } catch (IOException exception) {
+                throw new IllegalStateException("Failed to read changeset config", exception);
+            }
+        }
+        if (config != null) {
             String configured = ReleaseTextUtils.trimToNull(config.releaseBranch());
             if (configured != null) {
                 return configured;
             }
-        } catch (Exception ignored) {
         }
         return "changeset-release/" + targetBranch;
+    }
+
+    private static ChangesetConfigSupport.ChangesetConfig readConfigUnchecked(Path repoRoot) {
+        try {
+            return RepoFiles.readChangesetConfig(repoRoot);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Failed to read changeset config", exception);
+        }
     }
 
     private static Path resolveConfigRoot(String directoryOption) {

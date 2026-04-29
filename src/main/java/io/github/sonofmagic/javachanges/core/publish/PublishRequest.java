@@ -68,24 +68,16 @@ public final class PublishRequest {
         if (cliValue != null) {
             return SnapshotVersionMode.parse(cliValue, SnapshotVersionMode.STAMPED);
         }
-        try {
-            return RequestConfigSupport.readConfiguredChangesetConfig(directoryOption).snapshotVersionMode();
-        } catch (Exception ignored) {
-            return SnapshotVersionMode.STAMPED;
-        }
+        return RequestConfigSupport.readConfiguredChangesetConfigOrDefaults(directoryOption).snapshotVersionMode();
     }
 
     public static boolean shouldDefaultToSnapshot(String currentBranch, String directoryOption) {
         if (currentBranch == null) {
             return false;
         }
-        try {
-            ChangesetConfigSupport.ChangesetConfig config =
-                RequestConfigSupport.readConfiguredChangesetConfig(directoryOption);
-            return currentBranch.equals(config.snapshotBranch());
-        } catch (Exception ignored) {
-            return "snapshot".equals(currentBranch);
-        }
+        ChangesetConfigSupport.ChangesetConfig config =
+            RequestConfigSupport.readConfiguredChangesetConfigOrDefaults(directoryOption);
+        return currentBranch.equals(config.snapshotBranch());
     }
 
     private static String currentBranchFromEnvironment() {
