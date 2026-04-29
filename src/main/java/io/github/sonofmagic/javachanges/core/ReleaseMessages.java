@@ -604,6 +604,86 @@ public final class ReleaseMessages {
         return message("release.missingFieldInSource", field, source);
     }
 
+    public static String noPendingChangesetsReason() {
+        return message("release.reason.noPendingChangesets");
+    }
+
+    public static String releaseDryRunOnlyReason() {
+        return message("release.reason.dryRunOnly");
+    }
+
+    public static String tagAlreadyExistsRemotelyReason(String tagName) {
+        return message("release.reason.tagAlreadyExistsRemotely", tagName);
+    }
+
+    public static String noStagedReleasePlanChangesReason() {
+        return message("release.reason.noStagedReleasePlanChanges");
+    }
+
+    public static String createdGithubPullRequestReason() {
+        return message("release.reason.createdGithubPullRequest");
+    }
+
+    public static String updatedGithubPullRequestReason() {
+        return message("release.reason.updatedGithubPullRequest");
+    }
+
+    public static String createdGitlabMergeRequestReason() {
+        return message("release.reason.createdGitlabMergeRequest");
+    }
+
+    public static String updatedGitlabMergeRequestReason() {
+        return message("release.reason.updatedGitlabMergeRequest");
+    }
+
+    public static String currentBranchMatchesReleaseBranchReason() {
+        return message("release.reason.currentBranchMatchesReleaseBranch");
+    }
+
+    public static String currentBranchDoesNotMatchBaseBranchReason() {
+        return message("release.reason.currentBranchDoesNotMatchBaseBranch");
+    }
+
+    public static String missingPreviousShaReason() {
+        return message("release.reason.missingPreviousSha");
+    }
+
+    public static String noFreshReleaseStateChangeDetectedReason() {
+        return message("release.reason.noFreshReleaseStateChangeDetected");
+    }
+
+    public static String noReleasePlanManifestChangeDetectedReason() {
+        return message("release.reason.noReleasePlanManifestChangeDetected");
+    }
+
+    public static String createdAndPushedTagReason() {
+        return message("release.reason.createdAndPushedTag");
+    }
+
+    public static String gitlabReleaseWouldBeUpdatedReason() {
+        return message("release.reason.gitlabReleaseWouldBeUpdated");
+    }
+
+    public static String gitlabReleaseWouldBeCreatedReason() {
+        return message("release.reason.gitlabReleaseWouldBeCreated");
+    }
+
+    public static String updatedGithubReleaseReason() {
+        return message("release.reason.updatedGithubRelease");
+    }
+
+    public static String createdGithubReleaseReason() {
+        return message("release.reason.createdGithubRelease");
+    }
+
+    public static String updatedGitlabReleaseReason() {
+        return message("release.reason.updatedGitlabRelease");
+    }
+
+    public static String createdGitlabReleaseReason() {
+        return message("release.reason.createdGitlabRelease");
+    }
+
     public static String releaseNotesSection(String section) {
         if ("Breaking Changes".equals(section)) {
             return message("release.section.breakingChanges");

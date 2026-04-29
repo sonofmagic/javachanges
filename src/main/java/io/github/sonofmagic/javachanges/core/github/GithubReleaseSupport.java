@@ -69,7 +69,7 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
         runtime.runGit(concat("add", BuildModelSupport.releasePlanGitAddPaths(repoRoot)));
         if (runtime.hasNoStagedChanges()) {
             report.skipped = true;
-            report.reason = "No staged release plan changes.";
+            report.reason = ReleaseMessages.noStagedReleasePlanChangesReason();
             AutomationJsonSupport.print(out, textOutput, report,
                 "No staged release plan changes. Skip release PR update.");
             return;
@@ -80,7 +80,7 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
         String prNumber = runtime.findOpenPullRequestNumber(request.githubRepo, releaseBranch, targetBranch);
         if (ReleaseTextUtils.trimToNull(prNumber) == null) {
             report.action = "create-pull-request";
-            report.reason = "Created GitHub pull request.";
+            report.reason = ReleaseMessages.createdGithubPullRequestReason();
             runtime.createPullRequest(request.githubRepo, releaseBranch, targetBranch, title,
                 pullRequestBodyFile);
             AutomationJsonSupport.print(out, textOutput, report, "Created GitHub PR for " + title);
@@ -88,7 +88,7 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
         }
 
         report.action = "update-pull-request";
-        report.reason = "Updated GitHub pull request.";
+        report.reason = ReleaseMessages.updatedGithubPullRequestReason();
         runtime.updatePullRequest(request.githubRepo, prNumber, title,
             pullRequestBodyFile);
         AutomationJsonSupport.print(out, textOutput, report, "Updated GitHub PR #" + prNumber);
@@ -133,7 +133,7 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
             runtime.runGit("push", "origin", "refs/tags/" + tagName);
         }
         report.action = "create-tag";
-        report.reason = "Created and pushed tag.";
+        report.reason = ReleaseMessages.createdAndPushedTagReason();
         AutomationJsonSupport.print(out, textOutput, report, "Created and pushed tag(s) " + tagNames);
     }
 
@@ -175,14 +175,14 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
         boolean existed = runtime.releaseExists(tagName);
         if (existed) {
             report.action = "update-release";
-            report.reason = "Updated GitHub Release.";
+            report.reason = ReleaseMessages.updatedGithubReleaseReason();
             runtime.updateRelease(tagName, notesFile);
             AutomationJsonSupport.print(out, textOutput, report, "Updated GitHub Release " + tagName);
             return;
         }
 
         report.action = "create-release";
-        report.reason = "Created GitHub Release.";
+        report.reason = ReleaseMessages.createdGithubReleaseReason();
         runtime.createRelease(tagName, notesFile);
         AutomationJsonSupport.print(out, textOutput, report, "Created GitHub Release " + tagName);
     }

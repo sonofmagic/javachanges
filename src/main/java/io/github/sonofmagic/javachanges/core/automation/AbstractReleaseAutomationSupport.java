@@ -2,6 +2,7 @@ package io.github.sonofmagic.javachanges.core.automation;
 
 import io.github.sonofmagic.javachanges.core.OutputFormat;
 import io.github.sonofmagic.javachanges.core.ReleaseAutomationSupport;
+import io.github.sonofmagic.javachanges.core.ReleaseMessages;
 import io.github.sonofmagic.javachanges.core.plan.ReleasePlan;
 
 import java.io.IOException;
@@ -60,7 +61,7 @@ public abstract class AbstractReleaseAutomationSupport {
             return false;
         }
         report.skipped = true;
-        report.reason = "No pending changesets.";
+        report.reason = ReleaseMessages.noPendingChangesetsReason();
         AutomationJsonSupport.print(out, textOutput, report, message);
         return true;
     }
@@ -69,7 +70,7 @@ public abstract class AbstractReleaseAutomationSupport {
         if (report.execute) {
             return false;
         }
-        report.reason = "Dry-run only.";
+        report.reason = ReleaseMessages.releaseDryRunOnlyReason();
         AutomationJsonSupport.print(out, textOutput, report, message);
         return true;
     }
@@ -77,7 +78,7 @@ public abstract class AbstractReleaseAutomationSupport {
     protected final boolean skipWhenRemoteTagExists(AutomationJsonSupport.AutomationReport report, boolean textOutput,
                                                     String tagName) {
         report.skipped = true;
-        report.reason = "Tag already exists remotely: " + tagName;
+        report.reason = ReleaseMessages.tagAlreadyExistsRemotelyReason(tagName);
         AutomationJsonSupport.print(out, textOutput, report, "Tag already exists remotely. Skip.");
         return true;
     }

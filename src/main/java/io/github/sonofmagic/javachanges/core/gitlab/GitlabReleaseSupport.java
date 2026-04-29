@@ -70,7 +70,7 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
         runtime.runGit(concat("add", BuildModelSupport.releasePlanGitAddPaths(repoRoot)));
         if (runtime.hasNoStagedChanges()) {
             report.skipped = true;
-            report.reason = "No staged release plan changes.";
+            report.reason = ReleaseMessages.noStagedReleasePlanChangesReason();
             AutomationJsonSupport.print(out, textOutput, report,
                 "No staged release plan changes. Skip release MR update.");
             return;
@@ -83,7 +83,7 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
         if (mergeRequestIid == null) {
             String response = apiClient.createMergeRequest(request.projectId, releaseBranch, targetBranch, title, description);
             report.action = "create-merge-request";
-            report.reason = "Created GitLab merge request.";
+            report.reason = ReleaseMessages.createdGitlabMergeRequestReason();
             AutomationJsonSupport.print(out, textOutput, report,
                 "Created GitLab MR !" + apiClient.requiredJsonInt(response, "iid"));
             return;
@@ -91,7 +91,7 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
 
         apiClient.updateMergeRequest(request.projectId, mergeRequestIid.intValue(), title, description);
         report.action = "update-merge-request";
-        report.reason = "Updated GitLab merge request.";
+        report.reason = ReleaseMessages.updatedGitlabMergeRequestReason();
         AutomationJsonSupport.print(out, textOutput, report, "Updated GitLab MR !" + mergeRequestIid);
     }
 
@@ -110,7 +110,7 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
             && ReleaseTextUtils.trimToNull(request.releaseBranch) != null
             && request.currentBranch.equals(request.releaseBranch)) {
             report.skipped = true;
-            report.reason = "Current branch matches the configured release branch.";
+            report.reason = ReleaseMessages.currentBranchMatchesReleaseBranchReason();
             AutomationJsonSupport.print(out, textOutput, report,
                 "Current branch matches the configured release branch. Skip release tag.");
             return;
@@ -119,7 +119,7 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
             && ReleaseTextUtils.trimToNull(request.baseBranch) != null
             && !request.currentBranch.equals(request.baseBranch)) {
             report.skipped = true;
-            report.reason = "Current branch does not match the configured base branch.";
+            report.reason = ReleaseMessages.currentBranchDoesNotMatchBaseBranchReason();
             AutomationJsonSupport.print(out, textOutput, report,
                 "Current branch " + request.currentBranch + " does not match base branch "
                     + request.baseBranch + ". Skip release tag.");
@@ -129,7 +129,7 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
         String currentSha = ReleaseTextUtils.trimToNull(request.currentSha);
         if (beforeSha == null || currentSha == null || beforeSha.matches("0+")) {
             report.skipped = true;
-            report.reason = "Missing previous SHA.";
+            report.reason = ReleaseMessages.missingPreviousShaReason();
             AutomationJsonSupport.print(out, textOutput, report, "Missing previous SHA. Skip release tag.");
             return;
         }
@@ -137,8 +137,8 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
         if (!releaseMetadataChangedBetween(request, beforeSha, currentSha)) {
             report.skipped = true;
             report.reason = request.fresh
-                ? "No fresh release state change detected."
-                : "No release plan manifest change detected.";
+                ? ReleaseMessages.noFreshReleaseStateChangeDetectedReason()
+                : ReleaseMessages.noReleasePlanManifestChangeDetectedReason();
             AutomationJsonSupport.print(out, textOutput, report,
                 report.reason + " Skip release tag.");
             return;
@@ -167,7 +167,7 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
             runtime.runGit("push", remoteUrl, "refs/tags/" + tagName);
         }
         report.action = "create-tag";
-        report.reason = "Created and pushed tag.";
+        report.reason = ReleaseMessages.createdAndPushedTagReason();
         AutomationJsonSupport.print(out, textOutput, report, "Created and pushed tag(s) " + tagNames);
     }
 
@@ -206,7 +206,9 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
 
         boolean exists = apiClient.releaseExists(request.projectId, tagName);
         if (!request.execute) {
-            report.reason = exists ? "Dry-run only. GitLab Release would be updated." : "Dry-run only. GitLab Release would be created.";
+            report.reason = exists
+                ? ReleaseMessages.gitlabReleaseWouldBeUpdatedReason()
+                : ReleaseMessages.gitlabReleaseWouldBeCreatedReason();
             AutomationJsonSupport.print(out, textOutput, report,
                 "Dry-run only. Use --execute true to create/update the GitLab Release.");
             return;
@@ -219,14 +221,14 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
         if (exists) {
             apiClient.updateRelease(request.projectId, tagName, releaseName, description);
             report.action = "update-release";
-            report.reason = "Updated GitLab Release.";
+            report.reason = ReleaseMessages.updatedGitlabReleaseReason();
             AutomationJsonSupport.print(out, textOutput, report, "Updated GitLab Release " + tagName);
             return;
         }
 
         apiClient.createRelease(request.projectId, tagName, releaseName, description);
         report.action = "create-release";
-        report.reason = "Created GitLab Release.";
+        report.reason = ReleaseMessages.createdGitlabReleaseReason();
         AutomationJsonSupport.print(out, textOutput, report, "Created GitLab Release " + tagName);
     }
 

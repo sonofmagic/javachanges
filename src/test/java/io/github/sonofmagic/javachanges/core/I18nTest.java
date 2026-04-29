@@ -175,6 +175,8 @@ class I18nTest {
         assertEquals("Missing field tag in release manifest", ReleaseMessages.missingReleaseManifestField("tag"));
         assertEquals("Breaking Changes", ReleaseMessages.releaseNotesSection("Breaking Changes"));
         assertEquals("Other", ReleaseMessages.releaseNotesSection("Unknown"));
+        assertEquals("Created GitHub pull request.", ReleaseMessages.createdGithubPullRequestReason());
+        assertEquals("Tag already exists remotely: v1.2.0", ReleaseMessages.tagAlreadyExistsRemotelyReason("v1.2.0"));
         ReleaseLanguageContext.set(ReleaseLanguage.ZH_CN);
         try {
             assertEquals("在 GitLab 项目变量中创建 MAVEN_TOKEN，并勾选 protected",
@@ -183,6 +185,8 @@ class I18nTest {
                 ReleaseMessages.missingFieldInSource("releaseVersion", "release-plan.json"));
             assertEquals("重大变更", ReleaseMessages.releaseNotesSection("Breaking Changes"));
             assertEquals("其他", ReleaseMessages.releaseNotesSection("Unknown"));
+            assertEquals("已创建 GitHub pull request。", ReleaseMessages.createdGithubPullRequestReason());
+            assertEquals("远端 tag 已存在: v1.2.0", ReleaseMessages.tagAlreadyExistsRemotelyReason("v1.2.0"));
         } finally {
             ReleaseLanguageContext.clear();
         }
