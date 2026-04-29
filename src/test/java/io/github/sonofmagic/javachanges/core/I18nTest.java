@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class I18nTest {
+    private static final String MESSAGE_RESOURCE_ROOT = "src/main/resources/io/github/sonofmagic/javachanges";
     private static final String TEMPLATE_RESOURCE_ROOT = "src/main/resources/io/github/sonofmagic/javachanges/templates";
 
     @Test
@@ -188,6 +189,7 @@ class I18nTest {
             assertTrue(I18n.keys(ReleaseLanguage.EN).contains(key), key);
             assertTrue(I18n.keys(ReleaseLanguage.ZH_CN).contains(key), key);
         }
+        assertEquals(I18n.keys(ReleaseLanguage.EN), messageKeys);
 
         Set<String> templates = literalArguments(source, "I18n.template");
         templates.addAll(literalArguments(source, "I18n.templateLines"));
@@ -196,6 +198,12 @@ class I18nTest {
             assertLocalizedTemplateExists(template, ReleaseLanguage.EN);
             assertLocalizedTemplateExists(template, ReleaseLanguage.ZH_CN);
         }
+    }
+
+    @Test
+    void localizedResourceFilesDoNotContainDuplicateKeys() throws Exception {
+        assertNoDuplicateMessageKeys(messageResource(ReleaseLanguage.EN));
+        assertNoDuplicateMessageKeys(messageResource(ReleaseLanguage.ZH_CN));
     }
 
     @Test
@@ -246,6 +254,26 @@ class I18nTest {
             return name + "." + language.id;
         }
         return name.substring(0, extensionStart) + "." + language.id + name.substring(extensionStart);
+    }
+
+    private static void assertNoDuplicateMessageKeys(Path path) throws Exception {
+        Set<String> keys = new TreeSet<String>();
+        Set<String> duplicates = new TreeSet<String>();
+        for (String line : Files.readAllLines(path, StandardCharsets.UTF_8)) {
+            int separator = line.indexOf('=');
+            if (separator <= 0) {
+                continue;
+            }
+            String key = line.substring(0, separator);
+            if (!keys.add(key)) {
+                duplicates.add(key);
+            }
+        }
+        assertTrue(duplicates.isEmpty(), path + ": " + duplicates);
+    }
+
+    private static Path messageResource(ReleaseLanguage language) {
+        return repoRoot().resolve(MESSAGE_RESOURCE_ROOT).resolve("messages_" + language.resourceSuffix() + ".properties");
     }
 
     private static TemplateName parseTemplateName(String fileName) {
