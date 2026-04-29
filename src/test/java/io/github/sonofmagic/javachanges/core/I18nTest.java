@@ -2,6 +2,7 @@ package io.github.sonofmagic.javachanges.core;
 
 import org.junit.jupiter.api.Test;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -9,12 +10,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class I18nTest {
+    private static final String TEMPLATE_RESOURCE_ROOT = "src/main/resources/io/github/sonofmagic/javachanges/templates";
+
     @Test
     void localizedResourceKeysStayInSync() {
         assertEquals(I18n.keys(ReleaseLanguage.EN), I18n.keys(ReleaseLanguage.ZH_CN));
@@ -171,11 +176,31 @@ class I18nTest {
     }
 
     @Test
+    void releaseMessagesOnlyReferencesExistingMessageKeysAndTemplates() throws Exception {
+        String source = new String(
+            Files.readAllBytes(repoRoot().resolve("src/main/java/io/github/sonofmagic/javachanges/core/ReleaseMessages.java")),
+            StandardCharsets.UTF_8
+        );
+
+        Set<String> messageKeys = literalArguments(source, "message");
+        assertTrue(!messageKeys.isEmpty(), "ReleaseMessages should use message bundle keys");
+        for (String key : messageKeys) {
+            assertTrue(I18n.keys(ReleaseLanguage.EN).contains(key), key);
+            assertTrue(I18n.keys(ReleaseLanguage.ZH_CN).contains(key), key);
+        }
+
+        Set<String> templates = literalArguments(source, "I18n.template");
+        templates.addAll(literalArguments(source, "I18n.templateLines"));
+        assertTrue(!templates.isEmpty(), "ReleaseMessages should reference localized templates");
+        for (String template : templates) {
+            assertLocalizedTemplateExists(template, ReleaseLanguage.EN);
+            assertLocalizedTemplateExists(template, ReleaseLanguage.ZH_CN);
+        }
+    }
+
+    @Test
     void localizedTemplatesStayInSync() throws Exception {
-        Path templateRoot = Paths.get("")
-            .toAbsolutePath()
-            .normalize()
-            .resolve("src/main/resources/io/github/sonofmagic/javachanges/templates");
+        Path templateRoot = repoRoot().resolve(TEMPLATE_RESOURCE_ROOT);
         Map<String, Set<String>> localesByTemplate = new TreeMap<String, Set<String>>();
         Stream<Path> paths = Files.list(templateRoot);
         try {
@@ -201,6 +226,28 @@ class I18nTest {
         return value.substring(0, value.indexOf('\n') + 1);
     }
 
+    private static Set<String> literalArguments(String source, String functionName) {
+        Set<String> values = new TreeSet<String>();
+        Matcher matcher = Pattern.compile(Pattern.quote(functionName) + "\\(\"([^\"]+)\"").matcher(source);
+        while (matcher.find()) {
+            values.add(matcher.group(1));
+        }
+        return values;
+    }
+
+    private static void assertLocalizedTemplateExists(String name, ReleaseLanguage language) {
+        Path path = repoRoot().resolve(TEMPLATE_RESOURCE_ROOT).resolve(localizedTemplateName(name, language));
+        assertTrue(Files.isRegularFile(path), path.toString());
+    }
+
+    private static String localizedTemplateName(String name, ReleaseLanguage language) {
+        int extensionStart = name.lastIndexOf('.');
+        if (extensionStart < 0) {
+            return name + "." + language.id;
+        }
+        return name.substring(0, extensionStart) + "." + language.id + name.substring(extensionStart);
+    }
+
     private static TemplateName parseTemplateName(String fileName) {
         TemplateName english = parseTemplateName(fileName, ".en");
         if (english != null) {
@@ -222,6 +269,10 @@ class I18nTest {
             fileName.substring(0, localeStart) + fileName.substring(localeStart + localeSegment.length()),
             localeSegment.substring(1)
         );
+    }
+
+    private static Path repoRoot() {
+        return Paths.get("").toAbsolutePath().normalize();
     }
 
     private static final class TemplateName {
