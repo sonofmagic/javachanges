@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
-import java.text.MessageFormat;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Properties;
@@ -22,13 +21,49 @@ final class I18n {
 
     static String message(String key, Object... args) {
         String pattern = lookup(ReleaseLanguageContext.get(), key);
-        return args == null || args.length == 0
-            ? pattern
-            : new MessageFormat(pattern).format(args);
+        return format(pattern, args);
+    }
+
+    static String format(String pattern, Object... args) {
+        if (args == null || args.length == 0) {
+            return pattern;
+        }
+        StringBuilder builder = new StringBuilder(pattern.length() + 16);
+        for (int index = 0; index < pattern.length(); index++) {
+            char current = pattern.charAt(index);
+            if (current != '{') {
+                builder.append(current);
+                continue;
+            }
+            int placeholderEnd = pattern.indexOf('}', index + 1);
+            int argumentIndex = placeholderEnd < 0 ? -1 : parseArgumentIndex(pattern, index + 1, placeholderEnd);
+            if (argumentIndex >= 0 && argumentIndex < args.length) {
+                builder.append(String.valueOf(args[argumentIndex]));
+                index = placeholderEnd;
+            } else {
+                builder.append(current);
+            }
+        }
+        return builder.toString();
     }
 
     static Set<String> keys(ReleaseLanguage language) {
         return properties(language).stringPropertyNames();
+    }
+
+    private static int parseArgumentIndex(String pattern, int start, int end) {
+        if (start == end) {
+            return -1;
+        }
+        int value = 0;
+        for (int index = start; index < end; index++) {
+            char current = pattern.charAt(index);
+            if (current < '0' || current > '9') {
+                return -1;
+            }
+            value = value * 10 + current - '0';
+        }
+        return value;
     }
 
     private static String lookup(ReleaseLanguage language, String key) {

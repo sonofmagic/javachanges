@@ -22,4 +22,10 @@ class I18nTest {
             ReleaseLanguageContext.clear();
         }
     }
+
+    @Test
+    void formatsSimplePlaceholdersWithoutMessageFormatEscapingRules() {
+        assertEquals("Don't use example.env for repo", I18n.format("Don't use {0} for {1}", "example.env", "repo"));
+        assertEquals("Keep {missing} and {3}", I18n.format("Keep {missing} and {3}", "value"));
+    }
 }
