@@ -70,11 +70,16 @@ Release plan:
 
 Changesets:
 - 20260418-add-release-notes.md [minor] (packages: core, api) Add release notes generation workflow.
+
+Next steps:
+  javachanges plan --directory /path/to/repo --apply true
+  javachanges next --directory /path/to/repo
 ```
 
 当前行为要点：
 
 - 如果没有待发布 changeset，会输出 `Release plan: none`
+- 面向人的输出末尾会带上可直接复制的下一步命令
 - 这个命令当前使用英文标题
 - 当内部 `type` 是 `other` 时，可见输出里会省略类型文本
 

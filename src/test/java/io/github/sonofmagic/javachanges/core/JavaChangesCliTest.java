@@ -275,6 +275,20 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void statusSuggestsCreatingChangesetWhenNoneArePending(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+
+        ExecutionResult result = execute("status", "--directory", repoRoot.toString());
+
+        assertEquals(0, result.exitCode);
+        assertTrue(result.stdout.contains("Release plan: none"));
+        assertTrue(result.stdout.contains("Next steps:"));
+        assertTrue(result.stdout.contains("javachanges add --directory " + repoRoot
+            + " --summary \"describe the change\" --release patch"));
+        assertTrue(result.stdout.contains("javachanges next --directory " + repoRoot));
+    }
+
+    @Test
     void statusHidesOtherTypeLabel(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, true);
         writeChangeset(repoRoot,
@@ -291,6 +305,9 @@ class JavaChangesCliTest {
         assertTrue(result.stdout.contains("Release plan:"));
         assertTrue(result.stdout.contains("- Affected packages: fixture-app"));
         assertTrue(result.stdout.contains("[patch] (packages: fixture-app) hide the implicit other label"));
+        assertTrue(result.stdout.contains("Next steps:"));
+        assertTrue(result.stdout.contains("javachanges plan --directory " + repoRoot + " --apply true"));
+        assertTrue(result.stdout.contains("javachanges next --directory " + repoRoot));
         assertFalse(result.stdout.contains("other:"));
     }
 

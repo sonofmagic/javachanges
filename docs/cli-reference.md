@@ -240,6 +240,7 @@ Typical output includes:
 - release plan summary
 - affected packages
 - each pending changeset entry
+- next-step commands for creating or applying a changeset
 
 ### 5.4 `plan`
 

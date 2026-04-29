@@ -196,8 +196,24 @@ final class NextCommand extends AbstractCliCommand {
 final class StatusCommand extends AbstractCliCommand {
     @Override
     public Integer call() throws Exception {
-        JavaChangesStatusPrinter.printStatus(new ReleasePlanner(repoRoot()).plan(), out());
+        Path repoRoot = repoRoot();
+        ReleasePlan plan = new ReleasePlanner(repoRoot).plan();
+        JavaChangesStatusPrinter.printStatus(plan, out());
+        printNextSteps(repoRoot, plan);
         return success();
+    }
+
+    private void printNextSteps(Path repoRoot, ReleasePlan plan) {
+        String repoArg = CliOutputSupport.shellQuote(repoRoot.toString());
+        out().println();
+        out().println("Next steps:");
+        if (plan.hasPendingChangesets()) {
+            out().println("  javachanges plan --directory " + repoArg + " --apply true");
+            out().println("  javachanges next --directory " + repoArg);
+            return;
+        }
+        out().println("  javachanges add --directory " + repoArg + " --summary \"describe the change\" --release patch");
+        out().println("  javachanges next --directory " + repoArg);
     }
 }
 

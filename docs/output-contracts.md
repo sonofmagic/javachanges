@@ -74,11 +74,16 @@ Release plan:
 
 Changesets:
 - 20260418-add-release-notes.md [minor] (packages: core, api) Add release notes generation workflow.
+
+Next steps:
+  javachanges plan --directory /path/to/repo --apply true
+  javachanges next --directory /path/to/repo
 ```
 
 Important behavior:
 
 - if there are no pending changesets, the command prints `Release plan: none`
+- the human output ends with copyable next-step commands
 - the command currently prints English headings
 - visible change type text is omitted when the internal type is `other`
 

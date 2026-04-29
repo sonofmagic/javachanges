@@ -239,6 +239,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/re
 - release plan 摘要
 - affected packages
 - 每一个待处理 changeset 条目
+- 用于创建或应用 changeset 的下一步命令
 
 ### 5.4 `plan`
 
