@@ -128,7 +128,7 @@ mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:ma
 
 说明：
 
-- 现在 `status`、`plan`、`add`、`manifest-field` 都有独立 goal
+- 现在 `init`、`status`、`plan`、`add`、`manifest-field` 都有独立 goal
 - `javachanges:run` 仍然保留，适合配合 `-Djavachanges.args="..."` 传递完整原始参数
 
 ## 5. 准备目标仓库
@@ -139,6 +139,14 @@ mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:ma
 - 有带 `<revision>` 属性的根 `pom.xml`，或有带 `version` / `revision` 的 Gradle `gradle.properties`
 - 有 `CHANGELOG.md`，或者让 `javachanges` 在应用 release plan 时自动创建/更新
 - Maven 根 `pom.xml` 中有 `<modules>`、Gradle `settings.gradle(.kts)` 中有 `include(...)`，或是单模块根 artifact / project
+
+先初始化 changeset 目录和可选的发布流程配置：
+
+```bash
+mvn javachanges:init -Djavachanges.config=true
+```
+
+这个命令会创建 `.changesets/README.md`，按需写入 `.changesets/config.jsonc`，并输出接下来可以执行的命令。
 
 ## 6. 创建 changeset
 

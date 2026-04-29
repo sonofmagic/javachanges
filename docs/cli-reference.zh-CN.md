@@ -43,6 +43,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/re
 
 | 片段 | 说明 |
 | --- | --- |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:init -Djavachanges.config=true` | 初始化 `.changesets/` 文件并输出起步命令 |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:next` | 让 javachanges 判断下一步应该执行哪个发布流程命令 |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:modules` | 列出识别到的构建元数据和模块名称 |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:status` | 执行独立的 status goal |
@@ -65,6 +66,7 @@ mvn -B io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__:r
 如果你已经在目标仓库的 `pom.xml` 里声明了 plugin，本地最短写法就是：
 
 ```bash
+mvn javachanges:init -Djavachanges.config=true
 mvn javachanges:next
 mvn javachanges:modules
 mvn javachanges:status
@@ -152,6 +154,7 @@ jc-version:
 
 | 命令 | 作用 | 是否写文件 |
 | --- | --- | --- |
+| `init` | 初始化 `.changesets/README.md`，可选写入 `.changesets/config.jsonc`，并输出起步命令 | `.changesets/README.md`，可选 `.changesets/config.jsonc` |
 | `add` | 创建 changeset | `.changesets/*.md` |
 | `next` | 推荐下一步发布流程命令 | 否 |
 | `modules` | 列出识别到的构建元数据和模块名称 | 否 |
@@ -167,7 +170,20 @@ jc-version:
 
 ## 5. Changeset 相关命令
 
-### 5.1 `add`
+### 5.1 `init`
+
+初始化目标仓库的 changeset 目录，并输出后续可以直接复制执行的命令。
+
+示例：
+
+```bash
+mvn javachanges:init -Djavachanges.config=true
+mvn -q -DskipTests compile exec:java -Dexec.args="init --directory /path/to/repo --config"
+```
+
+如果需要用默认模板替换已有 `.changesets/config.json` 或 `.changesets/config.jsonc`，使用 `--force` 或 `-Djavachanges.force=true`。
+
+### 5.2 `add`
 
 创建一个新的 changeset 文件。
 
@@ -203,7 +219,7 @@ add release notes command
 - `add` 仍然接受 `--release`、`--modules` 这类旧参数名
 - 但实际写出的文件已经是官方 Changesets 风格的 package map
 
-### 5.2 `status`
+### 5.3 `status`
 
 查看当前待发布的 release plan。
 
@@ -222,7 +238,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/re
 - affected packages
 - 每一个待处理 changeset 条目
 
-### 5.3 `plan`
+### 5.4 `plan`
 
 只计算、不写文件：
 
@@ -249,7 +265,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo
 `release-plan.md` 提交进 release 分支。这个模式下 PR/MR 正文会作为临时文件生成，
 后续 tag / release job 应使用 `--fresh true`。
 
-### 5.4 `manifest-field`
+### 5.5 `manifest-field`
 
 读取生成后的 release manifest 字段，或从当前仓库状态推导字段。
 

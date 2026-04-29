@@ -31,6 +31,7 @@ class JavaChangesCliTest {
 
         assertEquals(0, result.exitCode);
         assertTrue(result.stdout.contains("Usage: javachanges"));
+        assertTrue(result.stdout.contains("init"));
         assertTrue(result.stdout.contains("next"));
         assertTrue(result.stdout.contains("modules"));
         assertTrue(result.stdout.contains("github-release-plan"));
@@ -51,6 +52,92 @@ class JavaChangesCliTest {
         assertEquals(0, result.exitCode);
         assertEquals("1.2.3\n", result.stdout);
         assertEquals("", result.stderr);
+    }
+
+    @Test
+    void initCreatesChangesetReadmeAndPrintsNextSteps(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+
+        ExecutionResult result = execute("init", "--directory", repoRoot.toString());
+
+        assertEquals(0, result.exitCode);
+        assertTrue(Files.exists(repoRoot.resolve(".changesets").resolve("README.md")));
+        assertFalse(Files.exists(repoRoot.resolve(".changesets").resolve("config.jsonc")));
+        assertTrue(result.stdout.contains("Initialized javachanges in " + repoRoot));
+        assertTrue(result.stdout.contains("Created: .changesets/README.md"));
+        assertTrue(result.stdout.contains("use --config to write the default template"));
+        assertTrue(result.stdout.contains("javachanges modules --directory " + repoRoot));
+        assertTrue(result.stdout.contains("javachanges add --directory " + repoRoot));
+        assertTrue(result.stdout.contains("javachanges next --directory " + repoRoot));
+    }
+
+    @Test
+    void initWithConfigWritesDefaultConfigTemplate(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+
+        ExecutionResult result = execute("init", "--directory", repoRoot.toString(), "--config");
+
+        assertEquals(0, result.exitCode);
+        Path configPath = repoRoot.resolve(".changesets").resolve("config.jsonc");
+        assertTrue(Files.exists(configPath));
+        String config = read(configPath);
+        assertTrue(config.contains("\"baseBranch\": \"main\""));
+        assertTrue(config.contains("\"releaseBranch\": \"changeset-release/main\""));
+        assertTrue(config.contains("\"snapshotBranch\": \"snapshot\""));
+        assertTrue(config.contains("\"snapshotVersionMode\": \"stamped\""));
+        assertTrue(config.contains("\"tagStrategy\": \"whole-repo\""));
+        assertTrue(result.stdout.contains("Created: .changesets/config.jsonc"));
+    }
+
+    @Test
+    void initKeepsExistingConfigUnlessForced(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+        Path changesetsDir = repoRoot.resolve(".changesets");
+        Files.createDirectories(changesetsDir);
+        Path configPath = changesetsDir.resolve("config.jsonc");
+        Files.write(configPath, "{ \"baseBranch\": \"develop\" }\n".getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult keptResult = execute("init", "--directory", repoRoot.toString(), "--config");
+
+        assertEquals(0, keptResult.exitCode);
+        assertEquals("{ \"baseBranch\": \"develop\" }\n", read(configPath));
+        assertTrue(keptResult.stdout.contains("Kept: .changesets/config.jsonc"));
+        assertTrue(keptResult.stdout.contains("Use --force to replace it"));
+
+        ExecutionResult forcedResult = execute("init", "--directory", repoRoot.toString(), "--config", "--force");
+
+        assertEquals(0, forcedResult.exitCode);
+        assertTrue(read(configPath).contains("\"baseBranch\": \"main\""));
+        assertTrue(forcedResult.stdout.contains("Replaced: .changesets/config.jsonc"));
+    }
+
+    @Test
+    void initUsesExistingJsonConfigPath(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+        Path changesetsDir = repoRoot.resolve(".changesets");
+        Files.createDirectories(changesetsDir);
+        Path jsonConfigPath = changesetsDir.resolve("config.json");
+        Files.write(jsonConfigPath, "{ \"baseBranch\": \"develop\" }\n".getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = execute("init", "--directory", repoRoot.toString(), "--config", "--force");
+
+        assertEquals(0, result.exitCode);
+        assertTrue(read(jsonConfigPath).contains("\"baseBranch\": \"main\""));
+        assertFalse(read(jsonConfigPath).contains("//"));
+        assertFalse(Files.exists(changesetsDir.resolve("config.jsonc")));
+        assertTrue(result.stdout.contains("Replaced: .changesets/config.json"));
+    }
+
+    @Test
+    void initQuotesDirectoryWithSpaces(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo with space");
+        Files.createDirectories(repoRoot);
+        Files.write(repoRoot.resolve("pom.xml"), singleModulePom().getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = execute("init", "--directory", repoRoot.toString());
+
+        assertEquals(0, result.exitCode);
+        assertTrue(result.stdout.contains("javachanges add --directory '" + repoRoot + "'"));
     }
 
     @Test

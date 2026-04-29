@@ -44,6 +44,7 @@ Common parts:
 
 | Part | Meaning |
 | --- | --- |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:init -Djavachanges.config=true` | Initialize `.changesets/` files and print starter commands |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:next` | Ask javachanges which release workflow command to run next |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:modules` | List detected build metadata and module names |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:status` | Run the dedicated Maven plugin status goal |
@@ -66,6 +67,7 @@ mvn -B io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__:r
 If you declare the plugin in a target repository `pom.xml`, the shortest local form becomes:
 
 ```bash
+mvn javachanges:init -Djavachanges.config=true
 mvn javachanges:next
 mvn javachanges:modules
 mvn javachanges:status
@@ -153,6 +155,7 @@ Rules of thumb:
 
 | Command | Purpose | Writes files |
 | --- | --- | --- |
+| `init` | Initialize `.changesets/README.md`, optionally `.changesets/config.jsonc`, and print starter commands | `.changesets/README.md`, optional `.changesets/config.jsonc` |
 | `add` | Create a changeset | `.changesets/*.md` |
 | `next` | Suggest the next release workflow command | No |
 | `modules` | List detected build metadata and module names | No |
@@ -168,7 +171,20 @@ Rules of thumb:
 
 ## 5. Changeset Commands
 
-### 5.1 `add`
+### 5.1 `init`
+
+Initialize the changeset directory for a repository and print the next commands to run.
+
+Examples:
+
+```bash
+mvn javachanges:init -Djavachanges.config=true
+mvn -q -DskipTests compile exec:java -Dexec.args="init --directory /path/to/repo --config"
+```
+
+Use `--force` or `-Djavachanges.force=true` to replace an existing `.changesets/config.json` or `.changesets/config.jsonc` with the default template.
+
+### 5.2 `add`
 
 Create a new changeset file.
 
@@ -204,7 +220,7 @@ Compatibility note:
 - `add` still accepts legacy flag names such as `--release` and `--modules`
 - the generated file itself uses the official Changesets-style package map
 
-### 5.2 `status`
+### 5.3 `status`
 
 Show the current pending release plan.
 
@@ -223,7 +239,7 @@ Typical output includes:
 - affected packages
 - each pending changeset entry
 
-### 5.3 `plan`
+### 5.4 `plan`
 
 Render the release plan without writing files:
 
@@ -250,7 +266,7 @@ Automation commands such as `github-release-plan` and `gitlab-release-plan` can 
 `release-plan.md` files. In that mode, the PR/MR body is generated as a transient file
 and later tag/release jobs should use `--fresh true`.
 
-### 5.4 `manifest-field`
+### 5.5 `manifest-field`
 
 Read a field from the generated release manifest, or derive it from the current repository state.
 

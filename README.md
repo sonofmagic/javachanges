@@ -52,6 +52,7 @@ Recommended for target repositories: declare the Maven plugin and run the short 
 Then inside that repository:
 
 ```bash
+mvn javachanges:init -Djavachanges.config=true
 mvn javachanges:next
 mvn javachanges:modules
 mvn javachanges:status
@@ -77,6 +78,7 @@ On the current `main` branch, after installing the snapshot locally, you can als
 
 ```bash
 ./mvnw -q -DskipTests install
+mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:init -Djavachanges.config=true
 mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:next
 mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:modules
 mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:status
@@ -237,6 +239,7 @@ Field reference:
 
 High-value commands:
 
+- `init`
 - `add`
 - `next`
 - `modules`

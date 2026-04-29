@@ -10,6 +10,8 @@ import io.github.sonofmagic.javachanges.core.plan.RepoFiles;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -20,6 +22,96 @@ import static io.github.sonofmagic.javachanges.core.ReleaseModuleUtils.moduleSel
 import static io.github.sonofmagic.javachanges.core.ReleaseModuleUtils.releaseModuleFromTag;
 import static io.github.sonofmagic.javachanges.core.ReleaseModuleUtils.releaseVersionFromTag;
 import static io.github.sonofmagic.javachanges.core.ReleaseTextUtils.trimToNull;
+
+@Command(name = "init", mixinStandardHelpOptions = true,
+    description = "Initialize changeset files and print starter commands.")
+final class InitCommand extends AbstractCliCommand {
+    @Option(names = "--config", arity = "0..1", fallbackValue = "true", defaultValue = "false",
+        description = "Also write .changesets/config.jsonc with the default release workflow settings.")
+    private boolean config;
+
+    @Option(names = "--force", arity = "0..1", fallbackValue = "true", defaultValue = "false",
+        description = "Overwrite an existing changeset config file when used with --config.")
+    private boolean force;
+
+    @Override
+    public Integer call() throws Exception {
+        Path repoRoot = repoRoot();
+        Path changesetsDir = repoRoot.resolve(ChangesetPaths.DIR);
+        Path readmePath = changesetsDir.resolve(ChangesetPaths.README);
+        boolean hadReadme = Files.exists(readmePath);
+
+        RepoFiles.ensureChangesetReadme(repoRoot);
+
+        out().println("Initialized javachanges in " + repoRoot);
+        out().println();
+        printPathAction(hadReadme ? "Kept" : "Created", repoRoot, readmePath);
+
+        if (config) {
+            Path configPath = configPath(changesetsDir);
+            boolean hadConfig = Files.exists(configPath);
+            if (!hadConfig || force) {
+                Files.createDirectories(changesetsDir);
+                Files.write(configPath, defaultConfig(configPath).getBytes(StandardCharsets.UTF_8));
+                printPathAction(hadConfig ? "Replaced" : "Created", repoRoot, configPath);
+            } else {
+                printPathAction("Kept", repoRoot, configPath);
+                out().println("  Use --force to replace it with the default template.");
+            }
+        } else {
+            out().println("Skipped: " + ChangesetPaths.DIR + "/" + ChangesetPaths.CONFIG_JSONC
+                + " (use --config to write the default template)");
+        }
+
+        String repoArg = CliOutputSupport.shellQuote(repoRoot.toString());
+        out().println();
+        out().println("Next steps:");
+        out().println("  javachanges modules --directory " + repoArg);
+        out().println("  javachanges add --directory " + repoArg + " --summary \"describe the change\" --release patch");
+        out().println("  javachanges next --directory " + repoArg);
+        return success();
+    }
+
+    private void printPathAction(String action, Path repoRoot, Path path) {
+        out().println(action + ": " + repoRoot.relativize(path));
+    }
+
+    private static Path configPath(Path changesetsDir) {
+        Path jsonPath = changesetsDir.resolve(ChangesetPaths.CONFIG_JSON);
+        if (Files.exists(jsonPath)) {
+            return jsonPath;
+        }
+        return changesetsDir.resolve(ChangesetPaths.CONFIG_JSONC);
+    }
+
+    private static String defaultConfig(Path configPath) {
+        if (ChangesetPaths.CONFIG_JSON.equals(configPath.getFileName().toString())) {
+            return "{\n"
+                + "  \"baseBranch\": \"main\",\n"
+                + "  \"releaseBranch\": \"changeset-release/main\",\n"
+                + "  \"snapshotBranch\": \"snapshot\",\n"
+                + "  \"snapshotVersionMode\": \"stamped\",\n"
+                + "  \"tagStrategy\": \"whole-repo\"\n"
+                + "}\n";
+        }
+        return "{\n"
+            + "  // Default branch that receives reviewed release changesets.\n"
+            + "  \"baseBranch\": \"main\",\n"
+            + "\n"
+            + "  // Branch used by release-plan automation.\n"
+            + "  \"releaseBranch\": \"changeset-release/main\",\n"
+            + "\n"
+            + "  // Branch used for snapshot publishing.\n"
+            + "  \"snapshotBranch\": \"snapshot\",\n"
+            + "\n"
+            + "  // Snapshot version strategy: stamped or plain.\n"
+            + "  \"snapshotVersionMode\": \"stamped\",\n"
+            + "\n"
+            + "  // Release tag strategy: whole-repo or per-module.\n"
+            + "  \"tagStrategy\": \"whole-repo\"\n"
+            + "}\n";
+    }
+}
 
 @Command(name = "add", mixinStandardHelpOptions = true,
     description = "Create a changeset file.")
@@ -64,7 +156,7 @@ final class NextCommand extends AbstractCliCommand {
     @Override
     public Integer call() throws Exception {
         Path repoRoot = repoRoot();
-        String repoArg = shellQuote(repoRoot.toString());
+        String repoArg = CliOutputSupport.shellQuote(repoRoot.toString());
         ReleasePlan plan = new ReleasePlanner(repoRoot).plan();
         out().println("Next step for " + repoRoot + ":");
         out().println();
@@ -91,13 +183,6 @@ final class NextCommand extends AbstractCliCommand {
         out().println("Then review the plan:");
         out().println("  javachanges status --directory " + repoArg);
         return success();
-    }
-
-    private static String shellQuote(String value) {
-        if (value.matches("[A-Za-z0-9_./:-]+")) {
-            return value;
-        }
-        return "'" + value.replace("'", "'\"'\"'") + "'";
     }
 }
 
@@ -331,5 +416,17 @@ final class EnsureGpgPublicKeyCommand extends AbstractCliCommand {
         );
         out().println("gpg public key ok: " + fingerprint);
         return success();
+    }
+}
+
+final class CliOutputSupport {
+    private CliOutputSupport() {
+    }
+
+    static String shellQuote(String value) {
+        if (value.matches("[A-Za-z0-9_./:-]+")) {
+            return value;
+        }
+        return "'" + value.replace("'", "'\"'\"'") + "'";
     }
 }

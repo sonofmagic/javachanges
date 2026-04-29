@@ -52,6 +52,7 @@
 然后在该仓库里执行：
 
 ```bash
+mvn javachanges:init -Djavachanges.config=true
 mvn javachanges:next
 mvn javachanges:modules
 mvn javachanges:status
@@ -77,6 +78,7 @@ java -jar .javachanges/javachanges-<released-version>.jar --help
 
 ```bash
 ./mvnw -q -DskipTests install
+mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:init -Djavachanges.config=true
 mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:next
 mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:modules
 mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:status
@@ -237,6 +239,7 @@ summary: automate javachanges self-release publishing via GitHub Actions
 
 高价值命令：
 
+- `init`
 - `add`
 - `next`
 - `modules`

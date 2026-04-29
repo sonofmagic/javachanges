@@ -132,7 +132,7 @@ mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:ma
 
 Notes:
 
-- dedicated goals now exist for `status`, `plan`, `add`, and `manifest-field`
+- dedicated goals now exist for `init`, `status`, `plan`, `add`, and `manifest-field`
 - `javachanges:run` is still available with `-Djavachanges.args="..."`
 
 ## 5. Prepare a target repository
@@ -143,6 +143,14 @@ Your target repository should have:
 - a root `pom.xml` with a `<revision>` property, or a Gradle `gradle.properties` with `version` or `revision`
 - a `CHANGELOG.md` file, or let `javachanges` create/update it during plan application
 - either Maven `<modules>`, Gradle `include(...)` entries in `settings.gradle(.kts)`, or a single root artifact/project
+
+Initialize the changeset directory and optional release workflow config:
+
+```bash
+mvn javachanges:init -Djavachanges.config=true
+```
+
+The command creates `.changesets/README.md`, writes `.changesets/config.jsonc` when requested, and prints the next commands to run.
 
 ## 6. Create a changeset
 

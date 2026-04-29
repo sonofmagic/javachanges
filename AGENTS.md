@@ -22,6 +22,7 @@ Follow the existing Java style: 4-space indentation, braces on the same line, an
 ## Product Direction: Ease of Use
 
 Prefer changes that make the release workflow easier to discover, run, and recover from. When adding or changing behavior, bias toward task-oriented commands, clear next-step output, safe defaults, and examples that users can copy directly. Keep the advanced automation surface available, but make the common path obvious for Maven and Gradle users who do not already know the full release pipeline.
+First-run setup should be guided and idempotent: initialize only the minimal files users need, preserve existing configuration by default, and explain the next useful command instead of leaving users to search the docs.
 
 ## Testing Guidelines
 

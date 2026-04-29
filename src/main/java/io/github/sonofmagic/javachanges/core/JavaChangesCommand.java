@@ -16,6 +16,7 @@ import java.nio.file.Path;
     mixinStandardHelpOptions = true,
     description = "Java Changesets for Maven and Gradle repositories and release-plan workflows.",
     subcommands = {
+        InitCommand.class,
         AddCommand.class,
         NextCommand.class,
         StatusCommand.class,
