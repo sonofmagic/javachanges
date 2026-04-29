@@ -252,6 +252,9 @@ export default defineConfigWithTheme<DefaultTheme.Config>({
     hostname: 'https://javachanges.icebreaker.top',
   },
   vite: {
+    build: {
+      chunkSizeWarningLimit: 700,
+    },
     plugins: [
       llmstxt({
         domain: 'https://javachanges.icebreaker.top',
