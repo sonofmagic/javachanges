@@ -19,6 +19,10 @@ Use Maven for product code and `pnpm` only for docs and local release shortcuts.
 
 Follow the existing Java style: 4-space indentation, braces on the same line, and `UpperCamelCase` for classes with `lowerCamelCase` for methods and fields. Keep package names under `io.github.sonofmagic.javachanges.*`. Test classes should mirror the production class name with a `Test` suffix, for example `VersionSupportTest`. No dedicated formatter or linter is configured in this repo, so keep imports tidy and match surrounding code instead of reformatting unrelated files.
 
+## Product Direction: Ease of Use
+
+Prefer changes that make the release workflow easier to discover, run, and recover from. When adding or changing behavior, bias toward task-oriented commands, clear next-step output, safe defaults, and examples that users can copy directly. Keep the advanced automation surface available, but make the common path obvious for Maven and Gradle users who do not already know the full release pipeline.
+
 ## Testing Guidelines
 
 This project uses JUnit 5 with Surefire. Add or update tests in `src/test/java` whenever CLI behavior, release planning, or Maven plugin integration changes. Prefer focused unit tests using `@TempDir` for filesystem-heavy flows. Run `mvn -B test` locally before opening a PR; use `mvn -B verify` for CI-parity checks.

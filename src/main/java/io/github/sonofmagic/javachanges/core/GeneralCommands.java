@@ -57,6 +57,49 @@ final class AddCommand extends AbstractCliCommand {
     }
 }
 
+@Command(name = "next", mixinStandardHelpOptions = true,
+    description = "Suggest the next release workflow command for this repository.")
+final class NextCommand extends AbstractCliCommand {
+    @Override
+    public Integer call() throws Exception {
+        Path repoRoot = repoRoot();
+        String repoArg = shellQuote(repoRoot.toString());
+        ReleasePlan plan = new ReleasePlanner(repoRoot).plan();
+        out().println("Next step for " + repoRoot + ":");
+        out().println();
+        if (plan.hasPendingChangesets()) {
+            out().println("Pending changesets: " + plan.getChangesetCount());
+            out().println("Planned release: v" + plan.getReleaseVersion());
+            out().println("Affected packages: " + ReleaseModuleUtils.joinModules(plan.getAffectedPackages()));
+            out().println();
+            out().println("Review the plan:");
+            out().println("  javachanges status --directory " + repoArg);
+            out().println();
+            out().println("Apply it locally:");
+            out().println("  javachanges plan --directory " + repoArg + " --apply true");
+            out().println();
+            out().println("Or open an automated GitHub release PR:");
+            out().println("  javachanges github-release-plan --directory " + repoArg + " --write-plan-files false --execute true");
+            return success();
+        }
+        out().println("No pending changesets.");
+        out().println();
+        out().println("Create one:");
+        out().println("  javachanges add --directory " + repoArg + " --summary \"describe the change\" --release patch");
+        out().println();
+        out().println("Then review the plan:");
+        out().println("  javachanges status --directory " + repoArg);
+        return success();
+    }
+
+    private static String shellQuote(String value) {
+        if (value.matches("[A-Za-z0-9_./:-]+")) {
+            return value;
+        }
+        return "'" + value.replace("'", "'\"'\"'") + "'";
+    }
+}
+
 @Command(name = "status", mixinStandardHelpOptions = true,
     description = "Show the pending release plan.")
 final class StatusCommand extends AbstractCliCommand {

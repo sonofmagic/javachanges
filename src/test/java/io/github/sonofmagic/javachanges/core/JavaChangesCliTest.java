@@ -31,6 +31,7 @@ class JavaChangesCliTest {
 
         assertEquals(0, result.exitCode);
         assertTrue(result.stdout.contains("Usage: javachanges"));
+        assertTrue(result.stdout.contains("next"));
         assertTrue(result.stdout.contains("github-release-plan"));
         assertTrue(result.stdout.contains("github-release-from-plan"));
         assertTrue(result.stdout.contains("github-tag-from-plan"));
@@ -73,6 +74,52 @@ class JavaChangesCliTest {
         assertFalse(content.contains("release:"));
         assertFalse(content.contains("summary:"));
         assertFalse(content.contains("type:"));
+    }
+
+    @Test
+    void nextSuggestsCreatingChangesetWhenNoneArePending(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+
+        ExecutionResult result = execute("next", "--directory", repoRoot.toString());
+
+        assertEquals(0, result.exitCode);
+        assertTrue(result.stdout.contains("No pending changesets."));
+        assertTrue(result.stdout.contains("javachanges add --directory " + repoRoot));
+        assertTrue(result.stdout.contains("--summary \"describe the change\" --release patch"));
+    }
+
+    @Test
+    void nextQuotesDirectoryWithSpaces(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo with space");
+        Files.createDirectories(repoRoot);
+        Files.write(repoRoot.resolve("pom.xml"), singleModulePom().getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = execute("next", "--directory", repoRoot.toString());
+
+        assertEquals(0, result.exitCode);
+        assertTrue(result.stdout.contains("javachanges add --directory '" + repoRoot + "'"));
+    }
+
+    @Test
+    void nextSuggestsReviewAndApplyWhenChangesetsArePending(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, true);
+        writeChangeset(repoRoot,
+            "minor-release.md",
+            "---\n" +
+                "\"fixture-app\": minor\n" +
+                "---\n" +
+                "\n" +
+                "guide users to the next command\n");
+
+        ExecutionResult result = execute("next", "--directory", repoRoot.toString());
+
+        assertEquals(0, result.exitCode);
+        assertTrue(result.stdout.contains("Pending changesets: 1"));
+        assertTrue(result.stdout.contains("Planned release: v1.2.0"));
+        assertTrue(result.stdout.contains("Affected packages: fixture-app"));
+        assertTrue(result.stdout.contains("javachanges status --directory " + repoRoot));
+        assertTrue(result.stdout.contains("javachanges plan --directory " + repoRoot + " --apply true"));
+        assertTrue(result.stdout.contains("javachanges github-release-plan --directory " + repoRoot));
     }
 
     @Test

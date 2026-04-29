@@ -22,6 +22,7 @@ Current `main` branch Maven plugin invocation after local snapshot install:
 
 ```bash
 mvn -q -DskipTests install
+mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:next
 mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:status
 mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:plan -Djavachanges.apply=true
 mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
@@ -42,6 +43,7 @@ Common parts:
 
 | Part | Meaning |
 | --- | --- |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:next` | Ask javachanges which release workflow command to run next |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:status` | Run the dedicated Maven plugin status goal |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:plan -Djavachanges.apply=true` | Run the dedicated plan goal |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:publish -Djavachanges.tag=v1.2.3` | Run the dedicated Maven publish dry-run goal |
@@ -62,6 +64,7 @@ mvn -B io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__:r
 If you declare the plugin in a target repository `pom.xml`, the shortest local form becomes:
 
 ```bash
+mvn javachanges:next
 mvn javachanges:status
 mvn javachanges:plan -Djavachanges.apply=true
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
@@ -148,6 +151,7 @@ Rules of thumb:
 | Command | Purpose | Writes files |
 | --- | --- | --- |
 | `add` | Create a changeset | `.changesets/*.md` |
+| `next` | Suggest the next release workflow command | No |
 | `status` | Show the current release plan | No |
 | `plan` | Render the current release plan | No |
 | `plan --apply true` | Apply the plan and consume changesets | `pom.xml` or `gradle.properties`, `CHANGELOG.md`, `.changesets/release-plan.json`, `.changesets/release-plan.md` |

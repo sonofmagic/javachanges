@@ -52,6 +52,7 @@ Recommended for target repositories: declare the Maven plugin and run the short 
 Then inside that repository:
 
 ```bash
+mvn javachanges:next
 mvn javachanges:status
 mvn javachanges:plan -Djavachanges.apply=true
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
@@ -75,6 +76,7 @@ On the current `main` branch, after installing the snapshot locally, you can als
 
 ```bash
 ./mvnw -q -DskipTests install
+mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:next
 mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:status
 mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:plan -Djavachanges.apply=true
 mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
@@ -234,6 +236,7 @@ Field reference:
 High-value commands:
 
 - `add`
+- `next`
 - `status`
 - `plan`
 - `write-settings`

@@ -62,6 +62,10 @@ public final class ReleasePlan {
         return !changesets.isEmpty();
     }
 
+    public int getChangesetCount() {
+        return changesets.size();
+    }
+
     ReleaseLevel getReleaseLevel() {
         return releaseLevel;
     }
@@ -78,7 +82,7 @@ public final class ReleasePlan {
         return tagStrategy;
     }
 
-    List<String> getAffectedPackages() {
+    public List<String> getAffectedPackages() {
         Set<String> packages = new LinkedHashSet<String>();
         for (Changeset changeset : changesets) {
             packages.addAll(changeset.modules);
