@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.10.0 - 2026-04-29
+
+### Minor Changes
+
+- Add `add --format json` for scripts that need the created changeset path, affected packages, and next commands. (packages: javachanges)
+- Add JSON output for the core status, plan, and next workflow commands. (packages: javachanges)
+- Add a first-run setup command with safe defaults and optional env or CI template generation. (packages: javachanges)
+- Add `modules --format json` and Maven goal format passthrough for module discovery and workflow status commands. (packages: javachanges)
+- Write a release plan backup before applying and add a restore path for local recovery. (packages: javachanges)
+- Add JSON output for release tag parsing helpers so scripts can read release version and module metadata together. (packages: javachanges)
+- Add a validate command for local release readiness checks. (packages: javachanges)
+- Add `version --format json` and Maven goal format passthrough for version metadata automation. (packages: javachanges)
+- Improve `add` input handling with `--no-interactive` failures and detected module prompts for multi-module repositories. (packages: javachanges)
+
+### Patch Changes
+
+- Move release automation report reasons into the localized message bundles. (packages: javachanges)
+- Move release automation text output into the localized message bundles. (packages: javachanges)
+- Simplify localized message formatting so translators can write apostrophes naturally in message resources. (packages: javachanges)
+- Move core version, config, and build model error messages into the localized message bundles. (packages: javachanges)
+- Move release environment and platform doctor messages into the localized message bundles. (packages: javachanges)
+- Move GitLab protection check headings into the localized message bundles. (packages: javachanges)
+- Move GPG key publishing progress messages into the localized message bundles. (packages: javachanges)
+- Move Maven plugin execution log messages into the localized message bundles. (packages: javachanges)
+- Move Git, workflow, GPG, and platform API messages into the localized message bundles. (packages: javachanges)
+- Move remaining publish dry-run labels and automation reasons into the localized message bundles. (packages: javachanges)
+- Move publish preflight and execution messages into the localized message bundles. (packages: javachanges)
+- Move generated changeset README and auth help text into localized UTF-8 templates. (packages: javachanges)
+- Move release metadata, protected variable, and release notes section messages into the localized bundles. (packages: javachanges)
+- Validate localized message placeholders across languages to catch incomplete translations earlier. (packages: javachanges)
+
 ## 1.9.0 - 2026-04-29
 
 ### Minor Changes
