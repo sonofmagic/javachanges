@@ -182,6 +182,7 @@ class I18nTest {
         assertEquals("Created GitHub PR for chore(release): v1.2.0",
             ReleaseMessages.createdGithubPrFor("chore(release): v1.2.0"));
         assertEquals("Release tags: [v1.2.0]", ReleaseMessages.releaseTagsValue("[v1.2.0]"));
+        assertEquals("== GitLab Protected Variables ==", ReleaseMessages.gitlabProtectedVariablesHeading());
         ReleaseLanguageContext.set(ReleaseLanguage.ZH_CN);
         try {
             assertEquals("在 GitLab 项目变量中创建 MAVEN_TOKEN，并勾选 protected",
@@ -195,6 +196,7 @@ class I18nTest {
             assertEquals("已创建 GitHub PR: chore(release): v1.2.0",
                 ReleaseMessages.createdGithubPrFor("chore(release): v1.2.0"));
             assertEquals("Release tags: [v1.2.0]", ReleaseMessages.releaseTagsValue("[v1.2.0]"));
+            assertEquals("== GitLab Protected Branches ==", ReleaseMessages.gitlabProtectedBranchesHeading());
         } finally {
             ReleaseLanguageContext.clear();
         }

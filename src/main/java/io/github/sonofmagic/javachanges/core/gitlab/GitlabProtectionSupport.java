@@ -73,7 +73,7 @@ public final class GitlabProtectionSupport {
 
         if (textOutput) {
             out.println();
-            out.println("== GitLab Protected Branches ==");
+            out.println(ReleaseMessages.gitlabProtectedBranchesHeading());
         }
         boolean hasProtectedSecrets = remoteHasProtectedSecrets(remoteVariables);
         if (changesetConfig.hasSnapshotBranch()) {

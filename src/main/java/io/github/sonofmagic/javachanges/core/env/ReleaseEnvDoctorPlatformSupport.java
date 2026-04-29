@@ -169,7 +169,7 @@ final class ReleaseEnvDoctorPlatformSupport {
         sections.add(protectedBranchesSection);
         if (textOutput) {
             out.println();
-            out.println("== GitLab Protected Variables ==");
+            out.println(ReleaseMessages.gitlabProtectedVariablesHeading());
         }
         GitlabProtectionSupport.GitlabProtectionCheck protectionCheck =
             gitlabProtectionSupport.inspectProtection(request.gitlabRepo, env, changesetConfig,

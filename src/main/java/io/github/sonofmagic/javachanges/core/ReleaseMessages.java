@@ -608,6 +608,14 @@ public final class ReleaseMessages {
         return message("release.protectGitlabBranchForSnapshot", branch);
     }
 
+    public static String gitlabProtectedVariablesHeading() {
+        return message("release.gitlabProtectedVariablesHeading");
+    }
+
+    public static String gitlabProtectedBranchesHeading() {
+        return message("release.gitlabProtectedBranchesHeading");
+    }
+
     public static String freshMetadataCannotInferPerModuleTargets() {
         return message("release.freshMetadataCannotInferPerModuleTargets");
     }
