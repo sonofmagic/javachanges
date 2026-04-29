@@ -55,8 +55,11 @@ Then inside that repository:
 mvn javachanges:status
 mvn javachanges:plan -Djavachanges.apply=true
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn javachanges:version
+mvn javachanges:preflight -Djavachanges.tag=v1.2.3
+mvn javachanges:publish -Djavachanges.tag=v1.2.3
 mvn javachanges:manifest-field -Djavachanges.field=releaseVersion -Djavachanges.fresh=true
-mvn javachanges:run -Djavachanges.args="release-notes --tag v1.2.3"
+mvn javachanges:release-notes -Djavachanges.tag=v1.2.3 -Djavachanges.output=target/release-notes.md
 ```
 
 The plugin defaults `--directory` to the current Maven project's `${project.basedir}`, so if you run it inside the target repository you usually do not need to pass `--directory` explicitly. The generic `run` goal still exists for commands that do not have a dedicated goal yet.
@@ -76,6 +79,7 @@ mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:status
 mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:plan -Djavachanges.apply=true
 mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
 mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
+mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:release-notes -Djavachanges.tag=v1.2.3 -Djavachanges.output=target/release-notes.md
 ```
 
 Repository-local shortcuts for working on `javachanges` itself:

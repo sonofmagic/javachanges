@@ -55,8 +55,11 @@
 mvn javachanges:status
 mvn javachanges:plan -Djavachanges.apply=true
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn javachanges:version
+mvn javachanges:preflight -Djavachanges.tag=v1.2.3
+mvn javachanges:publish -Djavachanges.tag=v1.2.3
 mvn javachanges:manifest-field -Djavachanges.field=releaseVersion -Djavachanges.fresh=true
-mvn javachanges:run -Djavachanges.args="release-notes --tag v1.2.3"
+mvn javachanges:release-notes -Djavachanges.tag=v1.2.3 -Djavachanges.output=target/release-notes.md
 ```
 
 这个 plugin 会默认把 `--directory` 设成当前 Maven 项目的 `${project.basedir}`，所以如果你就是在目标仓库里执行，通常不需要再手动写 `--directory`。通用的 `run` goal 也仍然保留，方便覆盖还没有拆成独立 goal 的命令。
@@ -76,6 +79,7 @@ mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:status
 mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:plan -Djavachanges.apply=true
 mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
 mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
+mvn io.github.sonofmagic:javachanges:1.8.0-SNAPSHOT:release-notes -Djavachanges.tag=v1.2.3 -Djavachanges.output=target/release-notes.md
 ```
 
 如果你是在开发 `javachanges` 仓库本身，可以直接用这些本地快捷入口：

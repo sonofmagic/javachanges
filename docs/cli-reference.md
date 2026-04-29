@@ -25,8 +25,11 @@ mvn -q -DskipTests install
 mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:status
 mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:plan -Djavachanges.apply=true
 mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:version
+mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:preflight -Djavachanges.tag=v1.2.3
+mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:publish -Djavachanges.tag=v1.2.3
 mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:manifest-field -Djavachanges.field=releaseVersion -Djavachanges.fresh=true
-mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:run -Djavachanges.args="release-notes --tag v1.2.3"
+mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:release-notes -Djavachanges.tag=v1.2.3 -Djavachanges.output=target/release-notes.md
 ```
 
 Source-driven invocation while developing this repository:
@@ -41,6 +44,7 @@ Common parts:
 | --- | --- |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:status` | Run the dedicated Maven plugin status goal |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:plan -Djavachanges.apply=true` | Run the dedicated plan goal |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:publish -Djavachanges.tag=v1.2.3` | Run the dedicated Maven publish dry-run goal |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:run -Djavachanges.args="..."` | Use the generic bridge goal for commands without a dedicated goal |
 | `mvn -q -DskipTests compile exec:java` | Build the CLI and run the Java entrypoint |
 | `-Dexec.args="..."` | Pass `javachanges` CLI arguments |
@@ -61,7 +65,11 @@ If you declare the plugin in a target repository `pom.xml`, the shortest local f
 mvn javachanges:status
 mvn javachanges:plan -Djavachanges.apply=true
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn javachanges:version
+mvn javachanges:preflight -Djavachanges.tag=v1.2.3
+mvn javachanges:publish -Djavachanges.tag=v1.2.3
 mvn javachanges:manifest-field -Djavachanges.field=releaseVersion -Djavachanges.fresh=true
+mvn javachanges:release-notes -Djavachanges.tag=v1.2.3 -Djavachanges.output=target/release-notes.md
 ```
 
 Gradle repositories should use the CLI jar form:
