@@ -49,7 +49,11 @@ abstract class AbstractJavaChangesMojo extends AbstractMojo {
     }
 
     private void execute(String[] cliArgs) throws MojoFailureException {
-        int exitCode = JavaChangesCli.execute(withLanguage(cliArgs), System.out, System.err);
+        int exitCode = JavaChangesCli.execute(
+            JavaChangesMavenPluginSupport.prependLanguageIfMissing(language, cliArgs),
+            System.out,
+            System.err
+        );
         if (exitCode != 0) {
             ReleaseLanguageContext.set(mojoLanguage());
             try {
@@ -67,17 +71,5 @@ abstract class AbstractJavaChangesMojo extends AbstractMojo {
         } catch (IllegalArgumentException exception) {
             return ReleaseLanguage.EN;
         }
-    }
-
-    private String[] withLanguage(String[] cliArgs) {
-        String languageValue = JavaChangesMavenPluginSupport.trimToNull(language);
-        if (languageValue == null || JavaChangesMavenPluginSupport.containsOption(cliArgs, "--language", "--lang")) {
-            return cliArgs;
-        }
-        String[] result = new String[cliArgs.length + 2];
-        result[0] = "--language";
-        result[1] = languageValue;
-        System.arraycopy(cliArgs, 0, result, 2, cliArgs.length);
-        return result;
     }
 }

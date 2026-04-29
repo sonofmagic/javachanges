@@ -135,6 +135,18 @@ final class JavaChangesMavenPluginSupport {
         return false;
     }
 
+    static String[] prependLanguageIfMissing(String language, String[] cliArgs) {
+        String languageValue = trimToNull(language);
+        if (languageValue == null || containsOption(cliArgs, "--language", "--lang")) {
+            return cliArgs;
+        }
+        String[] result = new String[cliArgs.length + 2];
+        result[0] = "--language";
+        result[1] = languageValue;
+        System.arraycopy(cliArgs, 0, result, 2, cliArgs.length);
+        return result;
+    }
+
     private static String[] prependDirectoryIfMissing(String directory, List<String> effectiveArgs) {
         String directoryValue = trimToNull(directory);
         if (directoryValue != null && !containsDirectoryOption(effectiveArgs)) {

@@ -116,6 +116,34 @@ class JavaChangesMavenPluginSupportTest {
     }
 
     @Test
+    void languagePropertyIsPrependedWhenCliArgsDoNotSpecifyLanguage() {
+        String[] args = JavaChangesMavenPluginSupport.prependLanguageIfMissing(
+            "zh-CN",
+            new String[]{"--directory", "/tmp/repo", "status"}
+        );
+
+        assertArrayEquals(new String[]{
+            "--language", "zh-CN", "--directory", "/tmp/repo", "status"
+        }, args);
+    }
+
+    @Test
+    void explicitLanguageOptionWinsOverMavenLanguageProperty() {
+        String[] original = new String[]{"--language", "en", "--directory", "/tmp/repo", "status"};
+        String[] args = JavaChangesMavenPluginSupport.prependLanguageIfMissing("zh-CN", original);
+
+        assertArrayEquals(original, args);
+    }
+
+    @Test
+    void explicitLangAliasWinsOverMavenLanguageProperty() {
+        String[] original = new String[]{"--lang", "en", "--directory", "/tmp/repo", "status"};
+        String[] args = JavaChangesMavenPluginSupport.prependLanguageIfMissing("zh-CN", original);
+
+        assertArrayEquals(original, args);
+    }
+
+    @Test
     void resolvedPluginArgsCanDriveCliStatus(@TempDir Path tempDir) throws Exception {
         Path repoRoot = tempDir.resolve("repo");
         Files.createDirectories(repoRoot);
