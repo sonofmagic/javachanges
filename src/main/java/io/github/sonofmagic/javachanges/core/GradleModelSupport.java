@@ -6,8 +6,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -18,6 +20,9 @@ final class GradleModelSupport {
     private static final Pattern PROPERTY_LINE = Pattern.compile("^(\\s*)([^#!:=\\s]+)(\\s*[:=]\\s*|\\s+)(.*)$");
     private static final Pattern ROOT_PROJECT_NAME = Pattern.compile(
         "(?m)^\\s*rootProject\\.name\\s*=\\s*['\"]([^'\"]+)['\"]"
+    );
+    private static final Pattern PROJECT_NAME_ASSIGNMENT = Pattern.compile(
+        "(?m)project\\s*\\(\\s*['\"]([^'\"]+)['\"]\\s*\\)\\s*\\.\\s*name\\s*=\\s*['\"]([^'\"]+)['\"]"
     );
     private static final Pattern INCLUDE_TOKEN = Pattern.compile("(?m)^\\s*include\\b");
     private static final Pattern QUOTED_VALUE = Pattern.compile("['\"]([^'\"]+)['\"]");
@@ -79,20 +84,22 @@ final class GradleModelSupport {
                 : Collections.singletonList(repoRoot.getFileName().toString());
         }
         String settings = new String(Files.readAllBytes(settingsPath), StandardCharsets.UTF_8);
+        String uncommentedSettings = stripComments(settings);
+        Map<String, String> projectNames = projectNameAssignments(uncommentedSettings);
         Set<String> modules = new LinkedHashSet<String>();
-        for (String arguments : includeArguments(settings)) {
+        for (String arguments : includeArguments(uncommentedSettings)) {
             Matcher valueMatcher = QUOTED_VALUE.matcher(arguments);
             while (valueMatcher.find()) {
                 String module = normalizeProjectPath(valueMatcher.group(1));
                 if (module != null) {
-                    modules.add(module);
+                    modules.add(projectNames.containsKey(module) ? projectNames.get(module) : module);
                 }
             }
         }
         if (!modules.isEmpty()) {
             return new ArrayList<String>(modules);
         }
-        String rootProjectName = readRootProjectName(settings);
+        String rootProjectName = readRootProjectName(uncommentedSettings);
         if (rootProjectName != null) {
             return Collections.singletonList(rootProjectName);
         }
@@ -155,6 +162,19 @@ final class GradleModelSupport {
         return ReleaseTextUtils.trimToNull(matcher.group(1));
     }
 
+    private static Map<String, String> projectNameAssignments(String settings) {
+        Map<String, String> result = new LinkedHashMap<String, String>();
+        Matcher matcher = PROJECT_NAME_ASSIGNMENT.matcher(settings);
+        while (matcher.find()) {
+            String projectPath = normalizeProjectPath(matcher.group(1));
+            String projectName = ReleaseTextUtils.trimToNull(matcher.group(2));
+            if (projectPath != null && projectName != null) {
+                result.put(projectPath, projectName);
+            }
+        }
+        return result;
+    }
+
     private static String normalizeProjectPath(String projectPath) {
         String value = ReleaseTextUtils.trimToNull(projectPath);
         if (value == null) {
@@ -174,7 +194,7 @@ final class GradleModelSupport {
     }
 
     private static List<String> includeArguments(String settings) {
-        String text = stripLineComments(settings);
+        String text = settings;
         List<String> arguments = new ArrayList<String>();
         Matcher matcher = INCLUDE_TOKEN.matcher(text);
         while (matcher.find()) {
@@ -233,12 +253,55 @@ final class GradleModelSupport {
         return -1;
     }
 
-    private static String stripLineComments(String text) {
+    private static String stripComments(String text) {
         StringBuilder builder = new StringBuilder();
-        String[] lines = text.split("\\r?\\n", -1);
-        for (String line : lines) {
-            int comment = line.indexOf("//");
-            builder.append(comment >= 0 ? line.substring(0, comment) : line).append('\n');
+        boolean inString = false;
+        char quote = 0;
+        boolean escaped = false;
+        for (int index = 0; index < text.length(); index++) {
+            char current = text.charAt(index);
+            if (inString) {
+                builder.append(current);
+                if (escaped) {
+                    escaped = false;
+                } else if (current == '\\') {
+                    escaped = true;
+                } else if (current == quote) {
+                    inString = false;
+                }
+                continue;
+            }
+            if (current == '\'' || current == '"') {
+                inString = true;
+                quote = current;
+                builder.append(current);
+                continue;
+            }
+            if (current == '/' && index + 1 < text.length()) {
+                char next = text.charAt(index + 1);
+                if (next == '/') {
+                    index += 2;
+                    while (index < text.length() && text.charAt(index) != '\n' && text.charAt(index) != '\r') {
+                        index++;
+                    }
+                    if (index < text.length()) {
+                        builder.append(text.charAt(index));
+                    }
+                    continue;
+                }
+                if (next == '*') {
+                    index += 2;
+                    while (index + 1 < text.length() && !(text.charAt(index) == '*' && text.charAt(index + 1) == '/')) {
+                        if (text.charAt(index) == '\n' || text.charAt(index) == '\r') {
+                            builder.append(text.charAt(index));
+                        }
+                        index++;
+                    }
+                    index++;
+                    continue;
+                }
+            }
+            builder.append(current);
         }
         return builder.toString();
     }
