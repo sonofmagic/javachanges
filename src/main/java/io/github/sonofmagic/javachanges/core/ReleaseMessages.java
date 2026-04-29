@@ -706,94 +706,79 @@ public final class ReleaseMessages {
     }
 
     public static String usingEnvFile(String envPath) {
-        return text("Using env file: " + envPath, "使用 env 文件: " + envPath);
+        return message("env.usingEnvFile", envPath);
     }
 
     public static String sensitiveValuesMaskedByDefault() {
-        return text(
-            "Sensitive values are masked by default. Pass --show-secrets true to show raw values.",
-            "敏感值默认已打码。传入 --show-secrets true 可显示原值。"
-        );
+        return message("env.sensitiveValuesMaskedByDefault");
     }
 
     public static String dryRunOnlyPrintsCommands() {
-        return text(
-            "Dry-run only; commands are printed but not written to the platform. Pass --execute true to apply.",
-            "当前为 dry-run，只输出命令。传入 --execute true 后才会真正写入平台。"
-        );
+        return message("env.dryRunOnlyPrintsCommands");
     }
 
     public static String repoRequiredInExecuteMode() {
-        return text("--repo is required in execute mode", "执行模式下必须通过 --repo 指定仓库");
+        return message("env.repoRequiredInExecuteMode");
     }
 
     public static String githubCliCommandsHeading() {
-        return text("== GitHub CLI Commands ==", "== GitHub CLI 命令 ==");
+        return message("env.githubCliCommandsHeading");
     }
 
     public static String gitlabCliCommandsHeading() {
-        return text("== GitLab CLI Commands ==", "== GitLab CLI 命令 ==");
+        return message("env.gitlabCliCommandsHeading");
     }
 
     public static String runningCommand(String displayCommand) {
-        return text("Running: " + displayCommand, "执行: " + displayCommand);
+        return message("env.runningCommand", displayCommand);
     }
 
     public static String commandFailed(String displayCommand) {
-        return text("Command failed: " + displayCommand, "命令执行失败: " + displayCommand);
+        return message("env.commandFailed", displayCommand);
     }
 
     public static String templateFileNotFound(String path) {
-        return text("Template file not found: " + path, "未找到模板文件: " + path);
+        return message("env.templateFileNotFound", path);
     }
 
     public static String targetFileCannotBeExample(String path) {
-        return text("Target file cannot be an example file: " + path, "目标文件不能是示例文件: " + path);
+        return message("env.targetFileCannotBeExample", path);
     }
 
     public static String targetFileKept(String path) {
-        return text("Target file already exists; kept unchanged: " + path, "目标文件已存在，未做覆盖: " + path);
+        return message("env.targetFileKept", path);
     }
 
     public static String recreateEnvFileCommand(String path) {
-        return text(
-            "To recreate it, run: make env-init RELEASE_ENV_FILE=" + path + " FORCE=true",
-            "如果你确实要重建，请执行: make env-init RELEASE_ENV_FILE=" + path + " FORCE=true"
-        );
+        return message("env.recreateEnvFileCommand", path);
     }
 
     public static String generatedLocalEnvFile(String path) {
-        return text("Generated local env file: " + path, "已生成本地 env 文件: " + path);
+        return message("env.generatedLocalEnvFile", path);
     }
 
     public static String editEnvFileNextStep() {
-        return text(
-            "Next, edit the real repository addresses and credentials, then run: make readiness",
-            "下一步请编辑真实仓库地址和凭据，然后执行: make readiness"
-        );
+        return message("env.editEnvFileNextStep");
     }
 
     public static String platformVariableAuditFailed() {
-        return text(
-            "Platform variable audit failed. Fix MISSING_REMOTE / MISMATCH items and retry.",
-            "平台变量审计失败，请修正 MISSING_REMOTE / MISMATCH 项后重试"
-        );
+        return message("env.platformVariableAuditFailed");
     }
 
     public static String platformVariableAuditPassed() {
-        return text("Platform variable audit passed", "平台变量审计通过");
+        return message("env.platformVariableAuditPassed");
     }
 
     public static String githubVariablesAudit() {
-        return text("GitHub Variables Audit", "GitHub Variables 审计");
+        return message("env.githubVariablesAudit");
     }
 
     public static String githubSecretsAudit() {
-        return text("GitHub Secrets Audit", "GitHub Secrets 审计");
+        return message("env.githubSecretsAudit");
     }
 
     public static String gitlabVariablesAudit() {
-        return text("GitLab Variables Audit", "GitLab Variables 审计");
+        return message("env.gitlabVariablesAudit");
     }
 
     public static String heading(String label) {
@@ -801,110 +786,87 @@ public final class ReleaseMessages {
     }
 
     public static String missingRepositoryArgument(String name) {
-        return text("Missing repository argument: " + name, "缺少仓库参数: " + name);
+        return message("env.missingRepositoryArgument", name);
     }
 
     public static String cliNotFound(String command) {
-        return text(command + " CLI was not found", "未找到 " + command + " CLI");
+        return message("env.cliNotFound", command);
     }
 
     public static String authStatusFailed(String command) {
-        return "gh".equals(command)
-            ? text("gh auth status failed. Run make auth-help first.", "gh auth status 失败，请先执行 make auth-help")
-            : text("glab auth status failed. Run make auth-help first.", "glab auth status 失败，请先执行 make auth-help");
+        return message("env.authStatusFailed", command);
     }
 
     public static String localRuntime() {
-        return text("Local Runtime", "本机运行时");
+        return message("env.localRuntime");
     }
 
     public static String localEnvFile() {
-        return text("Local Env File", "本地 env 文件");
+        return message("env.localEnvFile");
     }
 
     public static String platformCli() {
-        return text("Platform CLI", "平台 CLI");
+        return message("env.platformCli");
     }
 
     public static String repositoryIdentifiers() {
-        return text("Repository Identifiers", "仓库标识");
+        return message("env.repositoryIdentifiers");
     }
 
     public static String localEnvCheck() {
-        return text("Local Env Check", "本地 env 检查");
+        return message("env.localEnvCheck");
     }
 
     public static String githubCliCheck() {
-        return text("GitHub CLI Check", "GitHub CLI 检查");
+        return message("env.githubCliCheck");
     }
 
     public static String gitlabCliCheck() {
-        return text("GitLab CLI Check", "GitLab CLI 检查");
+        return message("env.gitlabCliCheck");
     }
 
     public static String localReleaseEnvironmentPassed() {
-        return text("Local release environment check passed", "本机发布环境检查通过");
+        return message("env.localReleaseEnvironmentPassed");
     }
 
     public static String suggestedNextSteps() {
-        return text("Suggested next steps:", "下一步建议:");
+        return message("env.suggestedNextSteps");
     }
 
     public static String localReleaseEnvironmentNotReadyIntro() {
-        return text(
-            "Local release environment is not ready. Handle these in order:",
-            "本机发布环境未就绪，建议按顺序处理:"
-        );
+        return message("env.localReleaseEnvironmentNotReadyIntro");
     }
 
     public static String runEnvInitSuggestion() {
-        return text(
-            "Run make env-init to generate env/release.env.local",
-            "执行 make env-init 生成 env/release.env.local"
-        );
+        return message("env.runEnvInitSuggestion");
     }
 
     public static String editLocalEnvSuggestion() {
-        return text(
-            "Edit env/release.env.local and replace repository addresses, usernames, passwords, and required tokens",
-            "编辑 env/release.env.local，替换仓库地址、用户名、密码和需要的 token"
-        );
+        return message("env.editLocalEnvSuggestion");
     }
 
     public static String installJavaMavenSuggestion() {
-        return text(
-            "Install and configure a usable Java Runtime and Maven command (prefer ./mvnw, then system mvn), then rerun make readiness",
-            "安装并配置可用的 Java Runtime 与 Maven 命令（优先 ./mvnw，其次系统 mvn），然后重新执行 make readiness"
-        );
+        return message("env.installJavaMavenSuggestion");
     }
 
     public static String runAuthHelpSuggestion() {
-        return text(
-            "Run make auth-help to install and log in with gh / glab",
-            "执行 make auth-help，完成 gh / glab 的安装和登录"
-        );
+        return message("env.runAuthHelpSuggestion");
     }
 
     public static String runPlatformDoctorSuggestion() {
-        return text(
-            "After that, run make doctor-github, make doctor-gitlab, and sync-apply",
-            "通过后再执行 make doctor-github、make doctor-gitlab 和 sync-apply"
-        );
+        return message("env.runPlatformDoctorSuggestion");
     }
 
     public static String localReleaseEnvironmentNotReady() {
-        return text("Local release environment is not ready", "本机发布环境未就绪");
+        return message("env.localReleaseEnvironmentNotReady");
     }
 
     public static String doctorPlatformFailed() {
-        return text(
-            "doctor check failed. Fix the MISSING / PLACEHOLDER items above and retry.",
-            "doctor 检查失败，请修正上面的 MISSING / PLACEHOLDER 项后重试"
-        );
+        return message("env.doctorPlatformFailed");
     }
 
     public static String doctorCheckCompleted() {
-        return text("doctor check completed", "doctor 检查完成");
+        return message("env.doctorCheckCompleted");
     }
 
     public static String missingSnapshotOrTag() {

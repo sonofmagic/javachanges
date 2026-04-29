@@ -81,6 +81,19 @@ class I18nTest {
     }
 
     @Test
+    void loadsExternalizedReleaseEnvironmentMessages() {
+        assertEquals("== GitHub CLI Commands ==", ReleaseMessages.githubCliCommandsHeading());
+        assertEquals("gh CLI was not found", ReleaseMessages.cliNotFound("gh"));
+        ReleaseLanguageContext.set(ReleaseLanguage.ZH_CN);
+        try {
+            assertEquals("== GitLab CLI 命令 ==", ReleaseMessages.gitlabCliCommandsHeading());
+            assertEquals("未找到 glab CLI", ReleaseMessages.cliNotFound("glab"));
+        } finally {
+            ReleaseLanguageContext.clear();
+        }
+    }
+
+    @Test
     void localizedTemplatesStayInSync() throws Exception {
         Path templateRoot = Paths.get("")
             .toAbsolutePath()
