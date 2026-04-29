@@ -40,7 +40,7 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
 
         ReleasePlan plan = automationSupport.plan();
         ReleaseAutomationSupport.ReleaseDescriptor release = descriptorFromPlan(plan, report);
-        if (skipWhenNoPendingChangesets(plan, report, textOutput, "No pending changesets. Skip release PR.")) {
+        if (skipWhenNoPendingChangesets(plan, report, textOutput, ReleaseMessages.noPendingChangesetsSkipReleasePr())) {
             return;
         }
 
@@ -50,13 +50,13 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
         String title = release.githubPullRequestTitle();
 
         AutomationJsonSupport.printLines(out, textOutput,
-            "GitHub repo: " + request.githubRepo,
-            "Release branch: " + releaseBranch,
-            "Target branch: " + targetBranch,
-            "Release version: " + release.releaseVersion
+            ReleaseMessages.githubRepoValue(request.githubRepo),
+            ReleaseMessages.releaseBranchValue(releaseBranch),
+            ReleaseMessages.targetBranchValue(targetBranch),
+            ReleaseMessages.releaseVersionValueText(release.releaseVersion)
         );
 
-        if (skipDryRun(report, textOutput, "Dry-run only. Use --execute true to create/update the GitHub PR.")) {
+        if (skipDryRun(report, textOutput, ReleaseMessages.dryRunGithubPr())) {
             return;
         }
 
@@ -70,8 +70,7 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
         if (runtime.hasNoStagedChanges()) {
             report.skipped = true;
             report.reason = ReleaseMessages.noStagedReleasePlanChangesReason();
-            AutomationJsonSupport.print(out, textOutput, report,
-                "No staged release plan changes. Skip release PR update.");
+            AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.noStagedReleasePlanChangesSkipPr());
             return;
         }
         runtime.runGit("commit", "-m", commitMessage);
@@ -83,7 +82,7 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
             report.reason = ReleaseMessages.createdGithubPullRequestReason();
             runtime.createPullRequest(request.githubRepo, releaseBranch, targetBranch, title,
                 pullRequestBodyFile);
-            AutomationJsonSupport.print(out, textOutput, report, "Created GitHub PR for " + title);
+            AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.createdGithubPrFor(title));
             return;
         }
 
@@ -91,7 +90,7 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
         report.reason = ReleaseMessages.updatedGithubPullRequestReason();
         runtime.updatePullRequest(request.githubRepo, prNumber, title,
             pullRequestBodyFile);
-        AutomationJsonSupport.print(out, textOutput, report, "Updated GitHub PR #" + prNumber);
+        AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.updatedGithubPr(prNumber));
     }
 
     private static String[] concat(String first, String[] rest) {
@@ -113,8 +112,8 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
         List<String> tagNames = release.tagNames();
 
         AutomationJsonSupport.printLines(out, textOutput,
-            "Release tags: " + tagNames,
-            "Target commit: " + currentSha
+            ReleaseMessages.releaseTagsValue(tagNames),
+            ReleaseMessages.targetCommitValue(currentSha)
         );
 
         for (String tagName : tagNames) {
@@ -124,7 +123,7 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
             }
         }
 
-        if (skipDryRun(report, textOutput, "Dry-run only. Use --execute true to create and push the release tag.")) {
+        if (skipDryRun(report, textOutput, ReleaseMessages.dryRunReleaseTag())) {
             return;
         }
 
@@ -134,7 +133,7 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
         }
         report.action = "create-tag";
         report.reason = ReleaseMessages.createdAndPushedTagReason();
-        AutomationJsonSupport.print(out, textOutput, report, "Created and pushed tag(s) " + tagNames);
+        AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.createdAndPushedTags(tagNames));
     }
 
     public void syncReleaseFromPlan(GithubReleasePublishRequest request) throws IOException, InterruptedException {
@@ -150,20 +149,20 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
         report.releaseNotesFile = notesFile.toString();
 
         AutomationJsonSupport.printLines(out, textOutput,
-            "Release version: " + releaseVersion,
-            "Release tag: " + tagName,
-            "Release notes file: " + notesFile
+            ReleaseMessages.releaseVersionValueText(releaseVersion),
+            ReleaseMessages.releaseTagValue(tagName),
+            ReleaseMessages.releaseNotesFileValue(notesFile)
         );
 
         Path githubOutputFile = artifactSupport.resolveOptionalPath(request.githubOutputFile);
         if (githubOutputFile != null) {
             AutomationJsonSupport.printLines(out, textOutput,
                 request.execute
-                    ? "GitHub output file: " + githubOutputFile
-                    : "GitHub output file: " + githubOutputFile + " (execute only)");
+                    ? ReleaseMessages.githubOutputFileValue(githubOutputFile)
+                    : ReleaseMessages.githubOutputFileExecuteOnly(githubOutputFile));
         }
 
-        if (skipDryRun(report, textOutput, "Dry-run only. Use --execute true to create/update the GitHub Release.")) {
+        if (skipDryRun(report, textOutput, ReleaseMessages.dryRunGithubRelease())) {
             return;
         }
 
@@ -177,14 +176,14 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
             report.action = "update-release";
             report.reason = ReleaseMessages.updatedGithubReleaseReason();
             runtime.updateRelease(tagName, notesFile);
-            AutomationJsonSupport.print(out, textOutput, report, "Updated GitHub Release " + tagName);
+            AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.updatedGithubRelease(tagName));
             return;
         }
 
         report.action = "create-release";
         report.reason = ReleaseMessages.createdGithubReleaseReason();
         runtime.createRelease(tagName, notesFile);
-        AutomationJsonSupport.print(out, textOutput, report, "Created GitHub Release " + tagName);
+        AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.createdGithubRelease(tagName));
     }
 
     private void appendGithubOutputs(Path outputFile, String releaseVersion, String tagName, Path notesFile) throws IOException {

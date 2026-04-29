@@ -79,7 +79,7 @@ public abstract class AbstractReleaseAutomationSupport {
                                                     String tagName) {
         report.skipped = true;
         report.reason = ReleaseMessages.tagAlreadyExistsRemotelyReason(tagName);
-        AutomationJsonSupport.print(out, textOutput, report, "Tag already exists remotely. Skip.");
+        AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.tagAlreadyExistsRemotelySkip());
         return true;
     }
 

@@ -704,6 +704,150 @@ public final class ReleaseMessages {
         return message("release.reason.createdGitlabRelease");
     }
 
+    public static String githubRepoValue(String githubRepo) {
+        return message("release.text.githubRepo", githubRepo);
+    }
+
+    public static String releaseBranchValue(String branch) {
+        return message("release.text.releaseBranch", branch);
+    }
+
+    public static String targetBranchValue(String branch) {
+        return message("release.text.targetBranch", branch);
+    }
+
+    public static String releaseVersionValueText(String version) {
+        return message("release.text.releaseVersion", version);
+    }
+
+    public static String releaseTagValue(String tag) {
+        return message("release.text.releaseTag", tag);
+    }
+
+    public static String releaseTagsValue(Object tags) {
+        return message("release.text.releaseTags", tags);
+    }
+
+    public static String targetCommitValue(String commit) {
+        return message("release.text.targetCommit", commit);
+    }
+
+    public static String releaseNotesFileValue(Path notesFile) {
+        return message("release.text.releaseNotesFile", notesFile);
+    }
+
+    public static String githubOutputFileValue(Path outputFile) {
+        return message("release.text.githubOutputFile", outputFile);
+    }
+
+    public static String githubOutputFileExecuteOnly(Path outputFile) {
+        return message("release.text.githubOutputFileExecuteOnly", outputFile);
+    }
+
+    public static String gitlabHostValue(String host) {
+        return message("release.text.gitlabHost", host);
+    }
+
+    public static String projectIdValue(String projectId) {
+        return message("release.text.projectId", projectId);
+    }
+
+    public static String releaseModuleValue(String module) {
+        return message("release.text.releaseModule", module);
+    }
+
+    public static String noPendingChangesetsSkipReleasePr() {
+        return message("release.text.noPendingChangesetsSkipReleasePr");
+    }
+
+    public static String noPendingChangesetsSkipReleaseMr() {
+        return message("release.text.noPendingChangesetsSkipReleaseMr");
+    }
+
+    public static String dryRunGithubPr() {
+        return message("release.text.dryRunGithubPr");
+    }
+
+    public static String dryRunGitlabMr() {
+        return message("release.text.dryRunGitlabMr");
+    }
+
+    public static String dryRunReleaseTag() {
+        return message("release.text.dryRunReleaseTag");
+    }
+
+    public static String dryRunGithubRelease() {
+        return message("release.text.dryRunGithubRelease");
+    }
+
+    public static String dryRunGitlabRelease() {
+        return message("release.text.dryRunGitlabRelease");
+    }
+
+    public static String noStagedReleasePlanChangesSkipPr() {
+        return message("release.text.noStagedReleasePlanChangesSkipPr");
+    }
+
+    public static String noStagedReleasePlanChangesSkipMr() {
+        return message("release.text.noStagedReleasePlanChangesSkipMr");
+    }
+
+    public static String createdGithubPrFor(String title) {
+        return message("release.text.createdGithubPrFor", title);
+    }
+
+    public static String updatedGithubPr(String prNumber) {
+        return message("release.text.updatedGithubPr", prNumber);
+    }
+
+    public static String createdGitlabMr(int iid) {
+        return message("release.text.createdGitlabMr", iid);
+    }
+
+    public static String updatedGitlabMr(Integer iid) {
+        return message("release.text.updatedGitlabMr", iid);
+    }
+
+    public static String tagAlreadyExistsRemotelySkip() {
+        return message("release.text.tagAlreadyExistsRemotelySkip");
+    }
+
+    public static String currentBranchMatchesReleaseBranchSkipTag() {
+        return message("release.text.currentBranchMatchesReleaseBranchSkipTag");
+    }
+
+    public static String currentBranchDoesNotMatchBaseBranchSkipTag(String currentBranch, String baseBranch) {
+        return message("release.text.currentBranchDoesNotMatchBaseBranchSkipTag", currentBranch, baseBranch);
+    }
+
+    public static String missingPreviousShaSkipTag() {
+        return message("release.text.missingPreviousShaSkipTag");
+    }
+
+    public static String releaseChangeReasonSkipTag(String reason) {
+        return message("release.text.releaseChangeReasonSkipTag", reason);
+    }
+
+    public static String createdAndPushedTags(Object tags) {
+        return message("release.text.createdAndPushedTags", tags);
+    }
+
+    public static String updatedGithubRelease(String tagName) {
+        return message("release.text.updatedGithubRelease", tagName);
+    }
+
+    public static String createdGithubRelease(String tagName) {
+        return message("release.text.createdGithubRelease", tagName);
+    }
+
+    public static String updatedGitlabRelease(String tagName) {
+        return message("release.text.updatedGitlabRelease", tagName);
+    }
+
+    public static String createdGitlabRelease(String tagName) {
+        return message("release.text.createdGitlabRelease", tagName);
+    }
+
     public static String releaseNotesSection(String section) {
         if ("Breaking Changes".equals(section)) {
             return message("release.section.breakingChanges");

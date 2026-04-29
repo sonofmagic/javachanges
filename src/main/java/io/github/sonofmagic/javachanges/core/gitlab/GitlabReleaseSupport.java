@@ -44,7 +44,7 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
 
         ReleasePlan plan = automationSupport.plan();
         ReleaseAutomationSupport.ReleaseDescriptor release = descriptorFromPlan(plan, report);
-        if (skipWhenNoPendingChangesets(plan, report, textOutput, "No pending changesets. Skip release MR.")) {
+        if (skipWhenNoPendingChangesets(plan, report, textOutput, ReleaseMessages.noPendingChangesetsSkipReleaseMr())) {
             return;
         }
 
@@ -54,12 +54,12 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
         String title = release.gitlabMergeRequestTitle();
 
         AutomationJsonSupport.printLines(out, textOutput,
-            "Release branch: " + releaseBranch,
-            "Target branch: " + targetBranch,
-            "Release version: " + release.releaseVersion
+            ReleaseMessages.releaseBranchValue(releaseBranch),
+            ReleaseMessages.targetBranchValue(targetBranch),
+            ReleaseMessages.releaseVersionValueText(release.releaseVersion)
         );
 
-        if (skipDryRun(report, textOutput, "Dry-run only. Use --execute true to create/update the GitLab MR.")) {
+        if (skipDryRun(report, textOutput, ReleaseMessages.dryRunGitlabMr())) {
             return;
         }
 
@@ -71,8 +71,7 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
         if (runtime.hasNoStagedChanges()) {
             report.skipped = true;
             report.reason = ReleaseMessages.noStagedReleasePlanChangesReason();
-            AutomationJsonSupport.print(out, textOutput, report,
-                "No staged release plan changes. Skip release MR update.");
+            AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.noStagedReleasePlanChangesSkipMr());
             return;
         }
         runtime.runGit("commit", "-m", commitMessage);
@@ -85,14 +84,14 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
             report.action = "create-merge-request";
             report.reason = ReleaseMessages.createdGitlabMergeRequestReason();
             AutomationJsonSupport.print(out, textOutput, report,
-                "Created GitLab MR !" + apiClient.requiredJsonInt(response, "iid"));
+                ReleaseMessages.createdGitlabMr(apiClient.requiredJsonInt(response, "iid")));
             return;
         }
 
         apiClient.updateMergeRequest(request.projectId, mergeRequestIid.intValue(), title, description);
         report.action = "update-merge-request";
         report.reason = ReleaseMessages.updatedGitlabMergeRequestReason();
-        AutomationJsonSupport.print(out, textOutput, report, "Updated GitLab MR !" + mergeRequestIid);
+        AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.updatedGitlabMr(mergeRequestIid));
     }
 
     private static String[] concat(String first, String[] rest) {
@@ -111,8 +110,7 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
             && request.currentBranch.equals(request.releaseBranch)) {
             report.skipped = true;
             report.reason = ReleaseMessages.currentBranchMatchesReleaseBranchReason();
-            AutomationJsonSupport.print(out, textOutput, report,
-                "Current branch matches the configured release branch. Skip release tag.");
+            AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.currentBranchMatchesReleaseBranchSkipTag());
             return;
         }
         if (ReleaseTextUtils.trimToNull(request.currentBranch) != null
@@ -121,8 +119,7 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
             report.skipped = true;
             report.reason = ReleaseMessages.currentBranchDoesNotMatchBaseBranchReason();
             AutomationJsonSupport.print(out, textOutput, report,
-                "Current branch " + request.currentBranch + " does not match base branch "
-                    + request.baseBranch + ". Skip release tag.");
+                ReleaseMessages.currentBranchDoesNotMatchBaseBranchSkipTag(request.currentBranch, request.baseBranch));
             return;
         }
         String beforeSha = ReleaseTextUtils.trimToNull(request.beforeSha);
@@ -130,7 +127,7 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
         if (beforeSha == null || currentSha == null || beforeSha.matches("0+")) {
             report.skipped = true;
             report.reason = ReleaseMessages.missingPreviousShaReason();
-            AutomationJsonSupport.print(out, textOutput, report, "Missing previous SHA. Skip release tag.");
+            AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.missingPreviousShaSkipTag());
             return;
         }
 
@@ -139,8 +136,7 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
             report.reason = request.fresh
                 ? ReleaseMessages.noFreshReleaseStateChangeDetectedReason()
                 : ReleaseMessages.noReleasePlanManifestChangeDetectedReason();
-            AutomationJsonSupport.print(out, textOutput, report,
-                report.reason + " Skip release tag.");
+            AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.releaseChangeReasonSkipTag(report.reason));
             return;
         }
 
@@ -148,7 +144,7 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
             ? descriptorFromFreshPlan(report)
             : descriptorFromManifest(report);
         List<String> tagNames = release.tagNames();
-        AutomationJsonSupport.printLines(out, textOutput, "Release tags: " + tagNames);
+        AutomationJsonSupport.printLines(out, textOutput, ReleaseMessages.releaseTagsValue(tagNames));
 
         String remoteUrl = apiClient.authenticatedRemoteUrl();
         for (String tagName : tagNames) {
@@ -158,7 +154,7 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
             }
         }
 
-        if (skipDryRun(report, textOutput, "Dry-run only. Use --execute true to create and push the release tag.")) {
+        if (skipDryRun(report, textOutput, ReleaseMessages.dryRunReleaseTag())) {
             return;
         }
 
@@ -168,7 +164,7 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
         }
         report.action = "create-tag";
         report.reason = ReleaseMessages.createdAndPushedTagReason();
-        AutomationJsonSupport.print(out, textOutput, report, "Created and pushed tag(s) " + tagNames);
+        AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.createdAndPushedTags(tagNames));
     }
 
     public void syncRelease(GitlabReleaseRequest request) throws IOException, InterruptedException {
@@ -194,14 +190,14 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
         String releaseName = tagInfo.releaseDisplayName();
 
         AutomationJsonSupport.printLines(out, textOutput,
-            "GitLab host: " + ReleaseTextUtils.firstNonBlank(
+            ReleaseMessages.gitlabHostValue(ReleaseTextUtils.firstNonBlank(
                 ReleaseTextUtils.trimToNull(request.gitlabHost),
-                ReleaseTextUtils.trimToNull(System.getenv("CI_SERVER_HOST"))),
-            "Project ID: " + request.projectId,
-            "Release tag: " + tagName,
-            "Release version: " + report.releaseVersion,
-            "Release module: " + (report.releaseModule == null ? "all" : report.releaseModule),
-            "Release notes file: " + notesFile
+                ReleaseTextUtils.trimToNull(System.getenv("CI_SERVER_HOST")))),
+            ReleaseMessages.projectIdValue(request.projectId),
+            ReleaseMessages.releaseTagValue(tagName),
+            ReleaseMessages.releaseVersionValueText(report.releaseVersion),
+            ReleaseMessages.releaseModuleValue(report.releaseModule == null ? "all" : report.releaseModule),
+            ReleaseMessages.releaseNotesFileValue(notesFile)
         );
 
         boolean exists = apiClient.releaseExists(request.projectId, tagName);
@@ -209,8 +205,7 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
             report.reason = exists
                 ? ReleaseMessages.gitlabReleaseWouldBeUpdatedReason()
                 : ReleaseMessages.gitlabReleaseWouldBeCreatedReason();
-            AutomationJsonSupport.print(out, textOutput, report,
-                "Dry-run only. Use --execute true to create/update the GitLab Release.");
+            AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.dryRunGitlabRelease());
             return;
         }
 
@@ -222,14 +217,14 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
             apiClient.updateRelease(request.projectId, tagName, releaseName, description);
             report.action = "update-release";
             report.reason = ReleaseMessages.updatedGitlabReleaseReason();
-            AutomationJsonSupport.print(out, textOutput, report, "Updated GitLab Release " + tagName);
+            AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.updatedGitlabRelease(tagName));
             return;
         }
 
         apiClient.createRelease(request.projectId, tagName, releaseName, description);
         report.action = "create-release";
         report.reason = ReleaseMessages.createdGitlabReleaseReason();
-        AutomationJsonSupport.print(out, textOutput, report, "Created GitLab Release " + tagName);
+        AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.createdGitlabRelease(tagName));
     }
 
     private boolean releaseMetadataChangedBetween(GitlabTagRequest request, String beforeSha, String currentSha)
