@@ -163,22 +163,14 @@ public final class GitlabApiClient implements GitlabMergeRequestClient {
             connection.setDoOutput(true);
             connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
             connection.setRequestProperty("Content-Length", String.valueOf(bytes.length));
-            OutputStream output = connection.getOutputStream();
-            try {
+            try (OutputStream output = connection.getOutputStream()) {
                 output.write(bytes);
-            } finally {
-                output.close();
             }
         }
         int responseCode = connection.getResponseCode();
-        InputStream responseStream = responseCode >= 400 ? connection.getErrorStream() : connection.getInputStream();
         byte[] responseBytes;
-        try {
+        try (InputStream responseStream = responseCode >= 400 ? connection.getErrorStream() : connection.getInputStream()) {
             responseBytes = responseStream == null ? new byte[0] : ReleaseProcessUtils.readAllBytes(responseStream);
-        } finally {
-            if (responseStream != null) {
-                responseStream.close();
-            }
         }
         String response = new String(responseBytes, StandardCharsets.UTF_8);
         if (responseCode == 404) {

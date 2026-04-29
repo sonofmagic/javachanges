@@ -67,8 +67,7 @@ public final class ChangesetFileSupport {
             return Collections.emptyList();
         }
         List<Changeset> changesets = new ArrayList<Changeset>();
-        DirectoryStream<Path> stream = Files.newDirectoryStream(dir, "*.md");
-        try {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, "*.md")) {
             for (Path path : stream) {
                 String fileName = path.getFileName().toString();
                 if (isChangesetReadme(fileName) || ChangesetPaths.RELEASE_PLAN_MD.equals(fileName)) {
@@ -76,8 +75,6 @@ public final class ChangesetFileSupport {
                 }
                 changesets.add(ChangesetParser.parse(repoRoot, path));
             }
-        } finally {
-            stream.close();
         }
         Collections.sort(changesets, new Comparator<Changeset>() {
             @Override

@@ -137,14 +137,12 @@ final class I18n {
 
     private static Properties load(ReleaseLanguage language) {
         String resource = RESOURCE_PREFIX + language.resourceSuffix() + ".properties";
-        InputStream inputStream = openResource(resource);
         Properties properties = new Properties();
-        try {
-            try {
-                properties.load(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-            } finally {
-                inputStream.close();
-            }
+        try (
+            InputStream inputStream = openResource(resource);
+            InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)
+        ) {
+            properties.load(reader);
         } catch (IOException exception) {
             throw new UncheckedIOException(exception);
         }
@@ -152,18 +150,15 @@ final class I18n {
     }
 
     private static String readResource(String resource) {
-        InputStream inputStream = openResource(resource);
         StringBuilder content = new StringBuilder();
         char[] buffer = new char[4096];
-        try {
-            try {
-                InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
-                int read;
-                while ((read = reader.read(buffer)) >= 0) {
-                    content.append(buffer, 0, read);
-                }
-            } finally {
-                inputStream.close();
+        try (
+            InputStream inputStream = openResource(resource);
+            InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)
+        ) {
+            int read;
+            while ((read = reader.read(buffer)) >= 0) {
+                content.append(buffer, 0, read);
             }
         } catch (IOException exception) {
             throw new UncheckedIOException(exception);
