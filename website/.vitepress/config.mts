@@ -253,6 +253,7 @@ export default defineConfigWithTheme<DefaultTheme.Config>({
   },
   vite: {
     build: {
+      // Mermaid diagrams and the generated local-search index are lazy-loaded chunks.
       chunkSizeWarningLimit: 700,
     },
     plugins: [
