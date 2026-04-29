@@ -26,7 +26,7 @@ public final class ChangesetFileSupport {
         Files.createDirectories(dir);
         Path readme = dir.resolve(ChangesetPaths.README);
         if (!Files.exists(readme)) {
-            Files.write(readme, Collections.singletonList("# Changesets"), StandardCharsets.UTF_8);
+            Files.write(readme, defaultReadme().getBytes(StandardCharsets.UTF_8));
         }
     }
 
@@ -99,6 +99,44 @@ public final class ChangesetFileSupport {
         return ChangesetPaths.README.equals(fileName)
             || fileName.startsWith("README.")
             || fileName.startsWith("README-");
+    }
+
+    private static String defaultReadme() {
+        return "# Changesets\n"
+            + "\n"
+            + "This directory stores pending release notes. Add one changeset for each user-visible change.\n"
+            + "\n"
+            + "Create a changeset:\n"
+            + "\n"
+            + "```bash\n"
+            + "javachanges add --directory . --summary \"describe the change\" --release patch\n"
+            + "```\n"
+            + "\n"
+            + "For multi-module repositories, use detected module names:\n"
+            + "\n"
+            + "```bash\n"
+            + "javachanges modules --directory .\n"
+            + "javachanges add --directory . --modules core --summary \"describe the change\" --release patch\n"
+            + "```\n"
+            + "\n"
+            + "Changesets use the official package-map frontmatter shape:\n"
+            + "\n"
+            + "```md\n"
+            + "---\n"
+            + "\"core\": minor\n"
+            + "---\n"
+            + "\n"
+            + "Describe the user-visible change.\n"
+            + "```\n"
+            + "\n"
+            + "Supported release levels are `patch`, `minor`, and `major`.\n"
+            + "\n"
+            + "Review and apply the release plan:\n"
+            + "\n"
+            + "```bash\n"
+            + "javachanges status --directory .\n"
+            + "javachanges plan --directory . --apply true\n"
+            + "```\n";
     }
 
     private static String renderChangesetBody(String summary, String body) {

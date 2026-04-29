@@ -155,7 +155,7 @@ Rules of thumb:
 
 | Command | Purpose | Writes files |
 | --- | --- | --- |
-| `init` | Initialize `.changesets/README.md`, optionally `.changesets/config.jsonc`, and print starter commands | `.changesets/README.md`, optional `.changesets/config.jsonc` |
+| `init` | Initialize `.changesets/README.md` with starter examples, optionally `.changesets/config.jsonc`, and print starter commands | `.changesets/README.md`, optional `.changesets/config.jsonc` |
 | `add` | Create a changeset | `.changesets/*.md` |
 | `next` | Suggest the next release workflow command | No |
 | `modules` | List detected build metadata and module names | No |

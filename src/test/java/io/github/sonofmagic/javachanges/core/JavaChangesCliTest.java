@@ -61,7 +61,13 @@ class JavaChangesCliTest {
         ExecutionResult result = execute("init", "--directory", repoRoot.toString());
 
         assertEquals(0, result.exitCode);
-        assertTrue(Files.exists(repoRoot.resolve(".changesets").resolve("README.md")));
+        Path readmePath = repoRoot.resolve(".changesets").resolve("README.md");
+        assertTrue(Files.exists(readmePath));
+        String readme = read(readmePath);
+        assertTrue(readme.contains("This directory stores pending release notes."));
+        assertTrue(readme.contains("javachanges add --directory . --summary \"describe the change\" --release patch"));
+        assertTrue(readme.contains("\"core\": minor"));
+        assertTrue(readme.contains("javachanges plan --directory . --apply true"));
         assertFalse(Files.exists(repoRoot.resolve(".changesets").resolve("config.jsonc")));
         assertTrue(result.stdout.contains("Initialized javachanges in " + repoRoot));
         assertTrue(result.stdout.contains("Created: .changesets/README.md"));
@@ -154,6 +160,7 @@ class JavaChangesCliTest {
         assertEquals(0, result.exitCode);
         Path changesetsDir = repoRoot.resolve(".changesets");
         assertTrue(Files.exists(changesetsDir.resolve("README.md")));
+        assertTrue(read(changesetsDir.resolve("README.md")).contains("Supported release levels are `patch`, `minor`, and `major`."));
         List<Path> files = listChangesetFiles(changesetsDir);
         assertEquals(1, files.size());
         String content = read(files.get(0));

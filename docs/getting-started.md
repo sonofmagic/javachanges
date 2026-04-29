@@ -150,7 +150,7 @@ Initialize the changeset directory and optional release workflow config:
 mvn javachanges:init -Djavachanges.config=true
 ```
 
-The command creates `.changesets/README.md`, writes `.changesets/config.jsonc` when requested, and prints the next commands to run.
+The command creates `.changesets/README.md` with starter examples, writes `.changesets/config.jsonc` when requested, and prints the next commands to run.
 Run `mvn javachanges:modules` when you need the exact module names; its output includes `add` examples using the detected modules.
 
 ## 6. Create a changeset
