@@ -321,7 +321,10 @@ public final class ReleaseMessages {
     }
 
     public static String unsupportedLanguage(String value) {
-        return "Unsupported language: " + value + ". Use en or zh-CN.";
+        return text(
+            "Unsupported language: " + value + ". Use en or zh-CN.",
+            "不支持的语言: " + value + "。请使用 en 或 zh-CN。"
+        );
     }
 
     public static String unsupportedOutputFormat(String value) {
