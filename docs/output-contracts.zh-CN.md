@@ -18,7 +18,16 @@
 | `manifest-field` 标准输出 | 脚本和 CI | 优先使用的机器可读接口 |
 | `.changesets/release-plan.json` | 兼容脚本和 CI | 开启生成文件时的机器可读接口 |
 | `.changesets/release-plan.md` | 兼容 Pull Request / Merge Request 正文 | 面向人阅读，结构可能演进 |
+| `.changesets/release-plan-backup.json` | `plan --apply true` 提交前的本地恢复 | 机器可读恢复快照，本地工作流产物 |
+| `add --format json` 标准输出 | 脚本和 CI | 机器可读 changeset 创建契约 |
+| `version --format json` 标准输出 | 脚本和 CI | 机器可读版本和构建元数据契约 |
+| release tag helper 的 `--format json` 标准输出 | 脚本和 CI | 机器可读 release tag 解析契约 |
+| `modules --format json` 标准输出 | 脚本和 CI | 机器可读构建和模块发现契约 |
 | `status` 标准输出 | 本地操作者和审阅者 | 面向人，不要做刚性解析 |
+| `status --format json` 标准输出 | 脚本和 CI | 机器可读 release-plan 状态契约 |
+| `next --format json` 标准输出 | 脚本和 CI | 机器可读下一步推荐契约 |
+| `plan --format json` 标准输出 | 脚本和 CI | 机器可读 plan 预览/应用契约 |
+| `validate --format json` 标准输出 | 脚本和 CI | 机器可读本地发布就绪校验契约 |
 | `render-vars` 标准输出 | 本地操作者 | 默认面向人 |
 | `render-vars --format json` 标准输出 | 脚本和 CI | 机器可读 JSON 契约 |
 | `doctor-local` 标准输出 | 本地操作者 | 默认面向人 |
@@ -45,7 +54,118 @@
 - 如果需要兼容 manifest，再读取 `.changesets/release-plan.json`
 - 不要把终端标题、列对齐空格或中英文文案当作稳定契约
 
-## 3. `status` 输出
+## 3. `add --format json` 输出
+
+当脚本需要创建 changeset 并读取创建出的文件路径时，使用 JSON 输出，避免解析人工文本。
+
+命令：
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="add --directory /path/to/repo --summary 'add release notes command' --release minor --no-interactive true --format json"
+```
+
+当前结构：
+
+```json
+{
+  "ok": true,
+  "command": "add",
+  "repository": "/path/to/repo",
+  "createdChangeset": ".changesets/20260418-add-release-notes-command.md",
+  "releaseLevel": "minor",
+  "affectedPackages": ["core"],
+  "summary": "add release notes command",
+  "nextCommands": [
+    "javachanges status --directory /path/to/repo",
+    "javachanges next --directory /path/to/repo"
+  ]
+}
+```
+
+CI 中建议把 `--format json` 和 `--no-interactive true` 一起使用，这样缺少输入时会返回 JSON 错误，而不是等待 stdin。
+
+## 4. `version --format json` 输出
+
+当自动化需要当前版本以及产生这个版本的构建模型时，使用 JSON 输出。
+
+命令：
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="version --directory /path/to/repo --format json"
+```
+
+当前结构：
+
+```json
+{
+  "ok": true,
+  "command": "version",
+  "repository": "/path/to/repo",
+  "buildTool": "maven",
+  "versionFile": "pom.xml",
+  "currentRevision": "0.1.0-SNAPSHOT",
+  "releaseVersion": "0.1.0",
+  "snapshot": true
+}
+```
+
+不带 `--format json` 的 `version` 仍然只输出当前版本字符串。
+
+## 5. Release tag helper JSON 输出
+
+当自动化需要从 tag 同时得到 release version 和 release module 时，使用 JSON 输出。
+
+命令：
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="release-version-from-tag --tag core/v1.2.3 --format json"
+```
+
+当前结构：
+
+```json
+{
+  "ok": true,
+  "command": "release-version-from-tag",
+  "tag": "core/v1.2.3",
+  "releaseVersion": "1.2.3",
+  "releaseModule": "core"
+}
+```
+
+`release-module-from-tag --format json` 会返回同样字段，只是 `"command"` 为 `"release-module-from-tag"`。对于 `v1.2.3` 这样的 whole-repo tag，`releaseModule` 为 `null`。
+
+## 6. `modules --format json` 输出
+
+当自动化需要先读取精确模块名，再创建 changeset 时，使用 JSON 输出。
+
+命令：
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="modules --directory /path/to/repo --format json"
+```
+
+当前结构：
+
+```json
+{
+  "ok": true,
+  "command": "modules",
+  "repository": "/path/to/repo",
+  "buildTool": "maven",
+  "versionFile": "pom.xml",
+  "currentRevision": "0.1.0-SNAPSHOT",
+  "modules": ["core", "api"],
+  "nextCommands": [
+    "javachanges add --directory /path/to/repo --modules core --summary \"describe the change\" --release patch",
+    "javachanges add --directory /path/to/repo --modules all --summary \"describe the change\" --release patch"
+  ]
+}
+```
+
+单模块仓库的 `nextCommands` 只包含模块专属的 `add` 命令。
+
+## 7. `status` 输出
 
 `status` 打印的是给人看的发布摘要。
 
@@ -88,7 +208,7 @@ Next steps:
 - 不要解析 bullet 文本或空格对齐
 - 如果你需要 `releaseVersion` 或 `releaseLevel`，直接读 manifest
 
-## 4. `manifest-field` 输出
+## 8. `manifest-field` 输出
 
 `manifest-field` 是最窄、最适合脚本消费的接口。
 
@@ -112,7 +232,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /pa
 | `nextSnapshotVersion` | 写回 `pom.xml` 或 `gradle.properties` 的下一个快照版本 |
 | `releaseLevel` | 聚合后的发布级别 |
 
-## 5. `.changesets/release-plan.json`
+## 9. `.changesets/release-plan.json`
 
 这是当前最主要的机器可读发布 manifest。
 
@@ -167,7 +287,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /pa
 - 为了兼容当前实现，JSON 字段仍然叫 `modules`，即使用户文档里更推荐 `packages`
 - `type` 不是发布升级类型，真正有意义的是 `release`
 
-## 6. `.changesets/release-plan.md`
+## 10. `.changesets/release-plan.md`
 
 这个文件是给人审阅的 release PR / MR 正文。
 
@@ -207,7 +327,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /pa
 - 不适合作为稳定的机器接口
 - 标题和句子文案未来可能调整
 
-## 7. `render-vars` 输出
+## 11. `render-vars` 输出
 
 `render-vars` 用来展示某个 env 文件里的值会如何映射成 GitHub / GitLab 变量与 secrets。
 
@@ -296,7 +416,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="render-vars --env-file env/rel
 - 退出码 `0` 表示命令成功
 - `sections[].entries[].label` 表示字段名，`value` 表示渲染后的值或状态词
 
-## 8. `doctor-local` 输出
+## 12. `doctor-local` 输出
 
 `doctor-local` 会检查本地运行时、env 完整性、平台 CLI 登录状态，以及可选的仓库标识。
 
@@ -362,7 +482,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --env-file env/re
 - 非 `0` 退出码表示至少一个必需检查失败
 - 返回值会包含 `sections`，失败时还可能包含 `suggestions` 和最终的 `error`
 
-## 9. `doctor-platform` 和 `audit-vars`
+## 13. `doctor-platform` 和 `audit-vars`
 
 `doctor-platform` 用来在真正 sync 或 audit 之前，确认本地 env 和平台 CLI 鉴权是否已经准备好。
 
@@ -412,7 +532,7 @@ GitLab 额外增强：
 - `doctor-platform --platform gitlab --format json` 现在会额外返回 protected variables 和 protected branches 检查分组
 - 如果存在 protected variables，但配置的 `snapshotBranch` 没有被保护，命令会明确失败，而不是静默通过
 
-## 10. `publish` 和 GitLab 发布 JSON 契约
+## 14. `publish` 和 GitLab 发布 JSON 契约
 
 `preflight`、`publish`、`gitlab-release-plan`、`gitlab-tag-from-plan`、`gitlab-release` 现在共享一组稳定的顶层字段。
 
@@ -482,7 +602,7 @@ snapshot 专用示例：
 }
 ```
 
-## 11. 自动化建议
+## 15. 自动化建议
 
 对 CI 和脚本来说：
 
@@ -497,7 +617,7 @@ snapshot 专用示例：
 - 依赖 `== 本地 env 检查 ==` 这种标题文本
 - 依赖失败总结段落里的自然语言表述
 
-## 12. 相关阅读
+## 16. 相关阅读
 
 | 需求 | 文档 |
 | --- | --- |

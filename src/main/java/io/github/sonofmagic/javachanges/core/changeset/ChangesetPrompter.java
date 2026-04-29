@@ -8,6 +8,7 @@ import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import java.io.Console;
 import java.io.PrintStream;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -21,6 +22,7 @@ public final class ChangesetPrompter {
         String type = ReleaseTextUtils.trimToNull(options.get("type"));
         String modules = ReleaseTextUtils.trimToNull(options.get("modules"));
         String body = ReleaseTextUtils.trimToNull(options.get("body"));
+        boolean noInteractive = ReleaseTextUtils.isTrue(options.get("no-interactive"));
 
         if (summary == null) {
             summary = ReleaseTextUtils.trimToNull(System.getenv("CHANGESET_SUMMARY"));
@@ -38,7 +40,12 @@ public final class ChangesetPrompter {
             body = ReleaseTextUtils.trimToNull(System.getenv("CHANGESET_BODY"));
         }
 
+        if (noInteractive && (summary == null || release == null)) {
+            throw new IllegalArgumentException(ReleaseMessages.changesetNoInteractiveMissing());
+        }
+
         if (summary != null && release != null) {
+            summary = requireValidSummary(summary);
             return new ChangesetInput(
                 ReleaseLevel.parse(release),
                 ReleaseModuleUtils.normalizeType(type == null ? "other" : type),
@@ -54,7 +61,12 @@ public final class ChangesetPrompter {
         summary = summary != null ? summary : prompt(console, scanner, out, ReleaseMessages.changesetSummaryPrompt());
         release = release != null ? release : prompt(console, scanner, out, ReleaseMessages.changesetReleaseLevelPrompt());
         type = type == null ? "other" : type;
-        modules = modules == null ? "all" : modules;
+        if (modules == null) {
+            List<String> knownModules = ReleaseModuleUtils.detectKnownModules(repoRoot);
+            modules = knownModules.size() > 1
+                ? prompt(console, scanner, out, ReleaseMessages.changesetModulesPrompt(ReleaseModuleUtils.joinModules(knownModules)))
+                : "all";
+        }
 
         if (body == null) {
             out.println(ReleaseMessages.changesetBodyPrompt());
@@ -65,9 +77,17 @@ public final class ChangesetPrompter {
             ReleaseLevel.parse(release),
             ReleaseModuleUtils.normalizeType(type),
             ReleaseModuleUtils.parseModules(repoRoot, modules),
-            summary,
+            requireValidSummary(summary),
             body
         );
+    }
+
+    private static String requireValidSummary(String summary) {
+        String value = ReleaseTextUtils.trimToNull(summary);
+        if (value == null) {
+            throw new IllegalArgumentException(ReleaseMessages.changesetSummaryRequired());
+        }
+        return value;
     }
 
     private static String prompt(Console console, Scanner scanner, PrintStream out, String label) {

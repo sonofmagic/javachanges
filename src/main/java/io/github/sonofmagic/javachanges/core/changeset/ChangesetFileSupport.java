@@ -62,19 +62,9 @@ public final class ChangesetFileSupport {
     }
 
     public static List<Changeset> loadChangesets(Path repoRoot) throws IOException {
-        Path dir = repoRoot.resolve(ChangesetPaths.DIR);
-        if (!Files.exists(dir)) {
-            return Collections.emptyList();
-        }
         List<Changeset> changesets = new ArrayList<Changeset>();
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, "*.md")) {
-            for (Path path : stream) {
-                String fileName = path.getFileName().toString();
-                if (isChangesetReadme(fileName) || ChangesetPaths.RELEASE_PLAN_MD.equals(fileName)) {
-                    continue;
-                }
-                changesets.add(ChangesetParser.parse(repoRoot, path));
-            }
+        for (Path path : listPendingChangesetFiles(repoRoot)) {
+            changesets.add(parseChangeset(repoRoot, path));
         }
         Collections.sort(changesets, new Comparator<Changeset>() {
             @Override
@@ -83,6 +73,34 @@ public final class ChangesetFileSupport {
             }
         });
         return changesets;
+    }
+
+    public static List<Path> listPendingChangesetFiles(Path repoRoot) throws IOException {
+        Path dir = repoRoot.resolve(ChangesetPaths.DIR);
+        if (!Files.exists(dir)) {
+            return Collections.emptyList();
+        }
+        List<Path> paths = new ArrayList<Path>();
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, "*.md")) {
+            for (Path path : stream) {
+                String fileName = path.getFileName().toString();
+                if (isChangesetReadme(fileName) || ChangesetPaths.RELEASE_PLAN_MD.equals(fileName)) {
+                    continue;
+                }
+                paths.add(path);
+            }
+        }
+        Collections.sort(paths, new Comparator<Path>() {
+            @Override
+            public int compare(Path left, Path right) {
+                return left.getFileName().toString().compareTo(right.getFileName().toString());
+            }
+        });
+        return paths;
+    }
+
+    public static Changeset parseChangeset(Path repoRoot, Path path) throws IOException {
+        return ChangesetParser.parse(repoRoot, path);
     }
 
     public static String readManifestField(Path repoRoot, String field) throws IOException {

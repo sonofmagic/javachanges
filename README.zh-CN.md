@@ -52,10 +52,12 @@
 然后在该仓库里执行：
 
 ```bash
+mvn javachanges:setup
 mvn javachanges:init -Djavachanges.config=true
 mvn javachanges:next
 mvn javachanges:modules
 mvn javachanges:status
+mvn javachanges:validate
 mvn javachanges:plan -Djavachanges.apply=true
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
 mvn javachanges:version
@@ -78,10 +80,12 @@ java -jar .javachanges/javachanges-<released-version>.jar --help
 
 ```bash
 ./mvnw -q -DskipTests install
+mvn io.github.sonofmagic:javachanges:1.9.0-SNAPSHOT:setup
 mvn io.github.sonofmagic:javachanges:1.9.0-SNAPSHOT:init -Djavachanges.config=true
 mvn io.github.sonofmagic:javachanges:1.9.0-SNAPSHOT:next
 mvn io.github.sonofmagic:javachanges:1.9.0-SNAPSHOT:modules
 mvn io.github.sonofmagic:javachanges:1.9.0-SNAPSHOT:status
+mvn io.github.sonofmagic:javachanges:1.9.0-SNAPSHOT:validate
 mvn io.github.sonofmagic:javachanges:1.9.0-SNAPSHOT:plan -Djavachanges.apply=true
 mvn io.github.sonofmagic:javachanges:1.9.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
 mvn io.github.sonofmagic:javachanges:1.9.0-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
@@ -240,10 +244,12 @@ summary: automate javachanges self-release publishing via GitHub Actions
 高价值命令：
 
 - `init`
+- `setup`
 - `add`
 - `next`
 - `modules`
 - `status`
+- `validate`
 - `plan`
 - `write-settings`
 - `init-env`

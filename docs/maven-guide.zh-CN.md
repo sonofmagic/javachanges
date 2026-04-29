@@ -133,6 +133,8 @@ mvn javachanges:add \
   -Djavachanges.release=patch
 ```
 
+CI 或脚本中可以添加 `-Djavachanges.noInteractive=true`，这样缺少 summary 或 release 输入时会直接失败，而不是进入交互提示。如果脚本需要读取已创建 changeset 路径或下一步命令，可以再添加 `-Djavachanges.format=json`。
+
 生成的 changeset 会使用根 `artifactId`：
 
 ```md

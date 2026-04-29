@@ -43,10 +43,12 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/re
 
 | 片段 | 说明 |
 | --- | --- |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:setup` | 用安全默认值执行首次设置 |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:init -Djavachanges.config=true` | 初始化 `.changesets/` 文件并输出起步命令 |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:next` | 让 javachanges 判断下一步应该执行哪个发布流程命令 |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:modules` | 列出识别到的构建元数据和模块名称 |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:status` | 执行独立的 status goal |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:validate` | 执行本地发布就绪校验 |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:plan -Djavachanges.apply=true` | 执行独立的 plan goal |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:publish -Djavachanges.tag=v1.2.3` | 执行独立的 Maven publish dry-run goal |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:run -Djavachanges.args="..."` | 对还没有独立 goal 的命令继续走通用桥接 goal |
@@ -75,10 +77,12 @@ mvn javachanges:status -Djavachanges.language=zh-CN
 如果你已经在目标仓库的 `pom.xml` 里声明了 plugin，本地最短写法就是：
 
 ```bash
+mvn javachanges:setup
 mvn javachanges:init -Djavachanges.config=true
 mvn javachanges:next
 mvn javachanges:modules
 mvn javachanges:status
+mvn javachanges:validate
 mvn javachanges:plan -Djavachanges.apply=true
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
 mvn javachanges:version
@@ -163,13 +167,15 @@ jc-version:
 
 | 命令 | 作用 | 是否写文件 |
 | --- | --- | --- |
+| `setup` | 用安全默认值执行首次设置；可通过可选参数生成 env 和 CI 模板 | `.changesets/README.md`、`.changesets/config.jsonc`，可选 env 和 CI 文件 |
 | `init` | 初始化带起步示例的 `.changesets/README.md`，可选写入 `.changesets/config.jsonc`，并输出起步命令 | `.changesets/README.md`，可选 `.changesets/config.jsonc` |
 | `add` | 创建 changeset | `.changesets/*.md` |
 | `next` | 推荐下一步发布流程命令，包含本地、GitHub 和 GitLab 路径 | 否 |
 | `modules` | 列出识别到的构建元数据和模块名称 | 否 |
 | `status` | 查看当前 release plan | 否 |
+| `validate` | 检查本地发布就绪状态，包含构建元数据、changeset、配置、git 状态和计划 tag | 否 |
 | `plan` | 计算当前 release plan | 否 |
-| `plan --apply true` | 应用 release plan 并消费 changesets | `pom.xml` 或 `gradle.properties`、`CHANGELOG.md`、`.changesets/release-plan.json`、`.changesets/release-plan.md` |
+| `plan --apply true` | 应用 release plan 并消费 changesets | `pom.xml` 或 `gradle.properties`、`CHANGELOG.md`、`.changesets/release-plan.json`、`.changesets/release-plan.md`、`.changesets/release-plan-backup.json` |
 | `manifest-field` | 读取生成后的 release manifest 字段，或用 `--fresh true` 从当前仓库状态推导 | 否 |
 | `release-notes` | 为 tag 生成 release notes | 目标文件 |
 | `ensure-gpg-public-key` | 发布并验证当前签名公钥是否已被支持的 keyserver 发现 | 否 |
@@ -179,7 +185,18 @@ jc-version:
 
 ## 5. Changeset 相关命令
 
-### 5.1 `init`
+### 5.1 `setup`
+
+用安全默认值执行首次设置：
+
+```bash
+mvn javachanges:setup
+mvn -q -DskipTests compile exec:java -Dexec.args="setup --directory /path/to/repo"
+```
+
+默认情况下，`setup` 只会写入 `.changesets/README.md` 和 `.changesets/config.jsonc`，检测构建模型和模块，然后输出下一步命令。传入 `--env true`、`--github-actions true` 或 `--gitlab-ci true` 后，才会额外生成发布 env 和 CI 模板。已有生成文件默认保留，除非传入 `--force true`。
+
+### 5.2 `init`
 
 初始化目标仓库的 changeset 目录，并输出后续可以直接复制执行的命令。
 
@@ -193,7 +210,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="init --directory /path/to/repo
 如果需要用默认模板替换已有 `.changesets/config.json` 或 `.changesets/config.jsonc`，使用 `--force` 或 `-Djavachanges.force=true`。
 同一个 force 参数也会用当前起步指南刷新已有 `.changesets/README.md`；不加 force 时会保留自定义 README 内容。
 
-### 5.2 `add`
+### 5.3 `add`
 
 创建一个新的 changeset 文件。
 
@@ -211,8 +228,13 @@ mvn -q -DskipTests compile exec:java -Dexec.args="add --directory /path/to/repo 
 | `--release` | `patch`、`minor`、`major` |
 | `--modules` | 逗号分隔的 Maven artifactId、Gradle project name，或 `all` |
 | `--body` | summary 之后追加的 Markdown 正文 |
+| `--format` | `text` 或 `json` |
+| `--no-interactive` | 缺少 `--summary` 或 `--release` 时直接失败，不进入交互输入 |
 
 如果 `--release` 不是 `patch`、`minor` 或 `major`，命令会在写文件前失败，并输出允许值。
+
+启用交互输入时，多模块仓库还会提示选择受影响模块，并显示已检测到的模块名。CI 或脚本中建议使用 `--no-interactive true`，让缺少输入时输出明确错误，而不是等待 stdin。
+自动化需要读取已创建 changeset 路径、影响包和下一步命令时，可以使用 `--format json`。
 
 写入文件后，`add` 会输出解析后的 release level、affected packages，以及同一仓库的 `status` / `next` 命令，方便用户立刻审阅 release plan。
 
@@ -233,7 +255,7 @@ add release notes command
 - `add` 仍然接受 `--release`、`--modules` 这类旧参数名
 - 但实际写出的文件已经是官方 Changesets 风格的 package map
 
-### 5.3 `status`
+### 5.4 `status`
 
 查看当前待发布的 release plan。
 
@@ -253,7 +275,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/re
 - 每一个待处理 changeset 条目
 - 用于创建或应用 changeset 的下一步命令
 
-### 5.4 `plan`
+### 5.5 `plan`
 
 只计算、不写文件：
 
@@ -275,16 +297,23 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo
 2. 往 `CHANGELOG.md` 前面插入新的 release section
 3. 写入 `.changesets/release-plan.json`
 4. 写入 `.changesets/release-plan.md`
-5. 删除已消费的 changeset 文件
+5. 在修改文件前写入 `.changesets/release-plan-backup.json`
+6. 删除已消费的 changeset 文件
 
-应用完成后，命令会继续输出同一仓库可直接复制的 `git status`、`git add`、`git commit` 和 `javachanges next` 命令。`git add` 会根据识别到的构建工具生成，Maven 仓库包含 `pom.xml`，Gradle 仓库包含 `gradle.properties`。
+应用完成后，命令会继续输出同一仓库可直接复制的恢复命令、`git status`、`git add`、`git commit` 和 `javachanges next` 命令。`git add` 会根据识别到的构建工具生成，Maven 仓库包含 `pom.xml`，Gradle 仓库包含 `gradle.properties`。
+
+如果本地应用后还没有提交，可以这样撤回：
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo --restore true"
+```
 
 `github-release-plan` 和 `gitlab-release-plan` 这类自动化命令可以传
 `--write-plan-files false`，避免把生成的 `release-plan.json` 和
 `release-plan.md` 提交进 release 分支。这个模式下 PR/MR 正文会作为临时文件生成，
 后续 tag / release job 应使用 `--fresh true`。
 
-### 5.5 `manifest-field`
+### 5.6 `manifest-field`
 
 读取生成后的 release manifest 字段，或从当前仓库状态推导字段。
 
@@ -311,16 +340,20 @@ changesets 已经被消费后，它会从当前快照版本推导 whole-repo 发
 
 | 命令 | 作用 | 示例 |
 | --- | --- | --- |
-| `version` | 输出当前根版本 | `version --directory /path/to/repo` |
-| `modules` | 列出识别到的 Maven artifactId 或 Gradle project name | `modules --directory /path/to/repo` |
-| `release-version-from-tag` | 从 `v1.2.3` 或 `core/v1.2.3` 里取出 `1.2.3` | `release-version-from-tag --tag v1.2.3` |
-| `release-module-from-tag` | 从 `core/v1.2.3` 里取出 package/module 名称 | `release-module-from-tag --tag core/v1.2.3` |
+| `version` | 输出当前根版本 | `version --directory /path/to/repo --format json` |
+| `modules` | 列出识别到的 Maven artifactId 或 Gradle project name | `modules --directory /path/to/repo --format json` |
+| `release-version-from-tag` | 从 `v1.2.3` 或 `core/v1.2.3` 里取出 `1.2.3` | `release-version-from-tag --tag v1.2.3 --format json` |
+| `release-module-from-tag` | 从 `core/v1.2.3` 里取出 package/module 名称 | `release-module-from-tag --tag core/v1.2.3 --format json` |
 | `assert-module` | 校验某个 Maven artifactId 或 Gradle project name 是否存在 | `assert-module --directory /path/to/repo --module core` |
 | `assert-snapshot` | 确认当前版本仍然是 snapshot | `assert-snapshot --directory /path/to/repo` |
 | `assert-release-tag` | 校验 tag 是否和当前仓库版本一致 | `assert-release-tag --directory /path/to/repo --tag v1.2.3` |
 | `module-selector-args` | 输出构建工具模块选择参数 | `module-selector-args --directory /path/to/repo --module core` |
 
-`modules` 还会输出可直接复制的 `add` 命令。对于多模块仓库，它会同时给出第一个模块的示例和 `--modules all` 示例。
+自动化需要读取构建工具、版本文件、snapshot 标记，以及由当前版本推导出的 release version 时，`version` 支持 `--format json`。
+
+release tag 解析命令支持 `--format json`，并同时返回 `releaseVersion` 和 `releaseModule`，脚本可以只解析一次 tag 再复用两个字段。
+
+`modules` 还会输出可直接复制的 `add` 命令。对于多模块仓库，它会同时给出第一个模块的示例和 `--modules all` 示例。自动化需要读取构建工具、版本文件、模块列表和生成的 `add` 命令时，可以使用 `--format json`。
 
 Maven 仓库中，`module-selector-args --module core` 输出 Maven `-pl :core -am`。
 Gradle 仓库中，它输出 Gradle project selector `:core`。
@@ -355,6 +388,15 @@ mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --directory /path
 
 | 命令 | 说明 |
 | --- | --- |
+| `add` | 返回已创建 changeset 路径、发布级别、影响包和下一步命令 |
+| `version` | 返回构建工具、版本文件、当前版本、release version 和 snapshot 标记 |
+| `modules` | 返回构建工具、版本文件、当前版本、模块列表和 add 命令 |
+| `release-version-from-tag` | 返回 tag、release version 和 release module |
+| `release-module-from-tag` | 返回 tag、release version 和 release module |
+| `status` | 返回当前 release-plan 状态和审阅命令 |
+| `next` | 返回待发布元数据和推荐下一步命令 |
+| `plan` | 返回 dry-run / apply / restore 元数据和下一步命令 |
+| `validate` | 返回发布就绪检查结果和问题列表 |
 | `render-vars` | 返回值里会带上 `platform` 和 `showSecrets` |
 | `doctor-local` | 失败时会包含分组检查结果、建议列表和最终错误信息 |
 | `doctor-platform` | 会带上 `platform` 以及 env / CLI 检查分组 |

@@ -9,8 +9,11 @@ import org.apache.maven.plugins.annotations.Parameter;
 import java.util.ArrayList;
 import java.util.List;
 
-@Mojo(name = "status", defaultPhase = LifecyclePhase.NONE, threadSafe = true, requiresProject = true)
-public final class JavaChangesStatusMojo extends AbstractJavaChangesMojo {
+@Mojo(name = "validate", defaultPhase = LifecyclePhase.NONE, threadSafe = true, requiresProject = true)
+public final class JavaChangesValidateMojo extends AbstractJavaChangesMojo {
+
+    @Parameter(property = "javachanges.checkDirty", defaultValue = "false")
+    private boolean checkDirty;
 
     @Parameter(property = "javachanges.format")
     private String format;
@@ -18,7 +21,8 @@ public final class JavaChangesStatusMojo extends AbstractJavaChangesMojo {
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         List<String> args = new ArrayList<String>();
+        JavaChangesMavenPluginSupport.addFlag(args, "--check-dirty", checkDirty);
         JavaChangesMavenPluginSupport.addOption(args, "--format", format);
-        executeStructuredGoal("status", "status", args.toArray(new String[0]));
+        executeStructuredGoal("validate", "validate", args.toArray(new String[0]));
     }
 }

@@ -1,5 +1,6 @@
 package io.github.sonofmagic.javachanges.core;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -32,7 +33,9 @@ class JavaChangesCliTest {
         assertEquals(0, result.exitCode);
         assertTrue(result.stdout.contains("Usage: javachanges"));
         assertTrue(result.stdout.contains("init"));
+        assertTrue(result.stdout.contains("setup"));
         assertTrue(result.stdout.contains("next"));
+        assertTrue(result.stdout.contains("validate"));
         assertTrue(result.stdout.contains("modules"));
         assertTrue(result.stdout.contains("github-release-plan"));
         assertTrue(result.stdout.contains("github-release-from-plan"));
@@ -52,6 +55,46 @@ class JavaChangesCliTest {
         assertEquals(0, result.exitCode);
         assertEquals("1.2.3\n", result.stdout);
         assertEquals("", result.stderr);
+    }
+
+    @Test
+    void releaseVersionFromTagJsonReportsTagMetadata() {
+        ExecutionResult result = execute("release-version-from-tag", "--tag", "core/v1.2.3", "--format", "json");
+
+        assertEquals(0, result.exitCode);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertTrue(root.get("ok").asBoolean());
+        assertEquals("release-version-from-tag", root.get("command").asText());
+        assertEquals("core/v1.2.3", root.get("tag").asText());
+        assertEquals("1.2.3", root.get("releaseVersion").asText());
+        assertEquals("core", root.get("releaseModule").asText());
+        assertEquals("", result.stderr);
+    }
+
+    @Test
+    void releaseModuleFromTagJsonReportsWholeRepoTag() {
+        ExecutionResult result = execute("release-module-from-tag", "--tag", "v1.2.3", "--format", "json");
+
+        assertEquals(0, result.exitCode);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertTrue(root.get("ok").asBoolean());
+        assertEquals("release-module-from-tag", root.get("command").asText());
+        assertEquals("v1.2.3", root.get("tag").asText());
+        assertEquals("1.2.3", root.get("releaseVersion").asText());
+        assertTrue(root.get("releaseModule").isNull());
+        assertEquals("", result.stderr);
+    }
+
+    @Test
+    void releaseTagJsonReportsInvalidTag() {
+        ExecutionResult result = execute("release-version-from-tag", "--tag", "not-a-tag", "--format", "json");
+
+        assertNotEquals(0, result.exitCode);
+        assertEquals("", result.stderr);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertFalse(root.get("ok").asBoolean());
+        assertEquals("release-version-from-tag", root.get("command").asText());
+        assertEquals("Unsupported release tag: not-a-tag", root.get("reason").asText());
     }
 
     @Test
@@ -172,6 +215,70 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void setupCreatesMinimalReleaseWorkflowFiles(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+
+        ExecutionResult result = execute("setup", "--directory", repoRoot.toString());
+
+        assertEquals(0, result.exitCode);
+        assertTrue(Files.exists(repoRoot.resolve(".changesets").resolve("README.md")));
+        assertTrue(Files.exists(repoRoot.resolve(".changesets").resolve("config.jsonc")));
+        assertFalse(Files.exists(repoRoot.resolve("env").resolve("release.env.local")));
+        assertFalse(Files.exists(repoRoot.resolve(".github").resolve("workflows").resolve("javachanges-release.yml")));
+        assertFalse(Files.exists(repoRoot.resolve(".gitlab-ci.yml")));
+        assertTrue(result.stdout.contains("Setting up javachanges in " + repoRoot));
+        assertTrue(result.stdout.contains("Created: .changesets/README.md"));
+        assertTrue(result.stdout.contains("Created: .changesets/config.jsonc"));
+        assertTrue(result.stdout.contains("Build tool: maven"));
+        assertTrue(result.stdout.contains("Modules: fixture-app"));
+        assertTrue(result.stdout.contains("Setup completed."));
+        assertTrue(result.stdout.contains("javachanges validate --directory " + repoRoot));
+        assertTrue(result.stdout.contains("javachanges init-github-actions --directory " + repoRoot));
+        assertTrue(result.stdout.contains("javachanges init-gitlab-ci --directory " + repoRoot));
+    }
+
+    @Test
+    void setupKeepsExistingGeneratedFilesUnlessForced(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+        Path changesetsDir = repoRoot.resolve(".changesets");
+        Files.createDirectories(changesetsDir);
+        Path config = changesetsDir.resolve("config.jsonc");
+        Files.write(config, "{ \"baseBranch\": \"develop\" }\n".getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = execute("setup", "--directory", repoRoot.toString());
+
+        assertEquals(0, result.exitCode);
+        assertEquals("{ \"baseBranch\": \"develop\" }\n", read(config));
+        assertTrue(result.stdout.contains("Kept: .changesets/config.jsonc"));
+    }
+
+    @Test
+    void setupCanGenerateOptionalEnvAndCiTemplates(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+
+        ExecutionResult result = execute(
+            "setup",
+            "--directory", repoRoot.toString(),
+            "--env", "true",
+            "--github-actions", "true",
+            "--gitlab-ci", "true",
+            "--javachanges-version", "1.2.3"
+        );
+
+        assertEquals(0, result.exitCode);
+        assertTrue(Files.exists(repoRoot.resolve("env").resolve("release.env.example")));
+        assertTrue(Files.exists(repoRoot.resolve("env").resolve("release.env.local")));
+        assertTrue(Files.exists(repoRoot.resolve(".github").resolve("workflows").resolve("javachanges-release.yml")));
+        assertTrue(Files.exists(repoRoot.resolve(".gitlab-ci.yml")));
+        assertTrue(read(repoRoot.resolve(".github").resolve("workflows").resolve("javachanges-release.yml")).contains("JAVACHANGES_VERSION: \"1.2.3\""));
+        assertTrue(read(repoRoot.resolve(".gitlab-ci.yml")).contains("JAVACHANGES_VERSION: \"1.2.3\""));
+        assertTrue(result.stdout.contains("Created: env/release.env.example"));
+        assertTrue(result.stdout.contains("Generated local env file: env/release.env.local"));
+        assertTrue(result.stdout.contains("Generated GitHub Actions workflow: .github/workflows/javachanges-release.yml"));
+        assertTrue(result.stdout.contains("Generated GitLab CI template: .gitlab-ci.yml"));
+    }
+
+    @Test
     void initQuotesDirectoryWithSpaces(@TempDir Path tempDir) throws Exception {
         Path repoRoot = tempDir.resolve("repo with space");
         Files.createDirectories(repoRoot);
@@ -215,6 +322,33 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void addJsonReportsCreatedChangeset(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+
+        ExecutionResult result = execute(
+            "add",
+            "--directory", repoRoot.toString(),
+            "--release", "minor",
+            "--summary", "add machine readable changeset output",
+            "--format", "json",
+            "--no-interactive", "true"
+        );
+
+        assertEquals(0, result.exitCode);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertTrue(root.get("ok").asBoolean());
+        assertEquals("add", root.get("command").asText());
+        assertEquals(repoRoot.toString(), root.get("repository").asText());
+        assertEquals("minor", root.get("releaseLevel").asText());
+        assertEquals("fixture-app", root.get("affectedPackages").get(0).asText());
+        assertEquals("add machine readable changeset output", root.get("summary").asText());
+        assertTrue(root.get("createdChangeset").asText().startsWith(".changesets/"));
+        assertEquals("javachanges status --directory " + repoRoot, root.get("nextCommands").get(0).asText());
+        assertEquals("javachanges next --directory " + repoRoot, root.get("nextCommands").get(1).asText());
+        assertEquals(1, listChangesetFiles(repoRoot.resolve(".changesets")).size());
+    }
+
+    @Test
     void addQuotesDirectoryWithSpacesInNextSteps(@TempDir Path tempDir) throws Exception {
         Path repoRoot = tempDir.resolve("repo with space");
         Files.createDirectories(repoRoot);
@@ -245,6 +379,48 @@ class JavaChangesCliTest {
 
         assertNotEquals(0, result.exitCode);
         assertTrue(result.stderr.contains("Unsupported release level: feature. Use patch, minor, or major."));
+    }
+
+    @Test
+    void addNoInteractiveRejectsMissingInput(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+
+        ExecutionResult result = execute(
+            "add",
+            "--directory", repoRoot.toString(),
+            "--no-interactive", "true",
+            "--release", "patch"
+        );
+
+        assertNotEquals(0, result.exitCode);
+        assertTrue(result.stderr.contains(
+            "Missing changeset input in --no-interactive mode. Pass --summary and --release, or set CHANGESET_SUMMARY and CHANGESET_RELEASE."
+        ));
+        assertEquals(0, listChangesetFiles(repoRoot.resolve(".changesets")).size());
+    }
+
+    @Test
+    void addJsonReportsMissingNoInteractiveInput(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+
+        ExecutionResult result = execute(
+            "add",
+            "--directory", repoRoot.toString(),
+            "--format", "json",
+            "--no-interactive", "true",
+            "--release", "patch"
+        );
+
+        assertNotEquals(0, result.exitCode);
+        assertEquals("", result.stderr);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertFalse(root.get("ok").asBoolean());
+        assertEquals("add", root.get("command").asText());
+        assertEquals(
+            "Missing changeset input in --no-interactive mode. Pass --summary and --release, or set CHANGESET_SUMMARY and CHANGESET_RELEASE.",
+            root.get("reason").asText()
+        );
+        assertEquals(0, listChangesetFiles(repoRoot.resolve(".changesets")).size());
     }
 
     @Test
@@ -295,6 +471,24 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void versionJsonReportsBuildModel(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+
+        ExecutionResult result = execute("version", "--directory", repoRoot.toString(), "--format", "json");
+
+        assertEquals(0, result.exitCode);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertTrue(root.get("ok").asBoolean());
+        assertEquals("version", root.get("command").asText());
+        assertEquals(repoRoot.toString(), root.get("repository").asText());
+        assertEquals("maven", root.get("buildTool").asText());
+        assertEquals("pom.xml", root.get("versionFile").asText());
+        assertEquals("1.1.1-SNAPSHOT", root.get("currentRevision").asText());
+        assertEquals("1.1.1", root.get("releaseVersion").asText());
+        assertTrue(root.get("snapshot").asBoolean());
+    }
+
+    @Test
     void modulesListsMavenBuildModel(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createMonorepo(tempDir, false);
 
@@ -311,6 +505,30 @@ class JavaChangesCliTest {
             + " --modules core --summary \"describe the change\" --release patch"));
         assertTrue(result.stdout.contains("javachanges add --directory " + repoRoot
             + " --modules all --summary \"describe the change\" --release patch"));
+    }
+
+    @Test
+    void modulesJsonListsBuildModel(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createMonorepo(tempDir, false);
+
+        ExecutionResult result = execute("modules", "--directory", repoRoot.toString(), "--format", "json");
+
+        assertEquals(0, result.exitCode);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertTrue(root.get("ok").asBoolean());
+        assertEquals("modules", root.get("command").asText());
+        assertEquals(repoRoot.toString(), root.get("repository").asText());
+        assertEquals("maven", root.get("buildTool").asText());
+        assertEquals("pom.xml", root.get("versionFile").asText());
+        assertEquals("1.1.1-SNAPSHOT", root.get("currentRevision").asText());
+        assertEquals("core", root.get("modules").get(0).asText());
+        assertEquals("cli", root.get("modules").get(1).asText());
+        assertEquals("javachanges add --directory " + repoRoot
+            + " --modules core --summary \"describe the change\" --release patch",
+            root.get("nextCommands").get(0).asText());
+        assertEquals("javachanges add --directory " + repoRoot
+            + " --modules all --summary \"describe the change\" --release patch",
+            root.get("nextCommands").get(1).asText());
     }
 
     @Test
@@ -360,6 +578,113 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void statusJsonReportsNoPendingChangesets(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+
+        ExecutionResult result = execute("status", "--directory", repoRoot.toString(), "--format", "json");
+
+        assertEquals(0, result.exitCode);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertTrue(root.get("ok").asBoolean());
+        assertEquals("status", root.get("command").asText());
+        JsonNode plan = root.get("plan");
+        assertEquals(repoRoot.toString(), plan.get("repository").asText());
+        assertFalse(plan.get("hasPendingChangesets").asBoolean());
+        assertEquals(0, plan.get("pendingChangesets").asInt());
+        assertTrue(plan.get("releaseVersion").isNull());
+        assertEquals("1.1.1-SNAPSHOT", plan.get("nextSnapshotVersion").asText());
+        assertEquals("javachanges add --directory " + repoRoot
+            + " --summary \"describe the change\" --release patch", root.get("nextCommands").get(0).asText());
+    }
+
+    @Test
+    void validatePassesForReleaseReadyRepository(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, true);
+        writeChangeset(repoRoot,
+            "minor-release.md",
+            "---\n" +
+                "\"fixture-app\": minor\n" +
+                "---\n" +
+                "\n" +
+                "validate local release readiness\n");
+
+        ExecutionResult result = execute("validate", "--directory", repoRoot.toString());
+
+        assertEquals(0, result.exitCode);
+        assertTrue(result.stdout.contains("Validation passed for " + repoRoot));
+        assertTrue(result.stdout.contains("Checks:"));
+        assertTrue(result.stdout.contains("- Current revision: 1.1.1-SNAPSHOT"));
+        assertTrue(result.stdout.contains("- Pending changesets: 1"));
+        assertTrue(result.stdout.contains("- Release version: v1.2.0"));
+        assertTrue(result.stdout.contains("- Planned tags: v1.2.0"));
+    }
+
+    @Test
+    void validateJsonReportsIssues(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+
+        ExecutionResult result = execute("validate", "--directory", repoRoot.toString(), "--format", "json");
+
+        assertNotEquals(0, result.exitCode);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertFalse(root.get("ok").asBoolean());
+        assertEquals("validate", root.get("command").asText());
+        assertEquals(repoRoot.toString(), root.get("repository").asText());
+        assertEquals("GIT_REPOSITORY", root.get("issues").get(0).get("code").asText());
+    }
+
+    @Test
+    void validateReportsInvalidChangeset(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, true);
+        writeChangeset(repoRoot, "broken.md", "not frontmatter\n");
+
+        ExecutionResult result = execute("validate", "--directory", repoRoot.toString());
+
+        assertNotEquals(0, result.exitCode);
+        assertTrue(result.stdout.contains("Validation failed for " + repoRoot));
+        assertTrue(result.stdout.contains("[CHANGESET]"));
+        assertTrue(result.stdout.contains(".changesets/broken.md"));
+    }
+
+    @Test
+    void validateReportsExistingPlannedTag(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, true);
+        run(repoRoot, "git", "config", "user.name", "tester");
+        run(repoRoot, "git", "config", "user.email", "tester@example.com");
+        run(repoRoot, "git", "add", "pom.xml");
+        run(repoRoot, "git", "commit", "-qm", "init");
+        Files.createDirectories(repoRoot.resolve(".changesets"));
+        Files.write(repoRoot.resolve(".changesets").resolve("config.jsonc"),
+            ("{\n" +
+                "  \"tagStrategy\": \"per-module\"\n" +
+                "}\n").getBytes(StandardCharsets.UTF_8));
+        writeChangeset(repoRoot,
+            "patch-release.md",
+            "---\n" +
+                "\"fixture-app\": patch\n" +
+                "---\n" +
+                "\n" +
+                "catch duplicate tags before release\n");
+        run(repoRoot, "git", "tag", "fixture-app/v1.1.2");
+
+        ExecutionResult result = execute("validate", "--directory", repoRoot.toString());
+
+        assertNotEquals(0, result.exitCode);
+        assertTrue(result.stdout.contains("[RELEASE_TAG_EXISTS] Local release tag already exists: fixture-app/v1.1.2"));
+    }
+
+    @Test
+    void validateCheckDirtyReportsDirtyWorktree(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, true);
+        Files.write(repoRoot.resolve("untracked.txt"), "dirty\n".getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = execute("validate", "--directory", repoRoot.toString(), "--check-dirty", "true");
+
+        assertNotEquals(0, result.exitCode);
+        assertTrue(result.stdout.contains("[DIRTY_WORKTREE]"));
+    }
+
+    @Test
     void statusHidesOtherTypeLabel(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, true);
         writeChangeset(repoRoot,
@@ -383,6 +708,31 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void nextJsonReportsPendingReleaseCommands(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, true);
+        writeChangeset(repoRoot,
+            "minor-release.md",
+            "---\n" +
+                "\"fixture-app\": minor\n" +
+                "---\n" +
+                "\n" +
+                "guide json automation\n");
+
+        ExecutionResult result = execute("next", "--directory", repoRoot.toString(), "--format", "json");
+
+        assertEquals(0, result.exitCode);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertEquals("next", root.get("command").asText());
+        assertTrue(root.get("hasPendingChangesets").asBoolean());
+        assertEquals(1, root.get("pendingChangesets").asInt());
+        assertEquals("1.2.0", root.get("releaseVersion").asText());
+        assertEquals("fixture-app", root.get("affectedPackages").get(0).asText());
+        assertEquals("javachanges status --directory " + repoRoot, root.get("nextCommands").get(0).asText());
+        assertEquals("javachanges plan --directory " + repoRoot + " --apply true",
+            root.get("nextCommands").get(1).asText());
+    }
+
+    @Test
     void planDryRunSuggestsApplyWhenChangesetsArePending(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, true);
         writeChangeset(repoRoot,
@@ -400,6 +750,30 @@ class JavaChangesCliTest {
         assertTrue(result.stdout.contains("Next steps:"));
         assertTrue(result.stdout.contains("javachanges plan --directory " + repoRoot + " --apply true"));
         assertTrue(result.stdout.contains("javachanges next --directory " + repoRoot));
+        assertTrue(Files.exists(repoRoot.resolve(".changesets").resolve("minor-release.md")));
+    }
+
+    @Test
+    void planJsonDryRunReportsPlanWithoutApplying(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, true);
+        writeChangeset(repoRoot,
+            "minor-release.md",
+            "---\n" +
+                "\"fixture-app\": minor\n" +
+                "---\n" +
+                "\n" +
+                "preview json release plan\n");
+
+        ExecutionResult result = execute("plan", "--directory", repoRoot.toString(), "--format", "json");
+
+        assertEquals(0, result.exitCode);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertEquals("plan", root.get("command").asText());
+        assertFalse(root.get("apply").asBoolean());
+        assertFalse(root.get("applied").asBoolean());
+        assertEquals("dry-run", root.get("reason").asText());
+        assertEquals("minor", root.get("plan").get("releaseLevel").asText());
+        assertEquals("1.2.0", root.get("plan").get("releaseVersion").asText());
         assertTrue(Files.exists(repoRoot.resolve(".changesets").resolve("minor-release.md")));
     }
 
@@ -433,6 +807,8 @@ class JavaChangesCliTest {
 
         assertEquals(0, result.exitCode);
         assertTrue(result.stdout.contains("Applied release plan for v1.2.0"));
+        assertTrue(result.stdout.contains("Recovery backup: .changesets/release-plan-backup.json"));
+        assertTrue(result.stdout.contains("javachanges plan --directory " + repoRoot + " --restore true"));
         assertTrue(result.stdout.contains("Next steps:"));
         assertTrue(result.stdout.contains("git -C " + repoRoot + " status --short"));
         assertTrue(result.stdout.contains("git -C " + repoRoot + " add pom.xml CHANGELOG.md .changesets"));
@@ -447,6 +823,7 @@ class JavaChangesCliTest {
         assertTrue(read(repoRoot.resolve("pom.xml")).contains("<revision>1.2.0-SNAPSHOT</revision>"));
         assertTrue(Files.exists(repoRoot.resolve(".changesets").resolve("release-plan.json")));
         assertTrue(Files.exists(repoRoot.resolve(".changesets").resolve("release-plan.md")));
+        assertTrue(Files.exists(repoRoot.resolve(".changesets").resolve("release-plan-backup.json")));
         String releasePlanMarkdown = read(repoRoot.resolve(".changesets").resolve("release-plan.md"));
         assertTrue(releasePlanMarkdown.contains("| Field | Value |"));
         assertTrue(releasePlanMarkdown.contains("| 🏷️ Release version | `v1.2.0` |"));
@@ -456,6 +833,86 @@ class JavaChangesCliTest {
         assertTrue(releasePlanMarkdown.contains("## What happens next ✅"));
         assertFalse(releasePlanMarkdown.contains("  - 📝 Notes: automate self release"));
         assertFalse(Files.exists(repoRoot.resolve(".changesets").resolve("minor-release.md")));
+    }
+
+    @Test
+    void planRestoreRevertsAppliedReleasePlan(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, true);
+        Path changesetPath = writeChangeset(repoRoot,
+            "minor-release.md",
+            "---\n" +
+                "\"fixture-app\": minor\n" +
+                "---\n" +
+                "\n" +
+                "restore applied release plan\n");
+
+        ExecutionResult applyResult = execute("plan", "--directory", repoRoot.toString(), "--apply", "true");
+        assertEquals(0, applyResult.exitCode);
+        assertFalse(Files.exists(changesetPath));
+        assertTrue(read(repoRoot.resolve("pom.xml")).contains("<revision>1.2.0-SNAPSHOT</revision>"));
+        assertTrue(Files.exists(repoRoot.resolve(".changesets").resolve("release-plan.json")));
+
+        ExecutionResult restoreResult = execute("plan", "--directory", repoRoot.toString(), "--restore", "true");
+
+        assertEquals(0, restoreResult.exitCode);
+        assertTrue(restoreResult.stdout.contains("Restored release plan backup: .changesets/release-plan-backup.json"));
+        assertTrue(read(repoRoot.resolve("pom.xml")).contains("<revision>1.1.1-SNAPSHOT</revision>"));
+        assertFalse(Files.exists(repoRoot.resolve("CHANGELOG.md")));
+        assertFalse(Files.exists(repoRoot.resolve(".changesets").resolve("release-plan.json")));
+        assertFalse(Files.exists(repoRoot.resolve(".changesets").resolve("release-plan.md")));
+        assertTrue(Files.exists(changesetPath));
+        assertTrue(read(changesetPath).contains("restore applied release plan"));
+    }
+
+    @Test
+    void planJsonApplyReportsAppliedPlan(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, true);
+        writeChangeset(repoRoot,
+            "minor-release.md",
+            "---\n" +
+                "\"fixture-app\": minor\n" +
+                "---\n" +
+                "\n" +
+                "apply json release plan\n");
+
+        ExecutionResult result = execute("plan", "--directory", repoRoot.toString(), "--apply", "true", "--format", "json");
+
+        assertEquals(0, result.exitCode);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertEquals("plan", root.get("command").asText());
+        assertTrue(root.get("apply").asBoolean());
+        assertTrue(root.get("applied").asBoolean());
+        assertFalse(root.get("restored").asBoolean());
+        assertTrue(root.get("reason").isNull());
+        assertEquals(".changesets/release-plan-backup.json", root.get("backupFile").asText());
+        assertEquals("1.2.0", root.get("plan").get("releaseVersion").asText());
+        assertEquals("javachanges plan --directory " + repoRoot + " --restore true",
+            root.get("nextCommands").get(0).asText());
+        assertTrue(read(repoRoot.resolve("pom.xml")).contains("<revision>1.2.0-SNAPSHOT</revision>"));
+        assertFalse(Files.exists(repoRoot.resolve(".changesets").resolve("minor-release.md")));
+    }
+
+    @Test
+    void planJsonRestoreReportsRestoredBackup(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, true);
+        writeChangeset(repoRoot,
+            "minor-release.md",
+            "---\n" +
+                "\"fixture-app\": minor\n" +
+                "---\n" +
+                "\n" +
+                "restore json release plan\n");
+        ExecutionResult applyResult = execute("plan", "--directory", repoRoot.toString(), "--apply", "true");
+        assertEquals(0, applyResult.exitCode);
+
+        ExecutionResult result = execute("plan", "--directory", repoRoot.toString(), "--restore", "true", "--format", "json");
+
+        assertEquals(0, result.exitCode);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertEquals("plan", root.get("command").asText());
+        assertTrue(root.get("restored").asBoolean());
+        assertEquals(".changesets/release-plan-backup.json", root.get("backupFile").asText());
+        assertTrue(read(repoRoot.resolve("pom.xml")).contains("<revision>1.1.1-SNAPSHOT</revision>"));
     }
 
     @Test
@@ -1232,10 +1689,12 @@ class JavaChangesCliTest {
             + "</project>\n";
     }
 
-    private static void writeChangeset(Path repoRoot, String fileName, String content) throws IOException {
+    private static Path writeChangeset(Path repoRoot, String fileName, String content) throws IOException {
         Path changesetsDir = repoRoot.resolve(".changesets");
         Files.createDirectories(changesetsDir);
-        Files.write(changesetsDir.resolve(fileName), content.getBytes(StandardCharsets.UTF_8));
+        Path path = changesetsDir.resolve(fileName);
+        Files.write(path, content.getBytes(StandardCharsets.UTF_8));
+        return path;
     }
 
     private static List<Path> listChangesetFiles(Path changesetsDir) throws IOException {

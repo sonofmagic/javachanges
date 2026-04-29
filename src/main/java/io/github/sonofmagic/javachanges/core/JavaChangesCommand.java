@@ -17,9 +17,11 @@ import java.nio.file.Path;
     description = "Java Changesets for Maven and Gradle repositories and release-plan workflows.",
     subcommands = {
         InitCommand.class,
+        SetupCommand.class,
         AddCommand.class,
         NextCommand.class,
         StatusCommand.class,
+        ValidateCommand.class,
         PlanCommand.class,
         ManifestFieldCommand.class,
         VersionCommand.class,

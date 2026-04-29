@@ -133,6 +133,8 @@ summary: automate javachanges self-release publishing via GitHub Actions
 | `--modules` | 逗号分隔的 Maven artifactId、Gradle project name，或 `all` | `all` |
 | `--body` | summary 之后追加的 Markdown 正文 | 空 |
 | `--type` | 旧版兼容元数据 | 默认不写 |
+| `--format` | 输出格式，`text` 或 `json` | `text` |
+| `--no-interactive` | 缺少必填输入时直接失败，不进入交互输入 | `false` |
 
 ### 4.2 `plan`
 

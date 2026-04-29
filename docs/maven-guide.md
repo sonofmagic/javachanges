@@ -133,6 +133,8 @@ mvn javachanges:add \
   -Djavachanges.release=patch
 ```
 
+For CI or scripts, add `-Djavachanges.noInteractive=true` so missing summary or release input fails instead of prompting. Add `-Djavachanges.format=json` when the script needs the created changeset path or next commands.
+
 The generated changeset uses the root `artifactId`:
 
 ```md

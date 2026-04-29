@@ -46,6 +46,14 @@ public final class ReleaseMessages {
         return message("nextSteps");
     }
 
+    public static String setupStarted(Path repoRoot) {
+        return message("setupStarted", repoRoot);
+    }
+
+    public static String setupCompleted() {
+        return message("setupCompleted");
+    }
+
     public static String describeChangePlaceholder() {
         return message("describeChangePlaceholder");
     }
@@ -58,8 +66,20 @@ public final class ReleaseMessages {
         return message("changesetReleaseLevelPrompt");
     }
 
+    public static String changesetModulesPrompt(String modules) {
+        return message("changesetModulesPrompt", modules);
+    }
+
     public static String changesetBodyPrompt() {
         return message("changesetBodyPrompt");
+    }
+
+    public static String changesetNoInteractiveMissing() {
+        return message("changesetNoInteractiveMissing");
+    }
+
+    public static String changesetSummaryRequired() {
+        return message("changesetSummaryRequired");
     }
 
     public static String changesetReadme() {
@@ -220,6 +240,18 @@ public final class ReleaseMessages {
         return message("appliedReleasePlan", version);
     }
 
+    public static String restoredReleasePlanBackup(Path backupPath) {
+        return message("restoredReleasePlanBackup", backupPath);
+    }
+
+    public static String releasePlanBackup(Path backupPath) {
+        return message("releasePlanBackup", backupPath);
+    }
+
+    public static String restoreReleasePlanBackupCommand() {
+        return message("restoreReleasePlanBackupCommand");
+    }
+
     public static String createdOne() {
         return message("createdOne");
     }
@@ -250,6 +282,34 @@ public final class ReleaseMessages {
 
     public static String plannedRelease() {
         return message("plannedRelease");
+    }
+
+    public static String validationPassed(Path repoRoot) {
+        return message("validationPassed", repoRoot);
+    }
+
+    public static String validationFailed(Path repoRoot) {
+        return message("validationFailed", repoRoot);
+    }
+
+    public static String validationChecksHeading() {
+        return message("validationChecksHeading");
+    }
+
+    public static String validationErrorsHeading() {
+        return message("validationErrorsHeading");
+    }
+
+    public static String validationWarningsHeading() {
+        return message("validationWarningsHeading");
+    }
+
+    public static String notGitRepository(Path repoRoot) {
+        return message("notGitRepository", repoRoot);
+    }
+
+    public static String localTagAlreadyExists(String tag) {
+        return message("localTagAlreadyExists", tag);
     }
 
     public static String unsupportedLanguage(String value) {
@@ -314,6 +374,14 @@ public final class ReleaseMessages {
 
     public static String missingReleasePlanManifest(Path manifest) {
         return message("core.missingReleasePlanManifest", manifest);
+    }
+
+    public static String missingReleasePlanBackup(Path backupPath) {
+        return message("core.missingReleasePlanBackup", backupPath);
+    }
+
+    public static String invalidReleasePlanBackup(Path backupPath) {
+        return message("core.invalidReleasePlanBackup", backupPath);
     }
 
     public static String missingFieldIn(String field, Path manifest) {

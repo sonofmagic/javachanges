@@ -27,6 +27,12 @@ public final class JavaChangesAddMojo extends AbstractJavaChangesMojo {
     @Parameter(property = "javachanges.body")
     private String body;
 
+    @Parameter(property = "javachanges.format")
+    private String format;
+
+    @Parameter(property = "javachanges.noInteractive", defaultValue = "false")
+    private boolean noInteractive;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         List<String> args = new ArrayList<String>();
@@ -35,6 +41,11 @@ public final class JavaChangesAddMojo extends AbstractJavaChangesMojo {
         JavaChangesMavenPluginSupport.addOption(args, "--type", type);
         JavaChangesMavenPluginSupport.addOption(args, "--modules", modules);
         JavaChangesMavenPluginSupport.addOption(args, "--body", body);
+        JavaChangesMavenPluginSupport.addOption(args, "--format", format);
+        if (noInteractive) {
+            args.add("--no-interactive");
+            args.add("true");
+        }
         executeStructuredGoal("add", "add", args.toArray(new String[0]));
     }
 }

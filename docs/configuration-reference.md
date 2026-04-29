@@ -137,6 +137,8 @@ Compatibility status:
 | `--modules` | Comma-separated Maven artifactIds, Gradle project names, or `all` | `all` |
 | `--body` | Extra markdown body after the summary | empty |
 | `--type` | Legacy metadata only | omitted |
+| `--format` | Output format, `text` or `json` | `text` |
+| `--no-interactive` | Fail instead of prompting when required input is missing | `false` |
 
 ### 4.2 `plan`
 

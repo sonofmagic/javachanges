@@ -7,6 +7,7 @@ public final class ChangesetPaths {
     public static final String CONFIG_JSONC = "config.jsonc";
     public static final String RELEASE_PLAN_JSON = "release-plan.json";
     public static final String RELEASE_PLAN_MD = "release-plan.md";
+    public static final String RELEASE_PLAN_BACKUP_JSON = "release-plan-backup.json";
 
     private ChangesetPaths() {
     }

@@ -44,10 +44,12 @@ Common parts:
 
 | Part | Meaning |
 | --- | --- |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:setup` | Run first-time setup with safe defaults |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:init -Djavachanges.config=true` | Initialize `.changesets/` files and print starter commands |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:next` | Ask javachanges which release workflow command to run next |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:modules` | List detected build metadata and module names |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:status` | Run the dedicated Maven plugin status goal |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:validate` | Run local release-readiness checks |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:plan -Djavachanges.apply=true` | Run the dedicated plan goal |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:publish -Djavachanges.tag=v1.2.3` | Run the dedicated Maven publish dry-run goal |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:run -Djavachanges.args="..."` | Use the generic bridge goal for commands without a dedicated goal |
@@ -76,10 +78,12 @@ mvn javachanges:status -Djavachanges.language=zh-CN
 If you declare the plugin in a target repository `pom.xml`, the shortest local form becomes:
 
 ```bash
+mvn javachanges:setup
 mvn javachanges:init -Djavachanges.config=true
 mvn javachanges:next
 mvn javachanges:modules
 mvn javachanges:status
+mvn javachanges:validate
 mvn javachanges:plan -Djavachanges.apply=true
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
 mvn javachanges:version
@@ -164,13 +168,15 @@ Rules of thumb:
 
 | Command | Purpose | Writes files |
 | --- | --- | --- |
+| `setup` | Run first-time setup with safe defaults; optional flags can also generate env and CI templates | `.changesets/README.md`, `.changesets/config.jsonc`, optional env and CI files |
 | `init` | Initialize `.changesets/README.md` with starter examples, optionally `.changesets/config.jsonc`, and print starter commands | `.changesets/README.md`, optional `.changesets/config.jsonc` |
 | `add` | Create a changeset | `.changesets/*.md` |
 | `next` | Suggest the next release workflow command, including local, GitHub, and GitLab paths | No |
 | `modules` | List detected build metadata and module names | No |
 | `status` | Show the current release plan | No |
+| `validate` | Check local release readiness, including build metadata, changesets, config, git state, and planned tags | No |
 | `plan` | Render the current release plan | No |
-| `plan --apply true` | Apply the plan and consume changesets | `pom.xml` or `gradle.properties`, `CHANGELOG.md`, `.changesets/release-plan.json`, `.changesets/release-plan.md` |
+| `plan --apply true` | Apply the plan and consume changesets | `pom.xml` or `gradle.properties`, `CHANGELOG.md`, `.changesets/release-plan.json`, `.changesets/release-plan.md`, `.changesets/release-plan-backup.json` |
 | `manifest-field` | Read a field from the generated release manifest, or use `--fresh true` to derive it from the current repository state | No |
 | `release-notes` | Generate release notes for a tag | target file |
 | `ensure-gpg-public-key` | Publish and verify the current signing public key on supported keyservers | No |
@@ -180,7 +186,18 @@ Rules of thumb:
 
 ## 5. Changeset Commands
 
-### 5.1 `init`
+### 5.1 `setup`
+
+Run first-time setup with safe defaults:
+
+```bash
+mvn javachanges:setup
+mvn -q -DskipTests compile exec:java -Dexec.args="setup --directory /path/to/repo"
+```
+
+By default, `setup` writes only `.changesets/README.md` and `.changesets/config.jsonc`, detects the build model and modules, then prints the next useful commands. Use `--env true`, `--github-actions true`, or `--gitlab-ci true` to also generate release env and CI templates. Existing generated files are preserved unless `--force true` is passed.
+
+### 5.2 `init`
 
 Initialize the changeset directory for a repository and print the next commands to run.
 
@@ -194,7 +211,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="init --directory /path/to/repo
 Use `--force` or `-Djavachanges.force=true` to replace an existing `.changesets/config.json` or `.changesets/config.jsonc` with the default template.
 The same force flag also refreshes an existing `.changesets/README.md` with the current starter guide; without it, custom README content is preserved.
 
-### 5.2 `add`
+### 5.3 `add`
 
 Create a new changeset file.
 
@@ -212,8 +229,13 @@ Behavior:
 | `--release` | `patch`, `minor`, or `major` |
 | `--modules` | Comma-separated Maven artifactIds, Gradle project names, or `all` |
 | `--body` | Optional extra markdown content after the summary |
+| `--format` | `text` or `json` |
+| `--no-interactive` | Fail instead of prompting when `--summary` or `--release` is missing |
 
 If `--release` is not one of `patch`, `minor`, or `major`, the command fails before writing a file and prints the allowed values.
+
+When prompts are enabled, multi-module repositories also prompt for affected modules and show the detected module names. Use `--no-interactive true` in CI or scripts so missing input fails with a clear error instead of waiting for stdin.
+Use `--format json` when automation needs the created changeset path, affected packages, and next commands.
 
 After writing the file, `add` prints the resolved release level, affected packages, and `status` / `next` commands for the same repository so users can review the plan immediately.
 
@@ -234,7 +256,7 @@ Compatibility note:
 - `add` still accepts legacy flag names such as `--release` and `--modules`
 - the generated file itself uses the official Changesets-style package map
 
-### 5.3 `status`
+### 5.4 `status`
 
 Show the current pending release plan.
 
@@ -254,7 +276,7 @@ Typical output includes:
 - each pending changeset entry
 - next-step commands for creating or applying a changeset
 
-### 5.4 `plan`
+### 5.5 `plan`
 
 Render the release plan without writing files:
 
@@ -276,16 +298,23 @@ When `--apply true` is used, `javachanges`:
 2. prepends a new section to `CHANGELOG.md`
 3. writes `.changesets/release-plan.json`
 4. writes `.changesets/release-plan.md`
-5. deletes the consumed changeset files
+5. writes `.changesets/release-plan-backup.json` before modifying files
+6. deletes the consumed changeset files
 
-After applying the plan, the command prints copyable `git status`, `git add`, `git commit`, and `javachanges next` commands for the same repository. The `git add` command uses the detected build tool, so Maven repositories include `pom.xml` and Gradle repositories include `gradle.properties`.
+After applying the plan, the command prints copyable restore, `git status`, `git add`, `git commit`, and `javachanges next` commands for the same repository. The `git add` command uses the detected build tool, so Maven repositories include `pom.xml` and Gradle repositories include `gradle.properties`.
+
+To undo a local apply before committing it:
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo --restore true"
+```
 
 Automation commands such as `github-release-plan` and `gitlab-release-plan` can pass
 `--write-plan-files false` to avoid committing the generated `release-plan.json` and
 `release-plan.md` files. In that mode, the PR/MR body is generated as a transient file
 and later tag/release jobs should use `--fresh true`.
 
-### 5.5 `manifest-field`
+### 5.6 `manifest-field`
 
 Read a field from the generated release manifest, or derive it from the current repository state.
 
@@ -312,16 +341,20 @@ snapshot version, for example `1.2.0-SNAPSHOT` becomes release version `1.2.0`.
 
 | Command | Purpose | Example |
 | --- | --- | --- |
-| `version` | Print the current root revision | `version --directory /path/to/repo` |
-| `modules` | List detected Maven artifactIds or Gradle project names | `modules --directory /path/to/repo` |
-| `release-version-from-tag` | Extract `1.2.3` from `v1.2.3` or `core/v1.2.3` | `release-version-from-tag --tag v1.2.3` |
-| `release-module-from-tag` | Extract the package/module name from `core/v1.2.3` | `release-module-from-tag --tag core/v1.2.3` |
+| `version` | Print the current root revision | `version --directory /path/to/repo --format json` |
+| `modules` | List detected Maven artifactIds or Gradle project names | `modules --directory /path/to/repo --format json` |
+| `release-version-from-tag` | Extract `1.2.3` from `v1.2.3` or `core/v1.2.3` | `release-version-from-tag --tag v1.2.3 --format json` |
+| `release-module-from-tag` | Extract the package/module name from `core/v1.2.3` | `release-module-from-tag --tag core/v1.2.3 --format json` |
 | `assert-module` | Validate a Maven artifactId or Gradle project name exists | `assert-module --directory /path/to/repo --module core` |
 | `assert-snapshot` | Ensure the current revision is a snapshot | `assert-snapshot --directory /path/to/repo` |
 | `assert-release-tag` | Ensure a tag matches the current repository version | `assert-release-tag --directory /path/to/repo --tag v1.2.3` |
 | `module-selector-args` | Print build-tool selector args | `module-selector-args --directory /path/to/repo --module core` |
 
-`modules` also prints copyable `add` commands. For multi-module repositories, it includes both a first-module example and a `--modules all` example.
+`version` supports `--format json` when automation needs the build tool, version file, snapshot flag, and release version derived from the current revision.
+
+The release tag parsing commands support `--format json` and return both `releaseVersion` and `releaseModule`, so scripts can parse a tag once and reuse both fields.
+
+`modules` also prints copyable `add` commands. For multi-module repositories, it includes both a first-module example and a `--modules all` example. Use `--format json` when automation needs the detected build tool, version file, module list, and generated `add` commands.
 
 For Maven repositories, `module-selector-args --module core` prints Maven `-pl :core -am`.
 For Gradle repositories, it prints the Gradle project selector `:core`.
@@ -356,6 +389,15 @@ Commands that currently support `--format json`:
 
 | Command | Notes |
 | --- | --- |
+| `add` | Includes created changeset path, release level, affected packages, and next commands |
+| `version` | Includes build tool, version file, current revision, release version, and snapshot flag |
+| `modules` | Includes build tool, version file, current revision, module list, and add commands |
+| `release-version-from-tag` | Includes tag, release version, and release module |
+| `release-module-from-tag` | Includes tag, release version, and release module |
+| `status` | Includes the current release-plan status and review commands |
+| `next` | Includes pending release metadata and recommended next commands |
+| `plan` | Includes dry-run/apply/restore metadata and next commands |
+| `validate` | Includes release-readiness check results and issues |
 | `render-vars` | Includes `platform` and `showSecrets` in the payload |
 | `doctor-local` | Includes section summaries, suggestions, and final error text on failure |
 | `doctor-platform` | Includes `platform` and section summaries for env and CLI checks |

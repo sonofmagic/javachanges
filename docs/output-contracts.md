@@ -22,7 +22,16 @@ Use it when you are:
 | `manifest-field` stdout | scripts and CI | preferred machine-readable interface |
 | `.changesets/release-plan.json` | compatibility scripts and CI | machine-readable when generated plan files are enabled |
 | `.changesets/release-plan.md` | compatibility pull request and merge request bodies | human-readable, structure may evolve |
+| `.changesets/release-plan-backup.json` | local recovery before committing `plan --apply true` | machine-readable recovery snapshot, local workflow artifact |
+| `add --format json` stdout | scripts and CI | machine-readable changeset creation contract |
+| `version --format json` stdout | scripts and CI | machine-readable version/build metadata contract |
+| release tag helpers `--format json` stdout | scripts and CI | machine-readable release tag parsing contract |
+| `modules --format json` stdout | scripts and CI | machine-readable build/module discovery contract |
 | `status` stdout | local operators and reviewers | human-oriented, do not parse rigidly |
+| `status --format json` stdout | scripts and CI | machine-readable release-plan status contract |
+| `next --format json` stdout | scripts and CI | machine-readable next-step recommendation contract |
+| `plan --format json` stdout | scripts and CI | machine-readable plan preview/apply contract |
+| `validate --format json` stdout | scripts and CI | machine-readable local release-readiness contract |
 | `render-vars` stdout | local operators | human-oriented by default |
 | `render-vars --format json` stdout | scripts and CI | machine-readable JSON contract |
 | `doctor-local` stdout | local operators | human-oriented by default |
@@ -49,7 +58,118 @@ Practical rule:
 - if automation needs the compatibility manifest, read `.changesets/release-plan.json`
 - do not build CI logic around terminal headings, spacing, or localized labels
 
-## 3. `status` output
+## 3. `add --format json` output
+
+Use JSON output when a script needs to create a changeset and then read the created file path without parsing human text.
+
+Command:
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="add --directory /path/to/repo --summary 'add release notes command' --release minor --no-interactive true --format json"
+```
+
+Current shape:
+
+```json
+{
+  "ok": true,
+  "command": "add",
+  "repository": "/path/to/repo",
+  "createdChangeset": ".changesets/20260418-add-release-notes-command.md",
+  "releaseLevel": "minor",
+  "affectedPackages": ["core"],
+  "summary": "add release notes command",
+  "nextCommands": [
+    "javachanges status --directory /path/to/repo",
+    "javachanges next --directory /path/to/repo"
+  ]
+}
+```
+
+For CI, combine `--format json` with `--no-interactive true` so missing input is returned as a JSON error instead of waiting for stdin.
+
+## 4. `version --format json` output
+
+Use JSON output when automation needs the current revision together with the build model that produced it.
+
+Command:
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="version --directory /path/to/repo --format json"
+```
+
+Current shape:
+
+```json
+{
+  "ok": true,
+  "command": "version",
+  "repository": "/path/to/repo",
+  "buildTool": "maven",
+  "versionFile": "pom.xml",
+  "currentRevision": "0.1.0-SNAPSHOT",
+  "releaseVersion": "0.1.0",
+  "snapshot": true
+}
+```
+
+The plain `version` command still prints only the raw current revision.
+
+## 5. Release tag helper JSON output
+
+Use JSON output when automation needs both the release version and release module from a tag.
+
+Command:
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="release-version-from-tag --tag core/v1.2.3 --format json"
+```
+
+Current shape:
+
+```json
+{
+  "ok": true,
+  "command": "release-version-from-tag",
+  "tag": "core/v1.2.3",
+  "releaseVersion": "1.2.3",
+  "releaseModule": "core"
+}
+```
+
+`release-module-from-tag --format json` returns the same fields with `"command": "release-module-from-tag"`. For whole-repo tags like `v1.2.3`, `releaseModule` is `null`.
+
+## 6. `modules --format json` output
+
+Use JSON output when automation needs the exact detected module names before creating a changeset.
+
+Command:
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="modules --directory /path/to/repo --format json"
+```
+
+Current shape:
+
+```json
+{
+  "ok": true,
+  "command": "modules",
+  "repository": "/path/to/repo",
+  "buildTool": "maven",
+  "versionFile": "pom.xml",
+  "currentRevision": "0.1.0-SNAPSHOT",
+  "modules": ["core", "api"],
+  "nextCommands": [
+    "javachanges add --directory /path/to/repo --modules core --summary \"describe the change\" --release patch",
+    "javachanges add --directory /path/to/repo --modules all --summary \"describe the change\" --release patch"
+  ]
+}
+```
+
+For single-module repositories, `nextCommands` contains only the module-specific `add` command.
+
+## 7. `status` output
 
 `status` prints a human-readable release summary.
 
@@ -92,7 +212,7 @@ Automation guidance:
 - do not parse the bullet text or spacing
 - if you need `releaseVersion` or `releaseLevel`, read the manifest instead
 
-## 4. `manifest-field` output
+## 8. `manifest-field` output
 
 `manifest-field` is the narrowest machine-readable interface.
 
@@ -116,7 +236,7 @@ Common fields:
 | `nextSnapshotVersion` | Next snapshot version written back into `pom.xml` or `gradle.properties` |
 | `releaseLevel` | Aggregated release level |
 
-## 5. `.changesets/release-plan.json`
+## 9. `.changesets/release-plan.json`
 
 This is the primary machine-readable release manifest.
 
@@ -171,7 +291,7 @@ Important caveats:
 - the field is still called `modules` in JSON for compatibility, even though user-facing docs prefer `packages`
 - `type` is not the release bump; `release` is the meaningful release signal
 
-## 6. `.changesets/release-plan.md`
+## 10. `.changesets/release-plan.md`
 
 This file is designed for human review and PR or MR descriptions.
 
@@ -211,7 +331,7 @@ Guidance:
 - not a stable machine interface
 - headings and sentence wording may evolve
 
-## 7. `render-vars` output
+## 11. `render-vars` output
 
 `render-vars` shows which values will be treated as variables or secrets for GitHub or GitLab.
 
@@ -300,7 +420,7 @@ Contract notes:
 - exit code `0` means the command succeeded
 - `sections[].entries[].label` is the field name and `value` is the rendered value or status word
 
-## 8. `doctor-local` output
+## 12. `doctor-local` output
 
 `doctor-local` validates local runtime prerequisites, env completeness, CLI auth, and optional repository identifiers.
 
@@ -366,7 +486,7 @@ Current JSON behavior:
 - non-zero exit code means at least one required check failed
 - the payload includes `sections`, and may include `suggestions` plus final `error`
 
-## 9. `doctor-platform` and `audit-vars`
+## 13. `doctor-platform` and `audit-vars`
 
 `doctor-platform` validates local env values and authenticated platform access before sync or audit work.
 
@@ -416,7 +536,7 @@ GitLab-specific additions:
 - `doctor-platform --platform gitlab --format json` now includes protected-variable and protected-branch sections
 - if protected variables exist but the configured `snapshotBranch` is not protected, the command fails explicitly instead of silently passing
 
-## 10. Publish And GitLab Release JSON
+## 14. Publish And GitLab Release JSON
 
 `preflight`, `publish`, `gitlab-release-plan`, `gitlab-tag-from-plan`, and `gitlab-release` now expose a shared machine-readable top-level contract.
 
@@ -486,7 +606,7 @@ Snapshot-specific example:
 }
 ```
 
-## 11. Automation recommendations
+## 15. Automation recommendations
 
 For CI and scripting:
 
@@ -501,7 +621,7 @@ Avoid:
 - parsing localized headings like `== 本地 env 检查 ==`
 - depending on the exact prose of failure summaries
 
-## 12. Related guides
+## 16. Related guides
 
 | Need | Document |
 | --- | --- |

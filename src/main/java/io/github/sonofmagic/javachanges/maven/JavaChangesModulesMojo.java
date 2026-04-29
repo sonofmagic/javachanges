@@ -4,12 +4,21 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Mojo(name = "modules", defaultPhase = LifecyclePhase.NONE, threadSafe = true, requiresProject = true)
 public final class JavaChangesModulesMojo extends AbstractJavaChangesMojo {
 
+    @Parameter(property = "javachanges.format")
+    private String format;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        executeStructuredGoal("modules", "modules");
+        List<String> args = new ArrayList<String>();
+        JavaChangesMavenPluginSupport.addOption(args, "--format", format);
+        executeStructuredGoal("modules", "modules", args.toArray(new String[0]));
     }
 }

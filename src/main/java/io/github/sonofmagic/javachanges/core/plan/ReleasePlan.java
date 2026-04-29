@@ -43,7 +43,7 @@ public final class ReleasePlan {
         this.tagStrategy = tagStrategy;
     }
 
-    Path getRepoRoot() {
+    public Path getRepoRoot() {
         return repoRoot;
     }
 
@@ -75,7 +75,7 @@ public final class ReleasePlan {
         return releaseVersion;
     }
 
-    String getNextSnapshotVersion() {
+    public String getNextSnapshotVersion() {
         return nextSnapshotVersion;
     }
 
@@ -89,6 +89,28 @@ public final class ReleasePlan {
             packages.addAll(changeset.modules);
         }
         return new ArrayList<String>(packages);
+    }
+
+    public String toStatusJson() {
+        return ReleaseJsonUtils.toPrettyJson(toStatusPayload()) + "\n";
+    }
+
+    public Map<String, Object> toStatusPayload() {
+        Map<String, Object> payload = new LinkedHashMap<String, Object>();
+        payload.put("repository", repoRoot.toString());
+        payload.put("currentRevision", currentRevision);
+        payload.put("latestWholeRepoTag", latestWholeRepoTag);
+        payload.put("pendingChangesets", Integer.valueOf(changesets.size()));
+        payload.put("hasPendingChangesets", Boolean.valueOf(hasPendingChangesets()));
+        payload.put("releaseLevel", releaseLevel == null ? null : releaseLevel.id);
+        payload.put("releaseVersion", releaseVersion);
+        payload.put("nextSnapshotVersion", nextSnapshotVersion);
+        payload.put("tagStrategy", tagStrategy.id);
+        payload.put("tags", Collections.unmodifiableList(new ArrayList<String>(getPlannedTags())));
+        payload.put("releaseTargets", releaseTargetsPayload());
+        payload.put("affectedPackages", Collections.unmodifiableList(new ArrayList<String>(getAffectedPackages())));
+        payload.put("changesets", changesetsPayload());
+        return payload;
     }
 
     public List<ReleaseTarget> getReleaseTargets() {
@@ -106,7 +128,7 @@ public final class ReleasePlan {
         return targets;
     }
 
-    List<String> getPlannedTags() {
+    public List<String> getPlannedTags() {
         List<String> tags = new ArrayList<String>();
         for (ReleaseTarget target : getReleaseTargets()) {
             tags.add(target.tag);
@@ -216,6 +238,13 @@ public final class ReleasePlan {
         payload.put("releaseLevel", releaseLevel.id);
         payload.put("tagStrategy", tagStrategy.id);
         payload.put("tags", Collections.unmodifiableList(new ArrayList<String>(getPlannedTags())));
+        payload.put("releaseTargets", releaseTargetsPayload());
+        payload.put("generatedAt", OffsetDateTime.now().toString());
+        payload.put("changesets", changesetsPayload());
+        return ReleaseJsonUtils.toPrettyJson(payload) + "\n";
+    }
+
+    private List<Map<String, Object>> releaseTargetsPayload() {
         List<Map<String, Object>> renderedTargets = new ArrayList<Map<String, Object>>();
         for (ReleaseTarget target : getReleaseTargets()) {
             Map<String, Object> entry = new LinkedHashMap<String, Object>();
@@ -223,8 +252,10 @@ public final class ReleasePlan {
             entry.put("tag", target.tag);
             renderedTargets.add(entry);
         }
-        payload.put("releaseTargets", renderedTargets);
-        payload.put("generatedAt", OffsetDateTime.now().toString());
+        return renderedTargets;
+    }
+
+    private List<Map<String, Object>> changesetsPayload() {
         List<Map<String, Object>> renderedChangesets = new ArrayList<Map<String, Object>>();
         for (Changeset changeset : changesets) {
             Map<String, Object> entry = new LinkedHashMap<String, Object>();
@@ -235,8 +266,7 @@ public final class ReleasePlan {
             entry.put("modules", Collections.unmodifiableList(new ArrayList<String>(changeset.modules)));
             renderedChangesets.add(entry);
         }
-        payload.put("changesets", renderedChangesets);
-        return ReleaseJsonUtils.toPrettyJson(payload) + "\n";
+        return renderedChangesets;
     }
 
     private static String notesLine(Changeset changeset) {

@@ -46,6 +46,14 @@ public final class RepoFiles {
         ReleasePlanFiles.applyPlan(repoRoot, plan, writeReleasePlanFiles);
     }
 
+    public static Path writePlanBackup(Path repoRoot, ReleasePlan plan) throws IOException {
+        return ReleasePlanBackupFiles.writeBackup(repoRoot, plan);
+    }
+
+    public static Path restorePlanBackup(Path repoRoot) throws IOException {
+        return ReleasePlanBackupFiles.restore(repoRoot);
+    }
+
     public static ChangesetConfigSupport.ChangesetConfig readChangesetConfig(Path repoRoot) throws IOException {
         return ChangesetConfigSupport.load(repoRoot);
     }

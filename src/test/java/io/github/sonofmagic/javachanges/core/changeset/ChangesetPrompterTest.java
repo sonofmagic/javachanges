@@ -13,6 +13,7 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -50,6 +51,37 @@ class ChangesetPrompterTest {
         }
     }
 
+    @Test
+    void interactivePromptsForModulesInMultiModuleRepository(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot.resolve("core"));
+        Files.createDirectories(repoRoot.resolve("cli"));
+        Files.write(repoRoot.resolve("pom.xml"), monorepoPom().getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve("core").resolve("pom.xml"), childModulePom("core").getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve("cli").resolve("pom.xml"), childModulePom("cli").getBytes(StandardCharsets.UTF_8));
+
+        InputStream originalIn = System.in;
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        System.setIn(new ByteArrayInputStream("interactive summary\nminor\ncore,cli\nbody line\n.\n".getBytes(StandardCharsets.UTF_8)));
+        try {
+            ChangesetInput input = ChangesetPrompter.resolveInput(
+                repoRoot,
+                Collections.<String, String>emptyMap(),
+                new PrintStream(stdout, true),
+                new PrintStream(new ByteArrayOutputStream(), true)
+            );
+
+            assertEquals("interactive summary", input.summary);
+            assertEquals(ReleaseLevel.MINOR, input.release);
+            assertEquals(Arrays.asList("core", "cli"), input.modules);
+            assertEquals("body line", input.body);
+            String output = new String(stdout.toByteArray(), StandardCharsets.UTF_8);
+            assertTrue(output.contains("Modules (comma-separated, or all; detected: core, cli): "));
+        } finally {
+            System.setIn(originalIn);
+        }
+    }
+
     private static String singleModulePom() {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
             + "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n"
@@ -62,6 +94,41 @@ class ChangesetPrompterTest {
             + "  <properties>\n"
             + "    <revision>1.2.3-SNAPSHOT</revision>\n"
             + "  </properties>\n"
+            + "</project>\n";
+    }
+
+    private static String monorepoPom() {
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            + "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n"
+            + "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+            + "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd\">\n"
+            + "  <modelVersion>4.0.0</modelVersion>\n"
+            + "  <groupId>example</groupId>\n"
+            + "  <artifactId>fixture-root</artifactId>\n"
+            + "  <version>${revision}</version>\n"
+            + "  <packaging>pom</packaging>\n"
+            + "  <modules>\n"
+            + "    <module>core</module>\n"
+            + "    <module>cli</module>\n"
+            + "  </modules>\n"
+            + "  <properties>\n"
+            + "    <revision>1.2.3-SNAPSHOT</revision>\n"
+            + "  </properties>\n"
+            + "</project>\n";
+    }
+
+    private static String childModulePom(String artifactId) {
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            + "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n"
+            + "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+            + "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd\">\n"
+            + "  <modelVersion>4.0.0</modelVersion>\n"
+            + "  <parent>\n"
+            + "    <groupId>example</groupId>\n"
+            + "    <artifactId>fixture-root</artifactId>\n"
+            + "    <version>${revision}</version>\n"
+            + "  </parent>\n"
+            + "  <artifactId>" + artifactId + "</artifactId>\n"
             + "</project>\n";
     }
 }

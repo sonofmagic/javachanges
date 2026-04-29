@@ -52,10 +52,12 @@ Recommended for target repositories: declare the Maven plugin and run the short 
 Then inside that repository:
 
 ```bash
+mvn javachanges:setup
 mvn javachanges:init -Djavachanges.config=true
 mvn javachanges:next
 mvn javachanges:modules
 mvn javachanges:status
+mvn javachanges:validate
 mvn javachanges:plan -Djavachanges.apply=true
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
 mvn javachanges:version
@@ -78,10 +80,12 @@ On the current `main` branch, after installing the snapshot locally, you can als
 
 ```bash
 ./mvnw -q -DskipTests install
+mvn io.github.sonofmagic:javachanges:1.9.0-SNAPSHOT:setup
 mvn io.github.sonofmagic:javachanges:1.9.0-SNAPSHOT:init -Djavachanges.config=true
 mvn io.github.sonofmagic:javachanges:1.9.0-SNAPSHOT:next
 mvn io.github.sonofmagic:javachanges:1.9.0-SNAPSHOT:modules
 mvn io.github.sonofmagic:javachanges:1.9.0-SNAPSHOT:status
+mvn io.github.sonofmagic:javachanges:1.9.0-SNAPSHOT:validate
 mvn io.github.sonofmagic:javachanges:1.9.0-SNAPSHOT:plan -Djavachanges.apply=true
 mvn io.github.sonofmagic:javachanges:1.9.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
 mvn io.github.sonofmagic:javachanges:1.9.0-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
@@ -240,10 +244,12 @@ Field reference:
 High-value commands:
 
 - `init`
+- `setup`
 - `add`
 - `next`
 - `modules`
 - `status`
+- `validate`
 - `plan`
 - `write-settings`
 - `init-env`
