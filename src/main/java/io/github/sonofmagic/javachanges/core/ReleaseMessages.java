@@ -476,6 +476,26 @@ public final class ReleaseMessages {
         return message("platform.javachangesFailed", exitCode);
     }
 
+    public static String skippingJavachangesGoal(String goalName) {
+        return message("platform.skippingJavachangesGoal", goalName);
+    }
+
+    public static String runningJavachangesGoal(String goalName) {
+        return message("platform.runningJavachangesGoal", goalName);
+    }
+
+    public static String skippingJavachangesRun() {
+        return message("platform.skippingJavachangesRun");
+    }
+
+    public static String runningJavachangesArgs() {
+        return message("platform.runningJavachangesArgs");
+    }
+
+    public static String runningJavachangesCommand(String command) {
+        return message("platform.runningJavachangesCommand", command);
+    }
+
     public static String unterminatedJavachangesArgsQuote() {
         return message("platform.unterminatedJavachangesArgsQuote");
     }

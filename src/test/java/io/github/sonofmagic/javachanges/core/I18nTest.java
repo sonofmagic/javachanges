@@ -154,6 +154,7 @@ class I18nTest {
             ReleaseMessages.gitlabApiFailed("GET", "/projects", "denied"));
         assertEquals("Public key ABC is visible on keys.example.com",
             ReleaseMessages.publicKeyVisibleOn("ABC", "keys.example.com"));
+        assertEquals("Running javachanges command: status", ReleaseMessages.runningJavachangesCommand("status"));
         ReleaseLanguageContext.set(ReleaseLanguage.ZH_CN);
         try {
             assertEquals("git 命令执行失败: [push]", ReleaseMessages.gitCommandFailed("[push]"));
@@ -163,6 +164,7 @@ class I18nTest {
                 ReleaseMessages.gitlabApiFailed("GET", "/projects", "denied"));
             assertEquals("公钥 ABC 已在 keys.example.com 可见",
                 ReleaseMessages.publicKeyVisibleOn("ABC", "keys.example.com"));
+            assertEquals("执行 javachanges 命令: status", ReleaseMessages.runningJavachangesCommand("status"));
         } finally {
             ReleaseLanguageContext.clear();
         }

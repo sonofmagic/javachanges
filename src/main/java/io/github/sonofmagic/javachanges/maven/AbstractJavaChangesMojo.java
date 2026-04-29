@@ -23,23 +23,23 @@ abstract class AbstractJavaChangesMojo extends AbstractMojo {
 
     protected final void executeStructuredGoal(String goalName, String command, String... arguments) throws MojoFailureException {
         if (skip) {
-            getLog().info("Skipping javachanges:" + goalName);
+            getLog().info(ReleaseMessages.skippingJavachangesGoal(goalName));
             return;
         }
-        getLog().info("Running javachanges:" + goalName);
+        getLog().info(ReleaseMessages.runningJavachangesGoal(goalName));
         execute(JavaChangesMavenPluginSupport.resolveStructuredCliArgs(directoryValue(), command, arguments));
     }
 
     protected final void executeRunGoal(String rawArgs, String command, String[] arguments) throws MojoFailureException {
         if (skip) {
-            getLog().info("Skipping javachanges:run");
+            getLog().info(ReleaseMessages.skippingJavachangesRun());
             return;
         }
         if (JavaChangesMavenPluginSupport.trimToNull(rawArgs) != null) {
-            getLog().info("Running javachanges with javachanges.args");
+            getLog().info(ReleaseMessages.runningJavachangesArgs());
         } else {
             String effectiveCommand = JavaChangesMavenPluginSupport.trimToNull(command);
-            getLog().info("Running javachanges command: " + (effectiveCommand == null ? "status" : effectiveCommand));
+            getLog().info(ReleaseMessages.runningJavachangesCommand(effectiveCommand == null ? "status" : effectiveCommand));
         }
         execute(JavaChangesMavenPluginSupport.resolveCliArgs(directoryValue(), command, arguments, rawArgs));
     }
