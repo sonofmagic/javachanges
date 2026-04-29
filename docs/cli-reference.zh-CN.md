@@ -205,7 +205,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="add --directory /path/to/repo 
 
 如果 `--release` 不是 `patch`、`minor` 或 `major`，命令会在写文件前失败，并输出允许值。
 
-写入文件后，`add` 会输出同一仓库的 `status` 和 `next` 命令，方便用户立刻审阅 release plan。
+写入文件后，`add` 会输出解析后的 release level、affected packages，以及同一仓库的 `status` / `next` 命令，方便用户立刻审阅 release plan。
 
 生成文件的默认结构：
 

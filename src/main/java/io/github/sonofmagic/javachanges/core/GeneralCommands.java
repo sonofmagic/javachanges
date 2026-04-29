@@ -159,6 +159,8 @@ final class AddCommand extends AbstractCliCommand {
         Path created = RepoFiles.writeChangeset(repoRoot, input);
         String repoArg = CliOutputSupport.shellQuote(repoRoot.toString());
         out().println("Created changeset: " + repoRoot.relativize(created));
+        out().println("Release level: " + input.release.id);
+        out().println("Affected packages: " + ReleaseModuleUtils.joinModules(input.modules));
         out().println();
         out().println("Next steps:");
         out().println("  javachanges status --directory " + repoArg);

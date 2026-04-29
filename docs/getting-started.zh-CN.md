@@ -212,6 +212,7 @@ Improve CLI parsing and release planning.
 
 - `javachanges add` 默认会生成这种官方 Changesets 风格的 package map
 - 写入 changeset 后，`javachanges add` 会输出同一仓库的 `status` 和 `next` 命令
+- 它也会回显解析后的 release level 和 affected packages，方便在应用计划前发现模块选择错误
 - 正文第一条非空行会作为 `status`、changelog 和 release notes 使用的 summary
 - 旧的 `release` / `modules` / `summary` frontmatter 仍然可兼容读取，但新文件建议统一写 package map
 - changelog 会按聚合后的 release level 分成 `major`、`minor`、`patch`

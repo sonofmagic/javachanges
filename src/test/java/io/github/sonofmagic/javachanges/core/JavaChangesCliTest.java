@@ -192,6 +192,8 @@ class JavaChangesCliTest {
         assertFalse(content.contains("summary:"));
         assertFalse(content.contains("type:"));
         assertTrue(result.stdout.contains("Created changeset: .changesets/"));
+        assertTrue(result.stdout.contains("Release level: minor"));
+        assertTrue(result.stdout.contains("Affected packages: fixture-app"));
         assertTrue(result.stdout.contains("Next steps:"));
         assertTrue(result.stdout.contains("javachanges status --directory " + repoRoot));
         assertTrue(result.stdout.contains("javachanges next --directory " + repoRoot));

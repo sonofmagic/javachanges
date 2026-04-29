@@ -206,7 +206,7 @@ Behavior:
 
 If `--release` is not one of `patch`, `minor`, or `major`, the command fails before writing a file and prints the allowed values.
 
-After writing the file, `add` prints `status` and `next` commands for the same repository so users can review the plan immediately.
+After writing the file, `add` prints the resolved release level, affected packages, and `status` / `next` commands for the same repository so users can review the plan immediately.
 
 Generated file shape:
 

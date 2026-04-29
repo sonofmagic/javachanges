@@ -216,6 +216,7 @@ Notes:
 
 - `javachanges add` writes this official Changesets-style package map by default
 - after writing a changeset, `javachanges add` prints the `status` and `next` commands for the same repository
+- it also echoes the resolved release level and affected packages so you can catch module mistakes before applying the plan
 - the first non-empty body line becomes the summary used by `status`, changelogs, and release notes
 - legacy `release` / `modules` / `summary` frontmatter is still read for compatibility, but new files should use the package-map form
 - changelog sections are grouped by the aggregated release level: `major`, `minor`, `patch`
