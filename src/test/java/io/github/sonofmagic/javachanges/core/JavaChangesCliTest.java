@@ -162,6 +162,28 @@ class JavaChangesCliTest {
         assertFalse(content.contains("release:"));
         assertFalse(content.contains("summary:"));
         assertFalse(content.contains("type:"));
+        assertTrue(result.stdout.contains("Created changeset: .changesets/"));
+        assertTrue(result.stdout.contains("Next steps:"));
+        assertTrue(result.stdout.contains("javachanges status --directory " + repoRoot));
+        assertTrue(result.stdout.contains("javachanges next --directory " + repoRoot));
+    }
+
+    @Test
+    void addQuotesDirectoryWithSpacesInNextSteps(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo with space");
+        Files.createDirectories(repoRoot);
+        Files.write(repoRoot.resolve("pom.xml"), singleModulePom().getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = execute(
+            "add",
+            "--directory", repoRoot.toString(),
+            "--release", "patch",
+            "--summary", "quote add next steps"
+        );
+
+        assertEquals(0, result.exitCode);
+        assertTrue(result.stdout.contains("javachanges status --directory '" + repoRoot + "'"));
+        assertTrue(result.stdout.contains("javachanges next --directory '" + repoRoot + "'"));
     }
 
     @Test

@@ -203,6 +203,8 @@ Behavior:
 | `--modules` | Comma-separated Maven artifactIds, Gradle project names, or `all` |
 | `--body` | Optional extra markdown content after the summary |
 
+After writing the file, `add` prints `status` and `next` commands for the same repository so users can review the plan immediately.
+
 Generated file shape:
 
 ````md

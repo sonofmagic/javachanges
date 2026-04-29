@@ -145,7 +145,12 @@ final class AddCommand extends AbstractCliCommand {
         );
         ChangesetInput input = ChangesetPrompter.resolveInput(repoRoot, options, out(), err());
         Path created = RepoFiles.writeChangeset(repoRoot, input);
+        String repoArg = CliOutputSupport.shellQuote(repoRoot.toString());
         out().println("Created changeset: " + repoRoot.relativize(created));
+        out().println();
+        out().println("Next steps:");
+        out().println("  javachanges status --directory " + repoArg);
+        out().println("  javachanges next --directory " + repoArg);
         return success();
     }
 }

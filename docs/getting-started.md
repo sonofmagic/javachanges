@@ -213,6 +213,7 @@ Improve CLI parsing and release planning.
 Notes:
 
 - `javachanges add` writes this official Changesets-style package map by default
+- after writing a changeset, `javachanges add` prints the `status` and `next` commands for the same repository
 - the first non-empty body line becomes the summary used by `status`, changelogs, and release notes
 - legacy `release` / `modules` / `summary` frontmatter is still read for compatibility, but new files should use the package-map form
 - changelog sections are grouped by the aggregated release level: `major`, `minor`, `patch`

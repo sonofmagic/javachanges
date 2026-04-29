@@ -202,6 +202,8 @@ mvn -q -DskipTests compile exec:java -Dexec.args="add --directory /path/to/repo 
 | `--modules` | 逗号分隔的 Maven artifactId、Gradle project name，或 `all` |
 | `--body` | summary 之后追加的 Markdown 正文 |
 
+写入文件后，`add` 会输出同一仓库的 `status` 和 `next` 命令，方便用户立刻审阅 release plan。
+
 生成文件的默认结构：
 
 ````md
