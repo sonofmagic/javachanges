@@ -220,6 +220,8 @@ Improve CLI parsing and release planning.
 mvn javachanges:plan
 ```
 
+dry-run 输出会包含审阅完成后可直接执行的 apply 命令。
+
 Gradle CLI：
 
 ```bash

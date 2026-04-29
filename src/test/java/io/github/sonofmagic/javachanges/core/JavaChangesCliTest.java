@@ -312,6 +312,42 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void planDryRunSuggestsApplyWhenChangesetsArePending(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, true);
+        writeChangeset(repoRoot,
+            "minor-release.md",
+            "---\n" +
+                "\"fixture-app\": minor\n" +
+                "---\n" +
+                "\n" +
+                "preview release plan next steps\n");
+
+        ExecutionResult result = execute("plan", "--directory", repoRoot.toString());
+
+        assertEquals(0, result.exitCode);
+        assertTrue(result.stdout.contains("- Release type: minor"));
+        assertTrue(result.stdout.contains("Next steps:"));
+        assertTrue(result.stdout.contains("javachanges plan --directory " + repoRoot + " --apply true"));
+        assertTrue(result.stdout.contains("javachanges next --directory " + repoRoot));
+        assertTrue(Files.exists(repoRoot.resolve(".changesets").resolve("minor-release.md")));
+    }
+
+    @Test
+    void planApplySuggestsCreatingChangesetWhenNoneArePending(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+
+        ExecutionResult result = execute("plan", "--directory", repoRoot.toString(), "--apply", "true");
+
+        assertEquals(0, result.exitCode);
+        assertTrue(result.stdout.contains("Release plan: none"));
+        assertTrue(result.stdout.contains("No pending changesets to apply."));
+        assertTrue(result.stdout.contains("Next steps:"));
+        assertTrue(result.stdout.contains("javachanges add --directory " + repoRoot
+            + " --summary \"describe the change\" --release patch"));
+        assertTrue(result.stdout.contains("javachanges next --directory " + repoRoot));
+    }
+
+    @Test
     void planApplyUsesReleaseHeadings(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, true);
         writeChangeset(repoRoot,

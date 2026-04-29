@@ -224,6 +224,8 @@ Notes:
 mvn javachanges:plan
 ```
 
+The dry run prints the exact apply command to use after you review the plan.
+
 Gradle CLI:
 
 ```bash

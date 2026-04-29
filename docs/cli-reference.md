@@ -250,6 +250,8 @@ Render the release plan without writing files:
 mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo"
 ```
 
+Without `--apply true`, `plan` prints the same review-oriented next steps as `status`, including the exact apply command when changesets are pending.
+
 Apply the release plan:
 
 ```bash

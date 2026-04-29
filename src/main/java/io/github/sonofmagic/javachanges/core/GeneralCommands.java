@@ -10,6 +10,7 @@ import io.github.sonofmagic.javachanges.core.plan.RepoFiles;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -199,21 +200,8 @@ final class StatusCommand extends AbstractCliCommand {
         Path repoRoot = repoRoot();
         ReleasePlan plan = new ReleasePlanner(repoRoot).plan();
         JavaChangesStatusPrinter.printStatus(plan, out());
-        printNextSteps(repoRoot, plan);
+        ReleaseWorkflowNextSteps.printReviewNextSteps(out(), repoRoot, plan);
         return success();
-    }
-
-    private void printNextSteps(Path repoRoot, ReleasePlan plan) {
-        String repoArg = CliOutputSupport.shellQuote(repoRoot.toString());
-        out().println();
-        out().println("Next steps:");
-        if (plan.hasPendingChangesets()) {
-            out().println("  javachanges plan --directory " + repoArg + " --apply true");
-            out().println("  javachanges next --directory " + repoArg);
-            return;
-        }
-        out().println("  javachanges add --directory " + repoArg + " --summary \"describe the change\" --release patch");
-        out().println("  javachanges next --directory " + repoArg);
     }
 }
 
@@ -230,29 +218,49 @@ final class PlanCommand extends AbstractCliCommand {
         ReleasePlan plan = new ReleasePlanner(repoRoot).plan();
         JavaChangesStatusPrinter.printStatus(plan, out());
         if (!apply) {
+            ReleaseWorkflowNextSteps.printReviewNextSteps(out(), repoRoot, plan);
             return success();
         }
         if (!plan.hasPendingChangesets()) {
             out().println("No pending changesets to apply.");
+            ReleaseWorkflowNextSteps.printReviewNextSteps(out(), repoRoot, plan);
             return success();
         }
         RepoFiles.applyPlan(repoRoot, plan);
         out().println();
         out().println("Applied release plan for v" + plan.getReleaseVersion());
-        printAppliedNextSteps(repoRoot, plan);
+        ReleaseWorkflowNextSteps.printAppliedNextSteps(out(), repoRoot, plan);
         return success();
     }
+}
 
-    private void printAppliedNextSteps(Path repoRoot, ReleasePlan plan) {
+final class ReleaseWorkflowNextSteps {
+    private ReleaseWorkflowNextSteps() {
+    }
+
+    static void printReviewNextSteps(PrintStream out, Path repoRoot, ReleasePlan plan) {
         String repoArg = CliOutputSupport.shellQuote(repoRoot.toString());
-        out().println();
-        out().println("Next steps:");
-        out().println("  git -C " + repoArg + " status --short");
-        out().println("  git -C " + repoArg + " add "
+        out.println();
+        out.println("Next steps:");
+        if (plan.hasPendingChangesets()) {
+            out.println("  javachanges plan --directory " + repoArg + " --apply true");
+            out.println("  javachanges next --directory " + repoArg);
+            return;
+        }
+        out.println("  javachanges add --directory " + repoArg + " --summary \"describe the change\" --release patch");
+        out.println("  javachanges next --directory " + repoArg);
+    }
+
+    static void printAppliedNextSteps(PrintStream out, Path repoRoot, ReleasePlan plan) {
+        String repoArg = CliOutputSupport.shellQuote(repoRoot.toString());
+        out.println();
+        out.println("Next steps:");
+        out.println("  git -C " + repoArg + " status --short");
+        out.println("  git -C " + repoArg + " add "
             + CliOutputSupport.shellQuoteArgs(BuildModelSupport.releasePlanGitAddPaths(repoRoot)));
-        out().println("  git -C " + repoArg + " commit -m "
+        out.println("  git -C " + repoArg + " commit -m "
             + CliOutputSupport.shellQuote("chore(release): v" + plan.getReleaseVersion()));
-        out().println("  javachanges next --directory " + repoArg);
+        out.println("  javachanges next --directory " + repoArg);
     }
 }
 

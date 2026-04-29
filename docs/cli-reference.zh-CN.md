@@ -249,6 +249,8 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/re
 mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo"
 ```
 
+不加 `--apply true` 时，`plan` 会像 `status` 一样输出面向审阅的下一步命令；如果有待处理 changeset，会包含精确的 apply 命令。
+
 应用发布计划：
 
 ```bash
