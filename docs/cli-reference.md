@@ -309,6 +309,8 @@ snapshot version, for example `1.2.0-SNAPSHOT` becomes release version `1.2.0`.
 | `assert-release-tag` | Ensure a tag matches the current repository version | `assert-release-tag --directory /path/to/repo --tag v1.2.3` |
 | `module-selector-args` | Print build-tool selector args | `module-selector-args --directory /path/to/repo --module core` |
 
+`modules` also prints copyable `add` commands. For multi-module repositories, it includes both a first-module example and a `--modules all` example.
+
 For Maven repositories, `module-selector-args --module core` prints Maven `-pl :core -am`.
 For Gradle repositories, it prints the Gradle project selector `:core`.
 

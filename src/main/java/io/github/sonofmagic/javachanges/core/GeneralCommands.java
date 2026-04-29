@@ -310,7 +310,21 @@ final class ModulesCommand extends AbstractCliCommand {
         for (String module : modules) {
             out().println("  - " + module);
         }
+        printNextSteps(repoRoot, modules);
         return success();
+    }
+
+    private void printNextSteps(Path repoRoot, List<String> modules) {
+        String repoArg = CliOutputSupport.shellQuote(repoRoot.toString());
+        out().println();
+        out().println("Next steps:");
+        out().println("  javachanges add --directory " + repoArg
+            + " --modules " + CliOutputSupport.shellQuote(modules.get(0))
+            + " --summary \"describe the change\" --release patch");
+        if (modules.size() > 1) {
+            out().println("  javachanges add --directory " + repoArg
+                + " --modules all --summary \"describe the change\" --release patch");
+        }
     }
 }
 

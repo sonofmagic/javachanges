@@ -244,6 +244,11 @@ class JavaChangesCliTest {
         assertTrue(result.stdout.contains("Current revision: 1.1.1-SNAPSHOT"));
         assertTrue(result.stdout.contains("  - core"));
         assertTrue(result.stdout.contains("  - cli"));
+        assertTrue(result.stdout.contains("Next steps:"));
+        assertTrue(result.stdout.contains("javachanges add --directory " + repoRoot
+            + " --modules core --summary \"describe the change\" --release patch"));
+        assertTrue(result.stdout.contains("javachanges add --directory " + repoRoot
+            + " --modules all --summary \"describe the change\" --release patch"));
     }
 
     @Test
@@ -257,6 +262,10 @@ class JavaChangesCliTest {
         assertTrue(result.stdout.contains("Version file: gradle.properties"));
         assertTrue(result.stdout.contains("Current revision: 1.1.1-SNAPSHOT"));
         assertTrue(result.stdout.contains("  - fixture-app"));
+        assertTrue(result.stdout.contains("Next steps:"));
+        assertTrue(result.stdout.contains("javachanges add --directory " + repoRoot
+            + " --modules fixture-app --summary \"describe the change\" --release patch"));
+        assertFalse(result.stdout.contains("--modules all"));
     }
 
     @Test

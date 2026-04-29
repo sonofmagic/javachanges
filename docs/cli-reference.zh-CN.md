@@ -308,6 +308,8 @@ changesets 已经被消费后，它会从当前快照版本推导 whole-repo 发
 | `assert-release-tag` | 校验 tag 是否和当前仓库版本一致 | `assert-release-tag --directory /path/to/repo --tag v1.2.3` |
 | `module-selector-args` | 输出构建工具模块选择参数 | `module-selector-args --directory /path/to/repo --module core` |
 
+`modules` 还会输出可直接复制的 `add` 命令。对于多模块仓库，它会同时给出第一个模块的示例和 `--modules all` 示例。
+
 Maven 仓库中，`module-selector-args --module core` 输出 Maven `-pl :core -am`。
 Gradle 仓库中，它输出 Gradle project selector `:core`。
 
