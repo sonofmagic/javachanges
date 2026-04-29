@@ -132,6 +132,25 @@ class I18nTest {
     }
 
     @Test
+    void loadsExternalizedPlatformMessages() {
+        assertEquals("git command failed: [push]", ReleaseMessages.gitCommandFailed("[push]"));
+        assertEquals("Generated GitHub Actions workflow: .github/workflows/release.yml",
+            ReleaseMessages.generatedGithubActionsWorkflow(Paths.get(".github/workflows/release.yml")));
+        assertEquals("GitLab API GET /projects failed: denied",
+            ReleaseMessages.gitlabApiFailed("GET", "/projects", "denied"));
+        ReleaseLanguageContext.set(ReleaseLanguage.ZH_CN);
+        try {
+            assertEquals("git 命令执行失败: [push]", ReleaseMessages.gitCommandFailed("[push]"));
+            assertEquals("已生成 GitLab CI template: .gitlab-ci.yml",
+                ReleaseMessages.generatedGitlabCiTemplate(Paths.get(".gitlab-ci.yml")));
+            assertEquals("GitLab API GET /projects 失败: denied",
+                ReleaseMessages.gitlabApiFailed("GET", "/projects", "denied"));
+        } finally {
+            ReleaseLanguageContext.clear();
+        }
+    }
+
+    @Test
     void localizedTemplatesStayInSync() throws Exception {
         Path templateRoot = Paths.get("")
             .toAbsolutePath()

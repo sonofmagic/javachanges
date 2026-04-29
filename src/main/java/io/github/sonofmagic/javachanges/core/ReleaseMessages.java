@@ -421,159 +421,127 @@ public final class ReleaseMessages {
     }
 
     public static String gitCommandFailed() {
-        return text("git command failed", "git 命令执行失败");
+        return message("platform.gitCommandFailed");
     }
 
     public static String gitCommandFailed(String command) {
-        return text("git command failed: " + command, "git 命令执行失败: " + command);
+        return message("platform.gitCommandFailedWithCommand", command);
     }
 
     public static String failedToCaptureProcessOutput() {
-        return text("Failed to capture process output", "捕获进程输出失败");
+        return message("platform.failedToCaptureProcessOutput");
     }
 
     public static String gitTagFailed(String error) {
-        return text("git tag failed: " + error, "git tag 执行失败: " + error);
+        return message("platform.gitTagFailed", error);
     }
 
     public static String gitReturnedEmptyOutput(Object args) {
-        return text("git returned empty output for " + args, "git 返回了空输出: " + args);
+        return message("platform.gitReturnedEmptyOutput", args);
     }
 
     public static String unexpectedGitLsRemoteOutput(String stdout) {
-        return text("Unexpected git ls-remote output: " + stdout, "git ls-remote 输出不符合预期: " + stdout);
+        return message("platform.unexpectedGitLsRemoteOutput", stdout);
     }
 
     public static String gitRevParseHeadFailed() {
-        return text("git rev-parse HEAD failed", "git rev-parse HEAD 执行失败");
+        return message("platform.gitRevParseHeadFailed");
     }
 
     public static String currentHeadShaEmpty() {
-        return text("Current HEAD SHA is empty", "当前 HEAD SHA 为空");
+        return message("platform.currentHeadShaEmpty");
     }
 
     public static String ghPrListFailed() {
-        return text("gh pr list failed", "gh pr list 执行失败");
+        return message("platform.ghPrListFailed");
     }
 
     public static String ghCommandFailed(Object args) {
-        return text("gh command failed: " + args, "gh 命令执行失败: " + args);
+        return message("platform.ghCommandFailed", args);
     }
 
     public static String targetFileExists(Path target) {
-        return text(
-            "Target file already exists. Pass --force true to overwrite: " + target,
-            "目标文件已存在。传入 --force true 可覆盖: " + target
-        );
+        return message("platform.targetFileExists", target);
     }
 
     public static String generatedGithubActionsWorkflow(Path relativePath) {
-        return text("Generated GitHub Actions workflow: ", "已生成 GitHub Actions workflow: ") + relativePath;
+        return message("platform.generatedGithubActionsWorkflow", relativePath);
     }
 
     public static String generatedGitlabCiTemplate(Path relativePath) {
-        return text("Generated GitLab CI template: ", "已生成 GitLab CI template: ") + relativePath;
+        return message("platform.generatedGitlabCiTemplate", relativePath);
     }
 
     public static String unsupportedBuildTool(String buildTool) {
-        return text("Unsupported build tool: " + buildTool, "不支持的构建工具: " + buildTool);
+        return message("platform.unsupportedBuildTool", buildTool);
     }
 
     public static String javachangesFailed(int exitCode) {
-        return text("javachanges failed with exit code " + exitCode, "javachanges 执行失败，退出码: " + exitCode);
+        return message("platform.javachangesFailed", exitCode);
     }
 
     public static String unterminatedJavachangesArgsQuote() {
-        return text(
-            "Unterminated quoted argument in javachanges.args",
-            "javachanges.args 中存在未闭合的引号参数"
-        );
+        return message("platform.unterminatedJavachangesArgsQuote");
     }
 
     public static String attemptsMustBePositive() {
-        return text("--attempts must be greater than 0", "--attempts 必须大于 0");
+        return message("platform.attemptsMustBePositive");
     }
 
     public static String retryDelayMustBeNonNegative() {
-        return text("--retry-delay-seconds must be 0 or greater", "--retry-delay-seconds 必须大于等于 0");
+        return message("platform.retryDelayMustBeNonNegative");
     }
 
     public static String signingKeyNotVisible(String fingerprint, String primaryKeyserver, String secondaryKeyserver) {
-        return text(
-            "The signing key fingerprint " + fingerprint + " is still not visible from " + primaryKeyserver
-                + " or " + secondaryKeyserver + ". Publish the public key to a supported keyserver and rerun the workflow.",
-            "签名密钥指纹 " + fingerprint + " 仍无法从 " + primaryKeyserver + " 或 " + secondaryKeyserver
-                + " 查询到。请把公钥发布到受支持的 keyserver 后重新运行 workflow。"
-        );
+        return message("platform.signingKeyNotVisible", fingerprint, primaryKeyserver, secondaryKeyserver);
     }
 
     public static String failedToInspectGpgSecretKeys(String detail) {
-        return text("Failed to inspect imported GPG secret keys: " + detail, "检查已导入的 GPG 私钥失败: " + detail);
+        return message("platform.failedToInspectGpgSecretKeys", detail);
     }
 
     public static String noImportedSecretKeyFingerprint() {
-        return text(
-            "No imported secret key fingerprint was found after actions/setup-java.",
-            "actions/setup-java 后未找到已导入私钥的 fingerprint。"
-        );
+        return message("platform.noImportedSecretKeyFingerprint");
     }
 
     public static String missingGithubRepo() {
-        return text(
-            "Missing GitHub repo. Pass --github-repo or set GITHUB_REPOSITORY.",
-            "缺少 GitHub repo。请传入 --github-repo 或设置 GITHUB_REPOSITORY。"
-        );
+        return message("platform.missingGithubRepo");
     }
 
     public static String missingGitlabProjectId() {
-        return text(
-            "Missing GitLab project id. Pass --project-id or set CI_PROJECT_ID.",
-            "缺少 GitLab project id。请传入 --project-id 或设置 CI_PROJECT_ID。"
-        );
+        return message("platform.missingGitlabProjectId");
     }
 
     public static String missingGitlabTag() {
-        return text(
-            "Missing GitLab tag. Pass --tag or set CI_COMMIT_TAG.",
-            "缺少 GitLab tag。请传入 --tag 或设置 CI_COMMIT_TAG。"
-        );
+        return message("platform.missingGitlabTag");
     }
 
     public static String connectTimeoutMustBeNonNegative() {
-        return text("connectTimeoutMillis must be 0 or greater", "connectTimeoutMillis 必须大于等于 0");
+        return message("platform.connectTimeoutMustBeNonNegative");
     }
 
     public static String readTimeoutMustBeNonNegative() {
-        return text("readTimeoutMillis must be 0 or greater", "readTimeoutMillis 必须大于等于 0");
+        return message("platform.readTimeoutMustBeNonNegative");
     }
 
     public static String missingGitlabResponseField(String field, String json) {
-        return text(
-            "Missing `" + field + "` in GitLab response: " + json,
-            "GitLab 响应缺少 `" + field + "`: " + json
-        );
+        return message("platform.missingGitlabResponseField", field, json);
     }
 
     public static String gitlabApiNotFound(String method, String path) {
-        return text(
-            "GitLab API " + method + " " + path + " failed: Not found",
-            "GitLab API " + method + " " + path + " 失败: Not found"
-        );
+        return message("platform.gitlabApiNotFound", method, path);
     }
 
     public static String gitlabApiFailed(String method, String path, String detail) {
-        return text(
-            "GitLab API " + method + " " + path + " failed: " + detail,
-            "GitLab API " + method + " " + path + " 失败: " + detail
-        );
+        return message("platform.gitlabApiFailed", method, path, detail);
     }
 
     public static String failedToEncodeUrlComponent() {
-        return text("Failed to encode URL component", "URL 组件编码失败");
+        return message("platform.failedToEncodeUrlComponent");
     }
 
     public static String failedToEncodeGitlabProjectPath() {
-        return text("Failed to encode GitLab project path", "GitLab 项目路径编码失败");
+        return message("platform.failedToEncodeGitlabProjectPath");
     }
 
     public static String createGitlabProtectedVariable(String name) {
