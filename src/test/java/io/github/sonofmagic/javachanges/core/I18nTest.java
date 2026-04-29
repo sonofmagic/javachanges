@@ -94,6 +94,27 @@ class I18nTest {
     }
 
     @Test
+    void loadsExternalizedPublishMessages() {
+        assertEquals("  Use --force to replace it with the default template.", ReleaseMessages.useForceToReplaceDefaultTemplate());
+        assertEquals(" (use --config to write the default template)", ReleaseMessages.useConfigToWriteDefaultTemplate());
+        assertEquals("== Dry Run Output ==", ReleaseMessages.dryRunOutputHeading());
+        assertEquals("Maven command: ./mvnw (wrapper)", ReleaseMessages.mavenCommandLabel("./mvnw", "wrapper"));
+        assertEquals("target module: all", ReleaseMessages.targetModule(null));
+        assertEquals("target module: core", ReleaseMessages.targetModule("core"));
+        ReleaseLanguageContext.set(ReleaseLanguage.ZH_CN);
+        try {
+            assertEquals("  使用 --force 可替换为默认模板。", ReleaseMessages.useForceToReplaceDefaultTemplate());
+            assertEquals(" (使用 --config 写入默认模板)", ReleaseMessages.useConfigToWriteDefaultTemplate());
+            assertEquals("== 版本检查 ==", ReleaseMessages.versionCheckHeading());
+            assertEquals("Maven 命令: ./mvnw (wrapper)", ReleaseMessages.mavenCommandLabel("./mvnw", "wrapper"));
+            assertEquals("目标模块: all", ReleaseMessages.targetModule(null));
+            assertEquals("目标模块: core", ReleaseMessages.targetModule("core"));
+        } finally {
+            ReleaseLanguageContext.clear();
+        }
+    }
+
+    @Test
     void localizedTemplatesStayInSync() throws Exception {
         Path templateRoot = Paths.get("")
             .toAbsolutePath()

@@ -870,244 +870,198 @@ public final class ReleaseMessages {
     }
 
     public static String missingSnapshotOrTag() {
-        return text(
-            "Must specify --snapshot true or --tag <value>",
-            "必须指定 --snapshot true 或 --tag <value>"
-        );
+        return message("publish.missingSnapshotOrTag");
     }
 
     public static String snapshotAndTagMutuallyExclusive() {
-        return text("--snapshot and --tag cannot be used together", "--snapshot 和 --tag 不能同时使用");
+        return message("publish.snapshotAndTagMutuallyExclusive");
     }
 
     public static String useForceToReplaceDefaultTemplate() {
-        return text(
-            "  Use --force to replace it with the default template.",
-            "  使用 --force 可替换为默认模板。"
-        );
+        return message("publish.useForceToReplaceDefaultTemplate");
     }
 
     public static String useConfigToWriteDefaultTemplate() {
-        return text(" (use --config to write the default template)", " (使用 --config 写入默认模板)");
+        return message("publish.useConfigToWriteDefaultTemplate");
     }
 
     public static String buildTool() {
-        return text("Build tool", "构建工具");
+        return message("publish.buildTool");
     }
 
     public static String versionFile() {
-        return text("Version file", "版本文件");
+        return message("publish.versionFile");
     }
 
     public static String modules() {
-        return text("Modules", "模块");
+        return message("publish.modules");
     }
 
     public static String moduleOk() {
-        return text("module ok", "模块校验通过");
+        return message("publish.moduleOk");
     }
 
     public static String snapshotOk() {
-        return text("snapshot ok", "snapshot 校验通过");
+        return message("publish.snapshotOk");
     }
 
     public static String releaseTagOk() {
-        return text("release tag ok", "release tag 校验通过");
+        return message("publish.releaseTagOk");
     }
 
     public static String generatedMavenSettings(String output) {
-        return text("Generated Maven settings: ", "已生成 Maven settings: ") + output;
+        return message("publish.generatedMavenSettings", output);
     }
 
     public static String generatedReleaseNotes(String output) {
-        return text("Generated release notes: ", "已生成 release notes: ") + output;
+        return message("publish.generatedReleaseNotes", output);
     }
 
     public static String gpgPublicKeyOk(String fingerprint) {
-        return text("gpg public key ok: ", "gpg 公钥校验通过: ") + fingerprint;
+        return message("publish.gpgPublicKeyOk", fingerprint);
     }
 
     public static String envFileNotFound(String path) {
-        return text("Env file not found: " + path, "未找到 env 文件: " + path);
+        return message("publish.envFileNotFound", path);
     }
 
     public static String doNotUseExampleEnvFile(String path) {
-        return text("Do not use the example env file directly: " + path, "请不要直接使用示例文件: " + path);
+        return message("publish.doNotUseExampleEnvFile", path);
     }
 
     public static String explicitModuleDoesNotMatchTagModule(String resolvedModule, String tagModule) {
-        return text(
-            "Explicit module " + resolvedModule + " does not match module " + tagModule + " from tag",
-            "显式指定的模块 " + resolvedModule + " 与 tag 中的模块 " + tagModule + " 不一致"
-        );
+        return message("publish.explicitModuleDoesNotMatchTagModule", resolvedModule, tagModule);
     }
 
     public static String noMavenCommandFound() {
-        return text(
-            "No Maven command found. Expected " + ReleaseProcessUtils.mavenWrapperPath()
-                + " in the repository or mvn on PATH.",
-            "未找到可用的 Maven 命令，期望仓库内存在 "
-                + ReleaseProcessUtils.mavenWrapperPath() + " 或系统中可用 mvn"
-        );
+        return message("publish.noMavenCommandFound", ReleaseProcessUtils.mavenWrapperPath());
     }
 
     public static String noGradleCommandFound() {
-        return text(
-            "No Gradle command found. Expected " + ReleaseProcessUtils.gradleWrapperPath()
-                + " in the repository or gradle on PATH.",
-            "未找到可用的 Gradle 命令，期望仓库内存在 "
-                + ReleaseProcessUtils.gradleWrapperPath() + " 或系统中可用 gradle"
-        );
+        return message("publish.noGradleCommandFound", ReleaseProcessUtils.gradleWrapperPath());
     }
 
     public static String dryRunOutputHeading() {
-        return text("== Dry Run Output ==", "== Dry Run 输出 ==");
+        return message("publish.dryRunOutputHeading");
     }
 
     public static String generatedMavenSettingsFile() {
-        return text("Generated .m2/settings.xml", "已生成 .m2/settings.xml");
+        return message("publish.generatedMavenSettingsFile");
     }
 
     public static String mavenSettingsWillBeWritten() {
-        return text(
-            "Maven settings generation check passed; execution will write .m2/settings.xml",
-            "Maven settings 生成校验通过；执行时将写入 .m2/settings.xml"
-        );
+        return message("publish.mavenSettingsWillBeWritten");
     }
 
     public static String mavenCommandLabel(String command, String source) {
-        return text("Maven command: ", "Maven 命令: ") + command + " (" + source + ")";
+        return message("publish.mavenCommandLabel", command, source);
     }
 
     public static String localMavenRepository(Path path) {
-        return text("Local Maven repository: ", "本地 Maven 仓库: ") + path;
+        return message("publish.localMavenRepository", path);
     }
 
     public static String generatedReleaseNotesFile() {
-        return text("Generated target/release-notes.md", "已生成 target/release-notes.md");
+        return message("publish.generatedReleaseNotesFile");
     }
 
     public static String releaseNotesWillBeWritten() {
-        return text(
-            "release notes generation check passed; execution will write target/release-notes.md",
-            "release notes 生成校验通过；执行时将写入 target/release-notes.md"
-        );
+        return message("publish.releaseNotesWillBeWritten");
     }
 
     public static String targetModule(String module) {
-        return module == null ? text("target module: all", "目标模块: all") : text("target module: ", "目标模块: ") + module;
+        return module == null ? message("publish.targetModuleAll") : message("publish.targetModule", module);
     }
 
     public static String commandToRun() {
-        return text("Command to run:", "将执行的命令:");
+        return message("publish.commandToRun");
     }
 
     public static String dryRunOnlyMavenPublish() {
-        return text(
-            "Dry-run only. Pass --execute true to run Maven publish.",
-            "当前为 dry-run，未执行 Maven。传入 --execute true 才会真正发布。"
-        );
+        return message("publish.dryRunOnlyMavenPublish");
     }
 
     public static String dryRunOnlyGradlePublish() {
-        return text(
-            "Dry-run only. Pass --execute true to run Gradle publish.",
-            "当前为 dry-run，未执行 Gradle。传入 --execute true 才会真正发布。"
-        );
+        return message("publish.dryRunOnlyGradlePublish");
     }
 
     public static String runningMavenHeading() {
-        return text("== Running Maven ==", "== 开始执行 ==");
+        return message("publish.runningMavenHeading");
     }
 
     public static String runningGradleHeading() {
-        return text("== Running Gradle ==", "== 开始执行 Gradle ==");
+        return message("publish.runningGradleHeading");
     }
 
     public static String mavenDeployFailed(int exitCode) {
-        return text("Maven deploy failed with exit code " + exitCode, "Maven deploy 失败，退出码: " + exitCode);
+        return message("publish.mavenDeployFailed", exitCode);
     }
 
     public static String gradlePublishFailed(int exitCode) {
-        return text("Gradle publish failed with exit code " + exitCode, "Gradle publish 失败，退出码: " + exitCode);
+        return message("publish.gradlePublishFailed", exitCode);
     }
 
     public static String dirtyWorktree() {
-        return text(
-            "Working tree has uncommitted changes. Use --allow-dirty true to skip this check when intentional.",
-            "工作区存在未提交修改。若这是预期行为，可使用 --allow-dirty true 跳过检查。"
-        );
+        return message("publish.dirtyWorktree");
     }
 
     public static String versionCheckHeading() {
-        return text("== Version Check ==", "== 版本检查 ==");
+        return message("publish.versionCheckHeading");
     }
 
     public static String currentRevisionValue(String value) {
-        return text("Current revision: ", "当前 revision: ") + value;
+        return message("publish.currentRevisionValue", value);
     }
 
     public static String publishModeCheckHeading() {
-        return text("== Publish Mode Check ==", "== 发布模式检查 ==");
+        return message("publish.publishModeCheckHeading");
     }
 
     public static String snapshotCheckPassed() {
-        return text("snapshot check passed", "snapshot 校验通过");
+        return message("publish.snapshotCheckPassed");
     }
 
     public static String plainSnapshotDescription() {
-        return text(
-            "plain snapshot: project version keeps the original -SNAPSHOT revision from pom.xml",
-            "plain snapshot: 项目版本号保持 pom.xml 中的原始 -SNAPSHOT revision"
-        );
+        return message("publish.plainSnapshotDescription");
     }
 
     public static String stampedSnapshotDescription() {
-        return text(
-            "stamped snapshot: project version appends the build stamp before publishing",
-            "stamped snapshot: 项目版本号会追加 build stamp 后再发布"
-        );
+        return message("publish.stampedSnapshotDescription");
     }
 
     public static String repositoryVariableCheckHeading() {
-        return text("== Repository Variable Check ==", "== 仓库变量检查 ==");
+        return message("publish.repositoryVariableCheckHeading");
     }
 
     public static String credentialCheckHeading() {
-        return text("== Credential Check ==", "== 凭据检查 ==");
+        return message("publish.credentialCheckHeading");
     }
 
     public static String mavenSettingsGenerationPassed() {
-        return text("Maven settings generation check passed", "Maven settings 生成校验通过");
+        return message("publish.mavenSettingsGenerationPassed");
     }
 
     public static String releaseNotesPreflightHeading() {
-        return text("== Release Notes Preflight ==", "== Release Notes 预检查 ==");
+        return message("publish.releaseNotesPreflightHeading");
     }
 
     public static String releaseNotesGenerationPassed() {
-        return text("release notes generation check passed", "release notes 生成校验通过");
+        return message("publish.releaseNotesGenerationPassed");
     }
 
     public static String localTagMissingSkipReleaseNotes(String tag) {
-        return text(
-            "Local tag " + tag + " was not found; skipping release notes generation check",
-            "本地尚未找到 tag " + tag + "，跳过 release notes 生成检查"
-        );
+        return message("publish.localTagMissingSkipReleaseNotes", tag);
     }
 
     public static String preflightChecksPassed() {
-        return text("Preflight checks passed", "发布前检查通过");
+        return message("publish.preflightChecksPassed");
     }
 
     public static String taskMustBeNameWhenModuleSet(String task) {
-        return text(
-            "--task must be a task name, not a project path, when --module is set: " + task,
-            "设置 --module 时，--task 必须是任务名，不能是项目路径: " + task
-        );
+        return message("publish.taskMustBeNameWhenModuleSet", task);
     }
 
     public static String unsupportedGradleTask(String task) {
-        return text("Unsupported Gradle task: " + task, "不支持的 Gradle task: " + task);
+        return message("publish.unsupportedGradleTask", task);
     }
 }
