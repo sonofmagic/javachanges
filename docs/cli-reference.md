@@ -157,7 +157,7 @@ Rules of thumb:
 | --- | --- | --- |
 | `init` | Initialize `.changesets/README.md` with starter examples, optionally `.changesets/config.jsonc`, and print starter commands | `.changesets/README.md`, optional `.changesets/config.jsonc` |
 | `add` | Create a changeset | `.changesets/*.md` |
-| `next` | Suggest the next release workflow command | No |
+| `next` | Suggest the next release workflow command, including local, GitHub, and GitLab paths | No |
 | `modules` | List detected build metadata and module names | No |
 | `status` | Show the current release plan | No |
 | `plan` | Render the current release plan | No |

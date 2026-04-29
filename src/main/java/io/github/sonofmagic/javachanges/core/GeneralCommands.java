@@ -192,6 +192,9 @@ final class NextCommand extends AbstractCliCommand {
             out().println();
             out().println("Or open an automated GitHub release PR:");
             out().println("  javachanges github-release-plan --directory " + repoArg + " --write-plan-files false --execute true");
+            out().println();
+            out().println("Or open an automated GitLab release MR:");
+            out().println("  javachanges gitlab-release-plan --directory " + repoArg + " --write-plan-files false --execute true");
             return success();
         }
         out().println("No pending changesets.");

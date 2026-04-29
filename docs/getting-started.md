@@ -255,6 +255,7 @@ That updates:
 - `.changesets/release-plan.md`
 
 After applying the plan, `javachanges` prints the `git status`, `git add`, `git commit`, and `javachanges next` commands for the same repository.
+When changesets are pending, `javachanges next` also shows GitHub and GitLab release-plan automation commands.
 
 ## 9. Running from source during development
 

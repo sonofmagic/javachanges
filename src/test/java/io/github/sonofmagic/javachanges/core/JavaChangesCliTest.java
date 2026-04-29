@@ -276,6 +276,7 @@ class JavaChangesCliTest {
         assertTrue(result.stdout.contains("javachanges status --directory " + repoRoot));
         assertTrue(result.stdout.contains("javachanges plan --directory " + repoRoot + " --apply true"));
         assertTrue(result.stdout.contains("javachanges github-release-plan --directory " + repoRoot));
+        assertTrue(result.stdout.contains("javachanges gitlab-release-plan --directory " + repoRoot));
     }
 
     @Test

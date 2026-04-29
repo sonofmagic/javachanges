@@ -156,7 +156,7 @@ jc-version:
 | --- | --- | --- |
 | `init` | 初始化带起步示例的 `.changesets/README.md`，可选写入 `.changesets/config.jsonc`，并输出起步命令 | `.changesets/README.md`，可选 `.changesets/config.jsonc` |
 | `add` | 创建 changeset | `.changesets/*.md` |
-| `next` | 推荐下一步发布流程命令 | 否 |
+| `next` | 推荐下一步发布流程命令，包含本地、GitHub 和 GitLab 路径 | 否 |
 | `modules` | 列出识别到的构建元数据和模块名称 | 否 |
 | `status` | 查看当前 release plan | 否 |
 | `plan` | 计算当前 release plan | 否 |

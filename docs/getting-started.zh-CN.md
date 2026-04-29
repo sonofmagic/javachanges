@@ -251,6 +251,7 @@ java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar pl
 - `.changesets/release-plan.md`
 
 应用完成后，`javachanges` 会输出同一仓库的 `git status`、`git add`、`git commit` 和 `javachanges next` 命令。
+有待发布 changeset 时，`javachanges next` 也会显示 GitHub 和 GitLab release-plan 自动化命令。
 
 ## 9. 以源码方式进入开发模式
 
