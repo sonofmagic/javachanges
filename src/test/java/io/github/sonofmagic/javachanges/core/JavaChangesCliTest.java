@@ -118,6 +118,28 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void initKeepsExistingReadmeUnlessForced(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+        Path changesetsDir = repoRoot.resolve(".changesets");
+        Files.createDirectories(changesetsDir);
+        Path readmePath = changesetsDir.resolve("README.md");
+        Files.write(readmePath, "# Custom changeset policy\n".getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult keptResult = execute("init", "--directory", repoRoot.toString());
+
+        assertEquals(0, keptResult.exitCode);
+        assertEquals("# Custom changeset policy\n", read(readmePath));
+        assertTrue(keptResult.stdout.contains("Kept: .changesets/README.md"));
+
+        ExecutionResult forcedResult = execute("init", "--directory", repoRoot.toString(), "--force");
+
+        assertEquals(0, forcedResult.exitCode);
+        assertTrue(read(readmePath).contains("This directory stores pending release notes."));
+        assertTrue(read(readmePath).contains("javachanges modules --directory ."));
+        assertTrue(forcedResult.stdout.contains("Replaced: .changesets/README.md"));
+    }
+
+    @Test
     void initUsesExistingJsonConfigPath(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, false);
         Path changesetsDir = repoRoot.resolve(".changesets");

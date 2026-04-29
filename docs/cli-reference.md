@@ -183,6 +183,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="init --directory /path/to/repo
 ```
 
 Use `--force` or `-Djavachanges.force=true` to replace an existing `.changesets/config.json` or `.changesets/config.jsonc` with the default template.
+The same force flag also refreshes an existing `.changesets/README.md` with the current starter guide; without it, custom README content is preserved.
 
 ### 5.2 `add`
 

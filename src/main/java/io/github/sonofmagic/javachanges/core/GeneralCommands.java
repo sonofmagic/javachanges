@@ -32,7 +32,7 @@ final class InitCommand extends AbstractCliCommand {
     private boolean config;
 
     @Option(names = "--force", arity = "0..1", fallbackValue = "true", defaultValue = "false",
-        description = "Overwrite an existing changeset config file when used with --config.")
+        description = "Replace existing generated setup files. Config files are only replaced when used with --config.")
     private boolean force;
 
     @Override
@@ -42,11 +42,15 @@ final class InitCommand extends AbstractCliCommand {
         Path readmePath = changesetsDir.resolve(ChangesetPaths.README);
         boolean hadReadme = Files.exists(readmePath);
 
-        RepoFiles.ensureChangesetReadme(repoRoot);
+        if (hadReadme && force) {
+            RepoFiles.writeDefaultChangesetReadme(repoRoot);
+        } else {
+            RepoFiles.ensureChangesetReadme(repoRoot);
+        }
 
         out().println("Initialized javachanges in " + repoRoot);
         out().println();
-        printPathAction(hadReadme ? "Kept" : "Created", repoRoot, readmePath);
+        printPathAction(readmeAction(hadReadme), repoRoot, readmePath);
 
         if (config) {
             Path configPath = configPath(changesetsDir);
@@ -75,6 +79,13 @@ final class InitCommand extends AbstractCliCommand {
 
     private void printPathAction(String action, Path repoRoot, Path path) {
         out().println(action + ": " + repoRoot.relativize(path));
+    }
+
+    private String readmeAction(boolean hadReadme) {
+        if (!hadReadme) {
+            return "Created";
+        }
+        return force ? "Replaced" : "Kept";
     }
 
     private static Path configPath(Path changesetsDir) {

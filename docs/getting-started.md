@@ -152,6 +152,7 @@ mvn javachanges:init -Djavachanges.config=true
 
 The command creates `.changesets/README.md` with starter examples, writes `.changesets/config.jsonc` when requested, and prints the next commands to run.
 Run `mvn javachanges:modules` when you need the exact module names; its output includes `add` examples using the detected modules.
+Use `mvn javachanges:init -Djavachanges.force=true` to refresh an older generated README while preserving custom content by default.
 
 ## 6. Create a changeset
 

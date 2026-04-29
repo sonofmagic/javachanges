@@ -182,6 +182,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="init --directory /path/to/repo
 ```
 
 如果需要用默认模板替换已有 `.changesets/config.json` 或 `.changesets/config.jsonc`，使用 `--force` 或 `-Djavachanges.force=true`。
+同一个 force 参数也会用当前起步指南刷新已有 `.changesets/README.md`；不加 force 时会保留自定义 README 内容。
 
 ### 5.2 `add`
 

@@ -22,6 +22,10 @@ public final class RepoFiles {
         ChangesetFileSupport.ensureChangesetReadme(repoRoot);
     }
 
+    public static void writeDefaultChangesetReadme(Path repoRoot) throws IOException {
+        ChangesetFileSupport.writeDefaultChangesetReadme(repoRoot);
+    }
+
     public static Path writeChangeset(Path repoRoot, ChangesetInput input) throws IOException {
         return ChangesetFileSupport.writeChangeset(repoRoot, input);
     }

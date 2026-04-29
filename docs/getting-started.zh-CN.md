@@ -148,6 +148,7 @@ mvn javachanges:init -Djavachanges.config=true
 
 这个命令会创建带起步示例的 `.changesets/README.md`，按需写入 `.changesets/config.jsonc`，并输出接下来可以执行的命令。
 如果需要确认精确模块名，执行 `mvn javachanges:modules`；它的输出会基于检测到的模块给出 `add` 示例。
+如果需要刷新旧版生成 README，使用 `mvn javachanges:init -Djavachanges.force=true`；默认会保留自定义内容。
 
 ## 6. 创建 changeset
 

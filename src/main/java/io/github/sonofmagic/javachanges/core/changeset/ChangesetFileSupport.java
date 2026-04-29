@@ -26,8 +26,14 @@ public final class ChangesetFileSupport {
         Files.createDirectories(dir);
         Path readme = dir.resolve(ChangesetPaths.README);
         if (!Files.exists(readme)) {
-            Files.write(readme, defaultReadme().getBytes(StandardCharsets.UTF_8));
+            writeDefaultChangesetReadme(repoRoot);
         }
+    }
+
+    public static void writeDefaultChangesetReadme(Path repoRoot) throws IOException {
+        Path dir = repoRoot.resolve(ChangesetPaths.DIR);
+        Files.createDirectories(dir);
+        Files.write(dir.resolve(ChangesetPaths.README), defaultReadme().getBytes(StandardCharsets.UTF_8));
     }
 
     public static Path writeChangeset(Path repoRoot, ChangesetInput input) throws IOException {
