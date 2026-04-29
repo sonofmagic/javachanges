@@ -156,18 +156,20 @@ public final class ReleasePlan {
 
     public List<String> toPullRequestBodyLines() {
         List<String> lines = new ArrayList<String>();
-        lines.add("## Release Plan");
+        lines.add("## Release Plan 🚀");
+        lines.add("");
+        lines.add("> Generated from `.changesets/*.md`. Review the plan, then merge when the release looks right.");
         lines.add("");
         lines.add("| Field | Value |");
         lines.add("| --- | --- |");
-        lines.add("| Release type | `" + releaseLevel.id + "` |");
-        lines.add("| Affected packages | `" + ReleaseModuleUtils.joinModules(getAffectedPackages()) + "` |");
-        lines.add("| Release version | `v" + releaseVersion + "` |");
-        lines.add("| Tag strategy | `" + tagStrategy.id + "` |");
-        lines.add("| Planned tags | `" + ReleaseModuleUtils.joinModules(getPlannedTags()) + "` |");
-        lines.add("| Next snapshot | `" + nextSnapshotVersion + "` |");
+        lines.add("| 🚦 Release type | `" + releaseLevel.id + "` |");
+        lines.add("| 📦 Affected packages | `" + ReleaseModuleUtils.joinModules(getAffectedPackages()) + "` |");
+        lines.add("| 🏷️ Release version | `v" + releaseVersion + "` |");
+        lines.add("| 🔖 Tag strategy | `" + tagStrategy.id + "` |");
+        lines.add("| 🧾 Planned tags | `" + ReleaseModuleUtils.joinModules(getPlannedTags()) + "` |");
+        lines.add("| 🔁 Next snapshot | `" + nextSnapshotVersion + "` |");
         lines.add("");
-        lines.add("## Included Changesets");
+        lines.add("## Included Changesets 📝");
         lines.add("");
         Map<ReleaseLevel, List<Changeset>> grouped = new LinkedHashMap<ReleaseLevel, List<Changeset>>();
         grouped.put(ReleaseLevel.MAJOR, new ArrayList<Changeset>());
@@ -181,25 +183,27 @@ public final class ReleasePlan {
             if (levelChangesets == null || levelChangesets.isEmpty()) {
                 continue;
             }
-            lines.add("### " + ReleaseTextUtils.releaseLevelHeading(level));
+            lines.add("### " + releaseLevelEmoji(level) + " " + ReleaseTextUtils.releaseLevelHeading(level));
             lines.add("");
             for (Changeset changeset : levelChangesets) {
                 String visibleType = ReleaseTextUtils.renderVisibleType(changeset.type);
                 lines.add("- **" + changeset.summary + "**");
-                lines.add("  - Release: `" + changeset.release.id + "`");
-                lines.add("  - Packages: `" + ReleaseModuleUtils.joinModules(changeset.modules) + "`");
+                lines.add("  - 🚦 Release: `" + changeset.release.id + "`");
+                lines.add("  - 📦 Packages: `" + ReleaseModuleUtils.joinModules(changeset.modules) + "`");
                 if (!visibleType.isEmpty()) {
-                    lines.add("  - Type: `" + visibleType + "`");
+                    lines.add("  - 🧩 Type: `" + visibleType + "`");
                 }
                 String notes = notesLine(changeset);
                 if (!notes.isEmpty()) {
-                    lines.add("  - Notes: " + notes);
+                    lines.add("  - 📝 Notes: " + notes);
                 }
             }
             lines.add("");
         }
-        lines.add("This PR was generated automatically from `.changesets/*.md` files.");
-        lines.add("Merging it will trigger an automatic tag push and then reuse the existing release workflows.");
+        lines.add("## What happens next ✅");
+        lines.add("");
+        lines.add("- Merging this PR triggers the automatic tag push.");
+        lines.add("- Existing release workflows reuse the generated release metadata.");
         return lines;
     }
 
@@ -236,6 +240,16 @@ public final class ReleasePlan {
     private static String notesLine(Changeset changeset) {
         String firstBodyLine = ReleaseTextUtils.firstBodyLine(changeset.body);
         return firstBodyLine.equals(changeset.summary) ? "" : firstBodyLine;
+    }
+
+    private static String releaseLevelEmoji(ReleaseLevel level) {
+        if (level == ReleaseLevel.MAJOR) {
+            return "💥";
+        }
+        if (level == ReleaseLevel.MINOR) {
+            return "✨";
+        }
+        return "🛠️";
     }
 
     public static final class ReleaseTarget {

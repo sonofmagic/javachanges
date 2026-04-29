@@ -434,11 +434,12 @@ class JavaChangesCliTest {
         assertTrue(Files.exists(repoRoot.resolve(".changesets").resolve("release-plan.md")));
         String releasePlanMarkdown = read(repoRoot.resolve(".changesets").resolve("release-plan.md"));
         assertTrue(releasePlanMarkdown.contains("| Field | Value |"));
-        assertTrue(releasePlanMarkdown.contains("| Release version | `v1.2.0` |"));
-        assertTrue(releasePlanMarkdown.contains("### Minor Changes"));
+        assertTrue(releasePlanMarkdown.contains("| 🏷️ Release version | `v1.2.0` |"));
+        assertTrue(releasePlanMarkdown.contains("### ✨ Minor Changes"));
         assertTrue(releasePlanMarkdown.contains("- **automate self release**"));
-        assertTrue(releasePlanMarkdown.contains("  - Packages: `fixture-app`"));
-        assertFalse(releasePlanMarkdown.contains("  - Notes: automate self release"));
+        assertTrue(releasePlanMarkdown.contains("  - 📦 Packages: `fixture-app`"));
+        assertTrue(releasePlanMarkdown.contains("## What happens next ✅"));
+        assertFalse(releasePlanMarkdown.contains("  - 📝 Notes: automate self release"));
         assertFalse(Files.exists(repoRoot.resolve(".changesets").resolve("minor-release.md")));
     }
 

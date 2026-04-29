@@ -174,24 +174,31 @@ mvn -q -DskipTests compile exec:java -Dexec.args="manifest-field --directory /pa
 当前结构：
 
 ```md
-## Release Plan
+## Release Plan 🚀
+
+> Generated from `.changesets/*.md`. Review the plan, then merge when the release looks right.
 
 | Field | Value |
 | --- | --- |
-| Release type | `minor` |
-| Affected packages | `core, api` |
-| Release version | `v0.2.0` |
-| Tag strategy | `whole-repo` |
-| Planned tags | `v0.2.0` |
-| Next snapshot | `0.2.0-SNAPSHOT` |
+| 🚦 Release type | `minor` |
+| 📦 Affected packages | `core, api` |
+| 🏷️ Release version | `v0.2.0` |
+| 🔖 Tag strategy | `whole-repo` |
+| 🧾 Planned tags | `v0.2.0` |
+| 🔁 Next snapshot | `0.2.0-SNAPSHOT` |
 
-## Included Changesets
+## Included Changesets 📝
 
-### Minor Changes
+### ✨ Minor Changes
 
 - **Add release notes generation workflow.**
-  - Release: `minor`
-  - Packages: `core, api`
+  - 🚦 Release: `minor`
+  - 📦 Packages: `core, api`
+
+## What happens next ✅
+
+- Merging this PR triggers the automatic tag push.
+- Existing release workflows reuse the generated release metadata.
 ```
 
 建议：
