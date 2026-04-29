@@ -54,7 +54,10 @@ public final class ReleaseJsonUtils {
         try {
             return MAPPER.readTree(json);
         } catch (IOException exception) {
-            throw new IllegalStateException("Failed to parse JSON", exception);
+            throw new IllegalStateException(ReleaseMessages.text(
+                "Failed to parse JSON",
+                "解析 JSON 失败"
+            ), exception);
         }
     }
 
@@ -62,7 +65,10 @@ public final class ReleaseJsonUtils {
         try {
             return MAPPER.writeValueAsString(value);
         } catch (JsonProcessingException exception) {
-            throw new IllegalStateException("Failed to write JSON", exception);
+            throw new IllegalStateException(ReleaseMessages.text(
+                "Failed to write JSON",
+                "写入 JSON 失败"
+            ), exception);
         }
     }
 
@@ -70,7 +76,10 @@ public final class ReleaseJsonUtils {
         try {
             return PRETTY_WRITER.writeValueAsString(value);
         } catch (JsonProcessingException exception) {
-            throw new IllegalStateException("Failed to write JSON", exception);
+            throw new IllegalStateException(ReleaseMessages.text(
+                "Failed to write JSON",
+                "写入 JSON 失败"
+            ), exception);
         }
     }
 }

@@ -57,7 +57,10 @@ final class GradleModelSupport {
     static String readRevision(Path gradlePropertiesPath) throws IOException {
         VersionProperty property = findVersionProperty(gradlePropertiesPath);
         if (property == null) {
-            throw new IllegalStateException("Cannot find version or revision in " + gradlePropertiesPath);
+            throw new IllegalStateException(ReleaseMessages.text(
+                "Cannot find version or revision in " + gradlePropertiesPath,
+                "无法在 " + gradlePropertiesPath + " 中找到 version 或 revision"
+            ));
         }
         return property.value;
     }
@@ -66,11 +69,17 @@ final class GradleModelSupport {
         List<String> lines = Files.readAllLines(gradlePropertiesPath, StandardCharsets.UTF_8);
         int index = preferredVersionPropertyLine(lines);
         if (index < 0) {
-            throw new IllegalStateException("Cannot find version or revision in " + gradlePropertiesPath);
+            throw new IllegalStateException(ReleaseMessages.text(
+                "Cannot find version or revision in " + gradlePropertiesPath,
+                "无法在 " + gradlePropertiesPath + " 中找到 version 或 revision"
+            ));
         }
         Matcher matcher = PROPERTY_LINE.matcher(lines.get(index));
         if (!matcher.matches()) {
-            throw new IllegalStateException("Cannot parse version property in " + gradlePropertiesPath);
+            throw new IllegalStateException(ReleaseMessages.text(
+                "Cannot parse version property in " + gradlePropertiesPath,
+                "无法解析 " + gradlePropertiesPath + " 中的 version 配置"
+            ));
         }
         lines.set(index, matcher.group(1) + matcher.group(2) + matcher.group(3) + revision);
         Files.write(gradlePropertiesPath, lines, StandardCharsets.UTF_8);

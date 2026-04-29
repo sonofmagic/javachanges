@@ -23,6 +23,6 @@ public enum ReleaseTagStrategy {
         if (PER_MODULE.id.equals(normalized)) {
             return PER_MODULE;
         }
-        throw new IllegalArgumentException("Unsupported tag strategy: " + value);
+        throw new IllegalArgumentException(ReleaseMessages.unsupportedTagStrategy(value));
     }
 }

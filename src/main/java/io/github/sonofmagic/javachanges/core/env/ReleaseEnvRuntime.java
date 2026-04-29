@@ -1,6 +1,7 @@
 package io.github.sonofmagic.javachanges.core.env;
 
 import io.github.sonofmagic.javachanges.core.CommandResult;
+import io.github.sonofmagic.javachanges.core.ReleaseMessages;
 import io.github.sonofmagic.javachanges.core.ReleaseProcessUtils;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
@@ -21,10 +22,16 @@ public class ReleaseEnvRuntime {
     public Path resolveEnvFile(String envFile) throws IOException {
         Path path = resolvePath(envFile);
         if (!Files.exists(path)) {
-            throw new IllegalStateException("未找到 env 文件: " + relativizePath(path));
+            throw new IllegalStateException(ReleaseMessages.text(
+                "Env file not found: " + relativizePath(path),
+                "未找到 env 文件: " + relativizePath(path)
+            ));
         }
         if (isExampleFile(path)) {
-            throw new IllegalStateException("请不要直接使用示例文件: " + relativizePath(path));
+            throw new IllegalStateException(ReleaseMessages.text(
+                "Do not use the example env file directly: " + relativizePath(path),
+                "请不要直接使用示例文件: " + relativizePath(path)
+            ));
         }
         return path;
     }
@@ -65,7 +72,10 @@ public class ReleaseEnvRuntime {
 
     public void requireCommand(String command) {
         if (!commandExists(command)) {
-            throw new IllegalStateException("未找到 " + command + " CLI");
+            throw new IllegalStateException(ReleaseMessages.text(
+                command + " CLI was not found",
+                "未找到 " + command + " CLI"
+            ));
         }
     }
 

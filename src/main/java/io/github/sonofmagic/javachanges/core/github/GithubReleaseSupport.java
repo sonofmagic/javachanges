@@ -2,6 +2,7 @@ package io.github.sonofmagic.javachanges.core.github;
 
 import io.github.sonofmagic.javachanges.core.BuildModelSupport;
 import io.github.sonofmagic.javachanges.core.ReleaseAutomationSupport;
+import io.github.sonofmagic.javachanges.core.ReleaseMessages;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import io.github.sonofmagic.javachanges.core.automation.AbstractReleaseAutomationSupport;
 import io.github.sonofmagic.javachanges.core.automation.AutomationJsonSupport;
@@ -34,7 +35,10 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
         AutomationJsonSupport.AutomationReport report =
             newAutomationReport("github-release-plan", "plan-pull-request", request.execute);
         if (ReleaseTextUtils.trimToNull(request.githubRepo) == null) {
-            throw new IllegalArgumentException("Missing GitHub repo. Pass --github-repo or set GITHUB_REPOSITORY.");
+            throw new IllegalArgumentException(ReleaseMessages.text(
+                "Missing GitHub repo. Pass --github-repo or set GITHUB_REPOSITORY.",
+                "缺少 GitHub repo。请传入 --github-repo 或设置 GITHUB_REPOSITORY。"
+            ));
         }
 
         ReleasePlan plan = automationSupport.plan();

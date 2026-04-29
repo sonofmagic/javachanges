@@ -2,6 +2,7 @@ package io.github.sonofmagic.javachanges.core.changeset;
 
 import io.github.sonofmagic.javachanges.core.ChangesetPaths;
 import io.github.sonofmagic.javachanges.core.ReleaseJsonUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseMessages;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.io.IOException;
@@ -90,13 +91,13 @@ public final class ChangesetFileSupport {
     public static String readManifestField(Path repoRoot, String field) throws IOException {
         Path manifest = repoRoot.resolve(ChangesetPaths.DIR).resolve(ChangesetPaths.RELEASE_PLAN_JSON);
         if (!Files.exists(manifest)) {
-            throw new IllegalStateException("Missing release plan manifest: " + manifest);
+            throw new IllegalStateException(ReleaseMessages.missingReleasePlanManifest(manifest));
         }
         String content = new String(Files.readAllBytes(manifest), StandardCharsets.UTF_8);
         com.fasterxml.jackson.databind.JsonNode root = ReleaseJsonUtils.readTree(content);
         com.fasterxml.jackson.databind.JsonNode value = root.get(field);
         if (value == null || value.isNull()) {
-            throw new IllegalStateException("Missing field `" + field + "` in " + manifest);
+            throw new IllegalStateException(ReleaseMessages.missingFieldIn(field, manifest));
         }
         return value.asText();
     }
@@ -108,6 +109,43 @@ public final class ChangesetFileSupport {
     }
 
     private static String defaultReadme() {
+        if (ReleaseMessages.zh()) {
+            return "# Changesets\n"
+                + "\n"
+                + "这个目录保存待发布的 release notes。每个面向用户的变更都应该添加一条 changeset。\n"
+                + "\n"
+                + "创建 changeset:\n"
+                + "\n"
+                + "```bash\n"
+                + "javachanges add --directory . --summary \"描述这次变更\" --release patch\n"
+                + "```\n"
+                + "\n"
+                + "多模块仓库请使用检测到的模块名:\n"
+                + "\n"
+                + "```bash\n"
+                + "javachanges modules --directory .\n"
+                + "javachanges add --directory . --modules core --summary \"描述这次变更\" --release patch\n"
+                + "```\n"
+                + "\n"
+                + "Changeset 使用官方 package-map frontmatter 格式:\n"
+                + "\n"
+                + "```md\n"
+                + "---\n"
+                + "\"core\": minor\n"
+                + "---\n"
+                + "\n"
+                + "描述面向用户的变更。\n"
+                + "```\n"
+                + "\n"
+                + "支持的发布级别为 `patch`、`minor` 和 `major`。\n"
+                + "\n"
+                + "检查并应用发布计划:\n"
+                + "\n"
+                + "```bash\n"
+                + "javachanges status --directory .\n"
+                + "javachanges plan --directory . --apply true\n"
+                + "```\n";
+        }
         return "# Changesets\n"
             + "\n"
             + "This directory stores pending release notes. Add one changeset for each user-visible change.\n"

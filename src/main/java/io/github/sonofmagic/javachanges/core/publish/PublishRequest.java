@@ -1,6 +1,7 @@
 package io.github.sonofmagic.javachanges.core.publish;
 
 import io.github.sonofmagic.javachanges.core.OutputFormat;
+import io.github.sonofmagic.javachanges.core.ReleaseMessages;
 import io.github.sonofmagic.javachanges.core.SnapshotVersionMode;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import io.github.sonofmagic.javachanges.core.config.ChangesetConfigSupport;
@@ -45,10 +46,16 @@ public final class PublishRequest {
             snapshot = true;
         }
         if (!snapshot && tag == null) {
-            throw new IllegalArgumentException("必须指定 --snapshot true 或 --tag <value>");
+            throw new IllegalArgumentException(ReleaseMessages.text(
+                "Pass --snapshot true or --tag <value>.",
+                "必须指定 --snapshot true 或 --tag <value>"
+            ));
         }
         if (snapshot && tag != null) {
-            throw new IllegalArgumentException("--snapshot 和 --tag 不能同时使用");
+            throw new IllegalArgumentException(ReleaseMessages.text(
+                "--snapshot and --tag cannot be used together.",
+                "--snapshot 和 --tag 不能同时使用"
+            ));
         }
         return new PublishRequest(
             snapshot,

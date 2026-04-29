@@ -78,6 +78,21 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void languageOptionLocalizesGeneratedReadmeAndCliText(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+
+        ExecutionResult result = execute("--language", "zh-CN", "init", "--directory", repoRoot.toString());
+
+        assertEquals(0, result.exitCode);
+        String readme = read(repoRoot.resolve(".changesets").resolve("README.md"));
+        assertTrue(readme.contains("这个目录保存待发布的 release notes。"));
+        assertTrue(readme.contains("javachanges add --directory . --summary \"描述这次变更\" --release patch"));
+        assertTrue(result.stdout.contains("已在 " + repoRoot + " 初始化 javachanges"));
+        assertTrue(result.stdout.contains("已创建: .changesets/README.md"));
+        assertTrue(result.stdout.contains("下一步:"));
+    }
+
+    @Test
     void initWithConfigWritesDefaultConfigTemplate(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, false);
 
@@ -444,6 +459,32 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void languageOptionLocalizesStatusAndReleasePlanMarkdown(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, true);
+        writeChangeset(repoRoot,
+            "minor-release.md",
+            "---\n" +
+                "\"fixture-app\": minor\n" +
+                "---\n" +
+                "\n" +
+                "支持中文发布计划\n");
+
+        ExecutionResult result = execute("--language", "zh-CN", "plan", "--directory", repoRoot.toString(), "--apply", "true");
+
+        assertEquals(0, result.exitCode);
+        assertTrue(result.stdout.contains("发布计划:"));
+        assertTrue(result.stdout.contains("- 发布类型: minor"));
+        assertTrue(result.stdout.contains("已应用 v1.2.0 的发布计划"));
+        String releasePlanMarkdown = read(repoRoot.resolve(".changesets").resolve("release-plan.md"));
+        assertTrue(releasePlanMarkdown.contains("## 发布计划 🚀"));
+        assertTrue(releasePlanMarkdown.contains("| 🏷️ 发布版本 | `v1.2.0` |"));
+        assertTrue(releasePlanMarkdown.contains("### ✨ 功能变更"));
+        assertTrue(releasePlanMarkdown.contains("  - 📦 包: `fixture-app`"));
+        assertTrue(read(repoRoot.resolve("CHANGELOG.md")).contains("### 功能变更"));
+        assertTrue(read(repoRoot.resolve("CHANGELOG.md")).contains("(包: fixture-app)"));
+    }
+
+    @Test
     void planApplyUpdatesGradleProperties(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createGradleRepository(tempDir, true);
         writeChangeset(repoRoot,
@@ -602,7 +643,7 @@ class JavaChangesCliTest {
         );
 
         assertEquals(0, result.exitCode, result.stderr);
-        assertTrue(result.stdout.contains("Maven settings 生成校验通过；执行时将写入 .m2/settings.xml"));
+        assertTrue(result.stdout.contains("Maven settings generation check passed; execution will write .m2/settings.xml"));
         assertTrue(result.stdout.contains("-s .m2/settings.xml"));
         assertFalse(Files.exists(repoRoot.resolve(".m2/settings.xml")));
         assertFalse(Files.exists(repoRoot.resolve(".m2/repository")));
@@ -630,7 +671,7 @@ class JavaChangesCliTest {
         assertTrue(result.stdout.contains("target module: fixture-app"));
         assertTrue(result.stdout.contains(ReleaseProcessUtils.gradleWrapperPath()
             + " --no-daemon :fixture-app:publish -Pversion=1.1.1-20260428.000000.test-SNAPSHOT"));
-        assertTrue(result.stdout.contains("当前为 dry-run，未执行 Gradle。"));
+        assertTrue(result.stdout.contains("Dry-run only. Pass --execute true to run Gradle publish."));
     }
 
     @Test
@@ -959,8 +1000,8 @@ class JavaChangesCliTest {
         assertTrue(result.stdout.contains("\"ok\":false"));
         assertTrue(result.stdout.contains("\"command\":\"doctor-local\""));
         assertTrue(result.stdout.contains("\"sections\":["));
-        assertTrue(result.stdout.contains("\"error\":\"本机发布环境未就绪\""));
-        assertFalse(result.stdout.contains("== 本机运行时 =="));
+        assertTrue(result.stdout.contains("\"error\":\"Local release environment is not ready\""));
+        assertFalse(result.stdout.contains("== Local Runtime =="));
         assertEquals("", result.stderr);
     }
 
@@ -983,9 +1024,9 @@ class JavaChangesCliTest {
         assertTrue(result.stdout.contains("\"command\":\"audit-vars\""));
         assertTrue(result.stdout.contains("\"platform\":\"github\""));
         assertTrue(result.stdout.contains("\"sections\":["));
-        assertTrue(result.stdout.contains("\"error\":\"缺少仓库参数: GITHUB_REPO\""));
+        assertTrue(result.stdout.contains("\"error\":\"Missing repository argument: GITHUB_REPO\""));
         assertTrue(result.stdout.contains("\"label\":\"GITHUB_REPO\""));
-        assertFalse(result.stdout.contains("== GitHub Variables 审计 =="));
+        assertFalse(result.stdout.contains("== GitHub Variables Audit =="));
         assertEquals("", result.stderr);
     }
 

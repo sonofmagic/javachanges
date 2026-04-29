@@ -1,6 +1,7 @@
 package io.github.sonofmagic.javachanges.core.env;
 
 import io.github.sonofmagic.javachanges.core.OutputFormat;
+import io.github.sonofmagic.javachanges.core.ReleaseMessages;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -19,9 +20,12 @@ final class ReleaseEnvRenderSupport {
             out.println(renderVarsJson(env, request, envPath));
             return true;
         }
-        out.println("使用 env 文件: " + envPath);
+        out.println(ReleaseMessages.text("Using env file: " + envPath, "使用 env 文件: " + envPath));
         if (!request.showSecrets) {
-            out.println("敏感值默认已打码。传入 --show-secrets true 可显示原值。");
+            out.println(ReleaseMessages.text(
+                "Sensitive values are masked by default. Pass --show-secrets true to show raw values.",
+                "敏感值默认已打码。传入 --show-secrets true 可显示原值。"
+            ));
         }
 
         if (request.platform.includesGithub()) {

@@ -30,7 +30,7 @@ class VersionSupportTest {
 
         IllegalStateException error = assertThrows(IllegalStateException.class,
             () -> support.resolveSnapshotPublishVersion("20260420.154500.abc1234"));
-        assertEquals("当前项目版本不是 SNAPSHOT: 1.2.3", error.getMessage());
+        assertEquals("Current project version is not a SNAPSHOT: 1.2.3", error.getMessage());
     }
 
     @Test
@@ -41,7 +41,22 @@ class VersionSupportTest {
 
         IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
             () -> support.resolveSnapshotPublishVersion("2026-04-20 sha"));
-        assertEquals("snapshot build stamp 只允许字母、数字和点号: 2026-04-20 sha", error.getMessage());
+        assertEquals("snapshot build stamp only allows letters, numbers, and dots: 2026-04-20 sha", error.getMessage());
+    }
+
+    @Test
+    void snapshotPublishErrorsCanUseChinese(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, "1.2.3");
+        ReleaseLanguageContext.set(ReleaseLanguage.ZH_CN);
+        try {
+            VersionSupport support = new VersionSupport(repoRoot);
+
+            IllegalStateException error = assertThrows(IllegalStateException.class,
+                () -> support.resolveSnapshotPublishVersion("20260420.154500.abc1234"));
+            assertEquals("当前项目版本不是 SNAPSHOT: 1.2.3", error.getMessage());
+        } finally {
+            ReleaseLanguageContext.clear();
+        }
     }
 
     @Test

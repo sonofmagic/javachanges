@@ -47,7 +47,7 @@ public final class ReleaseProcessUtils {
             if (!error.isEmpty()) {
                 throw new IllegalStateException(error);
             }
-            throw new IllegalStateException("git command failed");
+            throw new IllegalStateException(ReleaseMessages.text("git command failed", "git 命令执行失败"));
         }
         return result.stdoutText();
     }
@@ -197,7 +197,10 @@ public final class ReleaseProcessUtils {
             if (cause instanceof UncheckedIOException) {
                 throw ((UncheckedIOException) cause).getCause();
             }
-            throw new IllegalStateException("Failed to capture process output", cause);
+            throw new IllegalStateException(ReleaseMessages.text(
+                "Failed to capture process output",
+                "捕获进程输出失败"
+            ), cause);
         }
     }
 }

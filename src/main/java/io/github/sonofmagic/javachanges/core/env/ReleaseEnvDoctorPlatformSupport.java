@@ -1,6 +1,7 @@
 package io.github.sonofmagic.javachanges.core.env;
 
 import io.github.sonofmagic.javachanges.core.OutputFormat;
+import io.github.sonofmagic.javachanges.core.ReleaseMessages;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import io.github.sonofmagic.javachanges.core.config.ChangesetConfigSupport;
 import io.github.sonofmagic.javachanges.core.gitlab.GitlabProtectionSupport;
@@ -35,7 +36,8 @@ final class ReleaseEnvDoctorPlatformSupport {
         DoctorPlatformState state = new DoctorPlatformState();
         List<String> suggestions = new ArrayList<String>();
         List<ReleaseEnvJsonSupport.JsonSection> sections = new ArrayList<ReleaseEnvJsonSupport.JsonSection>();
-        ReleaseEnvJsonSupport.JsonSection envSection = new ReleaseEnvJsonSupport.JsonSection("本地 env 检查");
+        ReleaseEnvJsonSupport.JsonSection envSection =
+            new ReleaseEnvJsonSupport.JsonSection(ReleaseMessages.text("Local Env Check", "本地 env 检查"));
         sections.add(envSection);
 
         checkLocalEnv(env, textOutput, envSection, state);
@@ -52,15 +54,19 @@ final class ReleaseEnvDoctorPlatformSupport {
             out.println();
         }
         if (state.failed) {
+            String failure = ReleaseMessages.text(
+                "doctor check failed. Fix the MISSING / PLACEHOLDER items above and retry.",
+                "doctor 检查失败，请修正上面的 MISSING / PLACEHOLDER 项后重试"
+            );
             if (request.format == OutputFormat.JSON) {
                 out.println(doctorSupport.commandReportJson("doctor-platform", false, runtime.relativizePath(env.path),
-                    request.platform.id, sections, suggestions, "doctor 检查失败，请修正上面的 MISSING / PLACEHOLDER 项后重试"));
+                    request.platform.id, sections, suggestions, failure));
                 return false;
             }
-            throw new IllegalStateException("doctor 检查失败，请修正上面的 MISSING / PLACEHOLDER 项后重试");
+            throw new IllegalStateException(failure);
         }
         if (textOutput) {
-            out.println("doctor 检查完成");
+            out.println(ReleaseMessages.text("doctor check completed", "doctor 检查完成"));
         }
         if (request.format == OutputFormat.JSON) {
             out.println(doctorSupport.commandReportJson("doctor-platform", true, runtime.relativizePath(env.path),
@@ -72,9 +78,12 @@ final class ReleaseEnvDoctorPlatformSupport {
     private void checkLocalEnv(LoadedEnv env, boolean textOutput, ReleaseEnvJsonSupport.JsonSection envSection,
                                DoctorPlatformState state) {
         if (textOutput) {
-            out.println("使用 env 文件: " + runtime.relativizePath(env.path));
+            out.println(ReleaseMessages.text(
+                "Using env file: " + runtime.relativizePath(env.path),
+                "使用 env 文件: " + runtime.relativizePath(env.path)
+            ));
             out.println();
-            out.println("== 本地 env 检查 ==");
+            out.println("== " + ReleaseMessages.text("Local Env Check", "本地 env 检查") + " ==");
         }
         ReleaseEnvDoctorSupport.EnvStatusSummary summary =
             doctorSupport.recordCommonEnvStatuses(env, textOutput, envSection);
@@ -89,21 +98,26 @@ final class ReleaseEnvDoctorPlatformSupport {
         }
         if (textOutput) {
             out.println();
-            out.println("== GitHub CLI 检查 ==");
+            out.println("== " + ReleaseMessages.text("GitHub CLI Check", "GitHub CLI 检查") + " ==");
         }
-        ReleaseEnvJsonSupport.JsonSection githubSection = new ReleaseEnvJsonSupport.JsonSection("GitHub CLI 检查");
+        ReleaseEnvJsonSupport.JsonSection githubSection =
+            new ReleaseEnvJsonSupport.JsonSection(ReleaseMessages.text("GitHub CLI Check", "GitHub CLI 检查"));
         sections.add(githubSection);
         runtime.requireCommand("gh");
         doctorSupport.recordStatus(textOutput, githubSection, "gh", "OK");
         if (!runtime.runQuietly(Arrays.asList("gh", "auth", "status"))) {
             doctorSupport.recordStatus(textOutput, githubSection, "gh auth status", "FAILED");
+            String failure = ReleaseMessages.text(
+                "gh auth status failed. Run make auth-help first.",
+                "gh auth status 失败，请先执行 make auth-help"
+            );
             if (request.format == OutputFormat.JSON) {
                 out.println(doctorSupport.commandReportJson("doctor-platform", false, requestEnvPath(request),
-                    request.platform.id, sections, suggestions, "gh auth status 失败，请先执行 make auth-help"));
+                    request.platform.id, sections, suggestions, failure));
                 state.shortCircuited = true;
                 return;
             }
-            throw new IllegalStateException("gh auth status 失败，请先执行 make auth-help");
+            throw new IllegalStateException(failure);
         }
         doctorSupport.recordStatus(textOutput, githubSection, "gh auth status", "OK");
         if (ReleaseTextUtils.isBlank(request.githubRepo)) {
@@ -125,21 +139,26 @@ final class ReleaseEnvDoctorPlatformSupport {
         }
         if (textOutput) {
             out.println();
-            out.println("== GitLab CLI 检查 ==");
+            out.println("== " + ReleaseMessages.text("GitLab CLI Check", "GitLab CLI 检查") + " ==");
         }
-        ReleaseEnvJsonSupport.JsonSection gitlabSection = new ReleaseEnvJsonSupport.JsonSection("GitLab CLI 检查");
+        ReleaseEnvJsonSupport.JsonSection gitlabSection =
+            new ReleaseEnvJsonSupport.JsonSection(ReleaseMessages.text("GitLab CLI Check", "GitLab CLI 检查"));
         sections.add(gitlabSection);
         runtime.requireCommand("glab");
         doctorSupport.recordStatus(textOutput, gitlabSection, "glab", "OK");
         if (!runtime.runQuietly(Arrays.asList("glab", "auth", "status"))) {
             doctorSupport.recordStatus(textOutput, gitlabSection, "glab auth status", "FAILED");
+            String failure = ReleaseMessages.text(
+                "glab auth status failed. Run make auth-help first.",
+                "glab auth status 失败，请先执行 make auth-help"
+            );
             if (request.format == OutputFormat.JSON) {
                 out.println(doctorSupport.commandReportJson("doctor-platform", false, runtime.relativizePath(env.path),
-                    request.platform.id, sections, suggestions, "glab auth status 失败，请先执行 make auth-help"));
+                    request.platform.id, sections, suggestions, failure));
                 state.shortCircuited = true;
                 return;
             }
-            throw new IllegalStateException("glab auth status 失败，请先执行 make auth-help");
+            throw new IllegalStateException(failure);
         }
         doctorSupport.recordStatus(textOutput, gitlabSection, "glab auth status", "OK");
         if (ReleaseTextUtils.isBlank(request.gitlabRepo)) {

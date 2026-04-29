@@ -37,7 +37,7 @@ class ReleaseEnvDoctorSupportTest {
         assertFalse(ok);
         assertTrue(json.contains("\"ok\":false"));
         assertTrue(json.contains("\"command\":\"doctor-local\""));
-        assertTrue(json.contains("\"error\":\"本机发布环境未就绪\""));
+        assertTrue(json.contains("\"error\":\"Local release environment is not ready\""));
         assertTrue(json.contains("env/release.env.local"));
     }
 

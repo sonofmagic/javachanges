@@ -1,6 +1,7 @@
 package io.github.sonofmagic.javachanges.core.github;
 
 import io.github.sonofmagic.javachanges.core.CommandResult;
+import io.github.sonofmagic.javachanges.core.ReleaseMessages;
 import io.github.sonofmagic.javachanges.core.ReleaseProcessUtils;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
@@ -40,12 +41,15 @@ public class GithubReleaseRuntime {
         CommandResult result = runGitCapture("rev-parse", "HEAD");
         if (result.exitCode != 0) {
             throw new IllegalStateException(ReleaseTextUtils.trimToNull(result.stderrText()) == null
-                ? "git rev-parse HEAD failed"
+                ? ReleaseMessages.text("git rev-parse HEAD failed", "git rev-parse HEAD 执行失败")
                 : result.stderrText().trim());
         }
         String sha = ReleaseTextUtils.trimToNull(result.stdoutText());
         if (sha == null) {
-            throw new IllegalStateException("Current HEAD SHA is empty");
+            throw new IllegalStateException(ReleaseMessages.text(
+                "Current HEAD SHA is empty",
+                "当前 HEAD SHA 为空"
+            ));
         }
         return sha;
     }
@@ -82,7 +86,9 @@ public class GithubReleaseRuntime {
         );
         if (result.exitCode != 0) {
             String error = ReleaseTextUtils.trimToNull(result.stderrText());
-            throw new IllegalStateException(error == null ? "gh pr list failed" : error);
+            throw new IllegalStateException(error == null
+                ? ReleaseMessages.text("gh pr list failed", "gh pr list 执行失败")
+                : error);
         }
         return ReleaseTextUtils.trimToNull(result.stdoutText());
     }
@@ -120,7 +126,12 @@ public class GithubReleaseRuntime {
         CommandResult result = runGhCapture(args);
         if (result.exitCode != 0) {
             String error = ReleaseTextUtils.trimToNull(result.stderrText());
-            throw new IllegalStateException(error == null ? "gh command failed: " + Arrays.asList(args) : error);
+            throw new IllegalStateException(error == null
+                ? ReleaseMessages.text(
+                    "gh command failed: " + Arrays.asList(args),
+                    "gh 命令执行失败: " + Arrays.asList(args)
+                )
+                : error);
         }
     }
 
@@ -146,7 +157,10 @@ public class GithubReleaseRuntime {
     private IllegalStateException gitCommandException(CommandResult result, String... args) {
         String error = ReleaseTextUtils.trimToNull(ReleaseTextUtils.redactSensitiveText(result.stderrText()));
         return new IllegalStateException(error == null
-            ? "git command failed: " + ReleaseTextUtils.redactSensitiveText(Arrays.asList(args).toString())
+            ? ReleaseMessages.text(
+                "git command failed: " + ReleaseTextUtils.redactSensitiveText(Arrays.asList(args).toString()),
+                "git 命令执行失败: " + ReleaseTextUtils.redactSensitiveText(Arrays.asList(args).toString())
+            )
             : error);
     }
 }

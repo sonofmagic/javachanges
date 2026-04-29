@@ -12,7 +12,7 @@ public final class RepoPathSupport {
         Path input = Paths.get(value);
         Path target = input.isAbsolute() ? input.normalize() : root.resolve(input).normalize();
         if (!target.startsWith(root)) {
-            throw new IllegalArgumentException(optionName + " must stay inside repository: " + value);
+            throw new IllegalArgumentException(ReleaseMessages.outputPathMustStayInsideRepository(optionName, value));
         }
         return target;
     }

@@ -3,6 +3,7 @@ package io.github.sonofmagic.javachanges.core.plan;
 import io.github.sonofmagic.javachanges.core.ReleaseLevel;
 import io.github.sonofmagic.javachanges.core.ReleaseJsonUtils;
 import io.github.sonofmagic.javachanges.core.ReleaseModuleUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseMessages;
 import io.github.sonofmagic.javachanges.core.ReleaseTagStrategy;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import io.github.sonofmagic.javachanges.core.changeset.Changeset;
@@ -135,7 +136,8 @@ public final class ReleasePlan {
             builder.append("### ").append(ReleaseTextUtils.releaseLevelHeading(level)).append("\n\n");
             for (Changeset changeset : levelChangesets) {
                 builder.append("- ").append(changeset.summary);
-                builder.append(" (packages: ").append(ReleaseModuleUtils.joinModules(changeset.modules)).append(")");
+                builder.append(" (").append(ReleaseMessages.changelogPackagesLabel()).append(": ")
+                    .append(ReleaseModuleUtils.joinModules(changeset.modules)).append(")");
                 String notes = notesLine(changeset);
                 if (!notes.isEmpty()) {
                     builder.append(" ");
@@ -148,7 +150,7 @@ public final class ReleasePlan {
         }
 
         if (!wroteSection) {
-            builder.append("- No user-facing changes were recorded for this release.\n\n");
+            builder.append("- ").append(ReleaseMessages.noUserFacingChanges()).append("\n\n");
         }
 
         return builder.toString().trim() + "\n";
@@ -156,20 +158,20 @@ public final class ReleasePlan {
 
     public List<String> toPullRequestBodyLines() {
         List<String> lines = new ArrayList<String>();
-        lines.add("## Release Plan 🚀");
+        lines.add("## " + ReleaseMessages.releasePlanTitle());
         lines.add("");
-        lines.add("> Generated from `.changesets/*.md`. Review the plan, then merge when the release looks right.");
+        lines.add("> " + ReleaseMessages.releasePlanIntro());
         lines.add("");
-        lines.add("| Field | Value |");
+        lines.add("| " + ReleaseMessages.fieldHeader() + " | " + ReleaseMessages.valueHeader() + " |");
         lines.add("| --- | --- |");
-        lines.add("| 🚦 Release type | `" + releaseLevel.id + "` |");
-        lines.add("| 📦 Affected packages | `" + ReleaseModuleUtils.joinModules(getAffectedPackages()) + "` |");
-        lines.add("| 🏷️ Release version | `v" + releaseVersion + "` |");
-        lines.add("| 🔖 Tag strategy | `" + tagStrategy.id + "` |");
-        lines.add("| 🧾 Planned tags | `" + ReleaseModuleUtils.joinModules(getPlannedTags()) + "` |");
-        lines.add("| 🔁 Next snapshot | `" + nextSnapshotVersion + "` |");
+        lines.add("| 🚦 " + ReleaseMessages.releaseTypeField() + " | `" + releaseLevel.id + "` |");
+        lines.add("| 📦 " + ReleaseMessages.affectedPackagesField() + " | `" + ReleaseModuleUtils.joinModules(getAffectedPackages()) + "` |");
+        lines.add("| 🏷️ " + ReleaseMessages.releaseVersionField() + " | `v" + releaseVersion + "` |");
+        lines.add("| 🔖 " + ReleaseMessages.tagStrategyField() + " | `" + tagStrategy.id + "` |");
+        lines.add("| 🧾 " + ReleaseMessages.plannedTagsField() + " | `" + ReleaseModuleUtils.joinModules(getPlannedTags()) + "` |");
+        lines.add("| 🔁 " + ReleaseMessages.nextSnapshotField() + " | `" + nextSnapshotVersion + "` |");
         lines.add("");
-        lines.add("## Included Changesets 📝");
+        lines.add("## " + ReleaseMessages.includedChangesetsTitle());
         lines.add("");
         Map<ReleaseLevel, List<Changeset>> grouped = new LinkedHashMap<ReleaseLevel, List<Changeset>>();
         grouped.put(ReleaseLevel.MAJOR, new ArrayList<Changeset>());
@@ -188,22 +190,22 @@ public final class ReleasePlan {
             for (Changeset changeset : levelChangesets) {
                 String visibleType = ReleaseTextUtils.renderVisibleType(changeset.type);
                 lines.add("- **" + changeset.summary + "**");
-                lines.add("  - 🚦 Release: `" + changeset.release.id + "`");
-                lines.add("  - 📦 Packages: `" + ReleaseModuleUtils.joinModules(changeset.modules) + "`");
+                lines.add("  - 🚦 " + ReleaseMessages.releaseLabel() + ": `" + changeset.release.id + "`");
+                lines.add("  - 📦 " + ReleaseMessages.packagesLabel() + ": `" + ReleaseModuleUtils.joinModules(changeset.modules) + "`");
                 if (!visibleType.isEmpty()) {
-                    lines.add("  - 🧩 Type: `" + visibleType + "`");
+                    lines.add("  - 🧩 " + ReleaseMessages.typeLabel() + ": `" + visibleType + "`");
                 }
                 String notes = notesLine(changeset);
                 if (!notes.isEmpty()) {
-                    lines.add("  - 📝 Notes: " + notes);
+                    lines.add("  - 📝 " + ReleaseMessages.notesLabel() + ": " + notes);
                 }
             }
             lines.add("");
         }
-        lines.add("## What happens next ✅");
+        lines.add("## " + ReleaseMessages.whatHappensNextTitle());
         lines.add("");
-        lines.add("- Merging this PR triggers the automatic tag push.");
-        lines.add("- Existing release workflows reuse the generated release metadata.");
+        lines.add("- " + ReleaseMessages.mergeTriggersTagPush());
+        lines.add("- " + ReleaseMessages.workflowsReuseMetadata());
         return lines;
     }
 

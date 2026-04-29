@@ -20,6 +20,6 @@ public enum SnapshotVersionMode {
                 return mode;
             }
         }
-        throw new IllegalArgumentException("不支持的 snapshot version mode: " + value + "，可选值: plain, stamped");
+        throw new IllegalArgumentException(ReleaseMessages.unsupportedSnapshotVersionMode(value));
     }
 }

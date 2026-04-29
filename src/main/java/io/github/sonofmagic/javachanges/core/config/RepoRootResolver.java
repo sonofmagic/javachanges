@@ -1,6 +1,7 @@
 package io.github.sonofmagic.javachanges.core.config;
 
 import io.github.sonofmagic.javachanges.core.BuildModelSupport;
+import io.github.sonofmagic.javachanges.core.ReleaseMessages;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -20,6 +21,6 @@ public final class RepoRootResolver {
             }
             probe = probe.getParent();
         }
-        throw new IllegalStateException("Cannot find repository root from " + current);
+        throw new IllegalStateException(ReleaseMessages.cannotFindRepoRoot(current));
     }
 }

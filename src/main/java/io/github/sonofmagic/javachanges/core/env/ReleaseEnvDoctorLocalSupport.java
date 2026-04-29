@@ -2,6 +2,7 @@ package io.github.sonofmagic.javachanges.core.env;
 
 import io.github.sonofmagic.javachanges.core.MavenCommand;
 import io.github.sonofmagic.javachanges.core.OutputFormat;
+import io.github.sonofmagic.javachanges.core.ReleaseMessages;
 import io.github.sonofmagic.javachanges.core.ReleaseProcessUtils;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
@@ -30,10 +31,14 @@ final class ReleaseEnvDoctorLocalSupport {
         boolean textOutput = request.format != OutputFormat.JSON;
         DoctorLocalState state = new DoctorLocalState();
         List<ReleaseEnvJsonSupport.JsonSection> sections = new ArrayList<ReleaseEnvJsonSupport.JsonSection>();
-        ReleaseEnvJsonSupport.JsonSection runtimeSection = new ReleaseEnvJsonSupport.JsonSection("本机运行时");
-        ReleaseEnvJsonSupport.JsonSection envSection = new ReleaseEnvJsonSupport.JsonSection("本地 env 文件");
-        ReleaseEnvJsonSupport.JsonSection cliSection = new ReleaseEnvJsonSupport.JsonSection("平台 CLI");
-        ReleaseEnvJsonSupport.JsonSection repoSection = new ReleaseEnvJsonSupport.JsonSection("仓库标识");
+        ReleaseEnvJsonSupport.JsonSection runtimeSection =
+            new ReleaseEnvJsonSupport.JsonSection(ReleaseMessages.text("Local Runtime", "本机运行时"));
+        ReleaseEnvJsonSupport.JsonSection envSection =
+            new ReleaseEnvJsonSupport.JsonSection(ReleaseMessages.text("Local Env File", "本地 env 文件"));
+        ReleaseEnvJsonSupport.JsonSection cliSection =
+            new ReleaseEnvJsonSupport.JsonSection(ReleaseMessages.text("Platform CLI", "平台 CLI"));
+        ReleaseEnvJsonSupport.JsonSection repoSection =
+            new ReleaseEnvJsonSupport.JsonSection(ReleaseMessages.text("Repository Identifiers", "仓库标识"));
         sections.add(runtimeSection);
         sections.add(envSection);
         sections.add(cliSection);
@@ -52,8 +57,8 @@ final class ReleaseEnvDoctorLocalSupport {
             suggestions.add("make doctor-all GITHUB_REPO=owner/repo GITLAB_REPO=group/project");
             suggestions.add("make sync-all");
             if (textOutput) {
-                out.println("本机发布环境检查通过");
-                out.println("下一步建议:");
+                out.println(ReleaseMessages.text("Local release environment check passed", "本机发布环境检查通过"));
+                out.println(ReleaseMessages.text("Suggested next steps:", "下一步建议:"));
                 out.println("  make doctor-all GITHUB_REPO=owner/repo GITLAB_REPO=group/project");
                 out.println("  make sync-all");
             }
@@ -65,48 +70,75 @@ final class ReleaseEnvDoctorLocalSupport {
         }
 
         if (textOutput) {
-            out.println("本机发布环境未就绪，建议按顺序处理:");
+            out.println(ReleaseMessages.text(
+                "Local release environment is not ready. Handle these in order:",
+                "本机发布环境未就绪，建议按顺序处理:"
+            ));
         }
         if (!state.envPresent) {
-            suggestions.add("执行 make env-init 生成 env/release.env.local");
+            String suggestion = ReleaseMessages.text(
+                "Run make env-init to generate env/release.env.local",
+                "执行 make env-init 生成 env/release.env.local"
+            );
+            suggestions.add(suggestion);
             if (textOutput) {
-                out.println("  1. 执行 make env-init 生成 env/release.env.local");
+                out.println("  1. " + suggestion);
             }
         }
         if (state.envNeedsEdit) {
-            suggestions.add("编辑 env/release.env.local，替换仓库地址、用户名、密码和需要的 token");
+            String suggestion = ReleaseMessages.text(
+                "Edit env/release.env.local and replace repository addresses, usernames, passwords, and required tokens",
+                "编辑 env/release.env.local，替换仓库地址、用户名、密码和需要的 token"
+            );
+            suggestions.add(suggestion);
             if (textOutput) {
-                out.println("  2. 编辑 env/release.env.local，替换仓库地址、用户名、密码和需要的 token");
+                out.println("  2. " + suggestion);
             }
         }
         if (state.javaMissing || state.mavenMissing || state.mavenFailed) {
-            suggestions.add("安装并配置可用的 Java Runtime 与 Maven 命令（优先 ./mvnw，其次系统 mvn），然后重新执行 make readiness");
+            String suggestion = ReleaseMessages.text(
+                "Install and configure a usable Java Runtime and Maven command (prefer ./mvnw, then system mvn), then rerun make readiness",
+                "安装并配置可用的 Java Runtime 与 Maven 命令（优先 ./mvnw，其次系统 mvn），然后重新执行 make readiness"
+            );
+            suggestions.add(suggestion);
             if (textOutput) {
-                out.println("  3. 安装并配置可用的 Java Runtime 与 Maven 命令（优先 ./mvnw，其次系统 mvn），然后重新执行 make readiness");
+                out.println("  3. " + suggestion);
             }
         }
         if (state.ghMissing || state.ghAuthFailed || state.glabMissing || state.glabAuthFailed) {
-            suggestions.add("执行 make auth-help，完成 gh / glab 的安装和登录");
+            String suggestion = ReleaseMessages.text(
+                "Run make auth-help to install and log in with gh / glab",
+                "执行 make auth-help，完成 gh / glab 的安装和登录"
+            );
+            suggestions.add(suggestion);
             if (textOutput) {
-                out.println("  4. 执行 make auth-help，完成 gh / glab 的安装和登录");
+                out.println("  4. " + suggestion);
             }
         }
-        suggestions.add("通过后再执行 make doctor-github、make doctor-gitlab 和 sync-apply");
+        String finalSuggestion = ReleaseMessages.text(
+            "After that, run make doctor-github, make doctor-gitlab, and sync-apply",
+            "通过后再执行 make doctor-github、make doctor-gitlab 和 sync-apply"
+        );
+        suggestions.add(finalSuggestion);
         if (textOutput) {
-            out.println("  5. 通过后再执行 make doctor-github、make doctor-gitlab 和 sync-apply");
+            out.println("  5. " + finalSuggestion);
         }
+        String failure = ReleaseMessages.text(
+            "Local release environment is not ready",
+            "本机发布环境未就绪"
+        );
         if (request.format == OutputFormat.JSON) {
             out.println(doctorSupport.commandReportJson("doctor-local", false, runtime.relativizePath(envPath),
-                null, sections, suggestions, "本机发布环境未就绪"));
+                null, sections, suggestions, failure));
             return false;
         }
-        throw new IllegalStateException("本机发布环境未就绪");
+        throw new IllegalStateException(failure);
     }
 
     private void checkRuntime(boolean textOutput, ReleaseEnvJsonSupport.JsonSection runtimeSection,
                               DoctorLocalState state) throws IOException, InterruptedException {
         if (textOutput) {
-            out.println("== 本机运行时 ==");
+            out.println("== " + ReleaseMessages.text("Local Runtime", "本机运行时") + " ==");
         }
         if (runtime.commandAvailable("java", "-version")) {
             doctorSupport.recordStatus(textOutput, runtimeSection, "java -version", "OK");
@@ -157,7 +189,7 @@ final class ReleaseEnvDoctorLocalSupport {
                               ReleaseEnvJsonSupport.JsonSection envSection, DoctorLocalState state) throws IOException {
         if (textOutput) {
             out.println();
-            out.println("== 本地 env 文件 ==");
+            out.println("== " + ReleaseMessages.text("Local Env File", "本地 env 文件") + " ==");
         }
         Path envPath = runtime.resolvePath(request.envFile);
         if (Files.exists(envPath)) {
@@ -187,7 +219,7 @@ final class ReleaseEnvDoctorLocalSupport {
                                   DoctorLocalState state) throws IOException, InterruptedException {
         if (textOutput) {
             out.println();
-            out.println("== 平台 CLI ==");
+            out.println("== " + ReleaseMessages.text("Platform CLI", "平台 CLI") + " ==");
         }
         if (runtime.commandExists("gh")) {
             doctorSupport.recordStatus(textOutput, cliSection, "gh", "OK");
@@ -224,7 +256,7 @@ final class ReleaseEnvDoctorLocalSupport {
                                       ReleaseEnvJsonSupport.JsonSection repoSection, DoctorLocalState state) {
         if (textOutput) {
             out.println();
-            out.println("== 仓库标识 ==");
+            out.println("== " + ReleaseMessages.text("Repository Identifiers", "仓库标识") + " ==");
         }
         doctorSupport.recordStatus(textOutput, repoSection, "GITHUB_REPO", doctorSupport.repoStatusValue(request.githubRepo));
         doctorSupport.recordStatus(textOutput, repoSection, "GITLAB_REPO", doctorSupport.repoStatusValue(request.gitlabRepo));

@@ -46,10 +46,18 @@ public final class MavenSettingsWriter {
         );
 
         if (includeRelease && (releaseUsername == null || releasePassword == null)) {
-            throw new IllegalStateException("缺少 release 仓库认证信息，请设置 MAVEN_RELEASE_REPOSITORY_USERNAME/MAVEN_RELEASE_REPOSITORY_PASSWORD 或通用 MAVEN_REPOSITORY_USERNAME/MAVEN_REPOSITORY_PASSWORD");
+            throw new IllegalStateException(ReleaseMessages.missingRepositoryCredentials(
+                "release",
+                "MAVEN_RELEASE_REPOSITORY_USERNAME",
+                "MAVEN_RELEASE_REPOSITORY_PASSWORD"
+            ));
         }
         if (includeSnapshot && (snapshotUsername == null || snapshotPassword == null)) {
-            throw new IllegalStateException("缺少 snapshot 仓库认证信息，请设置 MAVEN_SNAPSHOT_REPOSITORY_USERNAME/MAVEN_SNAPSHOT_REPOSITORY_PASSWORD 或通用 MAVEN_REPOSITORY_USERNAME/MAVEN_REPOSITORY_PASSWORD");
+            throw new IllegalStateException(ReleaseMessages.missingRepositoryCredentials(
+                "snapshot",
+                "MAVEN_SNAPSHOT_REPOSITORY_USERNAME",
+                "MAVEN_SNAPSHOT_REPOSITORY_PASSWORD"
+            ));
         }
 
         Path parent = outputPath.toAbsolutePath().normalize().getParent();

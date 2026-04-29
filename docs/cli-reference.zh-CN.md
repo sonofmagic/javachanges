@@ -57,10 +57,19 @@ mvn -q -DskipTests compile exec:java -Dexec.args="status --directory /path/to/re
 plugin 说明：
 
 - 所有独立 goal 和 `javachanges:run` 都会自动注入 `--directory ${project.basedir}`，除非你已经显式传了 `--directory`
+- 输出语言默认是英文；可以传 `--language zh-CN`、设置 `JAVACHANGES_LANGUAGE=zh-CN`，或者在 Maven plugin goal 中使用 `-Djavachanges.language=zh-CN`，让 javachanges 的提示、错误和生成的 Markdown 改为中文
 - 对业务仓库或 CI 来说，也可以直接调用已发布的官方 Maven plugin，不需要额外维护 runner POM：
 
 ```bash
 mvn -B io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__:run -Djavachanges.args="gitlab-release-plan --directory $CI_PROJECT_DIR --write-plan-files false --execute true"
+```
+
+语言示例：
+
+```bash
+javachanges status --directory . --language zh-CN
+JAVACHANGES_LANGUAGE=zh-CN javachanges plan --directory . --apply true
+mvn javachanges:status -Djavachanges.language=zh-CN
 ```
 
 如果你已经在目标仓库的 `pom.xml` 里声明了 plugin，本地最短写法就是：

@@ -2,6 +2,7 @@ package io.github.sonofmagic.javachanges.core.env;
 
 import io.github.sonofmagic.javachanges.core.OutputFormat;
 import io.github.sonofmagic.javachanges.core.ReleaseJsonUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseMessages;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.io.IOException;
@@ -30,7 +31,7 @@ final class ReleaseEnvAuditSupport {
         boolean failed = false;
         List<ReleaseEnvJsonSupport.JsonSection> sections = new java.util.ArrayList<ReleaseEnvJsonSupport.JsonSection>();
         if (textOutput) {
-            out.println("使用 env 文件: " + envPath);
+            out.println(ReleaseMessages.text("Using env file: " + envPath, "使用 env 文件: " + envPath));
         }
 
         if (request.platform.includesGithub()) {
@@ -45,15 +46,19 @@ final class ReleaseEnvAuditSupport {
             out.println();
         }
         if (failed) {
+            String failure = ReleaseMessages.text(
+                "Platform variable audit failed. Fix MISSING_REMOTE / MISMATCH items and retry.",
+                "平台变量审计失败，请修正 MISSING_REMOTE / MISMATCH 项后重试"
+            );
             if (request.format == OutputFormat.JSON) {
                 out.println(doctorSupport.commandReportJson("audit-vars", false, envPath, request.platform.id,
-                    sections, Collections.<String>emptyList(), "平台变量审计失败，请修正 MISSING_REMOTE / MISMATCH 项后重试"));
+                    sections, Collections.<String>emptyList(), failure));
                 return false;
             }
-            throw new IllegalStateException("平台变量审计失败，请修正 MISSING_REMOTE / MISMATCH 项后重试");
+            throw new IllegalStateException(failure);
         }
         if (textOutput) {
-            out.println("平台变量审计通过");
+            out.println(ReleaseMessages.text("Platform variable audit passed", "平台变量审计通过"));
         }
         if (request.format == OutputFormat.JSON) {
             out.println(doctorSupport.commandReportJson("audit-vars", true, envPath, request.platform.id,
@@ -66,24 +71,32 @@ final class ReleaseEnvAuditSupport {
                                 List<ReleaseEnvJsonSupport.JsonSection> sections)
         throws IOException, InterruptedException {
         ReleaseEnvJsonSupport.JsonSection githubPreconditions = new ReleaseEnvJsonSupport.JsonSection("GitHub Audit Preconditions");
-        ReleaseEnvJsonSupport.JsonSection githubVariablesSection = new ReleaseEnvJsonSupport.JsonSection("GitHub Variables 审计");
-        ReleaseEnvJsonSupport.JsonSection githubSecretsSection = new ReleaseEnvJsonSupport.JsonSection("GitHub Secrets 审计");
+        ReleaseEnvJsonSupport.JsonSection githubVariablesSection =
+            new ReleaseEnvJsonSupport.JsonSection(ReleaseMessages.text("GitHub Variables Audit", "GitHub Variables 审计"));
+        ReleaseEnvJsonSupport.JsonSection githubSecretsSection =
+            new ReleaseEnvJsonSupport.JsonSection(ReleaseMessages.text("GitHub Secrets Audit", "GitHub Secrets 审计"));
         sections.add(githubPreconditions);
         sections.add(githubVariablesSection);
         sections.add(githubSecretsSection);
         if (ReleaseTextUtils.isBlank(request.githubRepo)) {
             githubPreconditions.add("GITHUB_REPO", "MISSING");
-            failPrecondition(request, env, sections, "缺少仓库参数: GITHUB_REPO");
+            failPrecondition(request, env, sections, ReleaseMessages.text(
+                "Missing repository argument: GITHUB_REPO",
+                "缺少仓库参数: GITHUB_REPO"
+            ));
         }
         githubPreconditions.add("GITHUB_REPO", request.githubRepo);
         if (!runtime.commandExists("gh")) {
             githubPreconditions.add("gh", "MISSING");
-            failPrecondition(request, env, sections, "未找到 gh CLI");
+            failPrecondition(request, env, sections, ReleaseMessages.text("gh CLI was not found", "未找到 gh CLI"));
         }
         githubPreconditions.add("gh", "OK");
         if (!runtime.runQuietly(Arrays.asList("gh", "auth", "status"))) {
             githubPreconditions.add("gh auth status", "FAILED");
-            failPrecondition(request, env, sections, "gh auth status 失败，请先执行 make auth-help");
+            failPrecondition(request, env, sections, ReleaseMessages.text(
+                "gh auth status failed. Run make auth-help first.",
+                "gh auth status 失败，请先执行 make auth-help"
+            ));
         }
         githubPreconditions.add("gh auth status", "OK");
         String variablesJson = runtime.runAndCapture(Arrays.asList("gh", "variable", "list", "--repo", request.githubRepo,
@@ -96,7 +109,7 @@ final class ReleaseEnvAuditSupport {
         boolean failed = false;
         if (textOutput) {
             out.println();
-            out.println("== GitHub Variables 审计 ==");
+            out.println("== " + ReleaseMessages.text("GitHub Variables Audit", "GitHub Variables 审计") + " ==");
         }
         for (EnvEntry entry : ReleaseEnvCatalog.GITHUB_ACTIONS_VARIABLES) {
             AuditOutcome outcome = auditValue(env.value(entry.name), githubVariables.get(entry.name), true);
@@ -108,7 +121,7 @@ final class ReleaseEnvAuditSupport {
 
         if (textOutput) {
             out.println();
-            out.println("== GitHub Secrets 审计 ==");
+            out.println("== " + ReleaseMessages.text("GitHub Secrets Audit", "GitHub Secrets 审计") + " ==");
         }
         for (EnvEntry entry : ReleaseEnvCatalog.GITHUB_ACTIONS_SECRETS) {
             AuditOutcome outcome = auditPresence(env.value(entry.name), githubSecrets.get(entry.name));
@@ -124,22 +137,29 @@ final class ReleaseEnvAuditSupport {
                                 List<ReleaseEnvJsonSupport.JsonSection> sections)
         throws IOException, InterruptedException {
         ReleaseEnvJsonSupport.JsonSection gitlabPreconditions = new ReleaseEnvJsonSupport.JsonSection("GitLab Audit Preconditions");
-        ReleaseEnvJsonSupport.JsonSection gitlabSection = new ReleaseEnvJsonSupport.JsonSection("GitLab Variables 审计");
+        ReleaseEnvJsonSupport.JsonSection gitlabSection =
+            new ReleaseEnvJsonSupport.JsonSection(ReleaseMessages.text("GitLab Variables Audit", "GitLab Variables 审计"));
         sections.add(gitlabPreconditions);
         sections.add(gitlabSection);
         if (ReleaseTextUtils.isBlank(request.gitlabRepo)) {
             gitlabPreconditions.add("GITLAB_REPO", "MISSING");
-            failPrecondition(request, env, sections, "缺少仓库参数: GITLAB_REPO");
+            failPrecondition(request, env, sections, ReleaseMessages.text(
+                "Missing repository argument: GITLAB_REPO",
+                "缺少仓库参数: GITLAB_REPO"
+            ));
         }
         gitlabPreconditions.add("GITLAB_REPO", request.gitlabRepo);
         if (!runtime.commandExists("glab")) {
             gitlabPreconditions.add("glab", "MISSING");
-            failPrecondition(request, env, sections, "未找到 glab CLI");
+            failPrecondition(request, env, sections, ReleaseMessages.text("glab CLI was not found", "未找到 glab CLI"));
         }
         gitlabPreconditions.add("glab", "OK");
         if (!runtime.runQuietly(Arrays.asList("glab", "auth", "status"))) {
             gitlabPreconditions.add("glab auth status", "FAILED");
-            failPrecondition(request, env, sections, "glab auth status 失败，请先执行 make auth-help");
+            failPrecondition(request, env, sections, ReleaseMessages.text(
+                "glab auth status failed. Run make auth-help first.",
+                "glab auth status 失败，请先执行 make auth-help"
+            ));
         }
         gitlabPreconditions.add("glab auth status", "OK");
         String exported = runtime.runAndCapture(Arrays.asList("glab", "variable", "export", "--repo", request.gitlabRepo,
@@ -149,7 +169,7 @@ final class ReleaseEnvAuditSupport {
         boolean failed = false;
         if (textOutput) {
             out.println();
-            out.println("== GitLab Variables 审计 ==");
+            out.println("== " + ReleaseMessages.text("GitLab Variables Audit", "GitLab Variables 审计") + " ==");
         }
         for (EnvEntry entry : ReleaseEnvCatalog.GITLAB_VARIABLES) {
             AuditOutcome outcome = auditValue(env.value(entry.name), remoteEnv.value(entry.name), true);

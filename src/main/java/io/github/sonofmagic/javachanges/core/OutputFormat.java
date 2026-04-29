@@ -20,6 +20,6 @@ public enum OutputFormat {
                 return format;
             }
         }
-        throw new IllegalArgumentException("不支持的输出格式: " + value + "，可选值: text, json");
+        throw new IllegalArgumentException(ReleaseMessages.unsupportedOutputFormat(value));
     }
 }

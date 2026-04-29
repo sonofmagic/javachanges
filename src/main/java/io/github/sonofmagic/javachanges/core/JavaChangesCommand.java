@@ -68,6 +68,13 @@ final class JavaChangesCommand implements Runnable {
     )
     private String directory;
 
+    @Option(
+        names = {"--language", "--lang"},
+        scope = CommandLine.ScopeType.INHERIT,
+        description = "Output language: en or zh-CN. Defaults to en, or JAVACHANGES_LANGUAGE when set."
+    )
+    private String language;
+
     JavaChangesCommand(PrintStream out, PrintStream err) {
         this.out = out;
         this.err = err;
@@ -79,14 +86,26 @@ final class JavaChangesCommand implements Runnable {
     }
 
     PrintStream out() {
+        applyLanguage();
         return out;
     }
 
     PrintStream err() {
+        applyLanguage();
         return err;
     }
 
     Path repoRoot() {
+        applyLanguage();
         return RepoFiles.resolveRepoRoot(directory);
+    }
+
+    ReleaseLanguage language() {
+        String configured = ReleaseTextUtils.firstNonBlank(language, System.getenv(ReleaseLanguage.ENV_NAME));
+        return ReleaseLanguage.parse(configured);
+    }
+
+    void applyLanguage() {
+        ReleaseLanguageContext.set(language());
     }
 }

@@ -149,7 +149,10 @@ final class InitGitlabCiCommand extends AbstractCliCommand {
         Path repoRoot = repoRoot();
         Path target = RepoPathSupport.resolveOutputPath(repoRoot, output, "--output");
         if (Files.exists(target) && !force) {
-            throw new IllegalStateException("Target file already exists. Pass --force true to overwrite: " + target);
+            throw new IllegalStateException(ReleaseMessages.text(
+                "Target file already exists. Pass --force true to overwrite: " + target,
+                "目标文件已存在。传入 --force true 可覆盖: " + target
+            ));
         }
         ChangesetConfigSupport.ChangesetConfig config = RepoFiles.readChangesetConfig(repoRoot);
         Path parent = target.getParent();
@@ -157,7 +160,8 @@ final class InitGitlabCiCommand extends AbstractCliCommand {
             Files.createDirectories(parent);
         }
         Files.write(target, renderTemplate(repoRoot, config, effectiveVersion(), buildTool).getBytes(StandardCharsets.UTF_8));
-        out().println("Generated GitLab CI template: " + repoRoot.relativize(target));
+        out().println(ReleaseMessages.text("Generated GitLab CI template: ", "已生成 GitLab CI template: ")
+            + repoRoot.relativize(target));
         return success();
     }
 
@@ -181,7 +185,10 @@ final class InitGitlabCiCommand extends AbstractCliCommand {
         }
         String normalized = explicit.toLowerCase(java.util.Locale.ROOT);
         if (!"maven".equals(normalized) && !"gradle".equals(normalized)) {
-            throw new IllegalArgumentException("Unsupported build tool: " + buildTool);
+            throw new IllegalArgumentException(ReleaseMessages.text(
+                "Unsupported build tool: " + buildTool,
+                "不支持的构建工具: " + buildTool
+            ));
         }
         return normalized;
     }

@@ -48,8 +48,12 @@ public final class ReleaseAutomationSupport {
         String releaseVersion = ReleaseTextUtils.stripSnapshot(BuildModelSupport.readRevision(repoRoot));
         ChangesetConfigSupport.ChangesetConfig config = RepoFiles.readChangesetConfig(repoRoot);
         if (config.tagStrategy() == ReleaseTagStrategy.PER_MODULE) {
-            throw new IllegalStateException("Fresh release metadata cannot infer per-module release targets after changesets are consumed. "
-                + "Use the committed release plan manifest or run before applying the plan.");
+            throw new IllegalStateException(ReleaseMessages.text(
+                "Fresh release metadata cannot infer per-module release targets after changesets are consumed. "
+                    + "Use the committed release plan manifest or run before applying the plan.",
+                "changeset 已消费后，fresh release metadata 无法推断 per-module 发布目标。"
+                    + "请使用已提交的 release plan manifest，或在应用计划前运行。"
+            ));
         }
         return new ReleaseDescriptor(releaseVersion, config.tagStrategy(),
             Collections.singletonList(new ReleasePlan.ReleaseTarget(null, "v" + releaseVersion)));
@@ -127,8 +131,12 @@ public final class ReleaseAutomationSupport {
                     return target.tag;
                 }
             }
-            throw new IllegalStateException("Release plan defines multiple tags under per-module strategy. "
-                + "Use explicit tag-based release commands instead of release-from-plan.");
+            throw new IllegalStateException(ReleaseMessages.text(
+                "Release plan defines multiple tags under per-module strategy. "
+                    + "Use explicit tag-based release commands instead of release-from-plan.",
+                "release plan 在 per-module 策略下定义了多个 tag。"
+                    + "请使用显式基于 tag 的发布命令，而不是 release-from-plan。"
+            ));
         }
     }
 
@@ -168,14 +176,20 @@ public final class ReleaseAutomationSupport {
     private static String requiredText(JsonNode node, String field) {
         String value = textOrNull(node.get(field));
         if (value == null) {
-            throw new IllegalStateException("Missing field " + field + " in release manifest");
+            throw new IllegalStateException(ReleaseMessages.text(
+                "Missing field " + field + " in release manifest",
+                "release manifest 缺少字段 " + field
+            ));
         }
         return value;
     }
 
     private static String requiredManifestFieldText(JsonNode value, String field, String source) {
         if (value == null || value.isNull()) {
-            throw new IllegalStateException("Missing field `" + field + "` in " + source);
+            throw new IllegalStateException(ReleaseMessages.text(
+                "Missing field `" + field + "` in " + source,
+                source + " 缺少字段 `" + field + "`"
+            ));
         }
         if (value.isArray()) {
             List<String> values = new ArrayList<String>();

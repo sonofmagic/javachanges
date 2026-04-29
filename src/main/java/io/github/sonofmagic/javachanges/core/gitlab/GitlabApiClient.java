@@ -2,6 +2,7 @@ package io.github.sonofmagic.javachanges.core.gitlab;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.sonofmagic.javachanges.core.ReleaseJsonUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseMessages;
 import io.github.sonofmagic.javachanges.core.ReleaseProcessUtils;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
@@ -42,10 +43,16 @@ public final class GitlabApiClient implements GitlabMergeRequestClient {
 
     GitlabApiClient(int connectTimeoutMillis, int readTimeoutMillis, Env env) {
         if (connectTimeoutMillis < 0) {
-            throw new IllegalArgumentException("connectTimeoutMillis must be 0 or greater");
+            throw new IllegalArgumentException(ReleaseMessages.text(
+                "connectTimeoutMillis must be 0 or greater",
+                "connectTimeoutMillis 必须大于等于 0"
+            ));
         }
         if (readTimeoutMillis < 0) {
-            throw new IllegalArgumentException("readTimeoutMillis must be 0 or greater");
+            throw new IllegalArgumentException(ReleaseMessages.text(
+                "readTimeoutMillis must be 0 or greater",
+                "readTimeoutMillis 必须大于等于 0"
+            ));
         }
         this.connectTimeoutMillis = connectTimeoutMillis;
         this.readTimeoutMillis = readTimeoutMillis;
@@ -106,7 +113,10 @@ public final class GitlabApiClient implements GitlabMergeRequestClient {
         JsonNode root = ReleaseJsonUtils.readTree(json);
         JsonNode value = root.get(field);
         if (value == null || value.isNull() || !value.canConvertToInt()) {
-            throw new IllegalStateException("Missing `" + field + "` in GitLab response: " + json);
+            throw new IllegalStateException(ReleaseMessages.text(
+                "Missing `" + field + "` in GitLab response: " + json,
+                "GitLab 响应缺少 `" + field + "`: " + json
+            ));
         }
         return value.asInt();
     }
@@ -142,7 +152,10 @@ public final class GitlabApiClient implements GitlabMergeRequestClient {
     private String request(String method, String path, String body) throws IOException {
         String response = requestAllowNotFound(method, path, body);
         if (response == null) {
-            throw new IllegalStateException("GitLab API " + method + " " + path + " failed: Not found");
+            throw new IllegalStateException(ReleaseMessages.text(
+                "GitLab API " + method + " " + path + " failed: Not found",
+                "GitLab API " + method + " " + path + " 失败: Not found"
+            ));
         }
         return response;
     }
@@ -188,7 +201,10 @@ public final class GitlabApiClient implements GitlabMergeRequestClient {
             if (detail == null) {
                 detail = "HTTP " + responseCode;
             }
-            throw new IllegalStateException("GitLab API " + method + " " + path + " failed: " + detail);
+            throw new IllegalStateException(ReleaseMessages.text(
+                "GitLab API " + method + " " + path + " failed: " + detail,
+                "GitLab API " + method + " " + path + " 失败: " + detail
+            ));
         }
         return response;
     }
@@ -204,7 +220,7 @@ public final class GitlabApiClient implements GitlabMergeRequestClient {
     private String requireEnv(String name) {
         String value = ReleaseTextUtils.trimToNull(env.get(name));
         if (value == null) {
-            throw new IllegalStateException("缺少环境变量: " + name);
+            throw new IllegalStateException(ReleaseMessages.missingEnv(name));
         }
         return value;
     }
@@ -238,7 +254,10 @@ public final class GitlabApiClient implements GitlabMergeRequestClient {
         try {
             return URLEncoder.encode(value, "UTF-8");
         } catch (Exception exception) {
-            throw new IllegalStateException("Failed to encode URL component", exception);
+            throw new IllegalStateException(ReleaseMessages.text(
+                "Failed to encode URL component",
+                "URL 组件编码失败"
+            ), exception);
         }
     }
 }

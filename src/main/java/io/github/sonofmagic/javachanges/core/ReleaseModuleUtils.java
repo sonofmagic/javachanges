@@ -47,7 +47,10 @@ public final class ReleaseModuleUtils {
 
             return modules;
         } catch (IOException exception) {
-            throw new IllegalStateException("Failed to detect Maven modules from " + repoRoot, exception);
+            throw new IllegalStateException(ReleaseMessages.text(
+                "Failed to detect Maven modules from " + repoRoot,
+                "检测 Maven 模块失败: " + repoRoot
+            ), exception);
         }
     }
 
@@ -78,7 +81,7 @@ public final class ReleaseModuleUtils {
         if (separator > 0) {
             return tag.substring(separator + 2);
         }
-        throw new IllegalArgumentException("Unsupported release tag: " + tag);
+        throw new IllegalArgumentException(ReleaseMessages.unsupportedReleaseTag(tag));
     }
 
     public static String releaseModuleFromTag(String tag) {
@@ -89,7 +92,7 @@ public final class ReleaseModuleUtils {
         if (separator > 0) {
             return tag.substring(0, separator);
         }
-        throw new IllegalArgumentException("Unsupported release tag: " + tag);
+        throw new IllegalArgumentException(ReleaseMessages.unsupportedReleaseTag(tag));
     }
 
     public static List<String> parseModules(Path repoRoot, String rawModules) {
@@ -111,7 +114,7 @@ public final class ReleaseModuleUtils {
             modules.add(module);
         }
         if (modules.isEmpty()) {
-            throw new IllegalArgumentException("At least one module is required");
+            throw new IllegalArgumentException(ReleaseMessages.atLeastOneModuleRequired());
         }
         return new ArrayList<String>(modules);
     }
@@ -123,7 +126,7 @@ public final class ReleaseModuleUtils {
         }
         List<String> supported = java.util.Arrays.asList("feat", "fix", "docs", "build", "ci", "test", "refactor", "perf", "chore", "other");
         if (!supported.contains(normalized)) {
-            throw new IllegalArgumentException("Unsupported change type: " + rawType);
+            throw new IllegalArgumentException(ReleaseMessages.unsupportedChangeType(rawType));
         }
         return normalized;
     }
@@ -140,7 +143,6 @@ public final class ReleaseModuleUtils {
     }
 
     public static String unknownModuleMessage(Path repoRoot, String module, List<String> knownModules) {
-        return "Unknown module: " + module + ", allowed: " + knownModules
-            + ". Run `javachanges modules --directory " + repoRoot + "` to list detected modules.";
+        return ReleaseMessages.unknownModule(repoRoot, module, knownModules);
     }
 }

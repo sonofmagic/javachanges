@@ -48,7 +48,7 @@ final class InitCommand extends AbstractCliCommand {
             RepoFiles.ensureChangesetReadme(repoRoot);
         }
 
-        out().println("Initialized javachanges in " + repoRoot);
+        out().println(ReleaseMessages.initialized(repoRoot));
         out().println();
         printPathAction(readmeAction(hadReadme), repoRoot, readmePath);
 
@@ -61,24 +61,28 @@ final class InitCommand extends AbstractCliCommand {
                 printPathAction(hadConfig ? "Replaced" : "Created", repoRoot, configPath);
             } else {
                 printPathAction("Kept", repoRoot, configPath);
-                out().println("  Use --force to replace it with the default template.");
+                out().println(ReleaseMessages.text(
+                    "  Use --force to replace it with the default template.",
+                    "  使用 --force 可替换为默认模板。"
+                ));
             }
         } else {
-            out().println("Skipped: " + ChangesetPaths.DIR + "/" + ChangesetPaths.CONFIG_JSONC
-                + " (use --config to write the default template)");
+            out().println(ReleaseMessages.pathAction("Skipped") + ": " + ChangesetPaths.DIR + "/" + ChangesetPaths.CONFIG_JSONC
+                + ReleaseMessages.text(" (use --config to write the default template)", " (使用 --config 写入默认模板)"));
         }
 
         String repoArg = CliOutputSupport.shellQuote(repoRoot.toString());
         out().println();
-        out().println("Next steps:");
+        out().println(ReleaseMessages.nextSteps());
         out().println("  javachanges modules --directory " + repoArg);
-        out().println("  javachanges add --directory " + repoArg + " --summary \"describe the change\" --release patch");
+        out().println("  javachanges add --directory " + repoArg + " --summary \""
+            + ReleaseMessages.describeChangePlaceholder() + "\" --release patch");
         out().println("  javachanges next --directory " + repoArg);
         return success();
     }
 
     private void printPathAction(String action, Path repoRoot, Path path) {
-        out().println(action + ": " + repoRoot.relativize(path));
+        out().println(ReleaseMessages.pathAction(action) + ": " + repoRoot.relativize(path));
     }
 
     private String readmeAction(boolean hadReadme) {
@@ -158,11 +162,11 @@ final class AddCommand extends AbstractCliCommand {
         ChangesetInput input = ChangesetPrompter.resolveInput(repoRoot, options, out(), err());
         Path created = RepoFiles.writeChangeset(repoRoot, input);
         String repoArg = CliOutputSupport.shellQuote(repoRoot.toString());
-        out().println("Created changeset: " + repoRoot.relativize(created));
-        out().println("Release level: " + input.release.id);
-        out().println("Affected packages: " + ReleaseModuleUtils.joinModules(input.modules));
+        out().println(ReleaseMessages.createdChangeset(repoRoot.relativize(created)));
+        out().println(ReleaseMessages.releaseLevel() + ": " + input.release.id);
+        out().println(ReleaseMessages.affectedPackages() + ": " + ReleaseModuleUtils.joinModules(input.modules));
         out().println();
-        out().println("Next steps:");
+        out().println(ReleaseMessages.nextSteps());
         out().println("  javachanges status --directory " + repoArg);
         out().println("  javachanges next --directory " + repoArg);
         return success();
@@ -177,32 +181,33 @@ final class NextCommand extends AbstractCliCommand {
         Path repoRoot = repoRoot();
         String repoArg = CliOutputSupport.shellQuote(repoRoot.toString());
         ReleasePlan plan = new ReleasePlanner(repoRoot).plan();
-        out().println("Next step for " + repoRoot + ":");
+        out().println(ReleaseMessages.nextStepFor(repoRoot));
         out().println();
         if (plan.hasPendingChangesets()) {
-            out().println("Pending changesets: " + plan.getChangesetCount());
-            out().println("Planned release: v" + plan.getReleaseVersion());
-            out().println("Affected packages: " + ReleaseModuleUtils.joinModules(plan.getAffectedPackages()));
+            out().println(ReleaseMessages.pendingChangesets() + ": " + plan.getChangesetCount());
+            out().println(ReleaseMessages.plannedRelease() + ": v" + plan.getReleaseVersion());
+            out().println(ReleaseMessages.affectedPackages() + ": " + ReleaseModuleUtils.joinModules(plan.getAffectedPackages()));
             out().println();
-            out().println("Review the plan:");
+            out().println(ReleaseMessages.reviewPlan());
             out().println("  javachanges status --directory " + repoArg);
             out().println();
-            out().println("Apply it locally:");
+            out().println(ReleaseMessages.applyLocally());
             out().println("  javachanges plan --directory " + repoArg + " --apply true");
             out().println();
-            out().println("Or open an automated GitHub release PR:");
+            out().println(ReleaseMessages.openGithubPr());
             out().println("  javachanges github-release-plan --directory " + repoArg + " --write-plan-files false --execute true");
             out().println();
-            out().println("Or open an automated GitLab release MR:");
+            out().println(ReleaseMessages.openGitlabMr());
             out().println("  javachanges gitlab-release-plan --directory " + repoArg + " --write-plan-files false --execute true");
             return success();
         }
-        out().println("No pending changesets.");
+        out().println(ReleaseMessages.noPendingChangesets());
         out().println();
-        out().println("Create one:");
-        out().println("  javachanges add --directory " + repoArg + " --summary \"describe the change\" --release patch");
+        out().println(ReleaseMessages.createdOne());
+        out().println("  javachanges add --directory " + repoArg + " --summary \""
+            + ReleaseMessages.describeChangePlaceholder() + "\" --release patch");
         out().println();
-        out().println("Then review the plan:");
+        out().println(ReleaseMessages.thenReviewPlan());
         out().println("  javachanges status --directory " + repoArg);
         return success();
     }
@@ -238,13 +243,13 @@ final class PlanCommand extends AbstractCliCommand {
             return success();
         }
         if (!plan.hasPendingChangesets()) {
-            out().println("No pending changesets to apply.");
+            out().println(ReleaseMessages.noPendingChangesetsToApply());
             ReleaseWorkflowNextSteps.printReviewNextSteps(out(), repoRoot, plan);
             return success();
         }
         RepoFiles.applyPlan(repoRoot, plan);
         out().println();
-        out().println("Applied release plan for v" + plan.getReleaseVersion());
+        out().println(ReleaseMessages.appliedReleasePlan(plan.getReleaseVersion()));
         ReleaseWorkflowNextSteps.printAppliedNextSteps(out(), repoRoot, plan);
         return success();
     }
@@ -257,20 +262,21 @@ final class ReleaseWorkflowNextSteps {
     static void printReviewNextSteps(PrintStream out, Path repoRoot, ReleasePlan plan) {
         String repoArg = CliOutputSupport.shellQuote(repoRoot.toString());
         out.println();
-        out.println("Next steps:");
+        out.println(ReleaseMessages.nextSteps());
         if (plan.hasPendingChangesets()) {
             out.println("  javachanges plan --directory " + repoArg + " --apply true");
             out.println("  javachanges next --directory " + repoArg);
             return;
         }
-        out.println("  javachanges add --directory " + repoArg + " --summary \"describe the change\" --release patch");
+        out.println("  javachanges add --directory " + repoArg + " --summary \""
+            + ReleaseMessages.describeChangePlaceholder() + "\" --release patch");
         out.println("  javachanges next --directory " + repoArg);
     }
 
     static void printAppliedNextSteps(PrintStream out, Path repoRoot, ReleasePlan plan) {
         String repoArg = CliOutputSupport.shellQuote(repoRoot.toString());
         out.println();
-        out.println("Next steps:");
+        out.println(ReleaseMessages.nextSteps());
         out.println("  git -C " + repoArg + " status --short");
         out.println("  git -C " + repoArg + " add "
             + CliOutputSupport.shellQuoteArgs(BuildModelSupport.releasePlanGitAddPaths(repoRoot)));
@@ -315,14 +321,17 @@ final class ModulesCommand extends AbstractCliCommand {
         Path repoRoot = repoRoot();
         BuildModelSupport.BuildModel model = BuildModelSupport.detect(repoRoot);
         if (model == null) {
-            throw new IllegalStateException("Cannot find supported Maven or Gradle build model in " + repoRoot);
+            throw new IllegalStateException(ReleaseMessages.text(
+                "Cannot find supported Maven or Gradle build model in " + repoRoot,
+                "无法在 " + repoRoot + " 中找到支持的 Maven 或 Gradle 构建模型"
+            ));
         }
         List<String> modules = ReleaseModuleUtils.detectKnownModules(repoRoot);
-        out().println("Repository: " + repoRoot);
-        out().println("Build tool: " + model.type.name().toLowerCase(java.util.Locale.ROOT));
-        out().println("Version file: " + BuildModelSupport.revisionFileLabel(repoRoot));
-        out().println("Current revision: " + BuildModelSupport.readRevision(repoRoot));
-        out().println("Modules:");
+        out().println(ReleaseMessages.repository() + ": " + repoRoot);
+        out().println(ReleaseMessages.text("Build tool", "构建工具") + ": " + model.type.name().toLowerCase(java.util.Locale.ROOT));
+        out().println(ReleaseMessages.text("Version file", "版本文件") + ": " + BuildModelSupport.revisionFileLabel(repoRoot));
+        out().println(ReleaseMessages.currentRevision() + ": " + BuildModelSupport.readRevision(repoRoot));
+        out().println(ReleaseMessages.text("Modules", "模块") + ":");
         for (String module : modules) {
             out().println("  - " + module);
         }
@@ -333,13 +342,13 @@ final class ModulesCommand extends AbstractCliCommand {
     private void printNextSteps(Path repoRoot, List<String> modules) {
         String repoArg = CliOutputSupport.shellQuote(repoRoot.toString());
         out().println();
-        out().println("Next steps:");
+        out().println(ReleaseMessages.nextSteps());
         out().println("  javachanges add --directory " + repoArg
             + " --modules " + CliOutputSupport.shellQuote(modules.get(0))
-            + " --summary \"describe the change\" --release patch");
+            + " --summary \"" + ReleaseMessages.describeChangePlaceholder() + "\" --release patch");
         if (modules.size() > 1) {
             out().println("  javachanges add --directory " + repoArg
-                + " --modules all --summary \"describe the change\" --release patch");
+                + " --modules all --summary \"" + ReleaseMessages.describeChangePlaceholder() + "\" --release patch");
         }
     }
 }
@@ -380,7 +389,7 @@ final class AssertModuleCommand extends AbstractCliCommand {
     @Override
     public Integer call() {
         assertKnownModule(repoRoot(), module);
-        out().println("module ok");
+        out().println(ReleaseMessages.text("module ok", "模块校验通过"));
         return success();
     }
 }
@@ -391,7 +400,7 @@ final class AssertSnapshotCommand extends AbstractCliCommand {
     @Override
     public Integer call() throws Exception {
         new VersionSupport(repoRoot()).assertSnapshot();
-        out().println("snapshot ok");
+        out().println(ReleaseMessages.text("snapshot ok", "snapshot 校验通过"));
         return success();
     }
 }
@@ -405,7 +414,7 @@ final class AssertReleaseTagCommand extends AbstractCliCommand {
     @Override
     public Integer call() throws Exception {
         new VersionSupport(repoRoot()).assertReleaseTag(tag);
-        out().println("release tag ok");
+        out().println(ReleaseMessages.text("release tag ok", "release tag 校验通过"));
         return success();
     }
 }
@@ -432,7 +441,7 @@ final class WriteSettingsCommand extends AbstractCliCommand {
     @Override
     public Integer call() throws Exception {
         MavenSettingsWriter.write(Paths.get(output));
-        out().println("Generated Maven settings: " + output);
+        out().println(ReleaseMessages.text("Generated Maven settings: ", "已生成 Maven settings: ") + output);
         return success();
     }
 }
@@ -451,7 +460,7 @@ final class ReleaseNotesCommand extends AbstractCliCommand {
         Path repoRoot = repoRoot();
         Path target = RepoPathSupport.resolveOutputPath(repoRoot, output, "--output");
         new ReleaseNotesGenerator(repoRoot).writeReleaseNotes(tag, target);
-        out().println("Generated release notes: " + output);
+        out().println(ReleaseMessages.text("Generated release notes: ", "已生成 release notes: ") + output);
         return success();
     }
 }
@@ -486,7 +495,7 @@ final class EnsureGpgPublicKeyCommand extends AbstractCliCommand {
             out(),
             err()
         );
-        out().println("gpg public key ok: " + fingerprint);
+        out().println(ReleaseMessages.text("gpg public key ok: ", "gpg 公钥校验通过: ") + fingerprint);
         return success();
     }
 }

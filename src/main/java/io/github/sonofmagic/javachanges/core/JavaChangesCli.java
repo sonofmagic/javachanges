@@ -24,8 +24,28 @@ public final class JavaChangesCli {
         CommandLine commandLine = new CommandLine(root);
         commandLine.setOut(new PrintWriter(out, true));
         commandLine.setErr(new PrintWriter(err, true));
+        commandLine.setExecutionStrategy(new CliExecutionStrategy(root));
         commandLine.setExecutionExceptionHandler(new CliExecutionExceptionHandler());
-        return commandLine.execute(args);
+        ReleaseLanguageContext.set(ReleaseLanguage.fromEnvironment());
+        try {
+            return commandLine.execute(args);
+        } finally {
+            ReleaseLanguageContext.clear();
+        }
+    }
+
+    static final class CliExecutionStrategy implements CommandLine.IExecutionStrategy {
+        private final JavaChangesCommand root;
+
+        CliExecutionStrategy(JavaChangesCommand root) {
+            this.root = root;
+        }
+
+        @Override
+        public int execute(CommandLine.ParseResult parseResult) {
+            root.applyLanguage();
+            return new CommandLine.RunLast().execute(parseResult);
+        }
     }
 
     static final class CliExecutionExceptionHandler implements CommandLine.IExecutionExceptionHandler {

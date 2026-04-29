@@ -1,5 +1,6 @@
 package io.github.sonofmagic.javachanges.core.env;
 
+import io.github.sonofmagic.javachanges.core.ReleaseMessages;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.io.IOException;
@@ -17,14 +18,20 @@ final class ReleaseEnvSyncSupport {
     }
 
     void syncVars(SyncVarsRequest request, LoadedEnv env, String envPath) throws IOException, InterruptedException {
-        out.println("使用 env 文件: " + envPath);
+        out.println(ReleaseMessages.text("Using env file: " + envPath, "使用 env 文件: " + envPath));
         if (!request.execute) {
-            out.println("当前为 dry-run，只输出命令。传入 --execute true 后才会真正写入平台。");
+            out.println(ReleaseMessages.text(
+                "Dry-run only; commands are printed but not written to the platform. Pass --execute true to apply.",
+                "当前为 dry-run，只输出命令。传入 --execute true 后才会真正写入平台。"
+            ));
         }
 
         if (request.execute) {
             if (ReleaseTextUtils.isBlank(request.repo)) {
-                throw new IllegalArgumentException("执行模式下必须通过 --repo 指定仓库");
+                throw new IllegalArgumentException(ReleaseMessages.text(
+                    "--repo is required in execute mode",
+                    "执行模式下必须通过 --repo 指定仓库"
+                ));
             }
             if (request.platform.includesGithub()) {
                 runtime.requireCommand("gh");
@@ -36,7 +43,7 @@ final class ReleaseEnvSyncSupport {
 
         if (request.platform.includesGithub()) {
             out.println();
-            out.println("== GitHub CLI 命令 ==");
+            out.println(ReleaseMessages.text("== GitHub CLI Commands ==", "== GitHub CLI 命令 =="));
             for (EnvEntry entry : ReleaseEnvCatalog.GITHUB_ACTIONS_VARIABLES) {
                 syncGithub(env, request, entry, false);
             }
@@ -47,7 +54,7 @@ final class ReleaseEnvSyncSupport {
 
         if (request.platform.includesGitlab()) {
             out.println();
-            out.println("== GitLab CLI 命令 ==");
+            out.println(ReleaseMessages.text("== GitLab CLI Commands ==", "== GitLab CLI 命令 =="));
             for (EnvEntry entry : ReleaseEnvCatalog.GITLAB_VARIABLES) {
                 syncGitlab(env, request, entry);
             }
@@ -73,10 +80,13 @@ final class ReleaseEnvSyncSupport {
         }
         if (request.execute) {
             String displayCommand = ReleaseTextUtils.renderCommand(maskedCommand(command, "--body", value, secret));
-            out.println("执行: " + displayCommand);
+            out.println(ReleaseMessages.text("Running: " + displayCommand, "执行: " + displayCommand));
             int exitCode = runtime.runCommand(command);
             if (exitCode != 0) {
-                throw new IllegalStateException("命令执行失败: " + displayCommand);
+                throw new IllegalStateException(ReleaseMessages.text(
+                    "Command failed: " + displayCommand,
+                    "命令执行失败: " + displayCommand
+                ));
             }
             return;
         }
@@ -111,10 +121,13 @@ final class ReleaseEnvSyncSupport {
         }
         if (request.execute) {
             String displayCommand = ReleaseTextUtils.renderCommand(maskedCommand(command, "--value", value, entry.secret));
-            out.println("执行: " + displayCommand);
+            out.println(ReleaseMessages.text("Running: " + displayCommand, "执行: " + displayCommand));
             int exitCode = runtime.runCommand(command);
             if (exitCode != 0) {
-                throw new IllegalStateException("命令执行失败: " + displayCommand);
+                throw new IllegalStateException(ReleaseMessages.text(
+                    "Command failed: " + displayCommand,
+                    "命令执行失败: " + displayCommand
+                ));
             }
             return;
         }

@@ -19,21 +19,21 @@ public final class VersionSupport {
         try {
             return BuildModelSupport.readRevision(repoRoot);
         } catch (IllegalStateException exception) {
-            throw new IllegalStateException("未在 Maven pom.xml 或 Gradle gradle.properties 中找到版本配置", exception);
+            throw new IllegalStateException(ReleaseMessages.missingVersionConfig(), exception);
         }
     }
 
     public void assertSnapshot() throws IOException {
         String version = readRevision();
         if (!version.endsWith("-SNAPSHOT")) {
-            throw new IllegalStateException("当前项目版本不是 SNAPSHOT: " + version);
+            throw new IllegalStateException(ReleaseMessages.notSnapshot(version));
         }
     }
 
     public String resolveSnapshotPublishVersion(String buildStamp) throws IOException {
         String version = readRevision();
         if (!version.endsWith("-SNAPSHOT")) {
-            throw new IllegalStateException("当前项目版本不是 SNAPSHOT: " + version);
+            throw new IllegalStateException(ReleaseMessages.notSnapshot(version));
         }
         String normalizedBuildStamp = normalizeSnapshotBuildStamp(buildStamp);
         return stripSnapshot(version) + "-" + normalizedBuildStamp + "-SNAPSHOT";
@@ -42,7 +42,7 @@ public final class VersionSupport {
     public String snapshotRevision() throws IOException {
         String version = readRevision();
         if (!version.endsWith("-SNAPSHOT")) {
-            throw new IllegalStateException("当前项目版本不是 SNAPSHOT: " + version);
+            throw new IllegalStateException(ReleaseMessages.notSnapshot(version));
         }
         return version;
     }
@@ -50,10 +50,10 @@ public final class VersionSupport {
     private String normalizeSnapshotBuildStamp(String buildStamp) {
         String normalized = buildStamp == null ? "" : buildStamp.trim();
         if (normalized.isEmpty()) {
-            throw new IllegalArgumentException("snapshot build stamp 不能为空");
+            throw new IllegalArgumentException(ReleaseMessages.emptySnapshotBuildStamp());
         }
         if (!normalized.matches("[A-Za-z0-9.]+")) {
-            throw new IllegalArgumentException("snapshot build stamp 只允许字母、数字和点号: " + buildStamp);
+            throw new IllegalArgumentException(ReleaseMessages.invalidSnapshotBuildStamp(buildStamp));
         }
         return normalized;
     }
@@ -67,7 +67,7 @@ public final class VersionSupport {
             assertKnownModule(repoRoot, module);
         }
         if (!baseVersion.equals(releaseVersion)) {
-            throw new IllegalStateException("tag " + tag + " 与项目版本 " + version + " 不匹配，期望基础版本为 " + releaseVersion);
+            throw new IllegalStateException(ReleaseMessages.releaseTagVersionMismatch(tag, version, releaseVersion));
         }
     }
 }

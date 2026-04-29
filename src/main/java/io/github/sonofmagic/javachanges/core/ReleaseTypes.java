@@ -14,7 +14,7 @@ final class Semver {
     static Semver parse(String value) {
         String[] parts = value.split("\\.");
         if (parts.length != 3) {
-            throw new IllegalArgumentException("Unsupported version: " + value);
+            throw new IllegalArgumentException(ReleaseMessages.unsupportedVersion(value));
         }
         return new Semver(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
     }

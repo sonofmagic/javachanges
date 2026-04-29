@@ -21,7 +21,7 @@ public enum Platform {
                 return platform;
             }
         }
-        throw new IllegalArgumentException("不支持的平台: " + value + "，可选值: github, gitlab, all");
+        throw new IllegalArgumentException(ReleaseMessages.unsupportedPlatform(value));
     }
 
     public boolean includesGithub() {

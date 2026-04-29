@@ -1,6 +1,7 @@
 package io.github.sonofmagic.javachanges.core.publish;
 
 import io.github.sonofmagic.javachanges.core.MavenCommand;
+import io.github.sonofmagic.javachanges.core.ReleaseMessages;
 import io.github.sonofmagic.javachanges.core.ReleaseModuleUtils;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import io.github.sonofmagic.javachanges.core.MavenSettingsWriter;
@@ -43,7 +44,10 @@ public final class PublishPlanSupport {
         if (resolvedModule == null) {
             resolvedModule = tagModule;
         } else if (tagModule != null && !resolvedModule.equals(tagModule)) {
-            throw new IllegalStateException("显式指定的模块 " + resolvedModule + " 与 tag 中的模块 " + tagModule + " 不一致");
+            throw new IllegalStateException(ReleaseMessages.text(
+                "Explicit module " + resolvedModule + " does not match module " + tagModule + " from tag.",
+                "显式指定的模块 " + resolvedModule + " 与 tag 中的模块 " + tagModule + " 不一致"
+            ));
         }
         return new PublishTarget(releaseVersion, resolvedModule, null, false);
     }

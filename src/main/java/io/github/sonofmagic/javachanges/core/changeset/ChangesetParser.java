@@ -1,6 +1,7 @@
 package io.github.sonofmagic.javachanges.core.changeset;
 
 import io.github.sonofmagic.javachanges.core.ReleaseLevel;
+import io.github.sonofmagic.javachanges.core.ReleaseMessages;
 import io.github.sonofmagic.javachanges.core.ReleaseModuleUtils;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
@@ -20,7 +21,7 @@ final class ChangesetParser {
     static Changeset parse(Path repoRoot, Path path) throws IOException {
         List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
         if (lines.size() < 3 || !"---".equals(lines.get(0))) {
-            throw new IllegalStateException("Invalid changeset frontmatter: " + path);
+            throw new IllegalStateException(ReleaseMessages.invalidChangesetFrontmatter(path));
         }
         Map<String, String> frontmatter = new LinkedHashMap<String, String>();
         int index = 1;
@@ -32,7 +33,7 @@ final class ChangesetParser {
             }
             int separator = line.indexOf(':');
             if (separator <= 0) {
-                throw new IllegalStateException("Invalid changeset line in " + path + ": " + line);
+                throw new IllegalStateException(ReleaseMessages.invalidChangesetLine(path, line));
             }
             String key = ReleaseTextUtils.stripWrappingQuotes(line.substring(0, separator).trim());
             String value = line.substring(separator + 1).trim();
@@ -95,7 +96,7 @@ final class ChangesetParser {
         }
 
         if (modules.isEmpty()) {
-            throw new IllegalStateException("Missing package release entries in " + path);
+            throw new IllegalStateException(ReleaseMessages.missingPackageReleaseEntries(path));
         }
 
         return new Changeset(
@@ -112,7 +113,7 @@ final class ChangesetParser {
     private static String required(Map<String, String> frontmatter, String key, Path path) {
         String value = frontmatter.get(key);
         if (value == null || value.trim().isEmpty()) {
-            throw new IllegalStateException("Missing `" + key + "` in " + path);
+            throw new IllegalStateException(ReleaseMessages.missingKeyIn(key, path));
         }
         return value.trim();
     }

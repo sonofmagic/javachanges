@@ -3,6 +3,7 @@ package io.github.sonofmagic.javachanges.core.plan;
 import io.github.sonofmagic.javachanges.core.CommandResult;
 import io.github.sonofmagic.javachanges.core.BuildModelSupport;
 import io.github.sonofmagic.javachanges.core.ReleaseLevel;
+import io.github.sonofmagic.javachanges.core.ReleaseMessages;
 import io.github.sonofmagic.javachanges.core.ReleaseProcessUtils;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import io.github.sonofmagic.javachanges.core.ReleaseVersionUtils;
@@ -48,7 +49,10 @@ public final class ReleasePlanner {
             if (error.contains("not a git repository")) {
                 return null;
             }
-            throw new IllegalStateException("git tag failed: " + error);
+            throw new IllegalStateException(ReleaseMessages.text(
+                "git tag failed: " + error,
+                "git tag 执行失败: " + error
+            ));
         }
         String output = result.stdoutText().trim();
         if (output.isEmpty()) {

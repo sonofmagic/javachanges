@@ -2,6 +2,7 @@ package io.github.sonofmagic.javachanges.core.automation;
 
 import io.github.sonofmagic.javachanges.core.CommandResult;
 import io.github.sonofmagic.javachanges.core.ReleaseModuleUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseMessages;
 import io.github.sonofmagic.javachanges.core.ReleaseProcessUtils;
 
 import java.io.IOException;
@@ -112,7 +113,7 @@ public final class ReleaseNotesGenerator {
             if (entry.getValue().isEmpty()) {
                 continue;
             }
-            builder.append("### ").append(entry.getKey()).append("\n\n");
+            builder.append("### ").append(localizedSection(entry.getKey())).append("\n\n");
             for (String line : entry.getValue()) {
                 builder.append("- ").append(line).append("\n");
             }
@@ -120,9 +121,43 @@ public final class ReleaseNotesGenerator {
             found = true;
         }
         if (!found) {
-            builder.append("- No user-facing changes were recorded for this release.\n");
+            builder.append("- ").append(ReleaseMessages.noUserFacingChanges()).append("\n");
         }
         return builder.toString().trim();
+    }
+
+    private String localizedSection(String section) {
+        if ("Breaking Changes".equals(section)) {
+            return ReleaseMessages.text("Breaking Changes", "重大变更");
+        }
+        if ("Features".equals(section)) {
+            return ReleaseMessages.text("Features", "功能");
+        }
+        if ("Fixes".equals(section)) {
+            return ReleaseMessages.text("Fixes", "修复");
+        }
+        if ("Performance".equals(section)) {
+            return ReleaseMessages.text("Performance", "性能");
+        }
+        if ("Refactoring".equals(section)) {
+            return ReleaseMessages.text("Refactoring", "重构");
+        }
+        if ("Build".equals(section)) {
+            return ReleaseMessages.text("Build", "构建");
+        }
+        if ("Documentation".equals(section)) {
+            return ReleaseMessages.text("Documentation", "文档");
+        }
+        if ("Tests".equals(section)) {
+            return ReleaseMessages.text("Tests", "测试");
+        }
+        if ("CI".equals(section)) {
+            return ReleaseMessages.text("CI", "CI");
+        }
+        if ("Chores".equals(section)) {
+            return ReleaseMessages.text("Chores", "杂项");
+        }
+        return ReleaseMessages.text("Other", "其他");
     }
 
     private String commitSection(String subject) {
@@ -163,7 +198,10 @@ public final class ReleaseNotesGenerator {
     private String gitSingleLine(String... args) throws IOException, InterruptedException {
         String value = gitText(args).trim();
         if (value.isEmpty()) {
-            throw new IllegalStateException("git returned empty output for " + Arrays.asList(args));
+            throw new IllegalStateException(ReleaseMessages.text(
+                "git returned empty output for " + Arrays.asList(args),
+                "git 返回了空输出: " + Arrays.asList(args)
+            ));
         }
         return value.split("\\r?\\n")[0].trim();
     }
@@ -175,7 +213,10 @@ public final class ReleaseNotesGenerator {
     private String gitText(String... args) throws IOException, InterruptedException {
         String value = gitTextAllowEmpty(args);
         if (value.trim().isEmpty()) {
-            throw new IllegalStateException("git returned empty output for " + Arrays.asList(args));
+            throw new IllegalStateException(ReleaseMessages.text(
+                "git returned empty output for " + Arrays.asList(args),
+                "git 返回了空输出: " + Arrays.asList(args)
+            ));
         }
         return value;
     }

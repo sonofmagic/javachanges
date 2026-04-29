@@ -24,6 +24,6 @@ public enum ReleaseLevel {
                 return level;
             }
         }
-        throw new IllegalArgumentException("Unsupported release level: " + value + ". Use " + ALLOWED_VALUES + ".");
+        throw new IllegalArgumentException(ReleaseMessages.unsupportedReleaseLevel(value));
     }
 }

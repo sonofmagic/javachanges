@@ -20,7 +20,7 @@ public final class ReleaseTextUtils {
         for (int i = fromIndex; i < args.length; i++) {
             String current = args[i];
             if (!current.startsWith("--")) {
-                throw new IllegalArgumentException("Unknown argument: " + current);
+                throw new IllegalArgumentException(ReleaseMessages.unknownArgument(current));
             }
             String key = current.substring(2);
             String value = "true";
@@ -52,7 +52,7 @@ public final class ReleaseTextUtils {
     public static String requiredOption(Map<String, String> options, String name) {
         String value = trimToNull(options.get(name));
         if (value == null) {
-            throw new IllegalArgumentException("Missing required option: --" + name);
+            throw new IllegalArgumentException(ReleaseMessages.missingRequiredOption(name));
         }
         return value;
     }
@@ -64,7 +64,7 @@ public final class ReleaseTextUtils {
     public static String requireEnv(String name) {
         String value = trimToNull(System.getenv(name));
         if (value == null) {
-            throw new IllegalStateException("缺少环境变量: " + name);
+            throw new IllegalStateException(ReleaseMessages.missingEnv(name));
         }
         return value;
     }
@@ -170,13 +170,7 @@ public final class ReleaseTextUtils {
     }
 
     public static String releaseLevelHeading(ReleaseLevel level) {
-        if (level == ReleaseLevel.MAJOR) {
-            return "Major Changes";
-        }
-        if (level == ReleaseLevel.MINOR) {
-            return "Minor Changes";
-        }
-        return "Patch Changes";
+        return ReleaseMessages.releaseLevelHeading(level);
     }
 
     public static String renderVisibleType(String type) {

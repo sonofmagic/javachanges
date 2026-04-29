@@ -1,6 +1,7 @@
 package io.github.sonofmagic.javachanges.core.gitlab;
 
 import io.github.sonofmagic.javachanges.core.CommandResult;
+import io.github.sonofmagic.javachanges.core.ReleaseMessages;
 import io.github.sonofmagic.javachanges.core.ReleaseProcessUtils;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
@@ -43,8 +44,12 @@ public class GitlabReleaseRuntime {
         if (result.exitCode != 0) {
             String error = ReleaseTextUtils.trimToNull(ReleaseTextUtils.redactSensitiveText(result.stderrText()));
             throw new IllegalStateException(error == null
-                ? "git command failed: [ls-remote, --heads, "
-                    + ReleaseTextUtils.redactSensitiveText(remoteUrl) + ", refs/heads/" + branchName + "]"
+                ? ReleaseMessages.text(
+                    "git command failed: [ls-remote, --heads, "
+                        + ReleaseTextUtils.redactSensitiveText(remoteUrl) + ", refs/heads/" + branchName + "]",
+                    "git 命令执行失败: [ls-remote, --heads, "
+                        + ReleaseTextUtils.redactSensitiveText(remoteUrl) + ", refs/heads/" + branchName + "]"
+                )
                 : error);
         }
         String stdout = ReleaseTextUtils.trimToNull(result.stdoutText());
@@ -53,7 +58,10 @@ public class GitlabReleaseRuntime {
         }
         int tabIndex = stdout.indexOf('\t');
         if (tabIndex <= 0) {
-            throw new IllegalStateException("Unexpected git ls-remote output: " + stdout);
+            throw new IllegalStateException(ReleaseMessages.text(
+                "Unexpected git ls-remote output: " + stdout,
+                "git ls-remote 输出不符合预期: " + stdout
+            ));
         }
         return stdout.substring(0, tabIndex).trim();
     }
@@ -94,7 +102,10 @@ public class GitlabReleaseRuntime {
     private IllegalStateException gitCommandException(CommandResult result, String... args) {
         String error = ReleaseTextUtils.trimToNull(ReleaseTextUtils.redactSensitiveText(result.stderrText()));
         return new IllegalStateException(error == null
-            ? "git command failed: " + ReleaseTextUtils.redactSensitiveText(Arrays.asList(args).toString())
+            ? ReleaseMessages.text(
+                "git command failed: " + ReleaseTextUtils.redactSensitiveText(Arrays.asList(args).toString()),
+                "git 命令执行失败: " + ReleaseTextUtils.redactSensitiveText(Arrays.asList(args).toString())
+            )
             : error);
     }
 

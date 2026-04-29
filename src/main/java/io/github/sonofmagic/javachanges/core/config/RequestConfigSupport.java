@@ -1,5 +1,6 @@
 package io.github.sonofmagic.javachanges.core.config;
 
+import io.github.sonofmagic.javachanges.core.ReleaseMessages;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import io.github.sonofmagic.javachanges.core.plan.RepoFiles;
 
@@ -29,7 +30,7 @@ public final class RequestConfigSupport {
         } catch (IllegalStateException exception) {
             return ChangesetConfigSupport.ChangesetConfig.defaults();
         } catch (IOException exception) {
-            throw new IllegalStateException("Failed to read changeset config", exception);
+            throw failedToReadConfig(exception);
         }
     }
 
@@ -43,7 +44,7 @@ public final class RequestConfigSupport {
         } catch (IllegalStateException exception) {
             return "main";
         } catch (IOException exception) {
-            throw new IllegalStateException("Failed to read changeset config", exception);
+            throw failedToReadConfig(exception);
         }
     }
 
@@ -58,7 +59,7 @@ public final class RequestConfigSupport {
             } catch (IllegalStateException exception) {
                 // Fall back when no repository is available.
             } catch (IOException exception) {
-                throw new IllegalStateException("Failed to read changeset config", exception);
+                throw failedToReadConfig(exception);
             }
         }
         if (config != null) {
@@ -74,8 +75,15 @@ public final class RequestConfigSupport {
         try {
             return RepoFiles.readChangesetConfig(repoRoot);
         } catch (IOException exception) {
-            throw new IllegalStateException("Failed to read changeset config", exception);
+            throw failedToReadConfig(exception);
         }
+    }
+
+    private static IllegalStateException failedToReadConfig(IOException exception) {
+        return new IllegalStateException(ReleaseMessages.text(
+            "Failed to read changeset config",
+            "读取 changeset 配置失败"
+        ), exception);
     }
 
     private static Path resolveConfigRoot(String directoryOption) {

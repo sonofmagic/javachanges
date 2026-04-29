@@ -1,5 +1,7 @@
 package io.github.sonofmagic.javachanges.maven;
 
+import io.github.sonofmagic.javachanges.core.ReleaseMessages;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -83,7 +85,10 @@ final class JavaChangesMavenPluginSupport {
             tokenStarted = true;
         }
         if (quote != null) {
-            throw new IllegalArgumentException("Unterminated quoted argument in javachanges.args");
+            throw new IllegalArgumentException(ReleaseMessages.text(
+                "Unterminated quoted argument in javachanges.args",
+                "javachanges.args 中存在未闭合的引号参数"
+            ));
         }
         if (escaping) {
             current.append('\\');
@@ -117,6 +122,20 @@ final class JavaChangesMavenPluginSupport {
             args.add(optionName);
             args.add("true");
         }
+    }
+
+    static boolean containsOption(String[] args, String... names) {
+        if (args == null || names == null) {
+            return false;
+        }
+        for (String arg : args) {
+            for (String name : names) {
+                if (name.equals(arg)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static String[] prependDirectoryIfMissing(String directory, List<String> effectiveArgs) {

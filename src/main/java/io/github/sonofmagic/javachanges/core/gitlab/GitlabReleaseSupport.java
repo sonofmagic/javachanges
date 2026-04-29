@@ -3,6 +3,7 @@ package io.github.sonofmagic.javachanges.core.gitlab;
 import io.github.sonofmagic.javachanges.core.BuildModelSupport;
 import io.github.sonofmagic.javachanges.core.ChangesetPaths;
 import io.github.sonofmagic.javachanges.core.ReleaseAutomationSupport;
+import io.github.sonofmagic.javachanges.core.ReleaseMessages;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import io.github.sonofmagic.javachanges.core.automation.AbstractReleaseAutomationSupport;
 import io.github.sonofmagic.javachanges.core.automation.AutomationJsonSupport;
@@ -38,7 +39,10 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
             newAutomationReport("gitlab-release-plan", "plan-merge-request", request.execute);
         report.projectId = request.projectId;
         if (ReleaseTextUtils.trimToNull(request.projectId) == null) {
-            throw new IllegalArgumentException("Missing GitLab project id. Pass --project-id or set CI_PROJECT_ID.");
+            throw new IllegalArgumentException(ReleaseMessages.text(
+                "Missing GitLab project id. Pass --project-id or set CI_PROJECT_ID.",
+                "缺少 GitLab project id。请传入 --project-id 或设置 CI_PROJECT_ID。"
+            ));
         }
 
         ReleasePlan plan = automationSupport.plan();
@@ -178,10 +182,16 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
 
         String tagName = ReleaseTextUtils.trimToNull(request.tag);
         if (tagName == null) {
-            throw new IllegalArgumentException("Missing GitLab tag. Pass --tag or set CI_COMMIT_TAG.");
+            throw new IllegalArgumentException(ReleaseMessages.text(
+                "Missing GitLab tag. Pass --tag or set CI_COMMIT_TAG.",
+                "缺少 GitLab tag。请传入 --tag 或设置 CI_COMMIT_TAG。"
+            ));
         }
         if (ReleaseTextUtils.trimToNull(request.projectId) == null) {
-            throw new IllegalArgumentException("Missing GitLab project id. Pass --project-id or set CI_PROJECT_ID.");
+            throw new IllegalArgumentException(ReleaseMessages.text(
+                "Missing GitLab project id. Pass --project-id or set CI_PROJECT_ID.",
+                "缺少 GitLab project id。请传入 --project-id 或设置 CI_PROJECT_ID。"
+            ));
         }
         ReleaseArtifactSupport.ReleaseTagInfo tagInfo = artifactSupport.describeTag(tagName);
         report.tag = tagInfo.tag;

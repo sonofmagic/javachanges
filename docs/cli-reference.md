@@ -58,10 +58,19 @@ Common parts:
 Plugin note:
 
 - all dedicated goals and `javachanges:run` inject `--directory ${project.basedir}` automatically unless you already passed `--directory` explicitly
+- output language defaults to English; pass `--language zh-CN`, set `JAVACHANGES_LANGUAGE=zh-CN`, or use `-Djavachanges.language=zh-CN` with Maven plugin goals to render javachanges prompts, errors, and generated Markdown in Chinese
 - for CI or external repositories, you can call the published plugin directly without a custom runner POM:
 
 ```bash
 mvn -B io.github.sonofmagic:javachanges:__JAVACHANGES_LATEST_RELEASE_VERSION__:run -Djavachanges.args="gitlab-release-plan --directory $CI_PROJECT_DIR --write-plan-files false --execute true"
+```
+
+Language examples:
+
+```bash
+javachanges status --directory . --language zh-CN
+JAVACHANGES_LANGUAGE=zh-CN javachanges plan --directory . --apply true
+mvn javachanges:status -Djavachanges.language=zh-CN
 ```
 
 If you declare the plugin in a target repository `pom.xml`, the shortest local form becomes:

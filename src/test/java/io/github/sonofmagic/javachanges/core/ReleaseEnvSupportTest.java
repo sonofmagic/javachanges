@@ -39,8 +39,8 @@ class ReleaseEnvSupportTest {
 
         String text = stdout.toString(StandardCharsets.UTF_8.name());
         assertTrue(Files.exists(repoRoot.resolve("env").resolve("release.env.local")));
-        assertTrue(text.contains("已生成本地 env 文件: env/release.env.local"));
-        assertTrue(text.contains("下一步请编辑真实仓库地址和凭据，然后执行: make readiness"));
+        assertTrue(text.contains("Generated local env file: env/release.env.local"));
+        assertTrue(text.contains("Next, edit the real repository addresses and credentials, then run: make readiness"));
     }
 
     @Test
@@ -54,9 +54,9 @@ class ReleaseEnvSupportTest {
         support.printAuthHelp(Platform.ALL);
 
         String text = stdout.toString(StandardCharsets.UTF_8.name());
-        assertTrue(text.contains("== GitHub CLI 登录建议 =="));
+        assertTrue(text.contains("== GitHub CLI Login Guide =="));
         assertTrue(text.contains("gh auth login --web --git-protocol ssh"));
-        assertTrue(text.contains("== GitLab CLI 登录建议 =="));
+        assertTrue(text.contains("== GitLab CLI Login Guide =="));
         assertTrue(text.contains("glab auth login --hostname gitlab.example.com --web --git-protocol ssh --use-keyring"));
     }
 
@@ -134,8 +134,8 @@ class ReleaseEnvSupportTest {
         assertTrue(json.contains("\"ok\":true"));
         assertTrue(json.contains("\"command\":\"audit-vars\""));
         assertTrue(json.contains("GitHub Audit Preconditions"));
-        assertTrue(json.contains("GitHub Variables 审计"));
-        assertTrue(json.contains("GitHub Secrets 审计"));
+        assertTrue(json.contains("GitHub Variables Audit"));
+        assertTrue(json.contains("GitHub Secrets Audit"));
         assertTrue(json.contains("MATCH (2026-04-22T10:00:00Z)"));
         assertTrue(json.contains("PRESENT (2026-04-22T10:05:00Z)"));
     }
@@ -156,10 +156,10 @@ class ReleaseEnvSupportTest {
         support.syncVars(SyncVarsRequest.fromOptions(options));
         String text = stdout.toString(StandardCharsets.UTF_8.name());
 
-        assertTrue(text.contains("== GitHub CLI 命令 =="));
+        assertTrue(text.contains("== GitHub CLI Commands =="));
         assertTrue(text.contains("gh variable set MAVEN_RELEASE_REPOSITORY_URL"));
         assertTrue(text.contains("gh secret set MAVEN_REPOSITORY_USERNAME"));
-        assertTrue(text.contains("== GitLab CLI 命令 =="));
+        assertTrue(text.contains("== GitLab CLI Commands =="));
         assertTrue(text.contains("glab variable set MAVEN_REPOSITORY_USERNAME"));
         assertTrue(text.contains("--masked --protected"));
     }

@@ -22,13 +22,19 @@ final class GpgKeySupport {
                                        String secondaryKeyserver,
                                        int attempts,
                                        int retryDelaySeconds,
-                                       PrintStream out,
-                                       PrintStream err) throws IOException, InterruptedException {
+        PrintStream out,
+        PrintStream err) throws IOException, InterruptedException {
         if (attempts < 1) {
-            throw new IllegalArgumentException("--attempts must be greater than 0");
+            throw new IllegalArgumentException(ReleaseMessages.text(
+                "--attempts must be greater than 0",
+                "--attempts 必须大于 0"
+            ));
         }
         if (retryDelaySeconds < 0) {
-            throw new IllegalArgumentException("--retry-delay-seconds must be 0 or greater");
+            throw new IllegalArgumentException(ReleaseMessages.text(
+                "--retry-delay-seconds must be 0 or greater",
+                "--retry-delay-seconds 必须大于等于 0"
+            ));
         }
 
         String fingerprint = detectFingerprint();
@@ -54,9 +60,12 @@ final class GpgKeySupport {
             }
         }
 
-        throw new IllegalStateException("The signing key fingerprint " + fingerprint
-            + " is still not visible from " + primaryKeyserver + " or " + secondaryKeyserver
-            + ". Publish the public key to a supported keyserver and rerun the workflow.");
+        throw new IllegalStateException(ReleaseMessages.text(
+            "The signing key fingerprint " + fingerprint + " is still not visible from " + primaryKeyserver
+                + " or " + secondaryKeyserver + ". Publish the public key to a supported keyserver and rerun the workflow.",
+            "签名密钥指纹 " + fingerprint + " 仍无法从 " + primaryKeyserver + " 或 " + secondaryKeyserver
+                + " 查询到。请把公钥发布到受支持的 keyserver 后重新运行 workflow。"
+        ));
     }
 
     private String detectFingerprint() throws IOException, InterruptedException {
@@ -64,7 +73,10 @@ final class GpgKeySupport {
             "gpg", "--batch", "--list-secret-keys", "--with-colons", "--fingerprint"
         ), null);
         if (result.exitCode != 0) {
-            throw new IllegalStateException("Failed to inspect imported GPG secret keys: " + stderrOrStdout(result));
+            throw new IllegalStateException(ReleaseMessages.text(
+                "Failed to inspect imported GPG secret keys: " + stderrOrStdout(result),
+                "检查已导入的 GPG 私钥失败: " + stderrOrStdout(result)
+            ));
         }
         String[] lines = result.stdoutText().split("\\R");
         for (String line : lines) {
@@ -78,7 +90,10 @@ final class GpgKeySupport {
                 }
             }
         }
-        throw new IllegalStateException("No imported secret key fingerprint was found after actions/setup-java.");
+        throw new IllegalStateException(ReleaseMessages.text(
+            "No imported secret key fingerprint was found after actions/setup-java.",
+            "actions/setup-java 后未找到已导入私钥的 fingerprint。"
+        ));
     }
 
     private void sendKey(String keyserver, String fingerprint, PrintStream out, PrintStream err)
