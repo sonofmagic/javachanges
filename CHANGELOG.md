@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.9.0 - 2026-04-29
+
+### Minor Changes
+
+- Add fresh release metadata mode so automation can avoid committing generated release-plan files. (packages: javachanges)
+- Add an init command for guided changeset setup. (packages: javachanges)
+- Add a `modules` command and friendlier unknown-module guidance. (packages: javachanges)
+- Add configurable output language support with English as the default and Chinese rendering for core CLI prompts, errors, and generated release Markdown. (packages: javachanges)
+- Add dedicated Maven plugin goals for version, preflight, publish, and release-notes commands. (packages: javachanges)
+- Add a `next` command that suggests the next release workflow step for the current repository. (packages: javachanges)
+
+### Patch Changes
+
+- Print review-oriented next steps after creating a changeset. (packages: javachanges)
+- Echo the resolved release level and affected packages after creating a changeset. (packages: javachanges)
+- Improve Gradle settings parsing for renamed projects and comments. (packages: javachanges)
+- Reject generated output paths that escape the repository and fail fast on malformed changeset config. (packages: javachanges)
+- Allow init force mode to refresh the generated changeset README. (packages: javachanges)
+- Print copyable add examples after listing detected modules. (packages: javachanges)
+- Show the GitLab release-plan command in next-step guidance. (packages: javachanges)
+- Print review and commit next steps after applying a release plan. (packages: javachanges)
+- Print apply-oriented next steps from plan dry-runs and empty apply attempts. (packages: javachanges)
+- Show allowed release levels when changeset creation receives an unsupported value. (packages: javachanges)
+- Write a more helpful changeset README with starter examples. (packages: javachanges)
+- Make generated release pull request and merge request bodies easier to scan with emoji-labelled sections, fields, and next-step guidance. (packages: javachanges)
+- Print next-step commands at the end of status output. (packages: javachanges)
+
 ## 1.8.0 - 2026-04-28
 
 ### Minor Changes
