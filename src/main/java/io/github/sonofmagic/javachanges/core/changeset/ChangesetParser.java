@@ -83,7 +83,7 @@ final class ChangesetParser {
                 continue;
             }
             if (!knownModules.contains(key)) {
-                throw new IllegalArgumentException("Unknown module: " + key + ", allowed: " + knownModules);
+                throw new IllegalArgumentException(ReleaseModuleUtils.unknownModuleMessage(repoRoot, key, knownModules));
             }
             if (!modules.contains(key)) {
                 modules.add(key);

@@ -32,6 +32,7 @@ class JavaChangesCliTest {
         assertEquals(0, result.exitCode);
         assertTrue(result.stdout.contains("Usage: javachanges"));
         assertTrue(result.stdout.contains("next"));
+        assertTrue(result.stdout.contains("modules"));
         assertTrue(result.stdout.contains("github-release-plan"));
         assertTrue(result.stdout.contains("github-release-from-plan"));
         assertTrue(result.stdout.contains("github-tag-from-plan"));
@@ -120,6 +121,48 @@ class JavaChangesCliTest {
         assertTrue(result.stdout.contains("javachanges status --directory " + repoRoot));
         assertTrue(result.stdout.contains("javachanges plan --directory " + repoRoot + " --apply true"));
         assertTrue(result.stdout.contains("javachanges github-release-plan --directory " + repoRoot));
+    }
+
+    @Test
+    void modulesListsMavenBuildModel(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createMonorepo(tempDir, false);
+
+        ExecutionResult result = execute("modules", "--directory", repoRoot.toString());
+
+        assertEquals(0, result.exitCode);
+        assertTrue(result.stdout.contains("Build tool: maven"));
+        assertTrue(result.stdout.contains("Version file: pom.xml"));
+        assertTrue(result.stdout.contains("Current revision: 1.1.1-SNAPSHOT"));
+        assertTrue(result.stdout.contains("  - core"));
+        assertTrue(result.stdout.contains("  - cli"));
+    }
+
+    @Test
+    void modulesListsGradleBuildModel(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createGradleRepository(tempDir, false);
+
+        ExecutionResult result = execute("modules", "--directory", repoRoot.toString());
+
+        assertEquals(0, result.exitCode);
+        assertTrue(result.stdout.contains("Build tool: gradle"));
+        assertTrue(result.stdout.contains("Version file: gradle.properties"));
+        assertTrue(result.stdout.contains("Current revision: 1.1.1-SNAPSHOT"));
+        assertTrue(result.stdout.contains("  - fixture-app"));
+    }
+
+    @Test
+    void unknownModuleSuggestsModulesCommand(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createMonorepo(tempDir, false);
+
+        ExecutionResult result = execute(
+            "assert-module",
+            "--directory", repoRoot.toString(),
+            "--module", "missing"
+        );
+
+        assertNotEquals(0, result.exitCode);
+        assertTrue(result.stderr.contains("Unknown module: missing, allowed: [core, cli]"));
+        assertTrue(result.stderr.contains("javachanges modules --directory " + repoRoot));
     }
 
     @Test

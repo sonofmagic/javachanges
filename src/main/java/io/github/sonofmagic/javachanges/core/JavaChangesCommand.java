@@ -22,6 +22,7 @@ import java.nio.file.Path;
         PlanCommand.class,
         ManifestFieldCommand.class,
         VersionCommand.class,
+        ModulesCommand.class,
         ReleaseVersionFromTagCommand.class,
         ReleaseModuleFromTagCommand.class,
         AssertModuleCommand.class,

@@ -12,6 +12,7 @@ import picocli.CommandLine.Option;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
 
 import static io.github.sonofmagic.javachanges.core.ReleaseModuleUtils.assertKnownModule;
@@ -159,6 +160,29 @@ final class VersionCommand extends AbstractCliCommand {
     @Override
     public Integer call() throws Exception {
         out().println(new VersionSupport(repoRoot()).readRevision());
+        return success();
+    }
+}
+
+@Command(name = "modules", mixinStandardHelpOptions = true,
+    description = "List the detected build tool, version file, revision, and modules.")
+final class ModulesCommand extends AbstractCliCommand {
+    @Override
+    public Integer call() throws Exception {
+        Path repoRoot = repoRoot();
+        BuildModelSupport.BuildModel model = BuildModelSupport.detect(repoRoot);
+        if (model == null) {
+            throw new IllegalStateException("Cannot find supported Maven or Gradle build model in " + repoRoot);
+        }
+        List<String> modules = ReleaseModuleUtils.detectKnownModules(repoRoot);
+        out().println("Repository: " + repoRoot);
+        out().println("Build tool: " + model.type.name().toLowerCase(java.util.Locale.ROOT));
+        out().println("Version file: " + BuildModelSupport.revisionFileLabel(repoRoot));
+        out().println("Current revision: " + BuildModelSupport.readRevision(repoRoot));
+        out().println("Modules:");
+        for (String module : modules) {
+            out().println("  - " + module);
+        }
         return success();
     }
 }

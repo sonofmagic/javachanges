@@ -23,6 +23,7 @@ Current `main` branch Maven plugin invocation after local snapshot install:
 ```bash
 mvn -q -DskipTests install
 mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:next
+mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:modules
 mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:status
 mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:plan -Djavachanges.apply=true
 mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
@@ -44,6 +45,7 @@ Common parts:
 | Part | Meaning |
 | --- | --- |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:next` | Ask javachanges which release workflow command to run next |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:modules` | List detected build metadata and module names |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:status` | Run the dedicated Maven plugin status goal |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:plan -Djavachanges.apply=true` | Run the dedicated plan goal |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:publish -Djavachanges.tag=v1.2.3` | Run the dedicated Maven publish dry-run goal |
@@ -65,6 +67,7 @@ If you declare the plugin in a target repository `pom.xml`, the shortest local f
 
 ```bash
 mvn javachanges:next
+mvn javachanges:modules
 mvn javachanges:status
 mvn javachanges:plan -Djavachanges.apply=true
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
@@ -152,6 +155,7 @@ Rules of thumb:
 | --- | --- | --- |
 | `add` | Create a changeset | `.changesets/*.md` |
 | `next` | Suggest the next release workflow command | No |
+| `modules` | List detected build metadata and module names | No |
 | `status` | Show the current release plan | No |
 | `plan` | Render the current release plan | No |
 | `plan --apply true` | Apply the plan and consume changesets | `pom.xml` or `gradle.properties`, `CHANGELOG.md`, `.changesets/release-plan.json`, `.changesets/release-plan.md` |
@@ -274,6 +278,7 @@ snapshot version, for example `1.2.0-SNAPSHOT` becomes release version `1.2.0`.
 | Command | Purpose | Example |
 | --- | --- | --- |
 | `version` | Print the current root revision | `version --directory /path/to/repo` |
+| `modules` | List detected Maven artifactIds or Gradle project names | `modules --directory /path/to/repo` |
 | `release-version-from-tag` | Extract `1.2.3` from `v1.2.3` or `core/v1.2.3` | `release-version-from-tag --tag v1.2.3` |
 | `release-module-from-tag` | Extract the package/module name from `core/v1.2.3` | `release-module-from-tag --tag core/v1.2.3` |
 | `assert-module` | Validate a Maven artifactId or Gradle project name exists | `assert-module --directory /path/to/repo --module core` |

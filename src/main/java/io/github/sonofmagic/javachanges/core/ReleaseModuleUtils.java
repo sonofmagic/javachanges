@@ -54,7 +54,7 @@ public final class ReleaseModuleUtils {
     public static void assertKnownModule(Path repoRoot, String module) {
         List<String> knownModules = detectKnownModules(repoRoot);
         if (!knownModules.contains(module)) {
-            throw new IllegalArgumentException("Unknown module: " + module + ", allowed: " + knownModules);
+            throw new IllegalArgumentException(unknownModuleMessage(repoRoot, module, knownModules));
         }
     }
 
@@ -106,7 +106,7 @@ public final class ReleaseModuleUtils {
                 continue;
             }
             if (!knownModules.contains(module)) {
-                throw new IllegalArgumentException("Unknown module: " + module + ", allowed: " + knownModules);
+                throw new IllegalArgumentException(unknownModuleMessage(repoRoot, module, knownModules));
             }
             modules.add(module);
         }
@@ -137,5 +137,10 @@ public final class ReleaseModuleUtils {
             builder.append(modules.get(i));
         }
         return builder.toString();
+    }
+
+    public static String unknownModuleMessage(Path repoRoot, String module, List<String> knownModules) {
+        return "Unknown module: " + module + ", allowed: " + knownModules
+            + ". Run `javachanges modules --directory " + repoRoot + "` to list detected modules.";
     }
 }
