@@ -9,6 +9,7 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeSet;
 
 final class I18n {
     private static final String RESOURCE_PREFIX = "io/github/sonofmagic/javachanges/messages_";
@@ -49,6 +50,26 @@ final class I18n {
 
     static Set<String> keys(ReleaseLanguage language) {
         return properties(language).stringPropertyNames();
+    }
+
+    static String pattern(ReleaseLanguage language, String key) {
+        return lookup(language, key);
+    }
+
+    static Set<Integer> placeholderIndexes(String pattern) {
+        Set<Integer> indexes = new TreeSet<Integer>();
+        for (int index = 0; index < pattern.length(); index++) {
+            if (pattern.charAt(index) != '{') {
+                continue;
+            }
+            int placeholderEnd = pattern.indexOf('}', index + 1);
+            int argumentIndex = placeholderEnd < 0 ? -1 : parseArgumentIndex(pattern, index + 1, placeholderEnd);
+            if (argumentIndex >= 0) {
+                indexes.add(argumentIndex);
+                index = placeholderEnd;
+            }
+        }
+        return indexes;
     }
 
     private static int parseArgumentIndex(String pattern, int start, int end) {

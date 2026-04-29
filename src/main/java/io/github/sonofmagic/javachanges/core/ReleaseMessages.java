@@ -340,7 +340,7 @@ public final class ReleaseMessages {
     }
 
     public static String unsupportedReleaseLevel(String value) {
-        return message("unsupportedReleaseLevel", value, ReleaseLevel.ALLOWED_VALUES);
+        return message("unsupportedReleaseLevel", value);
     }
 
     public static String unknownArgument(String value) {
