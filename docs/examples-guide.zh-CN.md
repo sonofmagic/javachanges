@@ -137,7 +137,9 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory examples/basi
 ## 7. Gradle 示例
 
 仓库里也包含了一个可以直接复制的 Gradle monorepo：`examples/basic-gradle-monorepo/`。
-它继续使用同样的 `.changesets/`、`CHANGELOG.md` 和 release-plan 文件，只是构建模型文件不同：
+它继续使用同样的 `.changesets/`、`CHANGELOG.md` 和 release-plan 文件。
+CI 模板固定使用 Java 8 和 Gradle 7.6.6，确保示例仍兼容 Java 8 运行环境。
+构建模型文件如下：
 
 ```text
 examples/basic-gradle-monorepo/

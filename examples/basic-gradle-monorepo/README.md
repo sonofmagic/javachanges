@@ -9,6 +9,7 @@ It demonstrates a two-project Gradle monorepo with:
 - official Changesets-style `.changesets/*.md` files using Gradle project names
 - generated release-plan snapshots
 - minimal GitHub Actions and GitLab CI templates
+- Java 8-compatible Gradle 7.6.6 build execution
 - Gradle-native publishing handoff through the release-plan manifest
 
 ## Layout
@@ -34,6 +35,14 @@ Run these commands from the `javachanges` repository root:
 mvn -q -DskipTests compile exec:java -Dexec.args="status --directory examples/basic-gradle-monorepo"
 mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory examples/basic-gradle-monorepo"
 ```
+
+To verify the Gradle build on a Java 8 runtime, use Gradle 7.6.6:
+
+```bash
+GRADLE_USER_HOME=../../.gradle ../../.tools/gradle-7.6.6/bin/gradle -Dorg.gradle.native=false --no-daemon clean build
+```
+
+The `-Dorg.gradle.native=false` flag is only needed on environments where Gradle's native services cannot load, such as some macOS aarch64 Java 8 setups.
 
 If you want to inspect the generated files without mutating the example tree, review the curated files under `snapshots/`.
 The checked-in snapshots reflect the example after it has been copied into its own standalone Git repository. When you run it inside the `javachanges` source tree, the outer repository tags are still visible to Git-based release calculations.

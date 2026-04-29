@@ -1,5 +1,7 @@
 target/
 .m2/
+.gradle/
+build/
 .idea/
 *.iml
 .DS_Store
@@ -12,3 +14,4 @@ website/.vitepress/dist/
 .playwright-cli
 .changesets/release-plan.json
 .changesets/release-plan.md
+.tools/

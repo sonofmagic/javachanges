@@ -5,7 +5,7 @@ stages:
   - publish
 
 default:
-  image: gradle:8.10.2-jdk17
+  image: gradle:7.6.6-jdk8
   cache:
     key:
       files:

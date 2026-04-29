@@ -9,6 +9,7 @@
 - 使用 Gradle project name 的官方 Changesets 风格 `.changesets/*.md`
 - `plan --apply true` 生成后的 release-plan 快照
 - 最小 GitHub Actions 与 GitLab CI 模板
+- 兼容 Java 8 的 Gradle 7.6.6 构建执行
 - 通过 release-plan manifest 交给 Gradle 原生 publishing
 
 ## 目录说明
@@ -34,6 +35,14 @@
 mvn -q -DskipTests compile exec:java -Dexec.args="status --directory examples/basic-gradle-monorepo"
 mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory examples/basic-gradle-monorepo"
 ```
+
+如果要在 Java 8 运行时验证 Gradle 构建，请使用 Gradle 7.6.6：
+
+```bash
+GRADLE_USER_HOME=../../.gradle ../../.tools/gradle-7.6.6/bin/gradle -Dorg.gradle.native=false --no-daemon clean build
+```
+
+`-Dorg.gradle.native=false` 只在 Gradle native services 无法加载的环境中需要，例如某些 macOS aarch64 + Java 8 组合。
 
 如果你只想看应用后的结果，又不想直接改动这个示例目录，可以直接查看 `snapshots/` 里的整理后文件。
 这些已提交的 snapshot 是把示例复制到独立 Git 仓库后生成的基线结果；如果你直接在 `javachanges` 源码仓库里运行，Git 相关的版本计算仍然会看到外层仓库的 tag。

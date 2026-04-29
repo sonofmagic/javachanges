@@ -141,7 +141,9 @@ The checked-in template now uses the official Maven plugin entrypoint directly, 
 ## 7. Gradle example
 
 The repository also includes a copy-ready Gradle monorepo under `examples/basic-gradle-monorepo/`.
-It uses the same `.changesets/`, `CHANGELOG.md`, and release-plan files. The build model files change:
+It uses the same `.changesets/`, `CHANGELOG.md`, and release-plan files.
+The CI templates pin Java 8 and Gradle 7.6.6 so the example remains compatible with Java 8 runtimes.
+The build model files change:
 
 ```text
 examples/basic-gradle-monorepo/
