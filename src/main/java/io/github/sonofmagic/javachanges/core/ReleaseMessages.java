@@ -545,98 +545,73 @@ public final class ReleaseMessages {
     }
 
     public static String createGitlabProtectedVariable(String name) {
-        return text(
-            "Create GitLab project variable " + name + " and mark it protected",
-            "在 GitLab 项目变量中创建 " + name + "，并勾选 protected"
-        );
+        return message("release.createGitlabProtectedVariable", name);
     }
 
     public static String markGitlabVariableProtected(String name) {
-        return text(
-            "Mark GitLab project variable " + name + " as protected",
-            "把 GitLab 项目变量 " + name + " 改为 protected"
-        );
+        return message("release.markGitlabVariableProtected", name);
     }
 
     public static String protectGitlabBranchForProtectedVariables(String branch) {
-        return text(
-            "Protect GitLab branch " + branch + " so protected variables are injected into that branch pipeline",
-            "保护 GitLab 分支 " + branch + "，否则 protected variables 不会注入该分支的 pipeline"
-        );
+        return message("release.protectGitlabBranchForProtectedVariables", branch);
     }
 
     public static String removeProtectedVariableFlagWithLowerSecurity() {
-        return text(
-            "Alternatively, remove protected from the related Maven / release variables, with lower security",
-            "或者取消相关 Maven / release 变量的 protected 标记，但这会降低安全性"
-        );
+        return message("release.removeProtectedVariableFlagWithLowerSecurity");
     }
 
     public static String protectGitlabBranchForSnapshot(String branch) {
-        return text(
-            "Protect GitLab branch " + branch + " so snapshot publishing matches protected variable behavior",
-            "保护 GitLab 分支 " + branch + "，让 snapshot 发布与 protected variables 行为一致"
-        );
+        return message("release.protectGitlabBranchForSnapshot", branch);
     }
 
     public static String freshMetadataCannotInferPerModuleTargets() {
-        return text(
-            "Fresh release metadata cannot infer per-module release targets after changesets are consumed. "
-                + "Use the committed release plan manifest or run before applying the plan.",
-            "changeset 已消费后，fresh release metadata 无法推断 per-module 发布目标。"
-                + "请使用已提交的 release plan manifest，或在应用计划前运行。"
-        );
+        return message("release.freshMetadataCannotInferPerModuleTargets");
     }
 
     public static String multipleTagsRequireExplicitTagCommand() {
-        return text(
-            "Release plan defines multiple tags under per-module strategy. "
-                + "Use explicit tag-based release commands instead of release-from-plan.",
-            "release plan 在 per-module 策略下定义了多个 tag。"
-                + "请使用显式基于 tag 的发布命令，而不是 release-from-plan。"
-        );
+        return message("release.multipleTagsRequireExplicitTagCommand");
     }
 
     public static String missingReleaseManifestField(String field) {
-        return text("Missing field " + field + " in release manifest", "release manifest 缺少字段 " + field);
+        return message("release.missingReleaseManifestField", field);
     }
 
     public static String missingFieldInSource(String field, String source) {
-        return text("Missing field `" + field + "` in " + source, source + " 缺少字段 `" + field + "`");
+        return message("release.missingFieldInSource", field, source);
     }
 
     public static String releaseNotesSection(String section) {
         if ("Breaking Changes".equals(section)) {
-            return text("Breaking Changes", "重大变更");
+            return message("release.section.breakingChanges");
         }
         if ("Features".equals(section)) {
-            return text("Features", "功能");
+            return message("release.section.features");
         }
         if ("Fixes".equals(section)) {
-            return text("Fixes", "修复");
+            return message("release.section.fixes");
         }
         if ("Performance".equals(section)) {
-            return text("Performance", "性能");
+            return message("release.section.performance");
         }
         if ("Refactoring".equals(section)) {
-            return text("Refactoring", "重构");
+            return message("release.section.refactoring");
         }
         if ("Build".equals(section)) {
-            return text("Build", "构建");
+            return message("release.section.build");
         }
         if ("Documentation".equals(section)) {
-            return text("Documentation", "文档");
+            return message("release.section.documentation");
         }
         if ("Tests".equals(section)) {
-            return text("Tests", "测试");
+            return message("release.section.tests");
         }
         if ("CI".equals(section)) {
-            return text("CI", "CI");
+            return message("release.section.ci");
         }
         if ("Chores".equals(section)) {
-            return text("Chores", "杂项");
+            return message("release.section.chores");
         }
-        return text("Other", "其他");
+        return message("release.section.other");
     }
 
     public static String[] githubAuthHelpLines() {

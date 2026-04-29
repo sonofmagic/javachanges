@@ -151,6 +151,26 @@ class I18nTest {
     }
 
     @Test
+    void loadsExternalizedReleaseMetadataMessages() {
+        assertEquals("Create GitLab project variable MAVEN_TOKEN and mark it protected",
+            ReleaseMessages.createGitlabProtectedVariable("MAVEN_TOKEN"));
+        assertEquals("Missing field tag in release manifest", ReleaseMessages.missingReleaseManifestField("tag"));
+        assertEquals("Breaking Changes", ReleaseMessages.releaseNotesSection("Breaking Changes"));
+        assertEquals("Other", ReleaseMessages.releaseNotesSection("Unknown"));
+        ReleaseLanguageContext.set(ReleaseLanguage.ZH_CN);
+        try {
+            assertEquals("在 GitLab 项目变量中创建 MAVEN_TOKEN，并勾选 protected",
+                ReleaseMessages.createGitlabProtectedVariable("MAVEN_TOKEN"));
+            assertEquals("release-plan.json 缺少字段 `releaseVersion`",
+                ReleaseMessages.missingFieldInSource("releaseVersion", "release-plan.json"));
+            assertEquals("重大变更", ReleaseMessages.releaseNotesSection("Breaking Changes"));
+            assertEquals("其他", ReleaseMessages.releaseNotesSection("Unknown"));
+        } finally {
+            ReleaseLanguageContext.clear();
+        }
+    }
+
+    @Test
     void localizedTemplatesStayInSync() throws Exception {
         Path templateRoot = Paths.get("")
             .toAbsolutePath()
