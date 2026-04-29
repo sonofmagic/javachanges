@@ -7,6 +7,8 @@ public enum ReleaseLevel {
     MINOR("minor", 2),
     MAJOR("major", 3);
 
+    public static final String ALLOWED_VALUES = "patch, minor, or major";
+
     public final String id;
     public final int weight;
 
@@ -22,6 +24,6 @@ public enum ReleaseLevel {
                 return level;
             }
         }
-        throw new IllegalArgumentException("Unsupported release level: " + value);
+        throw new IllegalArgumentException("Unsupported release level: " + value + ". Use " + ALLOWED_VALUES + ".");
     }
 }

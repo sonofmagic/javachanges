@@ -103,6 +103,14 @@ version=1.0.0-SNAPSHOT
 Improve Gradle release planning.
 ```
 
+### 2.7 不支持的 release level
+
+`javachanges add --release` 只接受 `patch`、`minor` 或 `major`。
+
+```bash
+javachanges add --directory . --summary "describe the change" --release patch
+```
+
 ## 3. Java 和 Maven 环境问题
 
 ### 3.1 不同机器构建结果不一致

@@ -216,6 +216,21 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void addRejectsInvalidReleaseLevelWithAllowedValues(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+
+        ExecutionResult result = execute(
+            "add",
+            "--directory", repoRoot.toString(),
+            "--release", "feature",
+            "--summary", "reject invalid release levels"
+        );
+
+        assertNotEquals(0, result.exitCode);
+        assertTrue(result.stderr.contains("Unsupported release level: feature. Use patch, minor, or major."));
+    }
+
+    @Test
     void nextSuggestsCreatingChangesetWhenNoneArePending(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, false);
 

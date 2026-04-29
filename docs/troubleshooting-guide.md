@@ -103,6 +103,14 @@ Check `settings.gradle(.kts)` and align the changeset frontmatter:
 Improve Gradle release planning.
 ```
 
+### 2.7 Unsupported release level
+
+Use only `patch`, `minor`, or `major` with `javachanges add --release`.
+
+```bash
+javachanges add --directory . --summary "describe the change" --release patch
+```
+
 ## 3. Java and Maven environment problems
 
 ### 3.1 Build fails or behaves differently across machines
