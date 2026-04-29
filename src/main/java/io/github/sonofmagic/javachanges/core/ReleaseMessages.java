@@ -50,6 +50,21 @@ public final class ReleaseMessages {
         return text("describe the change", "描述这次变更");
     }
 
+    public static String changesetSummaryPrompt() {
+        return text("Summary", "摘要");
+    }
+
+    public static String changesetReleaseLevelPrompt() {
+        return text("Release level (patch/minor/major)", "发布级别 (patch/minor/major)");
+    }
+
+    public static String changesetBodyPrompt() {
+        return text(
+            "Body (optional, finish with a single `.` line):",
+            "正文 (可选，输入单独的 `.` 行结束):"
+        );
+    }
+
     public static String changesetReadme() {
         return text(
             "# Changesets\n"

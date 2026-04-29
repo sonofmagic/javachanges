@@ -1,6 +1,7 @@
 package io.github.sonofmagic.javachanges.core.changeset;
 
 import io.github.sonofmagic.javachanges.core.ReleaseLevel;
+import io.github.sonofmagic.javachanges.core.ReleaseMessages;
 import io.github.sonofmagic.javachanges.core.ReleaseModuleUtils;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
@@ -50,13 +51,13 @@ public final class ChangesetPrompter {
         Console console = System.console();
         Scanner scanner = console == null ? new Scanner(System.in, "UTF-8") : null;
 
-        summary = summary != null ? summary : prompt(console, scanner, out, "Summary");
-        release = release != null ? release : prompt(console, scanner, out, "Release level (patch/minor/major)");
+        summary = summary != null ? summary : prompt(console, scanner, out, ReleaseMessages.changesetSummaryPrompt());
+        release = release != null ? release : prompt(console, scanner, out, ReleaseMessages.changesetReleaseLevelPrompt());
         type = type == null ? "other" : type;
         modules = modules == null ? "all" : modules;
 
         if (body == null) {
-            out.println("Body (optional, finish with a single `.` line):");
+            out.println(ReleaseMessages.changesetBodyPrompt());
             body = readMultiline(console, scanner);
         }
 
