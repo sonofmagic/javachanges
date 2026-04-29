@@ -67,78 +67,7 @@ public final class ReleaseMessages {
     }
 
     public static String changesetReadme() {
-        return text(
-            "# Changesets\n"
-                + "\n"
-                + "This directory stores pending release notes. Add one changeset for each user-visible change.\n"
-                + "\n"
-                + "Create a changeset:\n"
-                + "\n"
-                + "```bash\n"
-                + "javachanges add --directory . --summary \"describe the change\" --release patch\n"
-                + "```\n"
-                + "\n"
-                + "For multi-module repositories, use detected module names:\n"
-                + "\n"
-                + "```bash\n"
-                + "javachanges modules --directory .\n"
-                + "javachanges add --directory . --modules core --summary \"describe the change\" --release patch\n"
-                + "```\n"
-                + "\n"
-                + "Changesets use the official package-map frontmatter shape:\n"
-                + "\n"
-                + "```md\n"
-                + "---\n"
-                + "\"core\": minor\n"
-                + "---\n"
-                + "\n"
-                + "Describe the user-visible change.\n"
-                + "```\n"
-                + "\n"
-                + "Supported release levels are `patch`, `minor`, and `major`.\n"
-                + "\n"
-                + "Review and apply the release plan:\n"
-                + "\n"
-                + "```bash\n"
-                + "javachanges status --directory .\n"
-                + "javachanges plan --directory . --apply true\n"
-                + "```\n",
-            "# Changesets\n"
-                + "\n"
-                + "这个目录保存待发布的 release notes。每个面向用户的变更都应该添加一条 changeset。\n"
-                + "\n"
-                + "创建 changeset:\n"
-                + "\n"
-                + "```bash\n"
-                + "javachanges add --directory . --summary \"描述这次变更\" --release patch\n"
-                + "```\n"
-                + "\n"
-                + "多模块仓库请使用检测到的模块名:\n"
-                + "\n"
-                + "```bash\n"
-                + "javachanges modules --directory .\n"
-                + "javachanges add --directory . --modules core --summary \"描述这次变更\" --release patch\n"
-                + "```\n"
-                + "\n"
-                + "Changeset 使用官方 package-map frontmatter 格式:\n"
-                + "\n"
-                + "```md\n"
-                + "---\n"
-                + "\"core\": minor\n"
-                + "---\n"
-                + "\n"
-                + "描述面向用户的变更。\n"
-                + "```\n"
-                + "\n"
-                + "支持的发布级别为 `patch`、`minor` 和 `major`。\n"
-                + "\n"
-                + "检查并应用发布计划:\n"
-                + "\n"
-                + "```bash\n"
-                + "javachanges status --directory .\n"
-                + "javachanges plan --directory . --apply true\n"
-                + "```\n"
-        );
+        return I18n.template("changeset-readme.md");
     }
 
     public static String releaseLevelHeading(ReleaseLevel level) {
@@ -769,78 +698,11 @@ public final class ReleaseMessages {
     }
 
     public static String[] githubAuthHelpLines() {
-        return new String[] {
-            text("== GitHub CLI Login Guide ==", "== GitHub CLI 登录建议 =="),
-            "",
-            text("1. Install or verify gh is available", "1. 安装或确认 gh 可用"),
-            "   gh --version",
-            "",
-            text("2. Generate a local env template", "2. 生成本地 env 模板"),
-            "   make env-init",
-            "",
-            text("3. Log in with a browser", "3. 使用浏览器登录"),
-            "   gh auth login --web --git-protocol ssh",
-            "",
-            text("4. Check local readiness", "4. 检查本机 readiness"),
-            "   make readiness GITHUB_REPO=owner/repo",
-            "",
-            text("5. Check login status", "5. 检查登录状态"),
-            "   gh auth status",
-            "",
-            text("6. Verify the local doctor", "6. 验证本地 doctor"),
-            "   make doctor-github GITHUB_REPO=owner/repo",
-            "",
-            text("7. Preview platform write commands", "7. 预览将写入的平台命令"),
-            "   make sync-github",
-            "",
-            text("8. Write platform variables", "8. 真正写入平台变量"),
-            "   make sync-github-apply GITHUB_REPO=owner/repo",
-            "",
-            text("9. Audit platform state", "9. 回读审计平台状态"),
-            "   make audit-github GITHUB_REPO=owner/repo",
-            "",
-            text("Official docs:", "官方文档:"),
-            "  https://cli.github.com/manual/gh_auth_login"
-        };
+        return I18n.templateLines("github-auth-help.txt");
     }
 
     public static String[] gitlabAuthHelpLines() {
-        return new String[] {
-            text("== GitLab CLI Login Guide ==", "== GitLab CLI 登录建议 =="),
-            "",
-            text("1. Install or verify glab is available", "1. 安装或确认 glab 可用"),
-            "   glab --version",
-            "",
-            text("2. Generate a local env template", "2. 生成本地 env 模板"),
-            "   make env-init",
-            "",
-            text("3. Log in to GitLab with a browser", "3. 使用浏览器登录 GitLab"),
-            "   glab auth login --hostname gitlab.example.com --web --git-protocol ssh --use-keyring",
-            "",
-            text("4. Or log in with a token", "4. 或使用 token 登录"),
-            "   glab auth login --hostname gitlab.example.com --stdin < token.txt",
-            "",
-            text("5. Check local readiness", "5. 检查本机 readiness"),
-            "   make readiness GITLAB_REPO=group/project",
-            "",
-            text("6. Check login status", "6. 检查登录状态"),
-            "   glab auth status",
-            "",
-            text("7. Verify the local doctor", "7. 验证本地 doctor"),
-            "   make doctor-gitlab GITLAB_REPO=group/project",
-            "",
-            text("8. Preview platform write commands", "8. 预览将写入的平台命令"),
-            "   make sync-gitlab",
-            "",
-            text("9. Write platform variables", "9. 真正写入平台变量"),
-            "   make sync-gitlab-apply GITLAB_REPO=group/project",
-            "",
-            text("10. Audit platform state", "10. 回读审计平台状态"),
-            "    make audit-gitlab GITLAB_REPO=group/project",
-            "",
-            text("Official docs:", "官方文档:"),
-            "  https://docs.gitlab.com/cli/auth/login/"
-        };
+        return I18n.templateLines("gitlab-auth-help.txt");
     }
 
     public static String usingEnvFile(String envPath) {

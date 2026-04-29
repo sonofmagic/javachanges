@@ -1,0 +1,31 @@
+== GitHub CLI 登录建议 ==
+
+1. 安装或确认 gh 可用
+   gh --version
+
+2. 生成本地 env 模板
+   make env-init
+
+3. 使用浏览器登录
+   gh auth login --web --git-protocol ssh
+
+4. 检查本机 readiness
+   make readiness GITHUB_REPO=owner/repo
+
+5. 检查登录状态
+   gh auth status
+
+6. 验证本地 doctor
+   make doctor-github GITHUB_REPO=owner/repo
+
+7. 预览将写入的平台命令
+   make sync-github
+
+8. 真正写入平台变量
+   make sync-github-apply GITHUB_REPO=owner/repo
+
+9. 回读审计平台状态
+   make audit-github GITHUB_REPO=owner/repo
+
+官方文档:
+  https://cli.github.com/manual/gh_auth_login

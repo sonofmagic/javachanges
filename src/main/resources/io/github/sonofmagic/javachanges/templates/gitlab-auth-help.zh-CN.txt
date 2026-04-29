@@ -1,0 +1,34 @@
+== GitLab CLI 登录建议 ==
+
+1. 安装或确认 glab 可用
+   glab --version
+
+2. 生成本地 env 模板
+   make env-init
+
+3. 使用浏览器登录 GitLab
+   glab auth login --hostname gitlab.example.com --web --git-protocol ssh --use-keyring
+
+4. 或使用 token 登录
+   glab auth login --hostname gitlab.example.com --stdin < token.txt
+
+5. 检查本机 readiness
+   make readiness GITLAB_REPO=group/project
+
+6. 检查登录状态
+   glab auth status
+
+7. 验证本地 doctor
+   make doctor-gitlab GITLAB_REPO=group/project
+
+8. 预览将写入的平台命令
+   make sync-gitlab
+
+9. 真正写入平台变量
+   make sync-gitlab-apply GITLAB_REPO=group/project
+
+10. 回读审计平台状态
+    make audit-gitlab GITLAB_REPO=group/project
+
+官方文档:
+  https://docs.gitlab.com/cli/auth/login/

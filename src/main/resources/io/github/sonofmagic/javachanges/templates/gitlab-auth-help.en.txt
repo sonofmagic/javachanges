@@ -1,0 +1,34 @@
+== GitLab CLI Login Guide ==
+
+1. Install or verify glab is available
+   glab --version
+
+2. Generate a local env template
+   make env-init
+
+3. Log in to GitLab with a browser
+   glab auth login --hostname gitlab.example.com --web --git-protocol ssh --use-keyring
+
+4. Or log in with a token
+   glab auth login --hostname gitlab.example.com --stdin < token.txt
+
+5. Check local readiness
+   make readiness GITLAB_REPO=group/project
+
+6. Check login status
+   glab auth status
+
+7. Verify the local doctor
+   make doctor-gitlab GITLAB_REPO=group/project
+
+8. Preview platform write commands
+   make sync-gitlab
+
+9. Write platform variables
+   make sync-gitlab-apply GITLAB_REPO=group/project
+
+10. Audit platform state
+    make audit-gitlab GITLAB_REPO=group/project
+
+Official docs:
+  https://docs.gitlab.com/cli/auth/login/

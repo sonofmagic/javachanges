@@ -1,0 +1,31 @@
+== GitHub CLI Login Guide ==
+
+1. Install or verify gh is available
+   gh --version
+
+2. Generate a local env template
+   make env-init
+
+3. Log in with a browser
+   gh auth login --web --git-protocol ssh
+
+4. Check local readiness
+   make readiness GITHUB_REPO=owner/repo
+
+5. Check login status
+   gh auth status
+
+6. Verify the local doctor
+   make doctor-github GITHUB_REPO=owner/repo
+
+7. Preview platform write commands
+   make sync-github
+
+8. Write platform variables
+   make sync-github-apply GITHUB_REPO=owner/repo
+
+9. Audit platform state
+   make audit-github GITHUB_REPO=owner/repo
+
+Official docs:
+  https://cli.github.com/manual/gh_auth_login
