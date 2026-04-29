@@ -16,6 +16,9 @@ class DocumentationConsistencyTest {
     private static final Pattern SNAPSHOT_PLUGIN_COORDINATE = Pattern.compile(
         "io\\.github\\.sonofmagic:javachanges:([^:\\s]+-SNAPSHOT)"
     );
+    private static final Pattern CURRENT_SNAPSHOT_REFERENCE = Pattern.compile(
+        "current `([^`]+-SNAPSHOT)`|当前 `([^`]+-SNAPSHOT)`"
+    );
 
     @Test
     void readmeSnapshotPluginExamplesMatchProjectRevision() throws Exception {
@@ -35,5 +38,14 @@ class DocumentationConsistencyTest {
             assertEquals(revision, matcher.group(1), readme + " contains stale snapshot plugin version");
         }
         assertTrue(count > 0, readme + " should include at least one snapshot plugin example");
+
+        matcher = CURRENT_SNAPSHOT_REFERENCE.matcher(content);
+        count = 0;
+        while (matcher.find()) {
+            count++;
+            String snapshotVersion = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
+            assertEquals(revision, snapshotVersion, readme + " contains stale current snapshot version");
+        }
+        assertTrue(count > 0, readme + " should include at least one current snapshot reference");
     }
 }

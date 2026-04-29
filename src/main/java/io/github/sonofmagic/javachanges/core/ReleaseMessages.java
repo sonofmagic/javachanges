@@ -19,8 +19,12 @@ public final class ReleaseMessages {
         return zh() ? chinese : english;
     }
 
+    private static String message(String key, Object... args) {
+        return I18n.message(key, args);
+    }
+
     public static String initialized(Path repoRoot) {
-        return text("Initialized javachanges in " + repoRoot, "已在 " + repoRoot + " 初始化 javachanges");
+        return message("initialized", repoRoot);
     }
 
     public static String pathAction(String action) {
@@ -28,41 +32,38 @@ public final class ReleaseMessages {
             return action;
         }
         if ("Created".equals(action)) {
-            return "已创建";
+            return message("pathAction.created");
         }
         if ("Replaced".equals(action)) {
-            return "已替换";
+            return message("pathAction.replaced");
         }
         if ("Kept".equals(action)) {
-            return "已保留";
+            return message("pathAction.kept");
         }
         if ("Skipped".equals(action)) {
-            return "已跳过";
+            return message("pathAction.skipped");
         }
         return action;
     }
 
     public static String nextSteps() {
-        return text("Next steps:", "下一步:");
+        return message("nextSteps");
     }
 
     public static String describeChangePlaceholder() {
-        return text("describe the change", "描述这次变更");
+        return message("describeChangePlaceholder");
     }
 
     public static String changesetSummaryPrompt() {
-        return text("Summary", "摘要");
+        return message("changesetSummaryPrompt");
     }
 
     public static String changesetReleaseLevelPrompt() {
-        return text("Release level (patch/minor/major)", "发布级别 (patch/minor/major)");
+        return message("changesetReleaseLevelPrompt");
     }
 
     public static String changesetBodyPrompt() {
-        return text(
-            "Body (optional, finish with a single `.` line):",
-            "正文 (可选，输入单独的 `.` 行结束):"
-        );
+        return message("changesetBodyPrompt");
     }
 
     public static String changesetReadme() {
@@ -142,275 +143,248 @@ public final class ReleaseMessages {
 
     public static String releaseLevelHeading(ReleaseLevel level) {
         if (level == ReleaseLevel.MAJOR) {
-            return text("Major Changes", "重大变更");
+            return message("releaseLevelHeading.major");
         }
         if (level == ReleaseLevel.MINOR) {
-            return text("Minor Changes", "功能变更");
+            return message("releaseLevelHeading.minor");
         }
-        return text("Patch Changes", "修复变更");
+        return message("releaseLevelHeading.patch");
     }
 
     public static String changelogPackagesLabel() {
-        return text("packages", "包");
+        return message("changelogPackagesLabel");
     }
 
     public static String noUserFacingChanges() {
-        return text("No user-facing changes were recorded for this release.", "本次发布没有记录面向用户的变更。");
+        return message("noUserFacingChanges");
     }
 
     public static String releasePlanTitle() {
-        return text("Release Plan", "发布计划") + " 🚀";
+        return message("releasePlanTitle");
     }
 
     public static String releasePlanIntro() {
-        return text(
-            "Generated from `.changesets/*.md`. Review the plan, then merge when the release looks right.",
-            "根据 `.changesets/*.md` 自动生成。请确认发布计划无误后再合并。"
-        );
+        return message("releasePlanIntro");
     }
 
     public static String fieldHeader() {
-        return text("Field", "字段");
+        return message("fieldHeader");
     }
 
     public static String valueHeader() {
-        return text("Value", "值");
+        return message("valueHeader");
     }
 
     public static String releaseTypeField() {
-        return text("Release type", "发布类型");
+        return message("releaseTypeField");
     }
 
     public static String affectedPackagesField() {
-        return text("Affected packages", "影响包");
+        return message("affectedPackagesField");
     }
 
     public static String releaseVersionField() {
-        return text("Release version", "发布版本");
+        return message("releaseVersionField");
     }
 
     public static String tagStrategyField() {
-        return text("Tag strategy", "Tag 策略");
+        return message("tagStrategyField");
     }
 
     public static String plannedTagsField() {
-        return text("Planned tags", "计划 Tag");
+        return message("plannedTagsField");
     }
 
     public static String nextSnapshotField() {
-        return text("Next snapshot", "下一个快照版本");
+        return message("nextSnapshotField");
     }
 
     public static String includedChangesetsTitle() {
-        return text("Included Changesets", "包含的 Changeset") + " 📝";
+        return message("includedChangesetsTitle");
     }
 
     public static String releaseLabel() {
-        return text("Release", "发布");
+        return message("releaseLabel");
     }
 
     public static String packagesLabel() {
-        return text("Packages", "包");
+        return message("packagesLabel");
     }
 
     public static String typeLabel() {
-        return text("Type", "类型");
+        return message("typeLabel");
     }
 
     public static String notesLabel() {
-        return text("Notes", "备注");
+        return message("notesLabel");
     }
 
     public static String whatHappensNextTitle() {
-        return text("What happens next", "接下来会发生什么") + " ✅";
+        return message("whatHappensNextTitle");
     }
 
     public static String mergeTriggersTagPush() {
-        return text(
-            "Merging this PR triggers the automatic tag push.",
-            "合并这个 PR 后会触发自动推送 tag。"
-        );
+        return message("mergeTriggersTagPush");
     }
 
     public static String workflowsReuseMetadata() {
-        return text(
-            "Existing release workflows reuse the generated release metadata.",
-            "现有发布 workflow 会复用生成的发布元数据。"
-        );
+        return message("workflowsReuseMetadata");
     }
 
     public static String repository() {
-        return text("Repository", "仓库");
+        return message("repository");
     }
 
     public static String currentRevision() {
-        return text("Current revision", "当前版本");
+        return message("currentRevision");
     }
 
     public static String latestWholeRepoTag() {
-        return text("Latest whole-repo tag", "最新全仓库 tag");
+        return message("latestWholeRepoTag");
     }
 
     public static String none() {
-        return text("none", "无");
+        return message("none");
     }
 
     public static String pendingChangesets() {
-        return text("Pending changesets", "待发布 changeset");
+        return message("pendingChangesets");
     }
 
     public static String releasePlan() {
-        return text("Release plan", "发布计划");
+        return message("releasePlan");
     }
 
     public static String changesets() {
-        return text("Changesets", "Changesets");
+        return message("changesets");
     }
 
     public static String releaseType() {
-        return text("Release type", "发布类型");
+        return message("releaseType");
     }
 
     public static String affectedPackages() {
-        return text("Affected packages", "影响包");
+        return message("affectedPackages");
     }
 
     public static String releaseVersion() {
-        return text("Release version", "发布版本");
+        return message("releaseVersion");
     }
 
     public static String nextSnapshot() {
-        return text("Next snapshot", "下一个快照版本");
+        return message("nextSnapshot");
     }
 
     public static String createdChangeset(Path relativePath) {
-        return text("Created changeset: " + relativePath, "已创建 changeset: " + relativePath);
+        return message("createdChangeset", relativePath);
     }
 
     public static String releaseLevel() {
-        return text("Release level", "发布级别");
+        return message("releaseLevel");
     }
 
     public static String noPendingChangesets() {
-        return text("No pending changesets.", "没有待发布 changeset。");
+        return message("noPendingChangesets");
     }
 
     public static String noPendingChangesetsToApply() {
-        return text("No pending changesets to apply.", "没有可应用的待发布 changeset。");
+        return message("noPendingChangesetsToApply");
     }
 
     public static String appliedReleasePlan(String version) {
-        return text("Applied release plan for v" + version, "已应用 v" + version + " 的发布计划");
+        return message("appliedReleasePlan", version);
     }
 
     public static String createdOne() {
-        return text("Create one:", "创建一个:");
+        return message("createdOne");
     }
 
     public static String reviewPlan() {
-        return text("Review the plan:", "检查发布计划:");
+        return message("reviewPlan");
     }
 
     public static String thenReviewPlan() {
-        return text("Then review the plan:", "然后检查发布计划:");
+        return message("thenReviewPlan");
     }
 
     public static String applyLocally() {
-        return text("Apply it locally:", "在本地应用:");
+        return message("applyLocally");
     }
 
     public static String openGithubPr() {
-        return text("Or open an automated GitHub release PR:", "或者打开自动化 GitHub release PR:");
+        return message("openGithubPr");
     }
 
     public static String openGitlabMr() {
-        return text("Or open an automated GitLab release MR:", "或者打开自动化 GitLab release MR:");
+        return message("openGitlabMr");
     }
 
     public static String nextStepFor(Path repoRoot) {
-        return text("Next step for " + repoRoot + ":", repoRoot + " 的下一步:");
+        return message("nextStepFor", repoRoot);
     }
 
     public static String plannedRelease() {
-        return text("Planned release", "计划发布版本");
+        return message("plannedRelease");
     }
 
     public static String unsupportedLanguage(String value) {
-        return text(
-            "Unsupported language: " + value + ". Use en or zh-CN.",
-            "不支持的语言: " + value + "。请使用 en 或 zh-CN。"
-        );
+        return message("unsupportedLanguage", value);
     }
 
     public static String unsupportedOutputFormat(String value) {
-        return text(
-            "Unsupported output format: " + value + ". Use text or json.",
-            "不支持的输出格式: " + value + "，可选值: text, json"
-        );
+        return message("unsupportedOutputFormat", value);
     }
 
     public static String unsupportedPlatform(String value) {
-        return text(
-            "Unsupported platform: " + value + ". Use github, gitlab, or all.",
-            "不支持的平台: " + value + "，可选值: github, gitlab, all"
-        );
+        return message("unsupportedPlatform", value);
     }
 
     public static String unsupportedReleaseLevel(String value) {
-        return text(
-            "Unsupported release level: " + value + ". Use " + ReleaseLevel.ALLOWED_VALUES + ".",
-            "不支持的发布级别: " + value + "。请使用 patch、minor 或 major。"
-        );
+        return message("unsupportedReleaseLevel", value, ReleaseLevel.ALLOWED_VALUES);
     }
 
     public static String unknownArgument(String value) {
-        return text("Unknown argument: " + value, "未知参数: " + value);
+        return message("unknownArgument", value);
     }
 
     public static String missingRequiredOption(String name) {
-        return text("Missing required option: --" + name, "缺少必填选项: --" + name);
+        return message("missingRequiredOption", name);
     }
 
     public static String missingEnv(String name) {
-        return text("Missing environment variable: " + name, "缺少环境变量: " + name);
+        return message("missingEnv", name);
     }
 
     public static String unknownModule(Path repoRoot, String module, List<String> knownModules) {
-        return text(
-            "Unknown module: " + module + ", allowed: " + knownModules
-                + ". Run `javachanges modules --directory " + repoRoot + "` to list detected modules.",
-            "未知模块: " + module + "，可选模块: " + knownModules
-                + "。执行 `javachanges modules --directory " + repoRoot + "` 查看检测到的模块。"
-        );
+        return message("unknownModule", module, knownModules, repoRoot);
     }
 
     public static String unsupportedReleaseTag(String tag) {
-        return text("Unsupported release tag: " + tag, "不支持的发布 tag: " + tag);
+        return message("unsupportedReleaseTag", tag);
     }
 
     public static String atLeastOneModuleRequired() {
-        return text("At least one module is required", "至少需要指定一个模块");
+        return message("atLeastOneModuleRequired");
     }
 
     public static String unsupportedChangeType(String type) {
-        return text("Unsupported change type: " + type, "不支持的变更类型: " + type);
+        return message("unsupportedChangeType", type);
     }
 
     public static String invalidChangesetFrontmatter(Path path) {
-        return text("Invalid changeset frontmatter: " + path, "无效的 changeset frontmatter: " + path);
+        return message("invalidChangesetFrontmatter", path);
     }
 
     public static String invalidChangesetLine(Path path, String line) {
-        return text("Invalid changeset line in " + path + ": " + line,
-            "无效的 changeset 行 " + path + ": " + line);
+        return message("invalidChangesetLine", path, line);
     }
 
     public static String missingPackageReleaseEntries(Path path) {
-        return text("Missing package release entries in " + path, "缺少包发布条目: " + path);
+        return message("missingPackageReleaseEntries", path);
     }
 
     public static String missingKeyIn(String key, Path path) {
-        return text("Missing `" + key + "` in " + path, "缺少 `" + key + "`: " + path);
+        return message("missingKeyIn", key, path);
     }
 
     public static String missingReleasePlanManifest(Path manifest) {

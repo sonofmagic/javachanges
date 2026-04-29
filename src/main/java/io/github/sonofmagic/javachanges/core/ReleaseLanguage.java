@@ -36,4 +36,8 @@ public enum ReleaseLanguage {
     public boolean isChinese() {
         return this == ZH_CN;
     }
+
+    String resourceSuffix() {
+        return id.replace('-', '_');
+    }
 }
