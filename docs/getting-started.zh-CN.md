@@ -245,6 +245,8 @@ java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar pl
 - `.changesets/release-plan.json`
 - `.changesets/release-plan.md`
 
+应用完成后，`javachanges` 会输出同一仓库的 `git status`、`git add`、`git commit` 和 `javachanges next` 命令。
+
 ## 9. 以源码方式进入开发模式
 
 如果你是在开发 `javachanges` 这个仓库本身，才使用源码驱动的开发方式：

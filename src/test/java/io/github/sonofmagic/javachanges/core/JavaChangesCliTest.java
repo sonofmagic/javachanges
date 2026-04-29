@@ -326,6 +326,11 @@ class JavaChangesCliTest {
 
         assertEquals(0, result.exitCode);
         assertTrue(result.stdout.contains("Applied release plan for v1.2.0"));
+        assertTrue(result.stdout.contains("Next steps:"));
+        assertTrue(result.stdout.contains("git -C " + repoRoot + " status --short"));
+        assertTrue(result.stdout.contains("git -C " + repoRoot + " add pom.xml CHANGELOG.md .changesets"));
+        assertTrue(result.stdout.contains("git -C " + repoRoot + " commit -m 'chore(release): v1.2.0'"));
+        assertTrue(result.stdout.contains("javachanges next --directory " + repoRoot));
         assertTrue(result.stdout.contains("- Release type: minor"));
         assertTrue(result.stdout.contains("- Affected packages: fixture-app"));
         assertTrue(read(repoRoot.resolve("CHANGELOG.md")).contains("### Minor Changes"));
@@ -360,6 +365,7 @@ class JavaChangesCliTest {
 
         assertEquals(0, result.exitCode);
         assertTrue(result.stdout.contains("Applied release plan for v1.2.0"));
+        assertTrue(result.stdout.contains("git -C " + repoRoot + " add gradle.properties CHANGELOG.md .changesets"));
         assertTrue(read(repoRoot.resolve("gradle.properties")).contains("version=1.2.0-SNAPSHOT"));
         assertTrue(read(repoRoot.resolve("CHANGELOG.md")).contains("support gradle release plans"));
         assertFalse(Files.exists(repoRoot.resolve(".changesets").resolve("minor-release.md")));

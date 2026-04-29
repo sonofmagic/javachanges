@@ -239,7 +239,20 @@ final class PlanCommand extends AbstractCliCommand {
         RepoFiles.applyPlan(repoRoot, plan);
         out().println();
         out().println("Applied release plan for v" + plan.getReleaseVersion());
+        printAppliedNextSteps(repoRoot, plan);
         return success();
+    }
+
+    private void printAppliedNextSteps(Path repoRoot, ReleasePlan plan) {
+        String repoArg = CliOutputSupport.shellQuote(repoRoot.toString());
+        out().println();
+        out().println("Next steps:");
+        out().println("  git -C " + repoArg + " status --short");
+        out().println("  git -C " + repoArg + " add "
+            + CliOutputSupport.shellQuoteArgs(BuildModelSupport.releasePlanGitAddPaths(repoRoot)));
+        out().println("  git -C " + repoArg + " commit -m "
+            + CliOutputSupport.shellQuote("chore(release): v" + plan.getReleaseVersion()));
+        out().println("  javachanges next --directory " + repoArg);
     }
 }
 
@@ -449,5 +462,16 @@ final class CliOutputSupport {
             return value;
         }
         return "'" + value.replace("'", "'\"'\"'") + "'";
+    }
+
+    static String shellQuoteArgs(String[] values) {
+        StringBuilder result = new StringBuilder();
+        for (String value : values) {
+            if (result.length() > 0) {
+                result.append(' ');
+            }
+            result.append(shellQuote(value));
+        }
+        return result.toString();
     }
 }

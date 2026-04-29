@@ -263,6 +263,8 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo
 4. 写入 `.changesets/release-plan.md`
 5. 删除已消费的 changeset 文件
 
+应用完成后，命令会继续输出同一仓库可直接复制的 `git status`、`git add`、`git commit` 和 `javachanges next` 命令。`git add` 会根据识别到的构建工具生成，Maven 仓库包含 `pom.xml`，Gradle 仓库包含 `gradle.properties`。
+
 `github-release-plan` 和 `gitlab-release-plan` 这类自动化命令可以传
 `--write-plan-files false`，避免把生成的 `release-plan.json` 和
 `release-plan.md` 提交进 release 分支。这个模式下 PR/MR 正文会作为临时文件生成，

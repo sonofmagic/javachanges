@@ -264,6 +264,8 @@ When `--apply true` is used, `javachanges`:
 4. writes `.changesets/release-plan.md`
 5. deletes the consumed changeset files
 
+After applying the plan, the command prints copyable `git status`, `git add`, `git commit`, and `javachanges next` commands for the same repository. The `git add` command uses the detected build tool, so Maven repositories include `pom.xml` and Gradle repositories include `gradle.properties`.
+
 Automation commands such as `github-release-plan` and `gitlab-release-plan` can pass
 `--write-plan-files false` to avoid committing the generated `release-plan.json` and
 `release-plan.md` files. In that mode, the PR/MR body is generated as a transient file

@@ -249,6 +249,8 @@ That updates:
 - `.changesets/release-plan.json`
 - `.changesets/release-plan.md`
 
+After applying the plan, `javachanges` prints the `git status`, `git add`, `git commit`, and `javachanges next` commands for the same repository.
+
 ## 9. Running from source during development
 
 If you are working on the `javachanges` repository itself, use the source-driven development flow instead:
