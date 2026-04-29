@@ -84,12 +84,12 @@ public final class PublishSupport {
             }
             if (publishTarget.publishVersion != null) {
                 out.println(request.snapshot
-                    ? "snapshot publish version: " + publishTarget.publishVersion
-                    : "publish version: " + publishTarget.publishVersion);
+                    ? ReleaseMessages.snapshotPublishVersion(publishTarget.publishVersion)
+                    : ReleaseMessages.publishVersion(publishTarget.publishVersion));
             }
             if (request.snapshot) {
-                out.println("snapshot version mode: " + publishTarget.snapshotVersionMode.id);
-                out.println("snapshot build stamp applied: " + publishTarget.snapshotBuildStampApplied);
+                out.println(ReleaseMessages.snapshotVersionMode(publishTarget.snapshotVersionMode.id));
+                out.println(ReleaseMessages.snapshotBuildStampApplied(publishTarget.snapshotBuildStampApplied));
             }
             if (releaseNotesAvailable) {
                 out.println(request.execute
@@ -103,7 +103,7 @@ public final class PublishSupport {
         }
 
         if (!request.execute) {
-            report.reason = "Dry-run only.";
+            report.reason = ReleaseMessages.dryRunOnlyReason();
             if (request.format == io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
                 out.println(report.toJson());
             } else {
@@ -122,7 +122,7 @@ public final class PublishSupport {
             throw new IllegalStateException(ReleaseMessages.mavenDeployFailed(exitCode));
         }
         report.action = request.snapshot ? "publish-snapshot" : "publish-release";
-        report.reason = "Publish completed.";
+        report.reason = ReleaseMessages.publishCompletedReason();
         if (request.format == io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
             out.println(report.toJson());
         }
@@ -163,21 +163,21 @@ public final class PublishSupport {
         if (request.snapshot) {
             if (request.format != io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
                 out.println(ReleaseMessages.snapshotCheckPassed());
-                out.println("snapshot version mode: " + publishTarget.snapshotVersionMode.id);
+                out.println(ReleaseMessages.snapshotVersionMode(publishTarget.snapshotVersionMode.id));
                 out.println(publishTarget.snapshotVersionMode == SnapshotVersionMode.PLAIN
                     ? ReleaseMessages.plainSnapshotDescription()
                     : ReleaseMessages.stampedSnapshotDescription());
-                out.println("snapshot publish version: " + publishTarget.publishVersion);
+                out.println(ReleaseMessages.snapshotPublishVersion(publishTarget.publishVersion));
             }
         } else {
             if (request.format != io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
-                out.println("release tag: " + request.tag);
-                out.println("release version: " + publishTarget.publishVersion);
+                out.println(ReleaseMessages.releaseTag(request.tag));
+                out.println(ReleaseMessages.releaseVersionValue(publishTarget.publishVersion));
             }
         }
 
         if (request.format != io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
-            out.println(publishTarget.resolvedModule == null ? "target module: all" : "target module: " + publishTarget.resolvedModule);
+            out.println(ReleaseMessages.targetModule(publishTarget.resolvedModule));
             out.println();
             out.println(ReleaseMessages.repositoryVariableCheckHeading());
         }
@@ -221,7 +221,7 @@ public final class PublishSupport {
             }
         }
 
-        report.reason = "Preflight checks passed.";
+        report.reason = ReleaseMessages.preflightChecksPassedReason();
         if (request.format != io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
             out.println();
             out.println(ReleaseMessages.preflightChecksPassed());

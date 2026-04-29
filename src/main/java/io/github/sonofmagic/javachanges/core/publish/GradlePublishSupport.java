@@ -48,22 +48,22 @@ public final class GradlePublishSupport {
         List<String> command = buildPublishCommand(publishTarget, gradleCommand, resolvedTask);
         if (request.format != OutputFormat.JSON) {
             out.println();
-            out.println("== Gradle Publish Dry Run ==");
-            out.println("Gradle command: " + gradleCommand.command + " (" + gradleCommand.source + ")");
-            out.println("Gradle task: " + resolvedTask);
-            out.println("publish version: " + publishTarget.publishVersion);
+            out.println(ReleaseMessages.gradleDryRunOutputHeading());
+            out.println(ReleaseMessages.gradleCommandLabel(gradleCommand.command, gradleCommand.source));
+            out.println(ReleaseMessages.gradleTask(resolvedTask));
+            out.println(ReleaseMessages.publishVersion(publishTarget.publishVersion));
             if (request.snapshot) {
-                out.println("snapshot version mode: " + publishTarget.snapshotVersionMode.id);
-                out.println("snapshot build stamp applied: " + publishTarget.snapshotBuildStampApplied);
+                out.println(ReleaseMessages.snapshotVersionMode(publishTarget.snapshotVersionMode.id));
+                out.println(ReleaseMessages.snapshotBuildStampApplied(publishTarget.snapshotBuildStampApplied));
             }
-            out.println(publishTarget.resolvedModule == null ? "target module: all" : "target module: " + publishTarget.resolvedModule);
+            out.println(ReleaseMessages.targetModule(publishTarget.resolvedModule));
             out.println();
-            out.println("Command to run:");
+            out.println(ReleaseMessages.commandToRun());
             out.println(ReleaseTextUtils.renderCommand(command));
         }
 
         if (!request.execute) {
-            report.reason = "Dry-run only.";
+            report.reason = ReleaseMessages.dryRunOnlyReason();
             if (request.format == OutputFormat.JSON) {
                 out.println(report.toJson());
             } else {
@@ -81,7 +81,7 @@ public final class GradlePublishSupport {
         if (exitCode != 0) {
             throw new IllegalStateException(ReleaseMessages.gradlePublishFailed(exitCode));
         }
-        report.reason = "Gradle publish completed.";
+        report.reason = ReleaseMessages.gradlePublishCompletedReason();
         if (request.format == OutputFormat.JSON) {
             out.println(report.toJson());
         }

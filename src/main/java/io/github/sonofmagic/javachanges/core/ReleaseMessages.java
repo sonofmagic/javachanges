@@ -874,6 +874,42 @@ public final class ReleaseMessages {
         return message("publish.localMavenRepository", path);
     }
 
+    public static String publishVersion(String version) {
+        return message("publish.publishVersion", version);
+    }
+
+    public static String snapshotPublishVersion(String version) {
+        return message("publish.snapshotPublishVersion", version);
+    }
+
+    public static String snapshotVersionMode(String mode) {
+        return message("publish.snapshotVersionMode", mode);
+    }
+
+    public static String snapshotBuildStampApplied(boolean applied) {
+        return message("publish.snapshotBuildStampApplied", applied);
+    }
+
+    public static String releaseTag(String tag) {
+        return message("publish.releaseTag", tag);
+    }
+
+    public static String releaseVersionValue(String version) {
+        return message("publish.releaseVersionValue", version);
+    }
+
+    public static String gradleDryRunOutputHeading() {
+        return message("publish.gradleDryRunOutputHeading");
+    }
+
+    public static String gradleCommandLabel(String command, String source) {
+        return message("publish.gradleCommandLabel", command, source);
+    }
+
+    public static String gradleTask(String task) {
+        return message("publish.gradleTask", task);
+    }
+
     public static String generatedReleaseNotesFile() {
         return message("publish.generatedReleaseNotesFile");
     }
@@ -896,6 +932,22 @@ public final class ReleaseMessages {
 
     public static String dryRunOnlyGradlePublish() {
         return message("publish.dryRunOnlyGradlePublish");
+    }
+
+    public static String dryRunOnlyReason() {
+        return message("publish.reasonDryRunOnly");
+    }
+
+    public static String publishCompletedReason() {
+        return message("publish.reasonPublishCompleted");
+    }
+
+    public static String gradlePublishCompletedReason() {
+        return message("publish.reasonGradlePublishCompleted");
+    }
+
+    public static String preflightChecksPassedReason() {
+        return message("publish.reasonPreflightChecksPassed");
     }
 
     public static String runningMavenHeading() {

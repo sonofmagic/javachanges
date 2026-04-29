@@ -105,16 +105,24 @@ class I18nTest {
         assertEquals(" (use --config to write the default template)", ReleaseMessages.useConfigToWriteDefaultTemplate());
         assertEquals("== Dry Run Output ==", ReleaseMessages.dryRunOutputHeading());
         assertEquals("Maven command: ./mvnw (wrapper)", ReleaseMessages.mavenCommandLabel("./mvnw", "wrapper"));
+        assertEquals("Gradle command: ./gradlew (wrapper)", ReleaseMessages.gradleCommandLabel("./gradlew", "wrapper"));
+        assertEquals("publish version: 1.2.3", ReleaseMessages.publishVersion("1.2.3"));
+        assertEquals("snapshot version mode: plain", ReleaseMessages.snapshotVersionMode("plain"));
         assertEquals("target module: all", ReleaseMessages.targetModule(null));
         assertEquals("target module: core", ReleaseMessages.targetModule("core"));
+        assertEquals("Dry-run only.", ReleaseMessages.dryRunOnlyReason());
         ReleaseLanguageContext.set(ReleaseLanguage.ZH_CN);
         try {
             assertEquals("  使用 --force 可替换为默认模板。", ReleaseMessages.useForceToReplaceDefaultTemplate());
             assertEquals(" (使用 --config 写入默认模板)", ReleaseMessages.useConfigToWriteDefaultTemplate());
             assertEquals("== 版本检查 ==", ReleaseMessages.versionCheckHeading());
             assertEquals("Maven 命令: ./mvnw (wrapper)", ReleaseMessages.mavenCommandLabel("./mvnw", "wrapper"));
+            assertEquals("Gradle 命令: ./gradlew (wrapper)", ReleaseMessages.gradleCommandLabel("./gradlew", "wrapper"));
+            assertEquals("发布版本: 1.2.3", ReleaseMessages.publishVersion("1.2.3"));
+            assertEquals("snapshot version mode: plain", ReleaseMessages.snapshotVersionMode("plain"));
             assertEquals("目标模块: all", ReleaseMessages.targetModule(null));
             assertEquals("目标模块: core", ReleaseMessages.targetModule("core"));
+            assertEquals("仅 dry-run，未执行发布。", ReleaseMessages.dryRunOnlyReason());
         } finally {
             ReleaseLanguageContext.clear();
         }
