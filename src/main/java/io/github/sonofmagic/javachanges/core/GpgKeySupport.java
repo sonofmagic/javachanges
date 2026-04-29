@@ -32,24 +32,24 @@ final class GpgKeySupport {
         }
 
         String fingerprint = detectFingerprint();
-        out.println("Detected signing key fingerprint: " + fingerprint);
-        out.println("Publishing public key to supported keyservers if needed");
+        out.println(ReleaseMessages.detectedSigningKeyFingerprint(fingerprint));
+        out.println(ReleaseMessages.publishingPublicKeyToKeyservers());
 
         sendKey(primaryKeyserver, fingerprint, out, err);
         sendKey(secondaryKeyserver, fingerprint, out, err);
 
         for (int attempt = 1; attempt <= attempts; attempt++) {
             if (keyVisibleOnServer(primaryKeyserver, fingerprint)) {
-                out.println("Public key " + fingerprint + " is visible on " + primaryKeyserver);
+                out.println(ReleaseMessages.publicKeyVisibleOn(fingerprint, primaryKeyserver));
                 return fingerprint;
             }
             if (keyVisibleOnServer(secondaryKeyserver, fingerprint)) {
-                out.println("Public key " + fingerprint + " is visible on " + secondaryKeyserver);
+                out.println(ReleaseMessages.publicKeyVisibleOn(fingerprint, secondaryKeyserver));
                 return fingerprint;
             }
             if (attempt < attempts) {
-                out.println("Public key " + fingerprint + " is not visible yet (attempt "
-                    + attempt + "/" + attempts + "); retrying in " + retryDelaySeconds + "s");
+                out.println(ReleaseMessages.publicKeyNotVisibleRetrying(
+                    fingerprint, attempt, attempts, retryDelaySeconds));
                 Thread.sleep(retryDelaySeconds * 1000L);
             }
         }
@@ -86,11 +86,10 @@ final class GpgKeySupport {
             "gpg", "--batch", "--keyserver", keyserver, "--send-keys", fingerprint
         ), null);
         if (result.exitCode == 0) {
-            out.println("Public key uploaded to " + keyserver);
+            out.println(ReleaseMessages.publicKeyUploaded(keyserver));
             return;
         }
-        err.println("Warning: unable to upload public key " + fingerprint + " to " + keyserver
-            + ". Continuing to verification. Details: " + stderrOrStdout(result));
+        err.println(ReleaseMessages.publicKeyUploadWarning(fingerprint, keyserver, stderrOrStdout(result)));
     }
 
     private boolean keyVisibleOnServer(String keyserver, String fingerprint) throws IOException, InterruptedException {
@@ -120,6 +119,6 @@ final class GpgKeySupport {
             return value;
         }
         value = trimToNull(result.stdoutText());
-        return value == null ? "no process output" : value;
+        return value == null ? ReleaseMessages.noProcessOutput() : value;
     }
 }

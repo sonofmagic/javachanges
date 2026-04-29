@@ -488,6 +488,30 @@ public final class ReleaseMessages {
         return message("platform.retryDelayMustBeNonNegative");
     }
 
+    public static String detectedSigningKeyFingerprint(String fingerprint) {
+        return message("platform.detectedSigningKeyFingerprint", fingerprint);
+    }
+
+    public static String publishingPublicKeyToKeyservers() {
+        return message("platform.publishingPublicKeyToKeyservers");
+    }
+
+    public static String publicKeyVisibleOn(String fingerprint, String keyserver) {
+        return message("platform.publicKeyVisibleOn", fingerprint, keyserver);
+    }
+
+    public static String publicKeyNotVisibleRetrying(String fingerprint, int attempt, int attempts, int retryDelaySeconds) {
+        return message("platform.publicKeyNotVisibleRetrying", fingerprint, attempt, attempts, retryDelaySeconds);
+    }
+
+    public static String publicKeyUploaded(String keyserver) {
+        return message("platform.publicKeyUploaded", keyserver);
+    }
+
+    public static String publicKeyUploadWarning(String fingerprint, String keyserver, String detail) {
+        return message("platform.publicKeyUploadWarning", fingerprint, keyserver, detail);
+    }
+
     public static String signingKeyNotVisible(String fingerprint, String primaryKeyserver, String secondaryKeyserver) {
         return message("platform.signingKeyNotVisible", fingerprint, primaryKeyserver, secondaryKeyserver);
     }
@@ -498,6 +522,10 @@ public final class ReleaseMessages {
 
     public static String noImportedSecretKeyFingerprint() {
         return message("platform.noImportedSecretKeyFingerprint");
+    }
+
+    public static String noProcessOutput() {
+        return message("platform.noProcessOutput");
     }
 
     public static String missingGithubRepo() {
