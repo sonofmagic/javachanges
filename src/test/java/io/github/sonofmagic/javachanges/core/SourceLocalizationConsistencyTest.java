@@ -15,15 +15,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SourceLocalizationConsistencyTest {
     private static final Pattern HAN = Pattern.compile("\\p{IsHan}");
-    private static final String RELEASE_MESSAGES = "ReleaseMessages.java";
 
     @Test
-    void localizedChineseTextIsCentralizedInReleaseMessages() throws Exception {
+    void productionJavaSourcesDoNotInlineChineseLocalizedText() throws Exception {
         List<String> violations = new ArrayList<String>();
         for (Path path : sourceFiles()) {
-            if (RELEASE_MESSAGES.equals(path.getFileName().toString())) {
-                continue;
-            }
             String content = read(path);
             if (HAN.matcher(content).find()) {
                 violations.add(relative(path));
@@ -32,19 +28,16 @@ class SourceLocalizationConsistencyTest {
 
         assertTrue(
             violations.isEmpty(),
-            "Chinese localized text should live in " + RELEASE_MESSAGES + ": " + violations
+            "Chinese localized text should live in message bundles or templates: " + violations
         );
     }
 
     @Test
-    void businessCodeDoesNotCallReleaseMessagesTextDirectly() throws Exception {
+    void productionJavaSourcesDoNotUseInlineDualLanguageHelper() throws Exception {
         List<String> violations = new ArrayList<String>();
         for (Path path : sourceFiles()) {
-            if (RELEASE_MESSAGES.equals(path.getFileName().toString())) {
-                continue;
-            }
             String content = read(path);
-            if (content.contains("ReleaseMessages.text(")) {
+            if (content.contains("ReleaseMessages.text(") || content.contains("return text(")) {
                 violations.add(relative(path));
             }
         }

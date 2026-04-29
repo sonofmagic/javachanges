@@ -15,10 +15,6 @@ public final class ReleaseMessages {
         return language().isChinese();
     }
 
-    private static String text(String english, String chinese) {
-        return zh() ? chinese : english;
-    }
-
     private static String message(String key, Object... args) {
         return I18n.message(key, args);
     }
