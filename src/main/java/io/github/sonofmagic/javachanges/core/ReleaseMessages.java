@@ -317,133 +317,107 @@ public final class ReleaseMessages {
     }
 
     public static String missingReleasePlanManifest(Path manifest) {
-        return text("Missing release plan manifest: " + manifest, "缺少 release plan manifest: " + manifest);
+        return message("core.missingReleasePlanManifest", manifest);
     }
 
     public static String missingFieldIn(String field, Path manifest) {
-        return text("Missing field `" + field + "` in " + manifest, "缺少字段 `" + field + "`: " + manifest);
+        return message("core.missingFieldIn", field, manifest);
     }
 
     public static String cannotFindRepoRoot(Path current) {
-        return text("Cannot find repository root from " + current, "无法从 " + current + " 找到仓库根目录");
+        return message("core.cannotFindRepoRoot", current);
     }
 
     public static String unsupportedSnapshotVersionMode(String value) {
-        return text(
-            "Unsupported snapshot version mode: " + value + ". Use plain or stamped.",
-            "不支持的 snapshot version mode: " + value + "，可选值: plain, stamped"
-        );
+        return message("core.unsupportedSnapshotVersionMode", value);
     }
 
     public static String unsupportedTagStrategy(String value) {
-        return text(
-            "Unsupported tag strategy: " + value + ". Use whole-repo or per-module.",
-            "不支持的 tag 策略: " + value + "，可选值: whole-repo, per-module"
-        );
+        return message("core.unsupportedTagStrategy", value);
     }
 
     public static String unsupportedVersion(String value) {
-        return text("Unsupported version: " + value, "不支持的版本: " + value);
+        return message("core.unsupportedVersion", value);
     }
 
     public static String missingVersionConfig() {
-        return text(
-            "Cannot find version configuration in Maven pom.xml or Gradle gradle.properties",
-            "未在 Maven pom.xml 或 Gradle gradle.properties 中找到版本配置"
-        );
+        return message("core.missingVersionConfig");
     }
 
     public static String notSnapshot(String version) {
-        return text("Current project version is not a SNAPSHOT: " + version, "当前项目版本不是 SNAPSHOT: " + version);
+        return message("core.notSnapshot", version);
     }
 
     public static String emptySnapshotBuildStamp() {
-        return text("snapshot build stamp cannot be empty", "snapshot build stamp 不能为空");
+        return message("core.emptySnapshotBuildStamp");
     }
 
     public static String invalidSnapshotBuildStamp(String buildStamp) {
-        return text(
-            "snapshot build stamp only allows letters, numbers, and dots: " + buildStamp,
-            "snapshot build stamp 只允许字母、数字和点号: " + buildStamp
-        );
+        return message("core.invalidSnapshotBuildStamp", buildStamp);
     }
 
     public static String releaseTagVersionMismatch(String tag, String version, String releaseVersion) {
-        return text(
-            "tag " + tag + " does not match project version " + version + "; expected base version " + releaseVersion,
-            "tag " + tag + " 与项目版本 " + version + " 不匹配，期望基础版本为 " + releaseVersion
-        );
+        return message("core.releaseTagVersionMismatch", tag, version, releaseVersion);
     }
 
     public static String missingRepositoryCredentials(String mode, String specificUser, String specificPassword) {
-        return text(
-            "Missing " + mode + " repository credentials. Set " + specificUser + "/" + specificPassword
-                + " or MAVEN_REPOSITORY_USERNAME/MAVEN_REPOSITORY_PASSWORD.",
-            "缺少 " + mode + " 仓库认证信息，请设置 " + specificUser + "/" + specificPassword
-                + " 或通用 MAVEN_REPOSITORY_USERNAME/MAVEN_REPOSITORY_PASSWORD"
-        );
+        return message("core.missingRepositoryCredentials", mode, specificUser, specificPassword);
     }
 
     public static String outputPathMustStayInsideRepository(String optionName, String value) {
-        return text(
-            optionName + " must stay inside repository: " + value,
-            optionName + " 必须位于仓库内: " + value
-        );
+        return message("core.outputPathMustStayInsideRepository", optionName, value);
     }
 
     public static String cannotFindPomProperties(Path pomPath) {
-        return text("Cannot find <properties> in " + pomPath, "无法在 " + pomPath + " 中找到 <properties>");
+        return message("build.cannotFindPomProperties", pomPath);
     }
 
     public static String cannotFindPomRevision(Path pomPath) {
-        return text("Cannot find <revision> in " + pomPath, "无法在 " + pomPath + " 中找到 <revision>");
+        return message("build.cannotFindPomRevision", pomPath);
     }
 
     public static String failedToConfigureXmlParser(Path path) {
-        return text("Failed to configure XML parser for " + path, "配置 XML parser 失败: " + path);
+        return message("build.failedToConfigureXmlParser", path);
     }
 
     public static String failedToParsePom(Path path) {
-        return text("Failed to parse pom.xml: " + path, "解析 pom.xml 失败: " + path);
+        return message("build.failedToParsePom", path);
     }
 
     public static String failedToWritePom(Path path) {
-        return text("Failed to write pom.xml: " + path, "写入 pom.xml 失败: " + path);
+        return message("build.failedToWritePom", path);
     }
 
     public static String failedToDetectMavenModules(Path repoRoot) {
-        return text("Failed to detect Maven modules from " + repoRoot, "检测 Maven 模块失败: " + repoRoot);
+        return message("build.failedToDetectMavenModules", repoRoot);
     }
 
     public static String failedToDetectGradleModules(Path repoRoot) {
-        return text("Failed to detect Gradle modules from " + repoRoot, "检测 Gradle 模块失败: " + repoRoot);
+        return message("build.failedToDetectGradleModules", repoRoot);
     }
 
     public static String cannotFindSupportedBuildModel(Path repoRoot) {
-        return text(
-            "Cannot find supported Maven or Gradle build model in " + repoRoot,
-            "无法在 " + repoRoot + " 中找到支持的 Maven 或 Gradle 构建模型"
-        );
+        return message("build.cannotFindSupportedBuildModel", repoRoot);
     }
 
     public static String cannotFindGradleVersion(Path path) {
-        return text("Cannot find version or revision in " + path, "无法在 " + path + " 中找到 version 或 revision");
+        return message("build.cannotFindGradleVersion", path);
     }
 
     public static String cannotParseGradleVersion(Path path) {
-        return text("Cannot parse version property in " + path, "无法解析 " + path + " 中的 version 配置");
+        return message("build.cannotParseGradleVersion", path);
     }
 
     public static String failedToParseJson() {
-        return text("Failed to parse JSON", "解析 JSON 失败");
+        return message("core.failedToParseJson");
     }
 
     public static String failedToWriteJson() {
-        return text("Failed to write JSON", "写入 JSON 失败");
+        return message("core.failedToWriteJson");
     }
 
     public static String failedToReadChangesetConfig() {
-        return text("Failed to read changeset config", "读取 changeset 配置失败");
+        return message("core.failedToReadChangesetConfig");
     }
 
     public static String gitCommandFailed() {

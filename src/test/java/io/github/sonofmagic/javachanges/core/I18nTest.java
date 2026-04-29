@@ -115,6 +115,23 @@ class I18nTest {
     }
 
     @Test
+    void loadsExternalizedCoreAndBuildMessages() {
+        assertEquals("Missing field `releaseVersion` in .changesets/release-plan.json",
+            ReleaseMessages.missingFieldIn("releaseVersion", Paths.get(".changesets/release-plan.json")));
+        assertEquals("Cannot find <revision> in pom.xml", ReleaseMessages.cannotFindPomRevision(Paths.get("pom.xml")));
+        assertEquals("snapshot build stamp cannot be empty", ReleaseMessages.emptySnapshotBuildStamp());
+        ReleaseLanguageContext.set(ReleaseLanguage.ZH_CN);
+        try {
+            assertEquals("缺少字段 `releaseVersion`: .changesets/release-plan.json",
+                ReleaseMessages.missingFieldIn("releaseVersion", Paths.get(".changesets/release-plan.json")));
+            assertEquals("无法在 pom.xml 中找到 <revision>", ReleaseMessages.cannotFindPomRevision(Paths.get("pom.xml")));
+            assertEquals("snapshot build stamp 不能为空", ReleaseMessages.emptySnapshotBuildStamp());
+        } finally {
+            ReleaseLanguageContext.clear();
+        }
+    }
+
+    @Test
     void localizedTemplatesStayInSync() throws Exception {
         Path templateRoot = Paths.get("")
             .toAbsolutePath()
