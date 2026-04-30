@@ -8,6 +8,10 @@
   },
   "packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319",
   "scripts": {
+    "ci:local": "./scripts/ci-local.sh all",
+    "ci:local:build": "./scripts/ci-local.sh build",
+    "ci:local:docs": "./scripts/ci-local.sh docs",
+    "ci:local:release": "./scripts/ci-local.sh release-dry-run",
     "docs:dev": "vitepress dev website",
     "docs:build": "vitepress build website",
     "docs:preview": "vitepress preview website",

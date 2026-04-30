@@ -1,4 +1,5 @@
 target/
+.flattened-pom.xml
 .m2/
 .gradle/
 build/

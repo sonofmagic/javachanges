@@ -95,6 +95,10 @@ mvn io.github.sonofmagic:javachanges:1.11.0-SNAPSHOT:release-notes -Djavachanges
 Repository-local shortcuts for working on `javachanges` itself:
 
 ```bash
+pnpm ci:local
+pnpm ci:local:build
+pnpm ci:local:docs
+pnpm ci:local:release
 ./mvnw -B test
 ./mvnw -B -Pcoverage -Dmaven.repo.local=.m2/repository test
 pnpm snapshot:install
@@ -105,6 +109,10 @@ pnpm docs:deploy:local
 
 These map to the same phases used elsewhere in the docs:
 
+- `ci:local` runs the local CI simulation: Java build checks, docs build, and release automation dry-runs
+- `ci:local:build` mirrors the Java build steps from `.github/workflows/ci.yml`
+- `ci:local:docs` installs docs dependencies and runs the VitePress build
+- `ci:local:release` validates release PR/MR planning and snapshot publish preflight in dry-run mode only
 - `./mvnw -B test` runs the default test suite with build prerequisite checks
 - `./mvnw -B -Pcoverage -Dmaven.repo.local=.m2/repository test` also generates a JaCoCo HTML report under `target/site/jacoco/`
 - `snapshot:install` installs the current `1.11.0-SNAPSHOT` into local Maven

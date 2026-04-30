@@ -133,7 +133,35 @@ cd javachanges
 
 > **说明**：当前仓库已经包含面向 CLI 的单元测试，因此 `./mvnw test` 现在既会验证编译，也会验证命令行为。
 
-### 4.3 安装到本地 Maven 仓库（可选）
+### 4.3 本地模拟 CI
+
+如果你想在 push 前覆盖 CI 的主要路径，可以使用仓库内置的本地 CI helper：
+
+```bash
+pnpm ci:local
+```
+
+如果只想验证某一部分，也可以单独执行：
+
+```bash
+pnpm ci:local:build
+pnpm ci:local:docs
+pnpm ci:local:release
+```
+
+这些任务对应的本地安全检查如下：
+
+| 任务 | 验证内容 |
+| --- | --- |
+| `ci:local:build` | Maven `verify`、跳过 GPG 的 Central publish profile 校验，以及从源码运行 `status` |
+| `ci:local:docs` | `pnpm install --frozen-lockfile` 和 VitePress 文档构建 |
+| `ci:local:release` | GitHub/GitLab release-plan dry-run，以及 snapshot `preflight` / `publish` 的 JSON dry-run |
+
+release 任务不会传入 `--execute true`，因此不会推分支、创建 PR/MR、打 tag、创建 Release 或发布 artifact。脚本会填充占位的 Maven snapshot 仓库变量，让本地 preflight 可以验证命令渲染，不需要真实凭据。
+
+这个 helper 会把 Maven 本地仓库固定到当前 checkout 下的 `.m2/repository`，因此本地模拟不依赖可写的全局 `~/.m2`。
+
+### 4.4 安装到本地 Maven 仓库（可选）
 
 如果你希望把这个项目产物安装到本地 Maven 仓库，可以执行：
 

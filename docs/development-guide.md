@@ -133,7 +133,35 @@ This mainly does two things:
 
 > Note: the repository now includes CLI-focused unit tests, so `./mvnw test` validates both compilation and command behavior.
 
-### 4.3 Install into the local Maven repository (optional)
+### 4.3 Simulate CI locally
+
+Use the repository-local CI helper when you want to check the same broad paths before pushing:
+
+```bash
+pnpm ci:local
+```
+
+Focused tasks are available when you only need one part of the pipeline:
+
+```bash
+pnpm ci:local:build
+pnpm ci:local:docs
+pnpm ci:local:release
+```
+
+The tasks map to local-safe checks:
+
+| Task | What it validates |
+| --- | --- |
+| `ci:local:build` | Maven `verify`, the Central publish profile with GPG skipped, and `status` from source |
+| `ci:local:docs` | `pnpm install --frozen-lockfile` and the VitePress docs build |
+| `ci:local:release` | GitHub/GitLab release-plan dry-runs plus snapshot `preflight` and `publish` JSON dry-runs |
+
+The release task never passes `--execute true`. It does not push branches, open PRs/MRs, create tags, create releases, or deploy artifacts. It seeds placeholder Maven snapshot repository variables so the local preflight can validate command rendering without requiring real credentials.
+
+The helper pins Maven to `.m2/repository` inside this checkout, so the local simulation does not depend on a writable global `~/.m2`.
+
+### 4.4 Install into the local Maven repository (optional)
 
 ```bash
 ./mvnw install
