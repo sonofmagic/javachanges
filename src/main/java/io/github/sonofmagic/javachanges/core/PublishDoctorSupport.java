@@ -294,6 +294,7 @@ public final class PublishDoctorSupport {
         checkProfilePlugin(report, pom, profile, "maven-javadoc-plugin");
         checkProfilePlugin(report, pom, profile, "maven-gpg-plugin");
         checkProfilePlugin(report, pom, profile, "central-publishing-maven-plugin");
+        checkCentralPublishingPlugin(report, pom, profile);
         checkProfilePluginGoal(report, pom, profile, "flatten-maven-plugin",
             new String[]{"flatten"},
             "Bind flatten-maven-plugin to the flatten goal in the " + profile + " profile.");
@@ -433,6 +434,42 @@ public final class PublishDoctorSupport {
         }
         report.failed("Maven POM", profileId + " " + artifactId, "Plugin is missing.",
             "Add " + artifactId + " to the " + profileId + " profile before publishing to Maven Central.");
+    }
+
+    private void checkCentralPublishingPlugin(PublishDoctorReport report, MavenPom pom, String profileId) {
+        String artifactId = "central-publishing-maven-plugin";
+        if (!pom.hasProfilePlugin(profileId, artifactId)) {
+            return;
+        }
+        if (pom.hasProfilePluginChildText(profileId, artifactId, "extensions", "true")) {
+            report.ok("Maven POM", profileId + " " + artifactId + " extensions",
+                "Plugin is enabled as a Maven extension.");
+        } else {
+            report.failed("Maven POM", profileId + " " + artifactId + " extensions",
+                "Plugin is not enabled with <extensions>true</extensions>.",
+                "Enable central-publishing-maven-plugin as a Maven extension in the " + profileId + " profile.");
+        }
+
+        if (pom.hasProfilePluginDescendant(profileId, artifactId, "configuration", "publishingServerId")) {
+            report.ok("Maven POM", profileId + " " + artifactId + " publishingServerId",
+                "Publishing server id is configured.");
+        } else {
+            report.warn("Maven POM", profileId + " " + artifactId + " publishingServerId",
+                "Publishing server id is not configured; the plugin default will be used.");
+            report.suggest("Configure publishingServerId in " + profileId
+                + " when your Maven settings server id is not the plugin default.");
+        }
+
+        if ("central-snapshot-publish".equals(profileId)) {
+            if (pom.hasProfilePluginDescendant(profileId, artifactId, "configuration", "centralSnapshotsUrl")) {
+                report.ok("Maven POM", profileId + " " + artifactId + " centralSnapshotsUrl",
+                    "Snapshot Central repository URL is configured.");
+            } else {
+                report.failed("Maven POM", profileId + " " + artifactId + " centralSnapshotsUrl",
+                    "Snapshot Central repository URL is not configured.",
+                    "Configure centralSnapshotsUrl in the " + profileId + " profile.");
+            }
+        }
     }
 
     private void checkProfilePluginGoal(PublishDoctorReport report, MavenPom pom, String profileId, String artifactId,
@@ -833,6 +870,29 @@ public final class PublishDoctorSupport {
             }
             Set<String> acceptedGoals = new LinkedHashSet<String>(Arrays.asList(goals));
             return hasDescendantText(plugin, "goal", acceptedGoals);
+        }
+
+        boolean hasProfilePluginChildText(String profileId, String artifactId, String childName, String expectedValue) {
+            Element plugin = profilePlugin(profileId, artifactId);
+            if (plugin == null) {
+                return false;
+            }
+            return expectedValue.equals(childText(plugin, childName));
+        }
+
+        boolean hasProfilePluginDescendant(String profileId, String artifactId, String... path) {
+            Element plugin = profilePlugin(profileId, artifactId);
+            if (plugin == null) {
+                return false;
+            }
+            Element current = plugin;
+            for (String name : path) {
+                current = child(current, name);
+                if (current == null) {
+                    return false;
+                }
+            }
+            return ReleaseTextUtils.trimToNull(current.getTextContent()) != null;
         }
 
         private Element profilePlugin(String profileId, String artifactId) {

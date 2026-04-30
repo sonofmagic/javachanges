@@ -1792,6 +1792,29 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void doctorPublishJsonReportsIncompleteCentralPublishingPluginConfiguration(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot);
+        String pom = centralReadyPom().replace("<extensions>true</extensions>", "");
+        Files.write(repoRoot.resolve("pom.xml"), pom.getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.mavenWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+        commitAll(repoRoot);
+
+        ExecutionResult result = executeProcess(publishDoctorEnv(),
+            "doctor-publish",
+            "--directory", repoRoot.toString(),
+            "--format", "json"
+        );
+
+        assertNotEquals(0, result.exitCode);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertFalse(root.get("ok").asBoolean());
+        assertTrue(hasCheck(root, "Maven POM",
+            "central-snapshot-publish central-publishing-maven-plugin extensions", "FAILED"));
+        assertTrue(hasSuggestion(root, "Maven extension"));
+    }
+
+    @Test
     void doctorPublishJsonReportsMissingGradlePublishReadiness(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createGradleRepository(tempDir, false);
         Files.write(repoRoot.resolve(ReleaseProcessUtils.gradleWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
@@ -2266,9 +2289,20 @@ class JavaChangesCliTest {
             + "        <plugin><artifactId>maven-source-plugin</artifactId><executions><execution><goals><goal>jar-no-fork</goal></goals></execution></executions></plugin>\n"
             + "        <plugin><artifactId>maven-javadoc-plugin</artifactId><executions><execution><goals><goal>jar</goal></goals></execution></executions></plugin>\n"
             + "        <plugin><artifactId>maven-gpg-plugin</artifactId><executions><execution><goals><goal>sign</goal></goals></execution></executions></plugin>\n"
-            + "        <plugin><artifactId>central-publishing-maven-plugin</artifactId></plugin>\n"
+            + centralPublishingPlugin(id)
             + "      </plugins></build>\n"
             + "    </profile>\n";
+    }
+
+    private static String centralPublishingPlugin(String profileId) {
+        String snapshotConfiguration = "central-snapshot-publish".equals(profileId)
+            ? "<centralSnapshotsUrl>https://repo.example.com/snapshots</centralSnapshotsUrl>"
+            : "";
+        return "        <plugin><artifactId>central-publishing-maven-plugin</artifactId>"
+            + "<extensions>true</extensions>"
+            + "<configuration><publishingServerId>central</publishingServerId>"
+            + snapshotConfiguration
+            + "</configuration></plugin>\n";
     }
 
     private static String gradlePublishBuildFile() {
