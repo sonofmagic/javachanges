@@ -36,18 +36,36 @@ ensure_docs_tooling() {
 }
 
 seed_mock_publish_env() {
+  : "${MAVEN_RELEASE_REPOSITORY_URL:=https://example.invalid/maven-releases}"
+  : "${MAVEN_RELEASE_REPOSITORY_USERNAME:=local-ci-user}"
+  : "${MAVEN_RELEASE_REPOSITORY_PASSWORD:=local-ci-password}"
+  : "${MAVEN_RELEASE_REPOSITORY_ID:=local-releases}"
   : "${MAVEN_SNAPSHOT_REPOSITORY_URL:=https://example.invalid/maven-snapshots}"
   : "${MAVEN_SNAPSHOT_REPOSITORY_USERNAME:=local-ci-user}"
   : "${MAVEN_SNAPSHOT_REPOSITORY_PASSWORD:=local-ci-password}"
   : "${MAVEN_SNAPSHOT_REPOSITORY_ID:=local-snapshots}"
   : "${MAVEN_GPG_PRIVATE_KEY:=local-ci-private-key}"
   : "${MAVEN_GPG_PASSPHRASE:=local-ci-passphrase}"
+  export MAVEN_RELEASE_REPOSITORY_URL
+  export MAVEN_RELEASE_REPOSITORY_USERNAME
+  export MAVEN_RELEASE_REPOSITORY_PASSWORD
+  export MAVEN_RELEASE_REPOSITORY_ID
   export MAVEN_SNAPSHOT_REPOSITORY_URL
   export MAVEN_SNAPSHOT_REPOSITORY_USERNAME
   export MAVEN_SNAPSHOT_REPOSITORY_PASSWORD
   export MAVEN_SNAPSHOT_REPOSITORY_ID
   export MAVEN_GPG_PRIVATE_KEY
   export MAVEN_GPG_PASSPHRASE
+}
+
+current_release_tag() {
+  revision=$(sed -n 's/.*<revision>\([^<]*\)<\/revision>.*/\1/p' pom.xml | head -n 1)
+  if [ -z "$revision" ]; then
+    echo "Unable to resolve <revision> from pom.xml for local release dry-run." >&2
+    exit 1
+  fi
+  release_version=${revision%-SNAPSHOT}
+  printf 'v%s\n' "$release_version"
 }
 
 run_build() {
@@ -64,12 +82,16 @@ run_docs() {
 
 run_release_dry_run() {
   seed_mock_publish_env
+  release_tag=$(current_release_tag)
   run ./mvnw -B "-Dmaven.repo.local=$local_maven_repo" -DskipTests compile
   run ./mvnw -B "-Dmaven.repo.local=$local_maven_repo" -DskipTests exec:java "-Dexec.args=github-release-plan --directory $repo_root --github-repo local/mock --write-plan-files false --format json"
   run ./mvnw -B "-Dmaven.repo.local=$local_maven_repo" -DskipTests exec:java "-Dexec.args=gitlab-release-plan --directory $repo_root --project-id 0 --write-plan-files false --format json"
-  run ./mvnw -B "-Dmaven.repo.local=$local_maven_repo" -DskipTests exec:java "-Dexec.args=doctor-publish --directory $repo_root --format json"
+  run ./mvnw -B "-Dmaven.repo.local=$local_maven_repo" -DskipTests exec:java "-Dexec.args=doctor-publish --directory $repo_root --allow-dirty true --format json"
+  run ./mvnw -B "-Dmaven.repo.local=$local_maven_repo" -DskipTests exec:java "-Dexec.args=doctor-publish --directory $repo_root --tag $release_tag --allow-dirty true --format json"
   run ./mvnw -B "-Dmaven.repo.local=$local_maven_repo" -DskipTests exec:java "-Dexec.args=preflight --directory $repo_root --snapshot --snapshot-build-stamp local.ci.001 --allow-dirty true --format json"
   run ./mvnw -B "-Dmaven.repo.local=$local_maven_repo" -DskipTests exec:java "-Dexec.args=publish --directory $repo_root --snapshot --snapshot-build-stamp local.ci.001 --allow-dirty true --format json"
+  run ./mvnw -B "-Dmaven.repo.local=$local_maven_repo" -DskipTests exec:java "-Dexec.args=preflight --directory $repo_root --tag $release_tag --allow-dirty true --format json"
+  run ./mvnw -B "-Dmaven.repo.local=$local_maven_repo" -DskipTests exec:java "-Dexec.args=publish --directory $repo_root --tag $release_tag --allow-dirty true --format json"
 }
 
 case "$task" in
