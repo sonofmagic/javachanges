@@ -1671,6 +1671,45 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void doctorPublishJsonReportsMissingGradleRepositoryUrl(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createGradleRepository(tempDir, false);
+        Files.write(repoRoot.resolve("build.gradle"), gradlePublishBuildFile().getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.gradleWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+        commitAll(repoRoot);
+
+        ExecutionResult result = executeProcess(publishDoctorEnvWithoutRepositoryUrls(),
+            "doctor-publish",
+            "--directory", repoRoot.toString(),
+            "--format", "json"
+        );
+
+        assertNotEquals(0, result.exitCode);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertFalse(root.get("ok").asBoolean());
+        assertTrue(hasCheck(root, "Credentials", "Gradle snapshot repository URL", "FAILED"));
+        assertTrue(hasSuggestion(root, "ORG_GRADLE_PROJECT_mavenSnapshotRepositoryUrl"));
+    }
+
+    @Test
+    void doctorPublishJsonAcceptsGradleProjectRepositoryUrl(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createGradleRepository(tempDir, false);
+        Files.write(repoRoot.resolve("build.gradle"), gradlePublishBuildFile().getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.gradleWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+        commitAll(repoRoot);
+
+        ExecutionResult result = executeProcess(gradlePublishDoctorEnv(),
+            "doctor-publish",
+            "--directory", repoRoot.toString(),
+            "--format", "json"
+        );
+
+        assertEquals(0, result.exitCode, result.stdout + result.stderr);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertTrue(root.get("ok").asBoolean());
+        assertTrue(hasCheck(root, "Credentials", "Gradle snapshot repository URL", "OK"));
+    }
+
+    @Test
     void doctorLocalFallsBackToSystemMavenWhenWrapperMissing(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, false);
         ReleaseEnvTestFixtures.writeLocalEnv(repoRoot, ReleaseEnvTestFixtures.cliEnvFile());
@@ -2026,6 +2065,19 @@ class JavaChangesCliTest {
     private static Map<String, String> publishDoctorReleaseEnv() {
         Map<String, String> environment = publishDoctorEnv();
         environment.put("MAVEN_RELEASE_REPOSITORY_URL", "https://repo.example.com/releases");
+        return environment;
+    }
+
+    private static Map<String, String> publishDoctorEnvWithoutRepositoryUrls() {
+        Map<String, String> environment = publishDoctorEnv();
+        environment.remove("MAVEN_SNAPSHOT_REPOSITORY_URL");
+        environment.remove("MAVEN_RELEASE_REPOSITORY_URL");
+        return environment;
+    }
+
+    private static Map<String, String> gradlePublishDoctorEnv() {
+        Map<String, String> environment = publishDoctorEnvWithoutRepositoryUrls();
+        environment.put("ORG_GRADLE_PROJECT_mavenSnapshotRepositoryUrl", "https://repo.example.com/gradle-snapshots");
         return environment;
     }
 

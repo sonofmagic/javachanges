@@ -283,6 +283,19 @@ public final class PublishDoctorSupport {
     }
 
     private void checkGradleCredentials(PublishDoctorReport report) {
+        if ("snapshot".equals(report.mode)) {
+            checkEnvAnyOf(report, "Credentials", "Gradle snapshot repository URL",
+                "MAVEN_SNAPSHOT_REPOSITORY_URL",
+                "ORG_GRADLE_PROJECT_mavenSnapshotRepositoryUrl",
+                "ORG_GRADLE_PROJECT_mavenRepositoryUrl",
+                "MAVEN_REPOSITORY_URL");
+        } else {
+            checkEnvAnyOf(report, "Credentials", "Gradle release repository URL",
+                "MAVEN_RELEASE_REPOSITORY_URL",
+                "ORG_GRADLE_PROJECT_mavenReleaseRepositoryUrl",
+                "ORG_GRADLE_PROJECT_mavenRepositoryUrl",
+                "MAVEN_REPOSITORY_URL");
+        }
         checkEnvPair(report, "Credentials", "Gradle repository credentials",
             new String[][]{
                 {"MAVEN_CENTRAL_USERNAME", "MAVEN_CENTRAL_PASSWORD"},
@@ -380,6 +393,17 @@ public final class PublishDoctorSupport {
         }
         report.failed(section, name, "Missing " + variable + ".",
             "Set " + variable + " in your local env file or CI secret store.");
+    }
+
+    private void checkEnvAnyOf(PublishDoctorReport report, String section, String name, String... variables) {
+        for (String variable : variables) {
+            if (ReleaseTextUtils.trimToNull(System.getenv(variable)) != null) {
+                report.ok(section, name, variable + " is set.");
+                return;
+            }
+        }
+        report.failed(section, name, "Missing one of: " + join(variables) + ".",
+            "Set one of " + join(variables) + " in your local env file, Gradle project properties, or CI secret store.");
     }
 
     private void checkEnvPair(PublishDoctorReport report, String section, String name, String[][] alternatives) {
@@ -556,6 +580,17 @@ public final class PublishDoctorSupport {
             }
             builder.append(value);
             index++;
+        }
+        return builder.toString();
+    }
+
+    private static String join(String[] values) {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < values.length; i++) {
+            if (i > 0) {
+                builder.append(", ");
+            }
+            builder.append(values[i]);
         }
         return builder.toString();
     }

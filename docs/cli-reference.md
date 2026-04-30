@@ -471,7 +471,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="doctor-publish --directory /pa
 
 For Maven projects, the doctor checks build model, current revision, effective snapshot publish version, optional module target, clean Git worktree, Maven command availability, required POM metadata, Central publish profiles, source/javadoc/signing plugins, Central publishing plugin setup, repository credentials, and GPG signing inputs.
 
-For Gradle projects, the doctor checks `gradle.properties`, effective snapshot publish version, optional module target, clean Git worktree, settings/build files, detected modules, Gradle command availability, `maven-publish` or `publishing` configuration, signing configuration or Gradle signing environment variables, repository credentials, and the next `gradle-publish` command.
+For Gradle projects, the doctor checks `gradle.properties`, effective snapshot publish version, optional module target, clean Git worktree, settings/build files, detected modules, Gradle command availability, `maven-publish` or `publishing` configuration, signing configuration or Gradle signing environment variables, repository URLs and credentials, and the next `gradle-publish` command.
 
 Important flags:
 
