@@ -42,7 +42,8 @@ public final class GitlabTagRequest {
             ReleaseTextUtils.isTrue(options.get("execute")),
             config.baseBranch(),
             config.releaseBranch(),
-            ReleaseTextUtils.trimToNull(System.getenv("CI_COMMIT_BRANCH")),
+            ReleaseTextUtils.firstNonBlank(ReleaseTextUtils.trimToNull(options.get("current-branch")),
+                System.getenv("CI_COMMIT_BRANCH")),
             ReleaseTextUtils.isTrue(options.get("fresh")),
             OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );

@@ -22,6 +22,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class GitlabReleaseSupportTest {
@@ -148,6 +149,8 @@ class GitlabReleaseSupportTest {
                 "}\n").getBytes(StandardCharsets.UTF_8)
         );
         RecordingRuntime runtime = new RecordingRuntime(repoRoot);
+        runtime.changedPaths.put(".changesets/release-plan.json", Boolean.TRUE);
+        runtime.changedPaths.put("pom.xml", Boolean.TRUE);
         FakeGitlabApiClient api = new FakeGitlabApiClient();
         api.remoteUrl = "https://bot:token@example.com/group/repo.git";
         ByteArrayOutputStream stdout = new ByteArrayOutputStream();
@@ -164,6 +167,137 @@ class GitlabReleaseSupportTest {
         assertEquals("tag fixture-app/v1.2.0 abc222", runtime.createdTags.get(0));
         assertEquals("push https://bot:token@example.com/group/repo.git refs/tags/fixture-app/v1.2.0", runtime.pushes.get(0));
         assertTrue(stdout.toString(StandardCharsets.UTF_8.name()).contains("fixture-starter/v1.2.0"));
+    }
+
+    @Test
+    void tagFromReleasePlanFallsBackToFreshMetadataWhenManifestIsAbsent(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createAppliedReleaseRepository(tempDir, "1.2.0-SNAPSHOT");
+        RecordingRuntime runtime = new RecordingRuntime(repoRoot);
+        runtime.changedPaths.put("pom.xml", Boolean.TRUE);
+        FakeGitlabApiClient api = new FakeGitlabApiClient();
+        api.remoteUrl = "https://bot:token@example.com/group/repo.git";
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+
+        new GitlabReleaseSupport(repoRoot, new PrintStream(stdout, true), runtime, api)
+            .tagFromReleasePlan(GitlabTagRequest.fromOptions(tagOptions()));
+
+        assertEquals(1, runtime.createdTags.size());
+        assertEquals("tag v1.2.0 abc222", runtime.createdTags.get(0));
+        assertEquals("push https://bot:token@example.com/group/repo.git refs/tags/v1.2.0", runtime.pushes.get(0));
+        assertTrue(stdout.toString(StandardCharsets.UTF_8.name()).contains("Created and pushed tag(s) [v1.2.0]"));
+    }
+
+    @Test
+    void tagFromReleasePlanSkipsWhenNoManifestOrFreshReleaseStateChanged(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createAppliedReleaseRepository(tempDir, "1.2.0-SNAPSHOT");
+        RecordingRuntime runtime = new RecordingRuntime(repoRoot);
+        FakeGitlabApiClient api = new FakeGitlabApiClient();
+        api.remoteUrl = "https://bot:token@example.com/group/repo.git";
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+
+        new GitlabReleaseSupport(repoRoot, new PrintStream(stdout, true), runtime, api)
+            .tagFromReleasePlan(GitlabTagRequest.fromOptions(tagOptions()));
+
+        assertTrue(runtime.createdTags.isEmpty());
+        assertTrue(stdout.toString(StandardCharsets.UTF_8.name())
+            .contains("No release plan manifest or fresh release state change detected."));
+    }
+
+    @Test
+    void tagFromReleasePlanFreshOptionIgnoresChangedManifest(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createAppliedReleaseRepository(tempDir, "1.2.0-SNAPSHOT");
+        Files.write(
+            repoRoot.resolve(".changesets").resolve("release-plan.json"),
+            "{\"releaseVersion\":\"9.9.9\"}\n".getBytes(StandardCharsets.UTF_8)
+        );
+        RecordingRuntime runtime = new RecordingRuntime(repoRoot);
+        runtime.changedPaths.put(".changesets/release-plan.json", Boolean.TRUE);
+        runtime.changedPaths.put("pom.xml", Boolean.TRUE);
+        FakeGitlabApiClient api = new FakeGitlabApiClient();
+        api.remoteUrl = "https://bot:token@example.com/group/repo.git";
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+
+        Map<String, String> options = tagOptions();
+        options.put("fresh", "true");
+        new GitlabReleaseSupport(repoRoot, new PrintStream(stdout, true), runtime, api)
+            .tagFromReleasePlan(GitlabTagRequest.fromOptions(options));
+
+        assertEquals(1, runtime.createdTags.size());
+        assertEquals("tag v1.2.0 abc222", runtime.createdTags.get(0));
+        assertFalse(stdout.toString(StandardCharsets.UTF_8.name()).contains("v9.9.9"));
+    }
+
+    @Test
+    void tagFromReleasePlanSkipsReleaseBranchPipeline(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createAppliedReleaseRepository(tempDir, "1.2.0-SNAPSHOT");
+        RecordingRuntime runtime = new RecordingRuntime(repoRoot);
+        runtime.changedPaths.put("pom.xml", Boolean.TRUE);
+        FakeGitlabApiClient api = new FakeGitlabApiClient();
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+
+        Map<String, String> options = tagOptions();
+        options.put("current-branch", "changeset-release/main");
+        new GitlabReleaseSupport(repoRoot, new PrintStream(stdout, true), runtime, api)
+            .tagFromReleasePlan(GitlabTagRequest.fromOptions(options));
+
+        assertTrue(runtime.createdTags.isEmpty());
+        assertTrue(stdout.toString(StandardCharsets.UTF_8.name())
+            .contains("Current branch matches the configured release branch."));
+    }
+
+    @Test
+    void tagFromReleasePlanSkipsNonBaseBranchPipeline(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createAppliedReleaseRepository(tempDir, "1.2.0-SNAPSHOT");
+        RecordingRuntime runtime = new RecordingRuntime(repoRoot);
+        runtime.changedPaths.put("pom.xml", Boolean.TRUE);
+        FakeGitlabApiClient api = new FakeGitlabApiClient();
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+
+        Map<String, String> options = tagOptions();
+        options.put("current-branch", "feature/topic");
+        new GitlabReleaseSupport(repoRoot, new PrintStream(stdout, true), runtime, api)
+            .tagFromReleasePlan(GitlabTagRequest.fromOptions(options));
+
+        assertTrue(runtime.createdTags.isEmpty());
+        assertTrue(stdout.toString(StandardCharsets.UTF_8.name())
+            .contains("Current branch feature/topic does not match base branch main."));
+    }
+
+    @Test
+    void tagFromReleasePlanSkipsWhenRemoteTagAlreadyExists(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createAppliedReleaseRepository(tempDir, "1.2.0-SNAPSHOT");
+        RecordingRuntime runtime = new RecordingRuntime(repoRoot);
+        runtime.changedPaths.put("pom.xml", Boolean.TRUE);
+        runtime.remoteTagExists = true;
+        FakeGitlabApiClient api = new FakeGitlabApiClient();
+        api.remoteUrl = "https://bot:token@example.com/group/repo.git";
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+
+        new GitlabReleaseSupport(repoRoot, new PrintStream(stdout, true), runtime, api)
+            .tagFromReleasePlan(GitlabTagRequest.fromOptions(tagOptions()));
+
+        assertTrue(runtime.createdTags.isEmpty());
+        assertTrue(runtime.pushes.isEmpty());
+        assertTrue(stdout.toString(StandardCharsets.UTF_8.name()).contains("Tag already exists remotely. Skip."));
+    }
+
+    @Test
+    void tagFromReleasePlanFreshFallbackRejectsPerModuleWithoutManifest(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createAppliedReleaseRepository(tempDir, "1.2.0-SNAPSHOT");
+        Files.write(
+            repoRoot.resolve(".changesets").resolve("config.jsonc"),
+            "{\n  \"tagStrategy\": \"per-module\"\n}\n".getBytes(StandardCharsets.UTF_8)
+        );
+        RecordingRuntime runtime = new RecordingRuntime(repoRoot);
+        runtime.changedPaths.put("pom.xml", Boolean.TRUE);
+        FakeGitlabApiClient api = new FakeGitlabApiClient();
+        api.remoteUrl = "https://bot:token@example.com/group/repo.git";
+
+        IllegalStateException error = assertThrows(IllegalStateException.class,
+            () -> new GitlabReleaseSupport(repoRoot, new PrintStream(new ByteArrayOutputStream(), true), runtime, api)
+                .tagFromReleasePlan(GitlabTagRequest.fromOptions(tagOptions())));
+
+        assertTrue(error.getMessage().contains("Fresh release metadata cannot infer per-module release targets"));
     }
 
     private static Path createRepository(Path tempDir) throws IOException {
@@ -183,7 +317,18 @@ class GitlabReleaseSupportTest {
         return repoRoot;
     }
 
+    private static Path createAppliedReleaseRepository(Path tempDir, String revision) throws IOException {
+        Path repoRoot = createRepository(tempDir);
+        Files.delete(repoRoot.resolve(".changesets").resolve("minor-release.md"));
+        Files.write(repoRoot.resolve("pom.xml"), singleModulePom(revision).getBytes(StandardCharsets.UTF_8));
+        return repoRoot;
+    }
+
     private static String singleModulePom() {
+        return singleModulePom("1.1.1-SNAPSHOT");
+    }
+
+    private static String singleModulePom(String revision) {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
             + "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n"
             + "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
@@ -193,9 +338,17 @@ class GitlabReleaseSupportTest {
             + "    <artifactId>fixture-app</artifactId>\n"
             + "    <version>${revision}</version>\n"
             + "    <properties>\n"
-            + "        <revision>1.1.1-SNAPSHOT</revision>\n"
+            + "        <revision>" + revision + "</revision>\n"
             + "    </properties>\n"
             + "</project>\n";
+    }
+
+    private static Map<String, String> tagOptions() {
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("before-sha", "abc111");
+        options.put("current-sha", "abc222");
+        options.put("execute", "true");
+        return options;
     }
 
     private static GitlabReleasePlanRequest planRequest() {
@@ -232,6 +385,8 @@ class GitlabReleaseSupportTest {
         String pushExpectedOldSha;
         List<String> createdTags = new ArrayList<String>();
         List<String> pushes = new ArrayList<String>();
+        Map<String, Boolean> changedPaths = new HashMap<String, Boolean>();
+        boolean remoteTagExists;
 
         RecordingRuntime(Path repoRoot) {
             super(repoRoot);
@@ -272,7 +427,13 @@ class GitlabReleaseSupportTest {
 
         @Override
         public boolean remoteTagExists(String tagName, String remoteUrl) {
-            return false;
+            return remoteTagExists;
+        }
+
+        @Override
+        public boolean changedBetween(String beforeSha, String currentSha, String path) {
+            Boolean changed = changedPaths.get(path);
+            return changed != null && changed.booleanValue();
         }
 
         @Override

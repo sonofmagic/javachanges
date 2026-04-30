@@ -131,16 +131,17 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
             return;
         }
 
-        if (!releaseMetadataChangedBetween(request, beforeSha, currentSha)) {
+        ReleaseMetadataSource metadataSource = selectReleaseMetadataSource(request, beforeSha, currentSha);
+        if (metadataSource == ReleaseMetadataSource.NONE) {
             report.skipped = true;
             report.reason = request.fresh
                 ? ReleaseMessages.noFreshReleaseStateChangeDetectedReason()
-                : ReleaseMessages.noReleasePlanManifestChangeDetectedReason();
+                : ReleaseMessages.noReleaseMetadataChangeDetectedReason();
             AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.releaseChangeReasonSkipTag(report.reason));
             return;
         }
 
-        ReleaseAutomationSupport.ReleaseDescriptor release = request.fresh
+        ReleaseAutomationSupport.ReleaseDescriptor release = metadataSource == ReleaseMetadataSource.FRESH
             ? descriptorFromFreshPlan(report)
             : descriptorFromManifest(report);
         List<String> tagNames = release.tagNames();
@@ -227,17 +228,45 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
         AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.createdGitlabRelease(tagName));
     }
 
-    private boolean releaseMetadataChangedBetween(GitlabTagRequest request, String beforeSha, String currentSha)
+    private ReleaseMetadataSource selectReleaseMetadataSource(GitlabTagRequest request, String beforeSha, String currentSha)
         throws IOException, InterruptedException {
-        if (!request.fresh) {
-            return runtime.changedBetween(beforeSha, currentSha,
-                ChangesetPaths.DIR + "/" + ChangesetPaths.RELEASE_PLAN_JSON);
+        if (request.fresh) {
+            return freshReleaseStateChangedBetween(beforeSha, currentSha)
+                ? ReleaseMetadataSource.FRESH
+                : ReleaseMetadataSource.NONE;
         }
+        if (releasePlanManifestExists() && releasePlanManifestChangedBetween(beforeSha, currentSha)) {
+            return ReleaseMetadataSource.MANIFEST;
+        }
+        if (freshReleaseStateChangedBetween(beforeSha, currentSha)) {
+            return ReleaseMetadataSource.FRESH;
+        }
+        return ReleaseMetadataSource.NONE;
+    }
+
+    private boolean releasePlanManifestExists() {
+        return Files.exists(repoRoot.resolve(ChangesetPaths.DIR).resolve(ChangesetPaths.RELEASE_PLAN_JSON));
+    }
+
+    private boolean releasePlanManifestChangedBetween(String beforeSha, String currentSha)
+        throws IOException, InterruptedException {
+        return runtime.changedBetween(beforeSha, currentSha,
+            ChangesetPaths.DIR + "/" + ChangesetPaths.RELEASE_PLAN_JSON);
+    }
+
+    private boolean freshReleaseStateChangedBetween(String beforeSha, String currentSha)
+        throws IOException, InterruptedException {
         for (String path : BuildModelSupport.releaseStateGitPaths(repoRoot)) {
             if (runtime.changedBetween(beforeSha, currentSha, path)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private enum ReleaseMetadataSource {
+        MANIFEST,
+        FRESH,
+        NONE
     }
 }

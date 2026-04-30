@@ -752,6 +752,10 @@ public final class ReleaseMessages {
         return message("release.reason.noReleasePlanManifestChangeDetected");
     }
 
+    public static String noReleaseMetadataChangeDetectedReason() {
+        return message("release.reason.noReleaseMetadataChangeDetected");
+    }
+
     public static String createdAndPushedTagReason() {
         return message("release.reason.createdAndPushedTag");
     }
