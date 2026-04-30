@@ -101,9 +101,13 @@ jobs:
             should_publish=false
           elif [ "${{ github.event_name }}" = "workflow_run" ]; then
             head_sha="$(git rev-parse HEAD)"
+            head_subject="$(git log -1 --format=%s)"
+            expected_subject="chore(release): apply changesets for ${RELEASE_TAG}"
             if [ -z "$tag_sha" ]; then
-              echo "No release tag ${RELEASE_TAG} exists on this CI success. Skipping publish."
-              should_publish=false
+              if [ "$head_subject" != "$expected_subject" ]; then
+                echo "No release tag ${RELEASE_TAG} exists and HEAD is not the release apply commit. Skipping publish."
+                should_publish=false
+              fi
             elif [ "$tag_sha" != "$head_sha" ]; then
               echo "::error title=Release tag points at a different commit::${RELEASE_TAG} points at ${tag_sha}, but this CI run checked out ${head_sha}. Move the tag or run Publish Release manually with the intended commit."
               exit 1
