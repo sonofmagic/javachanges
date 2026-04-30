@@ -401,7 +401,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --directory /path
 | `doctor-local` | 失败时会包含分组检查结果、建议列表和最终错误信息 |
 | `doctor-platform` | 会带上 `platform` 以及 env / CLI 检查分组 |
 | `audit-vars` | 会带上 `platform`、审计分组结果，以及失败时的最终错误信息 |
-| `doctor-publish` | 会带上发布目标、模式、构建工具、模块、当前版本、就绪检查、修复建议和下一步命令 |
+| `doctor-publish` | 会带上发布目标、模式、构建工具、模块、当前版本、发布版本、snapshot 模式字段、就绪检查、修复建议和下一步命令 |
 | `preflight` | 会带上发布动作元数据，以及 `snapshotVersionMode`、`effectiveVersion`、`snapshotBuildStampApplied` 等 snapshot 模式字段 |
 | `publish` | 会带上 tag、module、releaseVersion、releaseNotesFile 等发布元数据 |
 | `gradle-publish` | 会带上 Gradle 发布动作元数据，例如 tag、module、releaseVersion 和 snapshot mode |
@@ -468,9 +468,9 @@ CI 中可以使用 JSON 输出：
 mvn -q -DskipTests compile exec:java -Dexec.args="doctor-publish --directory /path/to/repo --format json"
 ```
 
-对于 Maven 项目，会检查构建模型、当前版本、可选目标模块、干净 Git 工作区、Maven 命令、必需 POM 元数据、Central 发布 profiles、source/javadoc/signing 插件、Central publishing plugin 配置、仓库凭据和 GPG 签名输入。
+对于 Maven 项目，会检查构建模型、当前版本、实际 snapshot 发布版本、可选目标模块、干净 Git 工作区、Maven 命令、必需 POM 元数据、Central 发布 profiles、source/javadoc/signing 插件、Central publishing plugin 配置、仓库凭据和 GPG 签名输入。
 
-对于 Gradle 项目，会检查 `gradle.properties`、可选目标模块、干净 Git 工作区、settings/build 文件、检测到的模块、Gradle 命令、`maven-publish` 或 `publishing` 配置、签名配置或 Gradle 签名环境变量、仓库凭据，以及下一步 `gradle-publish` 命令。
+对于 Gradle 项目，会检查 `gradle.properties`、实际 snapshot 发布版本、可选目标模块、干净 Git 工作区、settings/build 文件、检测到的模块、Gradle 命令、`maven-publish` 或 `publishing` 配置、签名配置或 Gradle 签名环境变量、仓库凭据，以及下一步 `gradle-publish` 命令。
 
 关键参数：
 
@@ -480,6 +480,8 @@ mvn -q -DskipTests compile exec:java -Dexec.args="doctor-publish --directory /pa
 | `--mode` | 发布模式：`auto`、`snapshot` 或 `release` |
 | `--module` | 限制到单个 Maven artifactId 或 Gradle project name，并同步影响下一步命令 |
 | `--allow-dirty` | 跳过干净工作区检查，并在下一步命令里带上 `--allow-dirty true` |
+| `--snapshot-version-mode` | snapshot 版本策略：`stamped` 或 `plain` |
+| `--snapshot-build-stamp` | 显式指定 snapshot 发布标识；stamped 模式下未传入时，doctor 会生成一个并同步写入下一步命令 |
 | `--format json` | 输出机器可读的就绪检查 |
 
 ### 8.2 `preflight`

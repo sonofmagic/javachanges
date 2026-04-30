@@ -1449,9 +1449,64 @@ class JavaChangesCliTest {
         assertEquals("snapshot", root.get("mode").asText());
         assertEquals("maven", root.get("buildTool").asText());
         assertEquals("1.2.3-SNAPSHOT", root.get("currentRevision").asText());
+        assertEquals("stamped", root.get("snapshotVersionMode").asText());
+        assertTrue(root.get("snapshotBuildStampApplied").asBoolean());
+        assertTrue(root.get("publishVersion").asText().matches("1\\.2\\.3-[0-9]{8}\\.[0-9]{6}\\.[A-Za-z0-9]+-SNAPSHOT"));
+        assertTrue(root.get("nextCommands").get(0).asText().contains("--snapshot-version-mode stamped"));
+        assertTrue(root.get("nextCommands").get(0).asText().contains("--snapshot-build-stamp " + root.get("snapshotBuildStamp").asText()));
         assertTrue(hasCheck(root, "Maven POM", "Central metadata", "OK"));
         assertTrue(hasCheck(root, "Credentials", "GPG signing", "OK"));
         assertFalse(root.has("suggestions"));
+    }
+
+    @Test
+    void doctorPublishJsonSupportsExplicitSnapshotBuildStamp(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot);
+        Files.write(repoRoot.resolve("pom.xml"), centralReadyPom().getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.mavenWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+        commitAll(repoRoot);
+
+        ExecutionResult result = executeProcess(publishDoctorEnv(),
+            "doctor-publish",
+            "--directory", repoRoot.toString(),
+            "--snapshot-build-stamp", "20260430.120000.ci001",
+            "--format", "json"
+        );
+
+        assertEquals(0, result.exitCode, result.stdout + result.stderr);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertTrue(root.get("ok").asBoolean());
+        assertEquals("stamped", root.get("snapshotVersionMode").asText());
+        assertEquals("20260430.120000.ci001", root.get("snapshotBuildStamp").asText());
+        assertEquals("1.2.3-20260430.120000.ci001-SNAPSHOT", root.get("publishVersion").asText());
+        assertTrue(root.get("nextCommands").get(0).asText().contains("--snapshot-build-stamp 20260430.120000.ci001"));
+    }
+
+    @Test
+    void doctorPublishJsonSupportsPlainSnapshotMode(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot);
+        Files.write(repoRoot.resolve("pom.xml"), centralReadyPom().getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.mavenWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+        commitAll(repoRoot);
+
+        ExecutionResult result = executeProcess(publishDoctorEnv(),
+            "doctor-publish",
+            "--directory", repoRoot.toString(),
+            "--snapshot-version-mode", "plain",
+            "--format", "json"
+        );
+
+        assertEquals(0, result.exitCode, result.stdout + result.stderr);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertTrue(root.get("ok").asBoolean());
+        assertEquals("plain", root.get("snapshotVersionMode").asText());
+        assertFalse(root.get("snapshotBuildStampApplied").asBoolean());
+        assertTrue(root.get("snapshotBuildStamp").isNull());
+        assertEquals("1.2.3-SNAPSHOT", root.get("publishVersion").asText());
+        assertTrue(root.get("nextCommands").get(0).asText().contains("--snapshot-version-mode plain"));
+        assertFalse(root.get("nextCommands").get(0).asText().contains("--snapshot-build-stamp"));
     }
 
     @Test

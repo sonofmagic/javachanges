@@ -24,6 +24,12 @@ public final class JavaChangesDoctorPublishMojo extends AbstractJavaChangesMojo 
     @Parameter(property = "javachanges.allowDirty", defaultValue = "false")
     private boolean allowDirty;
 
+    @Parameter(property = "javachanges.snapshotBuildStamp")
+    private String snapshotBuildStamp;
+
+    @Parameter(property = "javachanges.snapshotVersionMode")
+    private String snapshotVersionMode;
+
     @Parameter(property = "javachanges.format")
     private String format;
 
@@ -34,6 +40,8 @@ public final class JavaChangesDoctorPublishMojo extends AbstractJavaChangesMojo 
         JavaChangesMavenPluginSupport.addOption(args, "--mode", mode);
         JavaChangesMavenPluginSupport.addOption(args, "--module", module);
         JavaChangesMavenPluginSupport.addFlag(args, "--allow-dirty", allowDirty);
+        JavaChangesMavenPluginSupport.addOption(args, "--snapshot-build-stamp", snapshotBuildStamp);
+        JavaChangesMavenPluginSupport.addOption(args, "--snapshot-version-mode", snapshotVersionMode);
         JavaChangesMavenPluginSupport.addOption(args, "--format", format);
         executeStructuredGoal("doctor-publish", "doctor-publish", args.toArray(new String[0]));
     }

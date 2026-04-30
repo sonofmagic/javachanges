@@ -1,6 +1,7 @@
 package io.github.sonofmagic.javachanges.core;
 
 import io.github.sonofmagic.javachanges.core.config.ChangesetConfigSupport;
+import io.github.sonofmagic.javachanges.core.publish.PublishRuntime;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -56,9 +57,7 @@ public final class PublishDoctorSupport {
         report.module = request.module;
         report.currentRevision = BuildModelSupport.readRevision(repoRoot);
         report.mode = resolveMode(request.mode, report.currentRevision);
-        report.publishVersion = "snapshot".equals(report.mode)
-            ? report.currentRevision
-            : ReleaseTextUtils.stripSnapshot(report.currentRevision);
+        resolvePublishVersion(report, request);
 
         if (model.type == BuildModelSupport.BuildType.GRADLE) {
             inspectGradle(report, model, request);
@@ -414,6 +413,12 @@ public final class PublishDoctorSupport {
         if (report.publishVersion != null) {
             out.println("Publish version: " + report.publishVersion);
         }
+        if (report.snapshotVersionMode != null) {
+            out.println("Snapshot version mode: " + report.snapshotVersionMode);
+        }
+        if (report.snapshotBuildStamp != null) {
+            out.println("Snapshot build stamp: " + report.snapshotBuildStamp);
+        }
         if (report.module != null) {
             out.println("Module: " + report.module);
         }
@@ -484,10 +489,45 @@ public final class PublishDoctorSupport {
         return request.allowDirty ? " --allow-dirty true" : "";
     }
 
+    private void resolvePublishVersion(PublishDoctorReport report, PublishDoctorRequest request)
+        throws IOException, InterruptedException {
+        if (!"snapshot".equals(report.mode)) {
+            report.publishVersion = ReleaseTextUtils.stripSnapshot(report.currentRevision);
+            return;
+        }
+        SnapshotVersionMode snapshotVersionMode = resolveSnapshotVersionMode(request);
+        report.snapshotVersionMode = snapshotVersionMode.id;
+        if (!report.currentRevision.endsWith("-SNAPSHOT")) {
+            report.publishVersion = report.currentRevision;
+            return;
+        }
+        if (snapshotVersionMode == SnapshotVersionMode.PLAIN) {
+            report.publishVersion = report.currentRevision;
+            report.snapshotBuildStampApplied = false;
+            return;
+        }
+        String buildStamp = ReleaseTextUtils.firstNonBlank(request.snapshotBuildStamp,
+            new PublishRuntime(repoRoot).snapshotBuildStamp());
+        report.snapshotBuildStamp = buildStamp;
+        report.snapshotBuildStampApplied = true;
+        report.publishVersion = new VersionSupport(repoRoot).resolveSnapshotPublishVersion(buildStamp);
+    }
+
+    private SnapshotVersionMode resolveSnapshotVersionMode(PublishDoctorRequest request) throws IOException {
+        ChangesetConfigSupport.ChangesetConfig config = ChangesetConfigSupport.load(repoRoot);
+        return SnapshotVersionMode.parse(request.snapshotVersionMode, config.snapshotVersionMode());
+    }
+
     private String publishModeArgs(PublishDoctorReport report, PublishDoctorRequest request) throws IOException {
         StringBuilder builder = new StringBuilder();
         if ("snapshot".equals(report.mode)) {
             builder.append(" --snapshot");
+            if (report.snapshotVersionMode != null) {
+                builder.append(" --snapshot-version-mode ").append(report.snapshotVersionMode);
+            }
+            if (report.snapshotBuildStamp != null) {
+                builder.append(" --snapshot-build-stamp ").append(report.snapshotBuildStamp);
+            }
         } else {
             builder.append(" --tag ").append(releaseTag(report, request));
         }

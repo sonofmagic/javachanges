@@ -23,6 +23,14 @@ final class DoctorPublishCommand extends AbstractCliCommand {
         description = "Allow a dirty working tree.")
     private boolean allowDirty;
 
+    @Option(names = "--snapshot-build-stamp",
+        description = "Explicit snapshot build stamp used to derive the publish revision.")
+    private String snapshotBuildStamp;
+
+    @Option(names = "--snapshot-version-mode",
+        description = "Snapshot version mode: plain or stamped.")
+    private String snapshotVersionMode;
+
     @Option(names = "--format", description = "Output format: text or json.")
     private String format;
 
@@ -33,6 +41,8 @@ final class DoctorPublishCommand extends AbstractCliCommand {
             option("mode", mode),
             option("module", module),
             flag("allow-dirty", allowDirty),
+            option("snapshot-build-stamp", snapshotBuildStamp),
+            option("snapshot-version-mode", snapshotVersionMode),
             option("format", format)
         );
         PublishDoctorRequest request = PublishDoctorRequest.fromOptions(options);

@@ -7,13 +7,18 @@ public final class PublishDoctorRequest {
     public final String mode;
     public final String module;
     public final boolean allowDirty;
+    public final String snapshotVersionMode;
+    public final String snapshotBuildStamp;
     public final OutputFormat format;
 
-    private PublishDoctorRequest(String target, String mode, String module, boolean allowDirty, OutputFormat format) {
+    private PublishDoctorRequest(String target, String mode, String module, boolean allowDirty,
+                                 String snapshotVersionMode, String snapshotBuildStamp, OutputFormat format) {
         this.target = target;
         this.mode = mode;
         this.module = module;
         this.allowDirty = allowDirty;
+        this.snapshotVersionMode = snapshotVersionMode;
+        this.snapshotBuildStamp = snapshotBuildStamp;
         this.format = format;
     }
 
@@ -23,6 +28,9 @@ public final class PublishDoctorRequest {
             parseMode(options.get("mode")),
             ReleaseTextUtils.trimToNull(options.get("module")),
             Boolean.parseBoolean(String.valueOf(options.get("allow-dirty"))),
+            ReleaseTextUtils.trimToNull(options.get("snapshot-version-mode")),
+            ReleaseTextUtils.firstNonBlank(ReleaseTextUtils.trimToNull(options.get("snapshot-build-stamp")),
+                System.getenv("JAVACHANGES_SNAPSHOT_BUILD_STAMP")),
             OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );
     }

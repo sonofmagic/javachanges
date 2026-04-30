@@ -13,6 +13,9 @@ public final class PublishDoctorReport {
     public String module;
     public String currentRevision;
     public String publishVersion;
+    public String snapshotVersionMode;
+    public String snapshotBuildStamp;
+    public boolean snapshotBuildStampApplied;
     public final List<Check> checks = new ArrayList<Check>();
     public final List<String> suggestions = new ArrayList<String>();
     public final List<String> nextCommands = new ArrayList<String>();
@@ -72,6 +75,9 @@ public final class PublishDoctorReport {
         payload.put("module", module);
         payload.put("currentRevision", currentRevision);
         payload.put("publishVersion", publishVersion);
+        payload.put("snapshotVersionMode", snapshotVersionMode);
+        payload.put("snapshotBuildStamp", snapshotBuildStamp);
+        payload.put("snapshotBuildStampApplied", Boolean.valueOf(snapshotBuildStampApplied));
         payload.put("reason", reason());
         List<Map<String, Object>> renderedChecks = new ArrayList<Map<String, Object>>();
         for (Check check : checks) {
