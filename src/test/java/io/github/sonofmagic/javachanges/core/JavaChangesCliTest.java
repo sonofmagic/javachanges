@@ -1169,6 +1169,60 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void writeSettingsReleaseModeOnlyRequiresReleaseCredentials(@TempDir Path tempDir) throws Exception {
+        Path output = tempDir.resolve("settings.xml");
+        Map<String, String> environment = new LinkedHashMap<String, String>();
+        environment.put("MAVEN_RELEASE_REPOSITORY_USERNAME", "release-user");
+        environment.put("MAVEN_RELEASE_REPOSITORY_PASSWORD", "release-secret");
+
+        ExecutionResult result = executeProcess(environment,
+            "write-settings",
+            "--output", output.toString(),
+            "--mode", "release"
+        );
+
+        assertEquals(0, result.exitCode, result.stdout + result.stderr);
+        String settings = read(output);
+        assertTrue(settings.contains("<id>maven-releases</id>"));
+        assertTrue(settings.contains("<username>release-user</username>"));
+        assertFalse(settings.contains("<id>maven-snapshots</id>"));
+    }
+
+    @Test
+    void writeSettingsSnapshotModeOnlyRequiresSnapshotCredentials(@TempDir Path tempDir) throws Exception {
+        Path output = tempDir.resolve("settings.xml");
+        Map<String, String> environment = new LinkedHashMap<String, String>();
+        environment.put("MAVEN_SNAPSHOT_REPOSITORY_USERNAME", "snapshot-user");
+        environment.put("MAVEN_SNAPSHOT_REPOSITORY_PASSWORD", "snapshot-secret");
+
+        ExecutionResult result = executeProcess(environment,
+            "write-settings",
+            "--output", output.toString(),
+            "--mode", "snapshot"
+        );
+
+        assertEquals(0, result.exitCode, result.stdout + result.stderr);
+        String settings = read(output);
+        assertFalse(settings.contains("<id>maven-releases</id>"));
+        assertTrue(settings.contains("<id>maven-snapshots</id>"));
+        assertTrue(settings.contains("<username>snapshot-user</username>"));
+    }
+
+    @Test
+    void writeSettingsRejectsUnsupportedMode(@TempDir Path tempDir) throws Exception {
+        Path output = tempDir.resolve("settings.xml");
+
+        ExecutionResult result = execute(
+            "write-settings",
+            "--output", output.toString(),
+            "--mode", "staging"
+        );
+
+        assertNotEquals(0, result.exitCode);
+        assertTrue(result.stderr.contains("Unsupported settings mode: staging. Use all, release, or snapshot."));
+    }
+
+    @Test
     void gradlePublishDryRunRendersPublishCommand(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createGradleRepository(tempDir, false);
         Files.write(repoRoot.resolve(ReleaseProcessUtils.gradleWrapperPath()),

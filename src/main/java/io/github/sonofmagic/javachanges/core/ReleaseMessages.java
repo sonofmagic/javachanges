@@ -396,6 +396,10 @@ public final class ReleaseMessages {
         return message("core.unsupportedSnapshotVersionMode", value);
     }
 
+    public static String unsupportedSettingsMode(String value) {
+        return message("core.unsupportedSettingsMode", value);
+    }
+
     public static String unsupportedTagStrategy(String value) {
         return message("core.unsupportedTagStrategy", value);
     }

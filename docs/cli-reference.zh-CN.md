@@ -372,6 +372,8 @@ Gradle 仓库中，它输出 Gradle project selector `:core`。
 | `audit-vars` | 对比本地 env 和远端平台变量，或通过 `--format json` 输出 JSON |
 | `ensure-gpg-public-key` | 上传当前签名公钥，并等待支持的 keyserver 能够查询到它 |
 
+`write-settings` 默认使用 `--mode all`，会同时写 release 和 snapshot server。CI job 只拥有其中一条发布链路的凭据时，可以改用 `--mode release` 或 `--mode snapshot`。
+
 示例：
 
 ```bash

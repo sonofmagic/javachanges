@@ -924,11 +924,33 @@ final class WriteSettingsCommand extends AbstractCliCommand {
     @Option(names = "--output", required = true, description = "Output path for settings.xml.")
     private String output;
 
+    @Option(names = "--mode", description = "Settings mode: all, release, or snapshot. Defaults to all.")
+    private String mode;
+
     @Override
     public Integer call() throws Exception {
-        MavenSettingsWriter.write(Paths.get(output));
+        MavenSettingsWriter.RepositoryMode repositoryMode = repositoryMode();
+        if (repositoryMode == null) {
+            MavenSettingsWriter.write(Paths.get(output));
+        } else {
+            MavenSettingsWriter.write(Paths.get(output), repositoryMode);
+        }
         out().println(ReleaseMessages.generatedMavenSettings(output));
         return success();
+    }
+
+    private MavenSettingsWriter.RepositoryMode repositoryMode() {
+        String value = trimToNull(mode);
+        if (value == null || "all".equalsIgnoreCase(value)) {
+            return null;
+        }
+        if ("release".equalsIgnoreCase(value)) {
+            return MavenSettingsWriter.RepositoryMode.RELEASE;
+        }
+        if ("snapshot".equalsIgnoreCase(value)) {
+            return MavenSettingsWriter.RepositoryMode.SNAPSHOT;
+        }
+        throw new IllegalArgumentException(ReleaseMessages.unsupportedSettingsMode(value));
     }
 }
 

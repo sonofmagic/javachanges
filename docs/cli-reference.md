@@ -373,6 +373,8 @@ For Gradle repositories, it prints the Gradle project selector `:core`.
 | `audit-vars` | Compare local env values with remote platform state, or emit JSON with `--format json` |
 | `ensure-gpg-public-key` | Upload the current public signing key and wait until a supported keyserver can fetch it |
 
+`write-settings` defaults to `--mode all`, which writes release and snapshot server entries. Use `--mode release` or `--mode snapshot` when a CI job only has credentials for one publish lane.
+
 Example:
 
 ```bash
