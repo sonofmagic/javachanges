@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.10.2 - 2026-04-30
+
+### Patch Changes
+
+- Avoid duplicate release publishing by running the publish workflow only after main CI succeeds. (packages: javachanges)
+
 ## 1.10.1 - 2026-04-30
 
 ### Patch Changes
