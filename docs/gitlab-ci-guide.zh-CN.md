@@ -55,6 +55,8 @@
 | `MAVEN_SNAPSHOT_REPOSITORY_ID` | 是 | snapshot 仓库 id |
 | `MAVEN_REPOSITORY_USERNAME` | 是，除非你显式拆分了 release/snapshot 凭据 | 通用用户名 |
 | `MAVEN_REPOSITORY_PASSWORD` | 是，除非你显式拆分了 release/snapshot 凭据 | 通用密码 |
+| `MAVEN_CENTRAL_USERNAME` | 否 | Sonatype Central Portal token 用户名回退值 |
+| `MAVEN_CENTRAL_PASSWORD` | 否 | Sonatype Central Portal token 密码回退值 |
 | `MAVEN_RELEASE_REPOSITORY_USERNAME` | 否 | release 专用用户名 |
 | `MAVEN_RELEASE_REPOSITORY_PASSWORD` | 否 | release 专用密码 |
 | `MAVEN_SNAPSHOT_REPOSITORY_USERNAME` | 否 | snapshot 专用用户名 |

@@ -228,19 +228,19 @@ summary: automate javachanges self-release publishing via GitHub Actions
 | --- |
 | `MAVEN_REPOSITORY_USERNAME` |
 | `MAVEN_REPOSITORY_PASSWORD` |
+| `MAVEN_CENTRAL_USERNAME` |
+| `MAVEN_CENTRAL_PASSWORD` |
 | `MAVEN_RELEASE_REPOSITORY_USERNAME` |
 | `MAVEN_RELEASE_REPOSITORY_PASSWORD` |
 | `MAVEN_SNAPSHOT_REPOSITORY_USERNAME` |
 | `MAVEN_SNAPSHOT_REPOSITORY_PASSWORD` |
 
-### 6.3 当前仓库自举发布额外需要的 Maven Central secrets
+### 6.3 当前仓库自举发布额外需要的 Maven Central 签名 secrets
 
 本仓库自己的正式发布 workflow 还需要：
 
 | Secret | 用途 |
 | --- | --- |
-| `MAVEN_CENTRAL_USERNAME` | Sonatype Central Portal token 用户名 |
-| `MAVEN_CENTRAL_PASSWORD` | Sonatype Central Portal token 密码 |
 | `MAVEN_GPG_PRIVATE_KEY` | ASCII armored 私钥 |
 | `MAVEN_GPG_PASSPHRASE` | GPG 口令 |
 
@@ -258,6 +258,8 @@ summary: automate javachanges self-release publishing via GitHub Actions
 | `MAVEN_SNAPSHOT_REPOSITORY_ID` | 否 | 否 |
 | `MAVEN_REPOSITORY_USERNAME` | 是 | 是 |
 | `MAVEN_REPOSITORY_PASSWORD` | 是 | 是 |
+| `MAVEN_CENTRAL_USERNAME` | 是 | 是 |
+| `MAVEN_CENTRAL_PASSWORD` | 是 | 是 |
 | `MAVEN_RELEASE_REPOSITORY_USERNAME` | 是 | 是 |
 | `MAVEN_RELEASE_REPOSITORY_PASSWORD` | 是 | 是 |
 | `MAVEN_SNAPSHOT_REPOSITORY_USERNAME` | 是 | 是 |

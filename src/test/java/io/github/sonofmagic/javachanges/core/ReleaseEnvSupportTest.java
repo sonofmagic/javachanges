@@ -110,6 +110,7 @@ class ReleaseEnvSupportTest {
         assertTrue(json.contains("GitHub Actions Variables"));
         assertTrue(json.contains("GitHub Actions Secrets"));
         assertTrue(json.contains("GitLab CI/CD Variables"));
+        assertTrue(json.contains("MAVEN_CENTRAL_USERNAME"));
         assertTrue(json.contains("OPTIONAL (fallback: CI_JOB_TOKEN)"));
     }
 
@@ -159,8 +160,10 @@ class ReleaseEnvSupportTest {
         assertTrue(text.contains("== GitHub CLI Commands =="));
         assertTrue(text.contains("gh variable set MAVEN_RELEASE_REPOSITORY_URL"));
         assertTrue(text.contains("gh secret set MAVEN_REPOSITORY_USERNAME"));
+        assertTrue(text.contains("gh secret set MAVEN_CENTRAL_USERNAME"));
         assertTrue(text.contains("== GitLab CLI Commands =="));
         assertTrue(text.contains("glab variable set MAVEN_REPOSITORY_USERNAME"));
+        assertTrue(text.contains("glab variable set MAVEN_CENTRAL_USERNAME"));
         assertTrue(text.contains("--masked --protected"));
     }
 
@@ -182,10 +185,13 @@ class ReleaseEnvSupportTest {
         String text = stdout.toString(StandardCharsets.UTF_8.name());
 
         assertFalse(text.contains("ci-password"));
+        assertFalse(text.contains("central-secret"));
         assertFalse(text.contains("glrt-token"));
         assertTrue(text.contains("ci****rd"));
+        assertTrue(text.contains("ce****et"));
         assertTrue(text.contains("gl****en"));
         assertTrue(runtime.executedCommands.toString().contains("ci-password"));
+        assertTrue(runtime.executedCommands.toString().contains("central-secret"));
         assertTrue(runtime.executedCommands.toString().contains("glrt-token"));
     }
 }

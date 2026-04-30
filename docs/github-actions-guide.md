@@ -79,6 +79,8 @@ Template fields in `env/release.env.example`:
 | `MAVEN_SNAPSHOT_REPOSITORY_ID` | Snapshot server id used in Maven settings |
 | `MAVEN_REPOSITORY_USERNAME` | Shared username fallback |
 | `MAVEN_REPOSITORY_PASSWORD` | Shared password fallback |
+| `MAVEN_CENTRAL_USERNAME` | Optional Sonatype Central Portal token username fallback |
+| `MAVEN_CENTRAL_PASSWORD` | Optional Sonatype Central Portal token password fallback |
 | `MAVEN_RELEASE_REPOSITORY_USERNAME` | Optional explicit release username |
 | `MAVEN_RELEASE_REPOSITORY_PASSWORD` | Optional explicit release password |
 | `MAVEN_SNAPSHOT_REPOSITORY_USERNAME` | Optional explicit snapshot username |
@@ -122,7 +124,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="audit-vars --env-file env/rele
 | Remote type | Names |
 | --- | --- |
 | GitHub Actions variables | `MAVEN_RELEASE_REPOSITORY_URL`, `MAVEN_SNAPSHOT_REPOSITORY_URL`, `MAVEN_RELEASE_REPOSITORY_ID`, `MAVEN_SNAPSHOT_REPOSITORY_ID` |
-| GitHub Actions secrets | `MAVEN_REPOSITORY_USERNAME`, `MAVEN_REPOSITORY_PASSWORD`, `MAVEN_RELEASE_REPOSITORY_USERNAME`, `MAVEN_RELEASE_REPOSITORY_PASSWORD`, `MAVEN_SNAPSHOT_REPOSITORY_USERNAME`, `MAVEN_SNAPSHOT_REPOSITORY_PASSWORD` |
+| GitHub Actions secrets | `MAVEN_REPOSITORY_USERNAME`, `MAVEN_REPOSITORY_PASSWORD`, `MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`, `MAVEN_RELEASE_REPOSITORY_USERNAME`, `MAVEN_RELEASE_REPOSITORY_PASSWORD`, `MAVEN_SNAPSHOT_REPOSITORY_USERNAME`, `MAVEN_SNAPSHOT_REPOSITORY_PASSWORD` |
 
 ### 4.6 Generate a starter workflow
 

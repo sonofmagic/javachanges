@@ -22,6 +22,8 @@ final class ReleaseEnvTestFixtures {
             + "MAVEN_SNAPSHOT_REPOSITORY_ID=maven-snapshots\n"
             + "MAVEN_REPOSITORY_USERNAME=ci-user\n"
             + "MAVEN_REPOSITORY_PASSWORD=ci-password\n"
+            + "MAVEN_CENTRAL_USERNAME=central-user\n"
+            + "MAVEN_CENTRAL_PASSWORD=central-secret\n"
             + "GITLAB_RELEASE_TOKEN=glrt-token\n";
     }
 
@@ -87,13 +89,17 @@ final class ReleaseEnvTestFixtures {
             if (joined.contains("gh, secret, list")) {
                 return json("["
                     + "{\"name\":\"MAVEN_REPOSITORY_USERNAME\",\"updatedAt\":\"2026-04-22T10:05:00Z\"},"
-                    + "{\"name\":\"MAVEN_REPOSITORY_PASSWORD\",\"updatedAt\":\"2026-04-22T10:05:00Z\"}"
+                    + "{\"name\":\"MAVEN_REPOSITORY_PASSWORD\",\"updatedAt\":\"2026-04-22T10:05:00Z\"},"
+                    + "{\"name\":\"MAVEN_CENTRAL_USERNAME\",\"updatedAt\":\"2026-04-22T10:05:00Z\"},"
+                    + "{\"name\":\"MAVEN_CENTRAL_PASSWORD\",\"updatedAt\":\"2026-04-22T10:05:00Z\"}"
                     + "]");
             }
             if (joined.contains("/variables?per_page=100")) {
                 return json("["
                     + "{\"key\":\"MAVEN_REPOSITORY_USERNAME\",\"protected\":true,\"masked\":true},"
                     + "{\"key\":\"MAVEN_REPOSITORY_PASSWORD\",\"protected\":true,\"masked\":true},"
+                    + "{\"key\":\"MAVEN_CENTRAL_USERNAME\",\"protected\":true,\"masked\":true},"
+                    + "{\"key\":\"MAVEN_CENTRAL_PASSWORD\",\"protected\":true,\"masked\":true},"
                     + "{\"key\":\"GITLAB_RELEASE_TOKEN\",\"protected\":true,\"masked\":true}"
                     + "]");
             }

@@ -200,6 +200,8 @@ public final class ReleaseTextUtils {
         return !Arrays.asList(
             "MAVEN_RELEASE_REPOSITORY_ID",
             "MAVEN_SNAPSHOT_REPOSITORY_ID",
+            "MAVEN_CENTRAL_USERNAME",
+            "MAVEN_CENTRAL_PASSWORD",
             "MAVEN_RELEASE_REPOSITORY_USERNAME",
             "MAVEN_RELEASE_REPOSITORY_PASSWORD",
             "MAVEN_SNAPSHOT_REPOSITORY_USERNAME",

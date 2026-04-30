@@ -59,6 +59,8 @@ Recommended command mapping:
 | `MAVEN_SNAPSHOT_REPOSITORY_ID` | Yes | Snapshot repository id |
 | `MAVEN_REPOSITORY_USERNAME` | Yes, unless explicit split credentials are used | Shared username |
 | `MAVEN_REPOSITORY_PASSWORD` | Yes, unless explicit split credentials are used | Shared password |
+| `MAVEN_CENTRAL_USERNAME` | Optional | Sonatype Central Portal token username fallback |
+| `MAVEN_CENTRAL_PASSWORD` | Optional | Sonatype Central Portal token password fallback |
 | `MAVEN_RELEASE_REPOSITORY_USERNAME` | Optional | Explicit release username |
 | `MAVEN_RELEASE_REPOSITORY_PASSWORD` | Optional | Explicit release password |
 | `MAVEN_SNAPSHOT_REPOSITORY_USERNAME` | Optional | Explicit snapshot username |

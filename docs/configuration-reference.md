@@ -232,19 +232,19 @@ These are treated as non-secret variables:
 | --- |
 | `MAVEN_REPOSITORY_USERNAME` |
 | `MAVEN_REPOSITORY_PASSWORD` |
+| `MAVEN_CENTRAL_USERNAME` |
+| `MAVEN_CENTRAL_PASSWORD` |
 | `MAVEN_RELEASE_REPOSITORY_USERNAME` |
 | `MAVEN_RELEASE_REPOSITORY_PASSWORD` |
 | `MAVEN_SNAPSHOT_REPOSITORY_USERNAME` |
 | `MAVEN_SNAPSHOT_REPOSITORY_PASSWORD` |
 
-### 6.3 Repository-specific Maven Central release secrets
+### 6.3 Repository-specific Maven Central signing secrets
 
 The self-release workflow in this repository also requires:
 
 | Secret | Purpose |
 | --- | --- |
-| `MAVEN_CENTRAL_USERNAME` | Sonatype Central Portal token username |
-| `MAVEN_CENTRAL_PASSWORD` | Sonatype Central Portal token password |
 | `MAVEN_GPG_PRIVATE_KEY` | ASCII-armored private key |
 | `MAVEN_GPG_PASSPHRASE` | GPG key passphrase |
 
@@ -262,6 +262,8 @@ When `sync-vars --platform gitlab` is used, these values are written as GitLab v
 | `MAVEN_SNAPSHOT_REPOSITORY_ID` | No | No |
 | `MAVEN_REPOSITORY_USERNAME` | Yes | Yes |
 | `MAVEN_REPOSITORY_PASSWORD` | Yes | Yes |
+| `MAVEN_CENTRAL_USERNAME` | Yes | Yes |
+| `MAVEN_CENTRAL_PASSWORD` | Yes | Yes |
 | `MAVEN_RELEASE_REPOSITORY_USERNAME` | Yes | Yes |
 | `MAVEN_RELEASE_REPOSITORY_PASSWORD` | Yes | Yes |
 | `MAVEN_SNAPSHOT_REPOSITORY_USERNAME` | Yes | Yes |
