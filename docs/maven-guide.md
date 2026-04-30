@@ -63,15 +63,55 @@ Add the plugin to the target repository `pom.xml`:
 Then run the shortest local goals inside the Maven repository:
 
 ```bash
+mvn javachanges:setup
 mvn javachanges:status
+mvn javachanges:next
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
 mvn javachanges:plan
 mvn javachanges:plan -Djavachanges.apply=true
+mvn javachanges:validate
+mvn javachanges:init-env
+mvn javachanges:auth-help -Djavachanges.platform=github
+mvn javachanges:render-vars -Djavachanges.envFile=env/release.env.local -Djavachanges.platform=github
+mvn javachanges:doctor-local -Djavachanges.envFile=env/release.env.local
+mvn javachanges:doctor-platform -Djavachanges.envFile=env/release.env.local -Djavachanges.platform=github
+mvn javachanges:audit-vars -Djavachanges.envFile=env/release.env.local -Djavachanges.platform=github
 mvn javachanges:write-settings -Djavachanges.settingsMode=release
+mvn javachanges:ensure-gpg-public-key
+mvn javachanges:init-github-actions
+mvn javachanges:github-release-plan -Djavachanges.githubRepo=owner/repo -Djavachanges.writePlanFiles=false
+mvn javachanges:github-tag-from-plan -Djavachanges.fresh=true
+mvn javachanges:github-release-publish-state -Djavachanges.fresh=true
+mvn javachanges:github-release-from-plan -Djavachanges.fresh=true
+mvn javachanges:init-gitlab-ci
+mvn javachanges:gitlab-release-plan -Djavachanges.projectId=12345 -Djavachanges.writePlanFiles=false
+mvn javachanges:gitlab-tag-from-plan -Djavachanges.fresh=true -Djavachanges.fallbackFromReleaseCommit=true
+mvn javachanges:gitlab-release -Djavachanges.tag=v1.2.3
+mvn javachanges:release-version-from-tag -Djavachanges.tag=core/v1.2.3
+mvn javachanges:release-module-from-tag -Djavachanges.tag=core/v1.2.3
+mvn javachanges:assert-module -Djavachanges.module=core
+mvn javachanges:assert-snapshot
+mvn javachanges:assert-release-tag -Djavachanges.tag=v1.2.3
+mvn javachanges:doctor-publish -Djavachanges.tag=v1.2.3
+mvn javachanges:gradle-publish -Djavachanges.directory=/path/to/gradle-repo -Djavachanges.tag=v1.2.3
 mvn javachanges:manifest-field -Djavachanges.field=releaseVersion -Djavachanges.fresh=true
 ```
 
 `javachanges:write-settings` writes `${project.basedir}/.m2/settings.xml` by default. Use `-Djavachanges.output=...` to choose another path and `-Djavachanges.settingsMode=all|release|snapshot` to control which server entries are written.
+
+`javachanges:init-env` writes a local release env file from the example template. Use `-Djavachanges.target=...` to choose the destination, `-Djavachanges.template=...` to choose another template, and `-Djavachanges.force=true` to replace an existing file. Use `javachanges:auth-help` with `-Djavachanges.platform=github|gitlab|all` to print the required authentication variables.
+
+The env review goals use Maven-style property names for common CLI options: `-Djavachanges.envFile=...`, `-Djavachanges.platform=github|gitlab|all`, `-Djavachanges.githubRepo=owner/repo`, and `-Djavachanges.gitlabRepo=group/project`. `javachanges:sync-vars` is a dry run by default; add `-Djavachanges.execute=true` only when you are ready to update the remote platform variables.
+
+`javachanges:ensure-gpg-public-key` publishes the current signing public key to supported keyservers and waits until it can be fetched. Use `-Djavachanges.primaryKeyserver=...`, `-Djavachanges.secondaryKeyserver=...`, `-Djavachanges.attempts=...`, and `-Djavachanges.retryDelaySeconds=...` when the defaults need to match your release environment.
+
+`javachanges:init-github-actions` writes `.github/workflows/javachanges-release.yml` by default, and `javachanges:init-gitlab-ci` writes `.gitlab-ci.yml` by default. Use `-Djavachanges.force=true` to replace an existing generated file, `-Djavachanges.buildTool=maven|gradle|auto` to choose the template, and `-Djavachanges.javachangesVersion=...` to pin the generated CI version.
+
+The GitHub release automation goals map directly to the CLI commands. Use `-Djavachanges.execute=true` only in CI or when you intentionally want to call `gh`; without it, release-plan, tag, and release goals stay in dry-run mode. Use `-Djavachanges.writePlanFiles=false` when the release-plan pull request should not commit `.changesets/release-plan.*` files.
+
+The GitLab release automation goals follow the same dry-run default. Use `-Djavachanges.execute=true` only when the command should call the GitLab API or push tags. `gitlab-tag-from-plan` also supports `-Djavachanges.fallbackFromReleaseCommit=true` for default-branch recovery from a merged `chore(release): release vX.Y.Z` commit.
+
+`javachanges:gradle-publish` is available when you are invoking the Maven plugin from a Maven runner project but need to target a Gradle repository through `-Djavachanges.directory=...`. Gradle repositories without a Maven project should keep using the released CLI jar as shown in the Gradle guide.
 
 Use the generic `run` goal for commands that do not have a dedicated Maven goal yet:
 
@@ -228,7 +268,7 @@ mvn javachanges:add \
 When a downstream job needs to publish or test one Maven module, ask `javachanges` for Maven selector arguments:
 
 ```bash
-mvn javachanges:run -Djavachanges.args="module-selector-args --module core"
+mvn javachanges:module-selector-args -Djavachanges.module=core
 ```
 
 For Maven repositories, this renders arguments such as:
@@ -275,6 +315,7 @@ mvn javachanges:run -Djavachanges.args="gitlab-tag-from-plan --execute true"
 Use `preflight` before enabling real publish execution:
 
 ```bash
+mvn javachanges:doctor-publish -Djavachanges.tag=v1.2.3
 mvn javachanges:preflight -Djavachanges.tag=v1.2.3
 ```
 

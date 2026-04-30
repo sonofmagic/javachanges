@@ -51,7 +51,21 @@ Common parts:
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:status` | Run the dedicated Maven plugin status goal |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:validate` | Run local release-readiness checks |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:plan -Djavachanges.apply=true` | Run the dedicated plan goal |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:init-env` | Initialize the local release env file |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:auth-help -Djavachanges.platform=github` | Show required authentication variables |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:doctor-local -Djavachanges.envFile=env/release.env.local` | Check local release prerequisites |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:sync-vars -Djavachanges.envFile=env/release.env.local -Djavachanges.platform=github` | Preview platform variable sync |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:github-release-plan -Djavachanges.githubRepo=owner/repo` | Create or update the GitHub release-plan pull request |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:github-release-from-plan -Djavachanges.fresh=true` | Generate release notes and sync the GitHub Release |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:gitlab-release-plan -Djavachanges.projectId=12345` | Create or update the GitLab release-plan merge request |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:gitlab-release -Djavachanges.tag=v1.2.3` | Generate release notes and sync the GitLab Release |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:release-version-from-tag -Djavachanges.tag=core/v1.2.3` | Extract a release version from a tag |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:module-selector-args -Djavachanges.module=core` | Print build-tool selector args |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:gradle-publish -Djavachanges.directory=/path/to/gradle-repo -Djavachanges.tag=v1.2.3` | Render or execute the Gradle publish command from a Maven runner project |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:init-github-actions -Djavachanges.force=true` | Generate the GitHub Actions release workflow |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:init-gitlab-ci -Djavachanges.force=true` | Generate the GitLab CI release template |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:publish -Djavachanges.tag=v1.2.3` | Run the dedicated Maven publish dry-run goal |
+| `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:ensure-gpg-public-key` | Publish and verify the signing public key |
 | `mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:run -Djavachanges.args="..."` | Use the generic bridge goal for commands without a dedicated goal |
 | `mvn -q -DskipTests compile exec:java` | Build the CLI and run the Java entrypoint |
 | `-Dexec.args="..."` | Pass `javachanges` CLI arguments |
@@ -574,6 +588,7 @@ Render the Gradle publish command:
 
 ```bash
 java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar gradle-publish --directory /path/to/repo --tag v1.2.3
+mvn javachanges:gradle-publish -Djavachanges.directory=/path/to/repo -Djavachanges.tag=v1.2.3
 ```
 
 Actually execute it:
@@ -610,6 +625,7 @@ Important Gradle repository note:
 | --- | --- |
 | `github-release-plan` | Create or update a GitHub release-plan pull request |
 | `github-tag-from-plan` | Create and push the final release tag from a generated release plan |
+| `github-release-publish-state` | Resolve whether a GitHub Release publish job should continue |
 | `github-release-from-plan` | Generate release metadata and optionally create or update the GitHub Release |
 | `init-github-actions` | Write a minimal GitHub Actions workflow that wires release-plan, tag, publish, and GitHub Release jobs |
 
@@ -617,9 +633,14 @@ Examples:
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="github-release-plan --directory /path/to/repo --github-repo owner/repo --write-plan-files false --execute true"
+mvn javachanges:github-release-plan -Djavachanges.githubRepo=owner/repo -Djavachanges.writePlanFiles=false
 mvn -q -DskipTests compile exec:java -Dexec.args="github-tag-from-plan --directory /path/to/repo --fresh true --execute true"
+mvn javachanges:github-tag-from-plan -Djavachanges.fresh=true
+mvn javachanges:github-release-publish-state -Djavachanges.fresh=true
 mvn -q -DskipTests compile exec:java -Dexec.args="github-release-from-plan --directory /path/to/repo --fresh true --release-notes-file target/release-notes.md --execute true"
+mvn javachanges:github-release-from-plan -Djavachanges.fresh=true -Djavachanges.releaseNotesFile=target/release-notes.md
 mvn -q -DskipTests compile exec:java -Dexec.args="github-release-from-plan --directory /path/to/repo --format json"
+mvn javachanges:init-github-actions -Djavachanges.force=true
 mvn -q -DskipTests compile exec:java -Dexec.args="init-github-actions --directory /path/to/repo --output .github/workflows/javachanges-release.yml --force true"
 mvn -q -DskipTests compile exec:java -Dexec.args="init-github-actions --directory /path/to/gradle-repo --build-tool gradle --output .github/workflows/javachanges-release.yml --force true"
 ```
@@ -639,8 +660,12 @@ Examples:
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-release-plan --directory /path/to/repo --project-id 12345 --write-plan-files false --execute true"
+mvn javachanges:gitlab-release-plan -Djavachanges.projectId=12345 -Djavachanges.writePlanFiles=false
 mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-tag-from-plan --directory /path/to/repo --fresh true --fallback-from-release-commit true --execute true"
+mvn javachanges:gitlab-tag-from-plan -Djavachanges.fresh=true -Djavachanges.fallbackFromReleaseCommit=true
 mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-release --directory /path/to/repo --ignore-catalog-validation true --execute true"
+mvn javachanges:gitlab-release -Djavachanges.ignoreCatalogValidation=true
+mvn javachanges:init-gitlab-ci -Djavachanges.force=true
 mvn -q -DskipTests compile exec:java -Dexec.args="init-gitlab-ci --directory /path/to/repo --output .gitlab-ci.yml --force true"
 mvn -q -DskipTests compile exec:java -Dexec.args="init-gitlab-ci --directory /path/to/gradle-repo --build-tool gradle --output .gitlab-ci.yml --force true"
 ```

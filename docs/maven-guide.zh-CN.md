@@ -63,15 +63,55 @@ Maven 仓库应该把根版本放在 `revision` 属性里：
 然后在 Maven 仓库内执行最短 goal：
 
 ```bash
+mvn javachanges:setup
 mvn javachanges:status
+mvn javachanges:next
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
 mvn javachanges:plan
 mvn javachanges:plan -Djavachanges.apply=true
+mvn javachanges:validate
+mvn javachanges:init-env
+mvn javachanges:auth-help -Djavachanges.platform=github
+mvn javachanges:render-vars -Djavachanges.envFile=env/release.env.local -Djavachanges.platform=github
+mvn javachanges:doctor-local -Djavachanges.envFile=env/release.env.local
+mvn javachanges:doctor-platform -Djavachanges.envFile=env/release.env.local -Djavachanges.platform=github
+mvn javachanges:audit-vars -Djavachanges.envFile=env/release.env.local -Djavachanges.platform=github
 mvn javachanges:write-settings -Djavachanges.settingsMode=release
+mvn javachanges:ensure-gpg-public-key
+mvn javachanges:init-github-actions
+mvn javachanges:github-release-plan -Djavachanges.githubRepo=owner/repo -Djavachanges.writePlanFiles=false
+mvn javachanges:github-tag-from-plan -Djavachanges.fresh=true
+mvn javachanges:github-release-publish-state -Djavachanges.fresh=true
+mvn javachanges:github-release-from-plan -Djavachanges.fresh=true
+mvn javachanges:init-gitlab-ci
+mvn javachanges:gitlab-release-plan -Djavachanges.projectId=12345 -Djavachanges.writePlanFiles=false
+mvn javachanges:gitlab-tag-from-plan -Djavachanges.fresh=true -Djavachanges.fallbackFromReleaseCommit=true
+mvn javachanges:gitlab-release -Djavachanges.tag=v1.2.3
+mvn javachanges:release-version-from-tag -Djavachanges.tag=core/v1.2.3
+mvn javachanges:release-module-from-tag -Djavachanges.tag=core/v1.2.3
+mvn javachanges:assert-module -Djavachanges.module=core
+mvn javachanges:assert-snapshot
+mvn javachanges:assert-release-tag -Djavachanges.tag=v1.2.3
+mvn javachanges:doctor-publish -Djavachanges.tag=v1.2.3
+mvn javachanges:gradle-publish -Djavachanges.directory=/path/to/gradle-repo -Djavachanges.tag=v1.2.3
 mvn javachanges:manifest-field -Djavachanges.field=releaseVersion -Djavachanges.fresh=true
 ```
 
 `javachanges:write-settings` 默认写入 `${project.basedir}/.m2/settings.xml`。可以用 `-Djavachanges.output=...` 指定其它路径，用 `-Djavachanges.settingsMode=all|release|snapshot` 控制写入哪些 server。
+
+`javachanges:init-env` 会基于示例模板写入本地 release env 文件。可以用 `-Djavachanges.target=...` 指定目标文件，用 `-Djavachanges.template=...` 指定其它模板，用 `-Djavachanges.force=true` 替换已有文件。`javachanges:auth-help` 可配合 `-Djavachanges.platform=github|gitlab|all` 输出需要配置的认证变量。
+
+env 审阅相关 goal 使用 Maven 风格属性名对应常用 CLI 选项：`-Djavachanges.envFile=...`、`-Djavachanges.platform=github|gitlab|all`、`-Djavachanges.githubRepo=owner/repo` 和 `-Djavachanges.gitlabRepo=group/project`。`javachanges:sync-vars` 默认只是 dry run；确认要更新远端平台变量时再添加 `-Djavachanges.execute=true`。
+
+`javachanges:ensure-gpg-public-key` 会把当前签名公钥发布到支持的 keyserver，并等待它可以被拉取。默认值不适合你的发布环境时，可以用 `-Djavachanges.primaryKeyserver=...`、`-Djavachanges.secondaryKeyserver=...`、`-Djavachanges.attempts=...` 和 `-Djavachanges.retryDelaySeconds=...` 调整。
+
+`javachanges:init-github-actions` 默认写入 `.github/workflows/javachanges-release.yml`，`javachanges:init-gitlab-ci` 默认写入 `.gitlab-ci.yml`。可以用 `-Djavachanges.force=true` 替换已有生成文件，用 `-Djavachanges.buildTool=maven|gradle|auto` 选择模板，用 `-Djavachanges.javachangesVersion=...` 固定生成的 CI 版本。
+
+GitHub 发布自动化 goal 会直接映射到对应 CLI 命令。只有在 CI 中或确认要调用 `gh` 时才添加 `-Djavachanges.execute=true`；不传时，release-plan、tag 和 release goal 都保持 dry run。release-plan pull request 不需要提交 `.changesets/release-plan.*` 文件时，可以传 `-Djavachanges.writePlanFiles=false`。
+
+GitLab 发布自动化 goal 也保持相同的 dry run 默认值。只有命令需要调用 GitLab API 或推送 tag 时才添加 `-Djavachanges.execute=true`。`gitlab-tag-from-plan` 还支持 `-Djavachanges.fallbackFromReleaseCommit=true`，用于默认分支从已合并的 `chore(release): release vX.Y.Z` commit 恢复 tag。
+
+当你从 Maven runner 项目调用 Maven plugin、但实际目标是一个 Gradle 仓库时，可以用 `javachanges:gradle-publish` 并通过 `-Djavachanges.directory=...` 指向 Gradle 仓库。没有 Maven 项目的 Gradle 仓库仍建议按 Gradle guide 使用正式发布版 CLI jar。
 
 对还没有专门 Maven goal 的命令，可以使用通用 `run` goal：
 
@@ -228,7 +268,7 @@ mvn javachanges:add \
 如果下游 job 只需要发布或测试一个 Maven module，可以让 `javachanges` 输出 Maven selector 参数：
 
 ```bash
-mvn javachanges:run -Djavachanges.args="module-selector-args --module core"
+mvn javachanges:module-selector-args -Djavachanges.module=core
 ```
 
 对 Maven 仓库，它会输出类似：
@@ -275,6 +315,7 @@ mvn javachanges:run -Djavachanges.args="gitlab-tag-from-plan --execute true"
 启用真实发布前，先使用 `preflight`：
 
 ```bash
+mvn javachanges:doctor-publish -Djavachanges.tag=v1.2.3
 mvn javachanges:preflight -Djavachanges.tag=v1.2.3
 ```
 

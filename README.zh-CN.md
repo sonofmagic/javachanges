@@ -255,8 +255,11 @@ summary: automate javachanges self-release publishing via GitHub Actions
 - `status`
 - `validate`
 - `plan`
+- `manifest-field`
+- `version`
 - `write-settings`
 - `init-env`
+- `auth-help`
 - `render-vars`
 - `doctor-local`
 - `doctor-platform`
@@ -267,11 +270,19 @@ summary: automate javachanges self-release publishing via GitHub Actions
 - `publish`
 - `gradle-publish`
 - `release-notes`
+- `ensure-gpg-public-key`
+- `release-version-from-tag`
+- `release-module-from-tag`
+- `assert-module`
+- `assert-snapshot`
+- `assert-release-tag`
+- `module-selector-args`
 
 GitHub 相关辅助：
 
 - `github-release-plan`
 - `github-tag-from-plan`
+- `github-release-publish-state`
 - `github-release-from-plan`
 - `init-github-actions`
 
@@ -279,6 +290,8 @@ GitLab 相关辅助：
 
 - `gitlab-release-plan`
 - `gitlab-tag-from-plan`
+- `gitlab-release`
+- `init-gitlab-ci`
 
 ## 文档
 

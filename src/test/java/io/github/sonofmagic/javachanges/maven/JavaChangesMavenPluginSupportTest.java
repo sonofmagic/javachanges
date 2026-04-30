@@ -14,6 +14,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -201,12 +206,191 @@ class JavaChangesMavenPluginSupportTest {
         org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.settingsMode}</settingsMode>"));
     }
 
+    @Test
+    void pluginDescriptorCoversEveryCliCommand() throws Exception {
+        Set<String> cliCommands = cliCommandNames();
+        Set<String> pluginGoals = descriptorGoals();
+
+        Set<String> missingGoals = new TreeSet<String>(cliCommands);
+        missingGoals.removeAll(pluginGoals);
+        assertEquals(new TreeSet<String>(), missingGoals, "Missing Maven plugin goals for CLI commands");
+
+        Set<String> pluginOnlyGoals = new TreeSet<String>(pluginGoals);
+        pluginOnlyGoals.removeAll(cliCommands);
+        assertEquals(new TreeSet<String>(Arrays.asList("run")), pluginOnlyGoals);
+    }
+
+    @Test
+    void mavenGuidesMentionEveryPluginGoal() throws Exception {
+        Set<String> pluginGoals = descriptorGoals();
+
+        assertDocumentMentionsGoals(Paths.get("docs/maven-guide.md"), pluginGoals);
+        assertDocumentMentionsGoals(Paths.get("docs/maven-guide.zh-CN.md"), pluginGoals);
+    }
+
+    @Test
+    void pluginDescriptorIncludesCiTemplateGoals() throws Exception {
+        String descriptor = read(Files.newInputStream(Paths.get("target/classes/META-INF/maven/plugin.xml")));
+
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>init-github-actions</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>init-gitlab-ci</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains(".github/workflows/javachanges-release.yml"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains(".gitlab-ci.yml"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.buildTool}</buildTool>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.javachangesVersion}</javachangesVersion>"));
+    }
+
+    @Test
+    void pluginDescriptorIncludesGpgPublicKeyGoal() throws Exception {
+        String descriptor = read(Files.newInputStream(Paths.get("target/classes/META-INF/maven/plugin.xml")));
+
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>ensure-gpg-public-key</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<name>primaryKeyserver</name>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<name>secondaryKeyserver</name>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<name>retryDelaySeconds</name>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.primaryKeyserver}</primaryKeyserver>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.retryDelaySeconds}</retryDelaySeconds>"));
+    }
+
+    @Test
+    void pluginDescriptorIncludesEnvStarterGoals() throws Exception {
+        String descriptor = read(Files.newInputStream(Paths.get("target/classes/META-INF/maven/plugin.xml")));
+
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>init-env</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>auth-help</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.template}</template>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.target}</target>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.platform}</platform>"));
+    }
+
+    @Test
+    void pluginDescriptorIncludesEnvOperationGoals() throws Exception {
+        String descriptor = read(Files.newInputStream(Paths.get("target/classes/META-INF/maven/plugin.xml")));
+
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>render-vars</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>doctor-local</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>doctor-platform</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>sync-vars</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>audit-vars</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.envFile}</envFile>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.githubRepo}</githubRepo>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.gitlabRepo}</gitlabRepo>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.showSecrets}</showSecrets>"));
+    }
+
+    @Test
+    void pluginDescriptorIncludesGithubReleaseGoals() throws Exception {
+        String descriptor = read(Files.newInputStream(Paths.get("target/classes/META-INF/maven/plugin.xml")));
+
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>github-release-plan</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>github-tag-from-plan</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>github-release-publish-state</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>github-release-from-plan</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.githubRepo}</githubRepo>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.targetBranch}</targetBranch>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.writePlanFiles}</writePlanFiles>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.githubOutputFile}</githubOutputFile>"));
+        org.junit.jupiter.api.Assertions.assertTrue(
+            descriptor.contains("${javachanges.requireReleaseApplyCommit}</requireReleaseApplyCommit>")
+        );
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.releaseNotesFile}</releaseNotesFile>"));
+    }
+
+    @Test
+    void pluginDescriptorIncludesGitlabReleaseGoals() throws Exception {
+        String descriptor = read(Files.newInputStream(Paths.get("target/classes/META-INF/maven/plugin.xml")));
+
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>gitlab-release-plan</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>gitlab-tag-from-plan</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>gitlab-release</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.projectId}</projectId>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.beforeSha}</beforeSha>"));
+        org.junit.jupiter.api.Assertions.assertTrue(
+            descriptor.contains("${javachanges.fallbackFromReleaseCommit}</fallbackFromReleaseCommit>")
+        );
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.gitlabHost}</gitlabHost>"));
+        org.junit.jupiter.api.Assertions.assertTrue(
+            descriptor.contains("${javachanges.ignoreCatalogValidation}</ignoreCatalogValidation>")
+        );
+    }
+
+    @Test
+    void pluginDescriptorIncludesCiHelperGoals() throws Exception {
+        String descriptor = read(Files.newInputStream(Paths.get("target/classes/META-INF/maven/plugin.xml")));
+
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>release-version-from-tag</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>release-module-from-tag</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>assert-module</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>assert-snapshot</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>assert-release-tag</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>module-selector-args</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.tag}</tag>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.module}</module>"));
+    }
+
+    @Test
+    void pluginDescriptorIncludesGradlePublishGoal() throws Exception {
+        String descriptor = read(Files.newInputStream(Paths.get("target/classes/META-INF/maven/plugin.xml")));
+
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>gradle-publish</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.task}</task>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.snapshotBuildStamp}</snapshotBuildStamp>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.snapshotVersionMode}</snapshotVersionMode>"));
+    }
+
     private static void run(Path workingDirectory, String... command) throws Exception {
         Process process = new ProcessBuilder(command)
             .directory(workingDirectory.toFile())
             .start();
         int exitCode = process.waitFor();
         assertEquals(0, exitCode, read(process.getErrorStream()));
+    }
+
+    private static Set<String> cliCommandNames() throws IOException {
+        final Pattern commandPattern = Pattern.compile("@Command\\(\\s*name\\s*=\\s*\"([^\"]+)\"");
+        final Set<String> commands = new TreeSet<String>();
+        try (Stream<Path> files = Files.walk(Paths.get("src/main/java/io/github/sonofmagic/javachanges/core"))) {
+            files.filter(path -> path.toString().endsWith(".java")).forEach(path -> {
+                try {
+                    Matcher matcher = commandPattern.matcher(read(Files.newInputStream(path)));
+                    while (matcher.find()) {
+                        String name = matcher.group(1);
+                        if (!"javachanges".equals(name)) {
+                            commands.add(name);
+                        }
+                    }
+                } catch (IOException exception) {
+                    throw new RuntimeException(exception);
+                }
+            });
+        } catch (RuntimeException exception) {
+            if (exception.getCause() instanceof IOException) {
+                throw (IOException) exception.getCause();
+            }
+            throw exception;
+        }
+        return commands;
+    }
+
+    private static Set<String> descriptorGoals() throws IOException {
+        Pattern goalPattern = Pattern.compile("<goal>([^<]+)</goal>");
+        Matcher matcher = goalPattern.matcher(read(Files.newInputStream(Paths.get("target/classes/META-INF/maven/plugin.xml"))));
+        Set<String> goals = new TreeSet<String>();
+        while (matcher.find()) {
+            goals.add(matcher.group(1));
+        }
+        return goals;
+    }
+
+    private static void assertDocumentMentionsGoals(Path document, Set<String> pluginGoals) throws IOException {
+        String content = read(Files.newInputStream(document));
+        Set<String> missingGoals = new TreeSet<String>(pluginGoals);
+        for (String goal : pluginGoals) {
+            if (content.contains(goal)) {
+                missingGoals.remove(goal);
+            }
+        }
+        assertEquals(new TreeSet<String>(), missingGoals, document + " is missing Maven plugin goal references");
     }
 
     private static String read(java.io.InputStream inputStream) throws IOException {
