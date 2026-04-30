@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.10.1 - 2026-04-30
+
+### Patch Changes
+
+- Allow GitLab release tagging to fall back to fresh release metadata when release-plan files are not committed. (packages: javachanges)
+
 ## 1.10.0 - 2026-04-29
 
 ### Minor Changes
