@@ -64,12 +64,14 @@ Then run the shortest local goals inside the Maven repository:
 
 ```bash
 mvn javachanges:setup
+mvn javachanges:setup -Djavachanges.directory=/path/to/gradle-repo -Djavachanges.applyGradleTasks=true
 mvn javachanges:status
 mvn javachanges:next
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
 mvn javachanges:plan
 mvn javachanges:plan -Djavachanges.apply=true
 mvn javachanges:validate
+mvn javachanges:init-gradle-tasks -Djavachanges.directory=/path/to/gradle-repo -Djavachanges.apply=true
 mvn javachanges:init-env
 mvn javachanges:auth-help -Djavachanges.platform=github
 mvn javachanges:render-vars -Djavachanges.envFile=env/release.env.local -Djavachanges.platform=github
@@ -106,6 +108,8 @@ The env review goals use Maven-style property names for common CLI options: `-Dj
 `javachanges:ensure-gpg-public-key` publishes the current signing public key to supported keyservers and waits until it can be fetched. Use `-Djavachanges.primaryKeyserver=...`, `-Djavachanges.secondaryKeyserver=...`, `-Djavachanges.attempts=...`, and `-Djavachanges.retryDelaySeconds=...` when the defaults need to match your release environment.
 
 `javachanges:init-github-actions` writes `.github/workflows/javachanges-release.yml` by default, and `javachanges:init-gitlab-ci` writes `.gitlab-ci.yml` by default. Use `-Djavachanges.force=true` to replace an existing generated file, `-Djavachanges.buildTool=maven|gradle|auto` to choose the template, and `-Djavachanges.javachangesVersion=...` to pin the generated CI version.
+
+`javachanges:init-gradle-tasks` writes `gradle/javachanges.gradle` for Gradle repositories. Use `-Djavachanges.apply=true` to append that script to the root `build.gradle` or `build.gradle.kts`; `javachanges:setup -Djavachanges.applyGradleTasks=true` does the same as part of first-time setup.
 
 The GitHub release automation goals map directly to the CLI commands. Use `-Djavachanges.execute=true` only in CI or when you intentionally want to call `gh`; without it, release-plan, tag, and release goals stay in dry-run mode. Use `-Djavachanges.writePlanFiles=false` when the release-plan pull request should not commit `.changesets/release-plan.*` files.
 

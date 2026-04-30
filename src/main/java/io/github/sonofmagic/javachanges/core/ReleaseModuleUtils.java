@@ -58,7 +58,7 @@ public final class ReleaseModuleUtils {
         }
     }
 
-    static String moduleSelectorArgs(Path repoRoot, String module) {
+    public static String moduleSelectorArgs(Path repoRoot, String module) {
         if (module == null || "all".equals(module)) {
             return "";
         }

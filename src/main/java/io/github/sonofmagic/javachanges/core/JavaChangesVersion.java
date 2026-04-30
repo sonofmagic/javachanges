@@ -1,12 +1,12 @@
 package io.github.sonofmagic.javachanges.core;
 
-final class JavaChangesVersion {
+public final class JavaChangesVersion {
     static final String FALLBACK_RELEASED_VERSION = "1.7.0";
 
     private JavaChangesVersion() {
     }
 
-    static String releasedVersion(String explicitVersion) {
+    public static String releasedVersion(String explicitVersion) {
         String explicit = ReleaseTextUtils.trimToNull(explicitVersion);
         if (explicit != null) {
             return explicit;

@@ -1,5 +1,7 @@
 package io.github.sonofmagic.javachanges.core;
 
+import io.github.sonofmagic.javachanges.gradle.GradleModelSupport;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

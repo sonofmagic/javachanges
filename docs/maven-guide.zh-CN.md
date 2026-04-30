@@ -64,12 +64,14 @@ Maven 仓库应该把根版本放在 `revision` 属性里：
 
 ```bash
 mvn javachanges:setup
+mvn javachanges:setup -Djavachanges.directory=/path/to/gradle-repo -Djavachanges.applyGradleTasks=true
 mvn javachanges:status
 mvn javachanges:next
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
 mvn javachanges:plan
 mvn javachanges:plan -Djavachanges.apply=true
 mvn javachanges:validate
+mvn javachanges:init-gradle-tasks -Djavachanges.directory=/path/to/gradle-repo -Djavachanges.apply=true
 mvn javachanges:init-env
 mvn javachanges:auth-help -Djavachanges.platform=github
 mvn javachanges:render-vars -Djavachanges.envFile=env/release.env.local -Djavachanges.platform=github
@@ -106,6 +108,8 @@ env 审阅相关 goal 使用 Maven 风格属性名对应常用 CLI 选项：`-Dj
 `javachanges:ensure-gpg-public-key` 会把当前签名公钥发布到支持的 keyserver，并等待它可以被拉取。默认值不适合你的发布环境时，可以用 `-Djavachanges.primaryKeyserver=...`、`-Djavachanges.secondaryKeyserver=...`、`-Djavachanges.attempts=...` 和 `-Djavachanges.retryDelaySeconds=...` 调整。
 
 `javachanges:init-github-actions` 默认写入 `.github/workflows/javachanges-release.yml`，`javachanges:init-gitlab-ci` 默认写入 `.gitlab-ci.yml`。可以用 `-Djavachanges.force=true` 替换已有生成文件，用 `-Djavachanges.buildTool=maven|gradle|auto` 选择模板，用 `-Djavachanges.javachangesVersion=...` 固定生成的 CI 版本。
+
+`javachanges:init-gradle-tasks` 会为 Gradle 仓库写入 `gradle/javachanges.gradle`。用 `-Djavachanges.apply=true` 可以把该脚本追加到根 `build.gradle` 或 `build.gradle.kts`；`javachanges:setup -Djavachanges.applyGradleTasks=true` 会在首次设置中完成同样的接入。
 
 GitHub 发布自动化 goal 会直接映射到对应 CLI 命令。只有在 CI 中或确认要调用 `gh` 时才添加 `-Djavachanges.execute=true`；不传时，release-plan、tag 和 release goal 都保持 dry run。release-plan pull request 不需要提交 `.changesets/release-plan.*` 文件时，可以传 `-Djavachanges.writePlanFiles=false`。
 

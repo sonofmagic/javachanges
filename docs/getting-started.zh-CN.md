@@ -128,7 +128,7 @@ mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:ma
 
 说明：
 
-- 常用本地、设置、GitHub、GitLab、发布和 CI helper 命令现在都有独立 goal，包括 `init`、`setup`、`add`、`next`、`modules`、`status`、`validate`、`plan`、`manifest-field`、`init-env`、`auth-help`、`render-vars`、`doctor-local`、`doctor-platform`、`sync-vars`、`audit-vars`、`write-settings`、`publish`、`gradle-publish`、`release-notes`、`ensure-gpg-public-key`、`release-version-from-tag`、`release-module-from-tag`、`assert-module`、`assert-snapshot`、`assert-release-tag`、`module-selector-args`、`github-release-plan`、`github-tag-from-plan`、`github-release-publish-state`、`github-release-from-plan`、`gitlab-release-plan`、`gitlab-tag-from-plan`、`gitlab-release`、`init-github-actions` 和 `init-gitlab-ci`
+- 常用本地、设置、GitHub、GitLab、发布和 CI helper 命令现在都有独立 goal，包括 `init`、`setup`、`add`、`next`、`modules`、`status`、`validate`、`plan`、`manifest-field`、`init-gradle-tasks`、`init-env`、`auth-help`、`render-vars`、`doctor-local`、`doctor-platform`、`sync-vars`、`audit-vars`、`write-settings`、`publish`、`gradle-publish`、`release-notes`、`ensure-gpg-public-key`、`release-version-from-tag`、`release-module-from-tag`、`assert-module`、`assert-snapshot`、`assert-release-tag`、`module-selector-args`、`github-release-plan`、`github-tag-from-plan`、`github-release-publish-state`、`github-release-from-plan`、`gitlab-release-plan`、`gitlab-tag-from-plan`、`gitlab-release`、`init-github-actions` 和 `init-gitlab-ci`
 - `javachanges:run` 仍然保留，适合配合 `-Djavachanges.args="..."` 传递完整原始参数
 
 ## 5. 准备目标仓库

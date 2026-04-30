@@ -47,6 +47,7 @@ class JavaChangesCliTest {
         assertTrue(result.stdout.contains("init-gitlab-ci"));
         assertTrue(result.stdout.contains("doctor-publish"));
         assertTrue(result.stdout.contains("gradle-publish"));
+        assertTrue(result.stdout.contains("init-gradle-tasks"));
     }
 
     @Test
@@ -277,6 +278,163 @@ class JavaChangesCliTest {
         assertTrue(result.stdout.contains("Generated local env file: env/release.env.local"));
         assertTrue(result.stdout.contains("Generated GitHub Actions workflow: .github/workflows/javachanges-release.yml"));
         assertTrue(result.stdout.contains("Generated GitLab CI template: .gitlab-ci.yml"));
+    }
+
+    @Test
+    void setupSuggestsGradleTasksForGradleRepository(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createGradleRepository(tempDir, false);
+
+        ExecutionResult result = execute("setup", "--directory", repoRoot.toString());
+
+        assertEquals(0, result.exitCode);
+        assertFalse(Files.exists(repoRoot.resolve("gradle").resolve("javachanges.gradle")));
+        assertTrue(result.stdout.contains("Build tool: gradle"));
+        assertTrue(result.stdout.contains("javachanges init-gradle-tasks --directory " + repoRoot));
+    }
+
+    @Test
+    void setupCanGenerateGradleTasks(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createGradleRepository(tempDir, false);
+
+        ExecutionResult result = execute(
+            "setup",
+            "--directory", repoRoot.toString(),
+            "--gradle-tasks", "true",
+            "--javachanges-version", "1.11.0"
+        );
+
+        assertEquals(0, result.exitCode);
+        Path script = repoRoot.resolve("gradle").resolve("javachanges.gradle");
+        assertTrue(Files.exists(script));
+        assertTrue(read(script).contains("orElse('1.11.0')"));
+        assertTrue(result.stdout.contains("Generated Gradle javachanges tasks: gradle/javachanges.gradle"));
+        assertFalse(result.stdout.contains("javachanges init-gradle-tasks --directory " + repoRoot));
+    }
+
+    @Test
+    void setupCanApplyGeneratedGradleTasks(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createGradleRepository(tempDir, false);
+
+        ExecutionResult result = execute(
+            "setup",
+            "--directory", repoRoot.toString(),
+            "--apply-gradle-tasks", "true"
+        );
+
+        assertEquals(0, result.exitCode);
+        assertTrue(Files.exists(repoRoot.resolve("gradle").resolve("javachanges.gradle")));
+        assertTrue(read(repoRoot.resolve("build.gradle")).contains("apply from: \"gradle/javachanges.gradle\""));
+        assertTrue(result.stdout.contains("Updated Gradle build file: build.gradle"));
+        assertFalse(result.stdout.contains("javachanges init-gradle-tasks --directory " + repoRoot));
+    }
+
+    @Test
+    void initGradleTasksWritesGradleScriptAndNextSteps(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createGradleRepository(tempDir, false);
+
+        ExecutionResult result = execute(
+            "init-gradle-tasks",
+            "--directory", repoRoot.toString(),
+            "--javachanges-version", "1.11.0"
+        );
+
+        assertEquals(0, result.exitCode);
+        Path script = repoRoot.resolve("gradle").resolve("javachanges.gradle");
+        assertTrue(Files.exists(script));
+        String content = read(script);
+        assertTrue(content.contains("io.github.sonofmagic:javachanges:${javachangesVersion.get()}"));
+        assertTrue(content.contains("orElse('1.11.0')"));
+        assertTrue(content.contains("javachangesStatus"));
+        assertTrue(content.contains("javachangesGradlePublish"));
+        assertTrue(content.contains("cliArgs.add('--directory')"));
+        assertTrue(content.contains("cliArgs.add(javachangesDirectory())"));
+        assertTrue(result.stdout.contains("Generated Gradle javachanges tasks: gradle/javachanges.gradle"));
+        assertTrue(result.stdout.contains("apply(from = \"gradle/javachanges.gradle\")"));
+        assertTrue(result.stdout.contains("./gradlew javachangesStatus"));
+    }
+
+    @Test
+    void initGradleTasksCanApplyToGroovyBuildFile(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createGradleRepository(tempDir, false);
+
+        ExecutionResult result = execute(
+            "init-gradle-tasks",
+            "--directory", repoRoot.toString(),
+            "--apply", "true"
+        );
+
+        assertEquals(0, result.exitCode);
+        String buildFile = read(repoRoot.resolve("build.gradle"));
+        assertTrue(buildFile.contains("apply from: \"gradle/javachanges.gradle\""));
+        assertTrue(result.stdout.contains("Updated Gradle build file: build.gradle"));
+        assertFalse(result.stdout.contains("Add `apply(from = \"gradle/javachanges.gradle\")`"));
+
+        ExecutionResult secondResult = execute(
+            "init-gradle-tasks",
+            "--directory", repoRoot.toString(),
+            "--apply", "true",
+            "--force", "true"
+        );
+
+        assertEquals(0, secondResult.exitCode);
+        String appliedAgain = read(repoRoot.resolve("build.gradle"));
+        assertEquals(appliedAgain.indexOf("apply from: \"gradle/javachanges.gradle\""),
+            appliedAgain.lastIndexOf("apply from: \"gradle/javachanges.gradle\""));
+    }
+
+    @Test
+    void initGradleTasksCanApplyToKotlinBuildFile(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createGradleRepository(tempDir, false);
+        Files.delete(repoRoot.resolve("build.gradle"));
+        Files.write(repoRoot.resolve("build.gradle.kts"), "plugins { `java-library` }\n".getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = execute(
+            "init-gradle-tasks",
+            "--directory", repoRoot.toString(),
+            "--apply", "true"
+        );
+
+        assertEquals(0, result.exitCode);
+        assertTrue(read(repoRoot.resolve("build.gradle.kts")).contains("apply(from = \"gradle/javachanges.gradle\")"));
+        assertTrue(result.stdout.contains("Updated Gradle build file: build.gradle.kts"));
+    }
+
+    @Test
+    void initGradleTasksApplyRequiresRootBuildFile(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createGradleRepository(tempDir, false);
+        Files.delete(repoRoot.resolve("build.gradle"));
+
+        ExecutionResult result = execute(
+            "init-gradle-tasks",
+            "--directory", repoRoot.toString(),
+            "--apply", "true"
+        );
+
+        assertNotEquals(0, result.exitCode);
+        assertFalse(Files.exists(repoRoot.resolve("gradle").resolve("javachanges.gradle")));
+        assertTrue(result.stderr.contains("Cannot find build.gradle or build.gradle.kts"));
+    }
+
+    @Test
+    void initGradleTasksPreservesExistingFileUnlessForced(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createGradleRepository(tempDir, false);
+        Path script = repoRoot.resolve("gradle").resolve("javachanges.gradle");
+        Files.createDirectories(script.getParent());
+        Files.write(script, "custom\n".getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult keptResult = execute("init-gradle-tasks", "--directory", repoRoot.toString());
+
+        assertNotEquals(0, keptResult.exitCode);
+        assertEquals("custom\n", read(script));
+
+        ExecutionResult forcedResult = execute(
+            "init-gradle-tasks",
+            "--directory", repoRoot.toString(),
+            "--force"
+        );
+
+        assertEquals(0, forcedResult.exitCode);
+        assertTrue(read(script).contains("javachangesStatus"));
     }
 
     @Test

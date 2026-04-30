@@ -258,6 +258,7 @@ summary: automate javachanges self-release publishing via GitHub Actions
 - `manifest-field`
 - `version`
 - `write-settings`
+- `init-gradle-tasks`
 - `init-env`
 - `auth-help`
 - `render-vars`

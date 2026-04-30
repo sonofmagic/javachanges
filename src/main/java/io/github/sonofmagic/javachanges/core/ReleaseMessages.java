@@ -54,6 +54,18 @@ public final class ReleaseMessages {
         return message("setupCompleted");
     }
 
+    public static String generatedGradleTasks(Path path) {
+        return message("generatedGradleTasks", path);
+    }
+
+    public static String updatedGradleBuildFile(Path path) {
+        return message("updatedGradleBuildFile", path);
+    }
+
+    public static String applyGradleTasksKotlin(Path path) {
+        return message("applyGradleTasksKotlin", path);
+    }
+
     public static String describeChangePlaceholder() {
         return message("describeChangePlaceholder");
     }
@@ -530,6 +542,10 @@ public final class ReleaseMessages {
 
     public static String targetFileExists(Path target) {
         return message("platform.targetFileExists", target);
+    }
+
+    public static String cannotFindGradleBuildFile(Path repoRoot) {
+        return message("platform.cannotFindGradleBuildFile", repoRoot);
     }
 
     public static String generatedGithubActionsWorkflow(Path relativePath) {

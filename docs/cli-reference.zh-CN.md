@@ -183,6 +183,7 @@ jc-version:
 | --- | --- | --- |
 | `setup` | 用安全默认值执行首次设置；可通过可选参数生成 env 和 CI 模板 | `.changesets/README.md`、`.changesets/config.jsonc`，可选 env 和 CI 文件 |
 | `init` | 初始化带起步示例的 `.changesets/README.md`，可选写入 `.changesets/config.jsonc`，并输出起步命令 | `.changesets/README.md`，可选 `.changesets/config.jsonc` |
+| `init-gradle-tasks` | 生成注册 javachanges tasks 的 Gradle script plugin | `gradle/javachanges.gradle`，传入 `--apply true` 时也会更新 `build.gradle(.kts)` |
 | `add` | 创建 changeset | `.changesets/*.md` |
 | `next` | 推荐下一步发布流程命令，包含本地、GitHub 和 GitLab 路径 | 否 |
 | `modules` | 列出识别到的构建元数据和模块名称 | 否 |
@@ -208,7 +209,7 @@ mvn javachanges:setup
 mvn -q -DskipTests compile exec:java -Dexec.args="setup --directory /path/to/repo"
 ```
 
-默认情况下，`setup` 只会写入 `.changesets/README.md` 和 `.changesets/config.jsonc`，检测构建模型和模块，然后输出下一步命令。传入 `--env true`、`--github-actions true` 或 `--gitlab-ci true` 后，才会额外生成发布 env 和 CI 模板。已有生成文件默认保留，除非传入 `--force true`。
+默认情况下，`setup` 只会写入 `.changesets/README.md` 和 `.changesets/config.jsonc`，检测构建模型和模块，然后输出下一步命令。传入 `--env true`、`--github-actions true`、`--gitlab-ci true` 或 `--gradle-tasks true` 后，才会额外生成发布 env、CI 模板或 Gradle task 快捷入口。对于 Gradle 仓库，`--apply-gradle-tasks true` 还会生成 Gradle task 脚本并追加到 `build.gradle(.kts)`。已有生成文件默认保留，除非传入 `--force true`。
 
 ### 5.2 `init`
 
@@ -223,6 +224,21 @@ mvn -q -DskipTests compile exec:java -Dexec.args="init --directory /path/to/repo
 
 如果需要用默认模板替换已有 `.changesets/config.json` 或 `.changesets/config.jsonc`，使用 `--force` 或 `-Djavachanges.force=true`。
 同一个 force 参数也会用当前起步指南刷新已有 `.changesets/README.md`；不加 force 时会保留自定义 README 内容。
+
+### 5.2.1 `init-gradle-tasks`
+
+为 Gradle 仓库生成一个 script plugin，用来注册 javachanges tasks。
+
+示例：
+
+```bash
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar init-gradle-tasks --directory /path/to/gradle-repo
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar init-gradle-tasks --directory /path/to/gradle-repo --apply true
+mvn javachanges:init-gradle-tasks -Djavachanges.directory=/path/to/gradle-repo
+mvn javachanges:init-gradle-tasks -Djavachanges.directory=/path/to/gradle-repo -Djavachanges.apply=true
+```
+
+默认输出为 `gradle/javachanges.gradle`。使用 `--apply true` 或 `-Djavachanges.apply=true` 后，会在 `build.gradle.kts` 中追加 `apply(from = "gradle/javachanges.gradle")`，或在 `build.gradle` 中追加 `apply from: "gradle/javachanges.gradle"`。生成的 tasks 包括 `javachangesStatus`、`javachangesStatusJson`、`javachangesAdd`、`javachangesPlan`、`javachangesApplyPlan`、`javachangesRestorePlan`、`javachangesDoctorPublish`、`javachangesGradlePublish` 和发布自动化快捷入口。脚本会从已有 repositories 解析 `io.github.sonofmagic:javachanges`，只有没有任何 repository 时才补 `mavenCentral()`，也可以用 `-Pjavachanges.jar=.javachanges/javachanges.jar` 指向本地 jar，用 `-Pjavachanges.jvmArgs="..."` 传入 JVM 参数，通过 `-Pjavachanges.directory=...` 和 `-Pjavachanges.language=zh-CN` 传入全局 CLI 参数，支持 `-Pjavachanges.status.format=json` 这类 scoped 已建模参数，并用 `-Pjavachanges.extraArgs="--format json"` 或 `-Pjavachanges.status.extraArgs="--format json"` 这类 command-scoped property 追加原始 CLI 参数。
 
 ### 5.3 `add`
 

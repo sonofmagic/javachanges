@@ -1,0 +1,430 @@
+def javachangesVersion = providers.gradleProperty('javachanges.version').orElse('__JAVACHANGES_VERSION__')
+def javachangesCli = configurations.findByName('javachangesCli') ?: configurations.create('javachangesCli')
+
+def javachangesProperty = { name ->
+    def value = providers.gradleProperty("javachanges.${name}").orNull
+    value == null || value.trim().isEmpty() ? null : value.trim()
+}
+
+def javachangesCommand = new ThreadLocal()
+def javachangesTaskProperty = { name ->
+    def command = javachangesCommand.get()
+    if (command != null) {
+        def scoped = javachangesProperty("${command}.${name}")
+        if (scoped != null) {
+            return scoped
+        }
+    }
+    javachangesProperty(name)
+}
+
+def javachangesJar = javachangesProperty('jar')
+if (javachangesJar != null) {
+    dependencies.add('javachangesCli', files(javachangesJar))
+} else {
+    if (repositories.isEmpty()) {
+        repositories.mavenCentral()
+    }
+    dependencies.add('javachangesCli', "io.github.sonofmagic:javachanges:${javachangesVersion.get()}")
+}
+
+def addOption = { args, propertyName, optionName ->
+    def value = javachangesTaskProperty(propertyName)
+    if (value != null) {
+        args.add(optionName)
+        args.add(value)
+    }
+}
+
+def addFlag = { args, propertyName, optionName ->
+    def value = javachangesTaskProperty(propertyName)
+    if (value != null && value.toBoolean()) {
+        args.add(optionName)
+        args.add('true')
+    }
+}
+
+def javachangesDirectory = {
+    javachangesTaskProperty('directory') ?: rootProject.projectDir.absolutePath
+}
+
+def tokenizeJavaChangesArgs = { value ->
+    if (value == null) {
+        return []
+    }
+    def args = []
+    def current = new StringBuilder()
+    def quote = null
+    def escaping = false
+    for (int index = 0; index < value.length(); index++) {
+        def ch = value.substring(index, index + 1)
+        if (escaping) {
+            current.append(ch)
+            escaping = false
+        } else if (ch == '\\') {
+            escaping = true
+        } else if (quote != null) {
+            if (ch == quote) {
+                quote = null
+            } else {
+                current.append(ch)
+            }
+        } else if (ch == '\'' || ch == '"') {
+            quote = ch
+        } else if (Character.isWhitespace(ch.charAt(0))) {
+            if (current.length() > 0) {
+                args.add(current.toString())
+                current.setLength(0)
+            }
+        } else {
+            current.append(ch)
+        }
+    }
+    if (escaping) {
+        current.append('\\')
+    }
+    if (quote != null) {
+        throw new GradleException('Unterminated quoted argument in -Pjavachanges.extraArgs')
+    }
+    if (current.length() > 0) {
+        args.add(current.toString())
+    }
+    args
+}
+
+def javachangesExtraArgs = { command ->
+    def args = []
+    args.addAll(tokenizeJavaChangesArgs(javachangesProperty('extraArgs')))
+    args.addAll(tokenizeJavaChangesArgs(javachangesProperty("${command}.extraArgs")))
+    args
+}
+
+def configureJavaChangesExec = { task, command, configureArgs ->
+    task.group = 'release'
+    task.classpath = javachangesCli
+    if (task.hasProperty('mainClass')) {
+        task.mainClass.set('io.github.sonofmagic.javachanges.core.JavaChangesCli')
+    } else {
+        task.main = 'io.github.sonofmagic.javachanges.core.JavaChangesCli'
+    }
+    task.doFirst {
+        javachangesCommand.set(command)
+        try {
+            def cliArgs = []
+            addOption(cliArgs, 'language', '--language')
+            cliArgs.add('--directory')
+            cliArgs.add(javachangesDirectory())
+            cliArgs.add(command)
+            configureArgs(cliArgs)
+            cliArgs.addAll(javachangesExtraArgs(command))
+            task.setArgs(cliArgs)
+            def cliJvmArgs = tokenizeJavaChangesArgs(javachangesTaskProperty('jvmArgs'))
+            if (!cliJvmArgs.isEmpty()) {
+                task.jvmArgs(cliJvmArgs)
+            }
+        } finally {
+            javachangesCommand.remove()
+        }
+    }
+}
+
+def registerJavaChangesTask = { taskName, command, description, configureArgs ->
+    tasks.register(taskName, JavaExec) { task ->
+        task.description = description
+        configureJavaChangesExec(task, command, configureArgs)
+    }
+}
+
+registerJavaChangesTask('javachangesInit', 'init', 'Initialize javachanges files.') { args ->
+    addFlag(args, 'config', '--config')
+    addFlag(args, 'force', '--force')
+}
+
+registerJavaChangesTask('javachangesSetup', 'setup', 'Set up javachanges files.') { args ->
+    addFlag(args, 'force', '--force')
+    addFlag(args, 'env', '--env')
+    addFlag(args, 'githubActions', '--github-actions')
+    addFlag(args, 'gitlabCi', '--gitlab-ci')
+    addFlag(args, 'gradleTasks', '--gradle-tasks')
+    addFlag(args, 'applyGradleTasks', '--apply-gradle-tasks')
+    addOption(args, 'ciVersion', '--javachanges-version')
+    addOption(args, 'buildTool', '--build-tool')
+}
+
+registerJavaChangesTask('javachangesInitGradleTasks', 'init-gradle-tasks', 'Generate javachanges Gradle tasks.') { args ->
+    addOption(args, 'output', '--output')
+    addFlag(args, 'force', '--force')
+    addFlag(args, 'apply', '--apply')
+    addOption(args, 'ciVersion', '--javachanges-version')
+}
+
+registerJavaChangesTask('javachangesStatus', 'status', 'Show the pending release plan.') { args ->
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesStatusJson', 'status', 'Show the pending release plan as JSON.') { args ->
+    args.add('--format')
+    args.add('json')
+}
+
+registerJavaChangesTask('javachangesNext', 'next', 'Suggest the next release workflow command.') { args ->
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesModules', 'modules', 'List detected release modules.') { args ->
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesValidate', 'validate', 'Check release readiness.') { args ->
+    addFlag(args, 'checkDirty', '--check-dirty')
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesVersion', 'version', 'Print the current project version.') { args ->
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesAdd', 'add', 'Create a changeset.') { args ->
+    addOption(args, 'summary', '--summary')
+    addOption(args, 'release', '--release')
+    addOption(args, 'modules', '--modules')
+    addOption(args, 'body', '--body')
+    addFlag(args, 'noInteractive', '--no-interactive')
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesPlan', 'plan', 'Render or apply the release plan.') { args ->
+    addFlag(args, 'apply', '--apply')
+    addFlag(args, 'restore', '--restore')
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesApplyPlan', 'plan', 'Apply the pending release plan.') { args ->
+    args.add('--apply')
+    args.add('true')
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesRestorePlan', 'plan', 'Restore the release plan backup.') { args ->
+    args.add('--restore')
+    args.add('true')
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesManifestField', 'manifest-field', 'Read a release manifest field.') { args ->
+    addOption(args, 'field', '--field')
+    addFlag(args, 'fresh', '--fresh')
+}
+
+registerJavaChangesTask('javachangesReleaseVersionFromTag', 'release-version-from-tag', 'Parse release version from a tag.') { args ->
+    addOption(args, 'tag', '--tag')
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesReleaseModuleFromTag', 'release-module-from-tag', 'Parse release module from a tag.') { args ->
+    addOption(args, 'tag', '--tag')
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesAssertModule', 'assert-module', 'Validate a release module name.') { args ->
+    addOption(args, 'module', '--module')
+}
+
+registerJavaChangesTask('javachangesAssertSnapshot', 'assert-snapshot', 'Validate that the project is a snapshot.') { args ->
+}
+
+registerJavaChangesTask('javachangesAssertReleaseTag', 'assert-release-tag', 'Validate a release tag.') { args ->
+    addOption(args, 'tag', '--tag')
+}
+
+registerJavaChangesTask('javachangesModuleSelectorArgs', 'module-selector-args', 'Print build tool module selector args.') { args ->
+    addOption(args, 'module', '--module')
+}
+
+registerJavaChangesTask('javachangesWriteSettings', 'write-settings', 'Generate Maven settings.xml.') { args ->
+    addOption(args, 'output', '--output')
+    addOption(args, 'mode', '--mode')
+}
+
+registerJavaChangesTask('javachangesInitEnv', 'init-env', 'Initialize a local release env file.') { args ->
+    addOption(args, 'template', '--template')
+    addOption(args, 'target', '--target')
+    addFlag(args, 'force', '--force')
+}
+
+registerJavaChangesTask('javachangesAuthHelp', 'auth-help', 'Print release authentication help.') { args ->
+    addOption(args, 'platform', '--platform')
+}
+
+registerJavaChangesTask('javachangesRenderVars', 'render-vars', 'Render release variables.') { args ->
+    addOption(args, 'envFile', '--env-file')
+    addOption(args, 'platform', '--platform')
+    addOption(args, 'githubRepo', '--github-repo')
+    addOption(args, 'gitlabRepo', '--gitlab-repo')
+    addFlag(args, 'showSecrets', '--show-secrets')
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesDoctorLocal', 'doctor-local', 'Validate local release env variables.') { args ->
+    addOption(args, 'envFile', '--env-file')
+    addOption(args, 'platform', '--platform')
+    addOption(args, 'githubRepo', '--github-repo')
+    addOption(args, 'gitlabRepo', '--gitlab-repo')
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesDoctorPlatform', 'doctor-platform', 'Validate release platform variables.') { args ->
+    addOption(args, 'envFile', '--env-file')
+    addOption(args, 'platform', '--platform')
+    addOption(args, 'githubRepo', '--github-repo')
+    addOption(args, 'gitlabRepo', '--gitlab-repo')
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesSyncVars', 'sync-vars', 'Sync release variables to a platform.') { args ->
+    addOption(args, 'envFile', '--env-file')
+    addOption(args, 'platform', '--platform')
+    addOption(args, 'githubRepo', '--github-repo')
+    addOption(args, 'gitlabRepo', '--gitlab-repo')
+    addFlag(args, 'execute', '--execute')
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesAuditVars', 'audit-vars', 'Audit release platform variables.') { args ->
+    addOption(args, 'envFile', '--env-file')
+    addOption(args, 'platform', '--platform')
+    addOption(args, 'githubRepo', '--github-repo')
+    addOption(args, 'gitlabRepo', '--gitlab-repo')
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesDoctorPublish', 'doctor-publish', 'Validate publish readiness.') { args ->
+    addOption(args, 'target', '--target')
+    addOption(args, 'mode', '--mode')
+    addOption(args, 'tag', '--tag')
+    addOption(args, 'module', '--module')
+    addOption(args, 'task', '--task')
+    addFlag(args, 'allowDirty', '--allow-dirty')
+    addOption(args, 'snapshotBuildStamp', '--snapshot-build-stamp')
+    addOption(args, 'snapshotVersionMode', '--snapshot-version-mode')
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesPreflight', 'preflight', 'Render Maven publish preflight checks.') { args ->
+    addFlag(args, 'snapshot', '--snapshot')
+    addOption(args, 'tag', '--tag')
+    addFlag(args, 'allowDirty', '--allow-dirty')
+    addOption(args, 'module', '--module')
+    addOption(args, 'snapshotBuildStamp', '--snapshot-build-stamp')
+    addOption(args, 'snapshotVersionMode', '--snapshot-version-mode')
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesPublish', 'publish', 'Render or execute Maven publishing.') { args ->
+    addFlag(args, 'snapshot', '--snapshot')
+    addOption(args, 'tag', '--tag')
+    addFlag(args, 'allowDirty', '--allow-dirty')
+    addFlag(args, 'execute', '--execute')
+    addOption(args, 'module', '--module')
+    addOption(args, 'snapshotBuildStamp', '--snapshot-build-stamp')
+    addOption(args, 'snapshotVersionMode', '--snapshot-version-mode')
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesGradlePublish', 'gradle-publish', 'Render or execute Gradle publishing.') { args ->
+    addFlag(args, 'snapshot', '--snapshot')
+    addOption(args, 'tag', '--tag')
+    addFlag(args, 'allowDirty', '--allow-dirty')
+    addFlag(args, 'execute', '--execute')
+    addOption(args, 'module', '--module')
+    addOption(args, 'task', '--task')
+    addOption(args, 'snapshotBuildStamp', '--snapshot-build-stamp')
+    addOption(args, 'snapshotVersionMode', '--snapshot-version-mode')
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesReleaseNotes', 'release-notes', 'Generate release notes for a tag.') { args ->
+    addOption(args, 'tag', '--tag')
+    addOption(args, 'output', '--output')
+}
+
+registerJavaChangesTask('javachangesEnsureGpgPublicKey', 'ensure-gpg-public-key', 'Publish and verify the signing public key.') { args ->
+    addOption(args, 'primaryKeyserver', '--primary-keyserver')
+    addOption(args, 'secondaryKeyserver', '--secondary-keyserver')
+    addOption(args, 'attempts', '--attempts')
+    addOption(args, 'retryDelaySeconds', '--retry-delay-seconds')
+}
+
+registerJavaChangesTask('javachangesInitGithubActions', 'init-github-actions', 'Generate a GitHub Actions release workflow.') { args ->
+    addOption(args, 'output', '--output')
+    addFlag(args, 'force', '--force')
+    addOption(args, 'ciVersion', '--javachanges-version')
+    addOption(args, 'buildTool', '--build-tool')
+}
+
+registerJavaChangesTask('javachangesGithubReleasePlan', 'github-release-plan', 'Create or update a GitHub release PR.') { args ->
+    addOption(args, 'githubRepo', '--github-repo')
+    addOption(args, 'targetBranch', '--target-branch')
+    addOption(args, 'releaseBranch', '--release-branch')
+    addFlag(args, 'execute', '--execute')
+    addOption(args, 'writePlanFiles', '--write-plan-files')
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesGithubTagFromPlan', 'github-tag-from-plan', 'Create a GitHub release tag from the plan.') { args ->
+    addOption(args, 'currentSha', '--current-sha')
+    addFlag(args, 'execute', '--execute')
+    addFlag(args, 'fresh', '--fresh')
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesGithubReleasePublishState', 'github-release-publish-state', 'Resolve GitHub Release publish state.') { args ->
+    addOption(args, 'currentSha', '--current-sha')
+    addOption(args, 'githubOutputFile', '--github-output-file')
+    addFlag(args, 'fresh', '--fresh')
+    addOption(args, 'requireReleaseApplyCommit', '--require-release-apply-commit')
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesGithubReleaseFromPlan', 'github-release-from-plan', 'Create or update a GitHub Release.') { args ->
+    addOption(args, 'releaseNotesFile', '--release-notes-file')
+    addOption(args, 'githubOutputFile', '--github-output-file')
+    addFlag(args, 'execute', '--execute')
+    addFlag(args, 'fresh', '--fresh')
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesInitGitlabCi', 'init-gitlab-ci', 'Generate a GitLab CI release template.') { args ->
+    addOption(args, 'output', '--output')
+    addFlag(args, 'force', '--force')
+    addOption(args, 'ciVersion', '--javachanges-version')
+    addOption(args, 'buildTool', '--build-tool')
+}
+
+registerJavaChangesTask('javachangesGitlabReleasePlan', 'gitlab-release-plan', 'Create or update a GitLab release MR.') { args ->
+    addOption(args, 'projectId', '--project-id')
+    addOption(args, 'targetBranch', '--target-branch')
+    addOption(args, 'releaseBranch', '--release-branch')
+    addFlag(args, 'execute', '--execute')
+    addOption(args, 'writePlanFiles', '--write-plan-files')
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesGitlabTagFromPlan', 'gitlab-tag-from-plan', 'Create a GitLab release tag from the plan.') { args ->
+    addOption(args, 'beforeSha', '--before-sha')
+    addOption(args, 'currentSha', '--current-sha')
+    addFlag(args, 'execute', '--execute')
+    addFlag(args, 'fresh', '--fresh')
+    addFlag(args, 'fallbackFromReleaseCommit', '--fallback-from-release-commit')
+    addOption(args, 'format', '--format')
+}
+
+registerJavaChangesTask('javachangesGitlabRelease', 'gitlab-release', 'Create or update a GitLab Release.') { args ->
+    addOption(args, 'tag', '--tag')
+    addOption(args, 'projectId', '--project-id')
+    addOption(args, 'gitlabHost', '--gitlab-host')
+    addOption(args, 'releaseNotesFile', '--release-notes-file')
+    addFlag(args, 'execute', '--execute')
+    addFlag(args, 'ignoreCatalogValidation', '--ignore-catalog-validation')
+    addOption(args, 'format', '--format')
+}

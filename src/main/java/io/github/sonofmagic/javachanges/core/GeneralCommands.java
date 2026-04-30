@@ -8,6 +8,8 @@ import io.github.sonofmagic.javachanges.core.plan.JavaChangesStatusPrinter;
 import io.github.sonofmagic.javachanges.core.plan.ReleasePlan;
 import io.github.sonofmagic.javachanges.core.plan.ReleasePlanner;
 import io.github.sonofmagic.javachanges.core.plan.RepoFiles;
+import io.github.sonofmagic.javachanges.gradle.GradleModelSupport;
+import io.github.sonofmagic.javachanges.gradle.GradleTasksSupport;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -148,6 +150,14 @@ final class SetupCommand extends AbstractCliCommand {
         description = "Also write the GitLab CI template.")
     private boolean gitlabCi;
 
+    @Option(names = "--gradle-tasks", arity = "0..1", fallbackValue = "true", defaultValue = "false",
+        description = "Also write gradle/javachanges.gradle for Gradle task shortcuts.")
+    private boolean gradleTasks;
+
+    @Option(names = "--apply-gradle-tasks", arity = "0..1", fallbackValue = "true", defaultValue = "false",
+        description = "Also apply generated Gradle task shortcuts to build.gradle(.kts). Implies --gradle-tasks.")
+    private boolean applyGradleTasks;
+
     @Option(names = "--javachanges-version", description = "Released javachanges version used by generated CI templates.")
     private String javachangesVersion;
 
@@ -175,7 +185,15 @@ final class SetupCommand extends AbstractCliCommand {
             runSetupChild(repoRoot, "init-gitlab-ci", "--force", String.valueOf(force),
                 "--build-tool", buildTool, "--javachanges-version", javachangesVersion);
         }
-        printSetupNextSteps(repoRoot);
+        if (applyGradleTasks) {
+            gradleTasks = true;
+        }
+        if (gradleTasks) {
+            runSetupChild(repoRoot, "init-gradle-tasks", "--force", String.valueOf(force),
+                "--apply", String.valueOf(applyGradleTasks),
+                "--javachanges-version", javachangesVersion);
+        }
+        printSetupNextSteps(repoRoot, model);
         return success();
     }
 
@@ -244,7 +262,7 @@ final class SetupCommand extends AbstractCliCommand {
         }
     }
 
-    private void printSetupNextSteps(Path repoRoot) {
+    private void printSetupNextSteps(Path repoRoot, BuildModelSupport.BuildModel model) {
         String repoArg = CliOutputSupport.shellQuote(repoRoot.toString());
         out().println();
         out().println(ReleaseMessages.setupCompleted());
@@ -258,6 +276,9 @@ final class SetupCommand extends AbstractCliCommand {
         }
         if (!gitlabCi) {
             out().println("  javachanges init-gitlab-ci --directory " + repoArg);
+        }
+        if (model.type == BuildModelSupport.BuildType.GRADLE && !gradleTasks) {
+            out().println("  javachanges init-gradle-tasks --directory " + repoArg);
         }
     }
 
@@ -276,6 +297,57 @@ final class SetupCommand extends AbstractCliCommand {
             + "\n"
             + "# Optional GitLab token for release creation\n"
             + "# GITLAB_RELEASE_TOKEN=replace-me\n";
+    }
+}
+
+@Command(name = "init-gradle-tasks", mixinStandardHelpOptions = true,
+    description = "Write a Gradle script plugin with javachanges tasks.")
+final class InitGradleTasksCommand extends AbstractCliCommand {
+    @Option(names = "--output", description = "Target Gradle script plugin path.",
+        defaultValue = GradleTasksSupport.DEFAULT_OUTPUT)
+    private String output;
+
+    @Option(names = "--force", arity = "0..1", fallbackValue = "true", defaultValue = "false",
+        description = "Overwrite the target file when it already exists.")
+    private boolean force;
+
+    @Option(names = "--javachanges-version",
+        description = "Released javachanges version used by the generated Gradle tasks.")
+    private String javachangesVersion;
+
+    @Option(names = "--apply", arity = "0..1", fallbackValue = "true", defaultValue = "false",
+        description = "Append the generated Gradle script plugin to build.gradle or build.gradle.kts.")
+    private boolean apply;
+
+    @Override
+    public Integer call() throws Exception {
+        Path repoRoot = repoRoot();
+        Path target = RepoPathSupport.resolveOutputPath(repoRoot, output, "--output");
+        if (apply && GradleModelSupport.buildFile(repoRoot) == null) {
+            throw new IllegalStateException(ReleaseMessages.cannotFindGradleBuildFile(repoRoot));
+        }
+        if (Files.exists(target) && !force) {
+            throw new IllegalStateException(ReleaseMessages.targetFileExists(target));
+        }
+        Path parent = target.getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+        Files.write(target, GradleTasksSupport.render(javachangesVersion).getBytes(StandardCharsets.UTF_8));
+        out().println(ReleaseMessages.generatedGradleTasks(repoRoot.relativize(target)));
+        if (apply) {
+            Path buildFile = GradleTasksSupport.applyToBuildFile(repoRoot, target);
+            out().println(ReleaseMessages.updatedGradleBuildFile(repoRoot.relativize(buildFile)));
+        }
+        out().println();
+        out().println(ReleaseMessages.nextSteps());
+        if (!apply) {
+            out().println("  " + ReleaseMessages.applyGradleTasksKotlin(repoRoot.relativize(target)));
+        }
+        out().println("  ./gradlew javachangesStatus");
+        out().println("  ./gradlew javachangesAdd -Pjavachanges.summary=\""
+            + ReleaseMessages.describeChangePlaceholder() + "\" -Pjavachanges.release=patch");
+        return success();
     }
 }
 

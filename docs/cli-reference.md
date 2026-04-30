@@ -184,6 +184,7 @@ Rules of thumb:
 | --- | --- | --- |
 | `setup` | Run first-time setup with safe defaults; optional flags can also generate env and CI templates | `.changesets/README.md`, `.changesets/config.jsonc`, optional env and CI files |
 | `init` | Initialize `.changesets/README.md` with starter examples, optionally `.changesets/config.jsonc`, and print starter commands | `.changesets/README.md`, optional `.changesets/config.jsonc` |
+| `init-gradle-tasks` | Generate a Gradle script plugin that registers javachanges tasks | `gradle/javachanges.gradle`, optional `build.gradle(.kts)` with `--apply true` |
 | `add` | Create a changeset | `.changesets/*.md` |
 | `next` | Suggest the next release workflow command, including local, GitHub, and GitLab paths | No |
 | `modules` | List detected build metadata and module names | No |
@@ -209,7 +210,7 @@ mvn javachanges:setup
 mvn -q -DskipTests compile exec:java -Dexec.args="setup --directory /path/to/repo"
 ```
 
-By default, `setup` writes only `.changesets/README.md` and `.changesets/config.jsonc`, detects the build model and modules, then prints the next useful commands. Use `--env true`, `--github-actions true`, or `--gitlab-ci true` to also generate release env and CI templates. Existing generated files are preserved unless `--force true` is passed.
+By default, `setup` writes only `.changesets/README.md` and `.changesets/config.jsonc`, detects the build model and modules, then prints the next useful commands. Use `--env true`, `--github-actions true`, `--gitlab-ci true`, or `--gradle-tasks true` to also generate release env, CI templates, or Gradle task shortcuts. For Gradle repositories, `--apply-gradle-tasks true` also writes the Gradle task script and appends it to `build.gradle(.kts)`. Existing generated files are preserved unless `--force true` is passed.
 
 ### 5.2 `init`
 
@@ -224,6 +225,21 @@ mvn -q -DskipTests compile exec:java -Dexec.args="init --directory /path/to/repo
 
 Use `--force` or `-Djavachanges.force=true` to replace an existing `.changesets/config.json` or `.changesets/config.jsonc` with the default template.
 The same force flag also refreshes an existing `.changesets/README.md` with the current starter guide; without it, custom README content is preserved.
+
+### 5.2.1 `init-gradle-tasks`
+
+Generate a Gradle script plugin that registers javachanges tasks for a Gradle repository.
+
+Examples:
+
+```bash
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar init-gradle-tasks --directory /path/to/gradle-repo
+java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar init-gradle-tasks --directory /path/to/gradle-repo --apply true
+mvn javachanges:init-gradle-tasks -Djavachanges.directory=/path/to/gradle-repo
+mvn javachanges:init-gradle-tasks -Djavachanges.directory=/path/to/gradle-repo -Djavachanges.apply=true
+```
+
+The default output is `gradle/javachanges.gradle`. Use `--apply true` or `-Djavachanges.apply=true` to append it to `build.gradle.kts` with `apply(from = "gradle/javachanges.gradle")`, or to `build.gradle` with `apply from: "gradle/javachanges.gradle"`. The generated tasks include `javachangesStatus`, `javachangesStatusJson`, `javachangesAdd`, `javachangesPlan`, `javachangesApplyPlan`, `javachangesRestorePlan`, `javachangesDoctorPublish`, `javachangesGradlePublish`, and release automation shortcuts. The script resolves `io.github.sonofmagic:javachanges` from existing repositories, adds `mavenCentral()` only when no repositories exist, can use a local jar with `-Pjavachanges.jar=.javachanges/javachanges.jar`, supports JVM options through `-Pjavachanges.jvmArgs="..."`, supports global CLI options through `-Pjavachanges.directory=...` and `-Pjavachanges.language=zh-CN`, supports scoped modeled options such as `-Pjavachanges.status.format=json`, and appends raw CLI options with `-Pjavachanges.extraArgs="--format json"` or command-scoped properties such as `-Pjavachanges.status.extraArgs="--format json"`.
 
 ### 5.3 `add`
 

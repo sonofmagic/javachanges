@@ -2,6 +2,7 @@ package io.github.sonofmagic.javachanges.core;
 
 import io.github.sonofmagic.javachanges.core.config.ChangesetConfigSupport;
 import io.github.sonofmagic.javachanges.core.publish.PublishRuntime;
+import io.github.sonofmagic.javachanges.gradle.GradleModelSupport;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;

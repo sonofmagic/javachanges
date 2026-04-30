@@ -1,4 +1,7 @@
-package io.github.sonofmagic.javachanges.core;
+package io.github.sonofmagic.javachanges.gradle;
+
+import io.github.sonofmagic.javachanges.core.ReleaseMessages;
+import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -14,7 +17,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-final class GradleModelSupport {
+public final class GradleModelSupport {
     private static final String VERSION_KEY = "version";
     private static final String REVISION_KEY = "revision";
     private static final Pattern PROPERTY_LINE = Pattern.compile("^(\\s*)([^#!:=\\s]+)(\\s*[:=]\\s*|\\s+)(.*)$");
@@ -30,7 +33,7 @@ final class GradleModelSupport {
     private GradleModelSupport() {
     }
 
-    static Path settingsFile(Path repoRoot) {
+    public static Path settingsFile(Path repoRoot) {
         Path groovy = repoRoot.resolve("settings.gradle");
         if (Files.exists(groovy)) {
             return groovy;
@@ -42,7 +45,7 @@ final class GradleModelSupport {
         return null;
     }
 
-    static Path buildFile(Path repoRoot) {
+    public static Path buildFile(Path repoRoot) {
         Path groovy = repoRoot.resolve("build.gradle");
         if (Files.exists(groovy)) {
             return groovy;
@@ -54,7 +57,7 @@ final class GradleModelSupport {
         return null;
     }
 
-    static String readRevision(Path gradlePropertiesPath) throws IOException {
+    public static String readRevision(Path gradlePropertiesPath) throws IOException {
         VersionProperty property = findVersionProperty(gradlePropertiesPath);
         if (property == null) {
             throw new IllegalStateException(ReleaseMessages.cannotFindGradleVersion(gradlePropertiesPath));
@@ -62,7 +65,7 @@ final class GradleModelSupport {
         return property.value;
     }
 
-    static void writeRevision(Path gradlePropertiesPath, String revision) throws IOException {
+    public static void writeRevision(Path gradlePropertiesPath, String revision) throws IOException {
         List<String> lines = Files.readAllLines(gradlePropertiesPath, StandardCharsets.UTF_8);
         int index = preferredVersionPropertyLine(lines);
         if (index < 0) {
@@ -76,7 +79,7 @@ final class GradleModelSupport {
         Files.write(gradlePropertiesPath, lines, StandardCharsets.UTF_8);
     }
 
-    static List<String> detectModules(Path repoRoot) throws IOException {
+    public static List<String> detectModules(Path repoRoot) throws IOException {
         Path settingsPath = settingsFile(repoRoot);
         if (settingsPath == null) {
             return buildFile(repoRoot) == null

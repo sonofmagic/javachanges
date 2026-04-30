@@ -132,7 +132,7 @@ mvn io.github.sonofmagic:javachanges:__JAVACHANGES_CURRENT_SNAPSHOT_VERSION__:ma
 
 Notes:
 
-- dedicated goals now exist for common local, setup, GitHub, GitLab, publish, and CI helper commands, including `init`, `setup`, `add`, `next`, `modules`, `status`, `validate`, `plan`, `manifest-field`, `init-env`, `auth-help`, `render-vars`, `doctor-local`, `doctor-platform`, `sync-vars`, `audit-vars`, `write-settings`, `publish`, `gradle-publish`, `release-notes`, `ensure-gpg-public-key`, `release-version-from-tag`, `release-module-from-tag`, `assert-module`, `assert-snapshot`, `assert-release-tag`, `module-selector-args`, `github-release-plan`, `github-tag-from-plan`, `github-release-publish-state`, `github-release-from-plan`, `gitlab-release-plan`, `gitlab-tag-from-plan`, `gitlab-release`, `init-github-actions`, and `init-gitlab-ci`
+- dedicated goals now exist for common local, setup, GitHub, GitLab, publish, and CI helper commands, including `init`, `setup`, `add`, `next`, `modules`, `status`, `validate`, `plan`, `manifest-field`, `init-gradle-tasks`, `init-env`, `auth-help`, `render-vars`, `doctor-local`, `doctor-platform`, `sync-vars`, `audit-vars`, `write-settings`, `publish`, `gradle-publish`, `release-notes`, `ensure-gpg-public-key`, `release-version-from-tag`, `release-module-from-tag`, `assert-module`, `assert-snapshot`, `assert-release-tag`, `module-selector-args`, `github-release-plan`, `github-tag-from-plan`, `github-release-publish-state`, `github-release-from-plan`, `gitlab-release-plan`, `gitlab-tag-from-plan`, `gitlab-release`, `init-github-actions`, and `init-gitlab-ci`
 - `javachanges:run` is still available with `-Djavachanges.args="..."`
 
 ## 5. Prepare a target repository

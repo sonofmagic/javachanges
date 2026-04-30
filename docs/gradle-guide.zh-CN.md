@@ -94,6 +94,87 @@ export JAVACHANGES="java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELE
 $JAVACHANGES status --directory .
 ```
 
+也可以生成 Gradle 原生 task 快捷入口：
+
+```bash
+$JAVACHANGES init-gradle-tasks --directory . --apply true --javachanges-version __JAVACHANGES_LATEST_RELEASE_VERSION__
+```
+
+首次设置时，也可以和其它起步文件一起生成：
+
+```bash
+$JAVACHANGES setup --directory . --apply-gradle-tasks true --javachanges-version __JAVACHANGES_LATEST_RELEASE_VERSION__
+```
+
+`--apply true` 会在 `build.gradle.kts` 中引用生成的 script plugin：
+
+```kotlin
+apply(from = "gradle/javachanges.gradle")
+```
+
+或在 `build.gradle` 中引用：
+
+```groovy
+apply from: "gradle/javachanges.gradle"
+```
+
+如果想先手动审阅构建文件，可以省略 `--apply true`，再自行添加同一行。
+
+之后常用命令可以直接通过 Gradle 执行：
+
+```bash
+./gradlew javachangesStatus
+./gradlew javachangesAdd -Pjavachanges.summary="fix generated release notes" -Pjavachanges.release=patch
+./gradlew javachangesPlan -Pjavachanges.apply=true
+./gradlew javachangesGradlePublish -Pjavachanges.tag=v1.4.0
+```
+
+生成脚本还包含几个面向审阅和恢复路径的任务型别名：
+
+```bash
+./gradlew javachangesStatusJson
+./gradlew javachangesApplyPlan
+./gradlew javachangesRestorePlan
+```
+
+生成的脚本会从项目已有 repositories 解析 `io.github.sonofmagic:javachanges`，只有当项目没有配置任何 repository 时才会补 `mavenCentral()`。如果想改用已下载或本地构建的 CLI jar，可以传入：
+
+```bash
+./gradlew javachangesStatus -Pjavachanges.jar=.javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar
+```
+
+Gradle tasks 默认把 `--directory` 指向 root project 目录。也可以覆盖目标目录或切换输出语言：
+
+```bash
+./gradlew javachangesStatus -Pjavachanges.directory=/path/to/repo -Pjavachanges.language=zh-CN
+```
+
+大多数已建模 property 也支持 command-scoped 覆盖。限定到命令的值只影响该 task，全局值仍作为其它 task 的默认值：
+
+```bash
+./gradlew javachangesStatus javachangesPlan -Pjavachanges.format=text -Pjavachanges.status.format=json
+```
+
+当 CLI 需要代理、编码或内存等 JVM 设置时，可以使用 `javachanges.jvmArgs`：
+
+```bash
+./gradlew javachangesStatus -Pjavachanges.jvmArgs="-Dfile.encoding=UTF-8 -Xmx512m"
+./gradlew javachangesStatus -Pjavachanges.status.jvmArgs="-Dhttps.proxyHost=proxy.example.com -Dhttps.proxyPort=8080"
+```
+
+如果临时需要传入还没有专用 Gradle property 的 CLI 参数，可以用 `javachanges.extraArgs` 追加：
+
+```bash
+./gradlew javachangesStatus -Pjavachanges.extraArgs="--format json"
+```
+
+如果追加参数只应该作用于某一个命令，可以按 CLI command name 限定范围：
+
+```bash
+./gradlew javachangesStatus -Pjavachanges.status.extraArgs="--format json"
+./gradlew javachangesGradlePublish -Pjavachanges.gradle-publish.extraArgs="--task publishAllPublicationsToMavenRepository"
+```
+
 如果你是在 `javachanges` 源码仓库中开发，可以这样指向一个 Gradle 仓库：
 
 ```bash

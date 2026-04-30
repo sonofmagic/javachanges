@@ -234,8 +234,13 @@ class JavaChangesMavenPluginSupportTest {
 
         org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>init-github-actions</goal>"));
         org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>init-gitlab-ci</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>init-gradle-tasks</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<name>gradleTasks</name>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<name>applyGradleTasks</name>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.apply}</apply>"));
         org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains(".github/workflows/javachanges-release.yml"));
         org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains(".gitlab-ci.yml"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("gradle/javachanges.gradle"));
         org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.buildTool}</buildTool>"));
         org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.javachangesVersion}</javachangesVersion>"));
     }

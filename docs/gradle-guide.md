@@ -94,6 +94,87 @@ Run against the Gradle repository:
 $JAVACHANGES status --directory .
 ```
 
+Optionally generate Gradle-native task shortcuts:
+
+```bash
+$JAVACHANGES init-gradle-tasks --directory . --apply true --javachanges-version __JAVACHANGES_LATEST_RELEASE_VERSION__
+```
+
+For first-time setup, the same script can be generated with the rest of the starter files:
+
+```bash
+$JAVACHANGES setup --directory . --apply-gradle-tasks true --javachanges-version __JAVACHANGES_LATEST_RELEASE_VERSION__
+```
+
+`--apply true` appends the generated script plugin to `build.gradle.kts`:
+
+```kotlin
+apply(from = "gradle/javachanges.gradle")
+```
+
+or to `build.gradle`:
+
+```groovy
+apply from: "gradle/javachanges.gradle"
+```
+
+If you prefer to review the build file yourself, omit `--apply true` and add the same line manually.
+
+After that, common commands can run through Gradle:
+
+```bash
+./gradlew javachangesStatus
+./gradlew javachangesAdd -Pjavachanges.summary="fix generated release notes" -Pjavachanges.release=patch
+./gradlew javachangesPlan -Pjavachanges.apply=true
+./gradlew javachangesGradlePublish -Pjavachanges.tag=v1.4.0
+```
+
+The generated script also includes task-oriented aliases for common review and recovery paths:
+
+```bash
+./gradlew javachangesStatusJson
+./gradlew javachangesApplyPlan
+./gradlew javachangesRestorePlan
+```
+
+The generated script resolves `io.github.sonofmagic:javachanges` from your existing repositories, and adds `mavenCentral()` only when the project has no repositories configured. To run with a downloaded or locally built CLI jar instead, pass:
+
+```bash
+./gradlew javachangesStatus -Pjavachanges.jar=.javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar
+```
+
+Gradle tasks default `--directory` to the root project directory. Override it or switch output language with:
+
+```bash
+./gradlew javachangesStatus -Pjavachanges.directory=/path/to/repo -Pjavachanges.language=zh-CN
+```
+
+Most modeled properties also support command-scoped overrides. The scoped value wins for that task, while the global value remains the default for other tasks:
+
+```bash
+./gradlew javachangesStatus javachangesPlan -Pjavachanges.format=text -Pjavachanges.status.format=json
+```
+
+Use `javachanges.jvmArgs` when the CLI needs JVM settings such as proxy, encoding, or memory options:
+
+```bash
+./gradlew javachangesStatus -Pjavachanges.jvmArgs="-Dfile.encoding=UTF-8 -Xmx512m"
+./gradlew javachangesStatus -Pjavachanges.status.jvmArgs="-Dhttps.proxyHost=proxy.example.com -Dhttps.proxyPort=8080"
+```
+
+For a temporary CLI option that is not modeled by a dedicated Gradle property yet, append it with `javachanges.extraArgs`:
+
+```bash
+./gradlew javachangesStatus -Pjavachanges.extraArgs="--format json"
+```
+
+When the extra arguments should apply only to one command, scope them by CLI command name:
+
+```bash
+./gradlew javachangesStatus -Pjavachanges.status.extraArgs="--format json"
+./gradlew javachangesGradlePublish -Pjavachanges.gradle-publish.extraArgs="--task publishAllPublicationsToMavenRepository"
+```
+
 When developing `javachanges` itself from this source checkout, you can target a Gradle repository with:
 
 ```bash

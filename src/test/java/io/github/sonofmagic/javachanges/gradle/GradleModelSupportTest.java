@@ -1,4 +1,7 @@
-package io.github.sonofmagic.javachanges.core;
+package io.github.sonofmagic.javachanges.gradle;
+
+import io.github.sonofmagic.javachanges.core.BuildModelSupport;
+import io.github.sonofmagic.javachanges.core.ReleaseModuleUtils;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;

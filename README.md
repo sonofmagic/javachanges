@@ -266,6 +266,7 @@ High-value commands:
 - `manifest-field`
 - `version`
 - `write-settings`
+- `init-gradle-tasks`
 - `init-env`
 - `auth-help`
 - `render-vars`

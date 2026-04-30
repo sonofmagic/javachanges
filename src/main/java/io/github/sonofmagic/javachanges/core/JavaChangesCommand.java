@@ -33,6 +33,7 @@ import java.nio.file.Path;
         AssertReleaseTagCommand.class,
         ModuleSelectorArgsCommand.class,
         WriteSettingsCommand.class,
+        InitGradleTasksCommand.class,
         InitEnvCommand.class,
         AuthHelpCommand.class,
         RenderVarsCommand.class,
