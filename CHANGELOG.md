@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.10.3 - 2026-04-30
+
+### Patch Changes
+
+- Allow release publishing to create the tag from a merged release apply commit after main CI succeeds. (packages: javachanges)
+- Move GitHub release publish-state decisions into javachanges and simplify the repository release workflows. (packages: javachanges)
+
 ## 1.10.2 - 2026-04-30
 
 ### Patch Changes
