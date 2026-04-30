@@ -402,7 +402,7 @@ Commands that currently support `--format json`:
 | `doctor-local` | Includes section summaries, suggestions, and final error text on failure |
 | `doctor-platform` | Includes `platform` and section summaries for env and CLI checks |
 | `audit-vars` | Includes `platform`, audit sections, and final error text on failure |
-| `doctor-publish` | Includes publish target, mode, build tool, current revision, readiness checks, and next commands |
+| `doctor-publish` | Includes publish target, mode, build tool, current revision, readiness checks, repair suggestions, and next commands |
 | `preflight` | Includes publish action metadata plus snapshot mode fields such as `snapshotVersionMode`, `effectiveVersion`, and `snapshotBuildStampApplied` |
 | `publish` | Includes publish action metadata such as tag, module, release version, and release notes file |
 | `gradle-publish` | Includes Gradle publish action metadata such as tag, module, release version, and snapshot mode |

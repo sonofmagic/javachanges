@@ -1425,6 +1425,8 @@ class JavaChangesCliTest {
         assertEquals("snapshot", root.get("mode").asText());
         assertTrue(hasCheck(root, "Maven POM", "Central metadata", "FAILED"));
         assertTrue(hasCheck(root, "Maven POM", "profile central-snapshot-publish", "FAILED"));
+        assertTrue(hasSuggestion(root, "Maven Central metadata"));
+        assertTrue(hasSuggestion(root, "central-snapshot-publish"));
     }
 
     @Test
@@ -1448,6 +1450,7 @@ class JavaChangesCliTest {
         assertEquals("1.2.3-SNAPSHOT", root.get("currentRevision").asText());
         assertTrue(hasCheck(root, "Maven POM", "Central metadata", "OK"));
         assertTrue(hasCheck(root, "Credentials", "GPG signing", "OK"));
+        assertFalse(root.has("suggestions"));
     }
 
     @Test
@@ -1466,6 +1469,7 @@ class JavaChangesCliTest {
         assertFalse(root.get("ok").asBoolean());
         assertEquals("gradle", root.get("buildTool").asText());
         assertTrue(hasCheck(root, "Gradle", "publish configuration", "FAILED"));
+        assertTrue(hasSuggestion(root, "maven-publish"));
     }
 
     @Test
@@ -1486,6 +1490,7 @@ class JavaChangesCliTest {
         assertEquals("gradle", root.get("buildTool").asText());
         assertTrue(hasCheck(root, "Gradle", "publish configuration", "OK"));
         assertTrue(hasCheck(root, "Credentials", "Gradle signing", "OK"));
+        assertFalse(root.has("suggestions"));
         assertTrue(root.get("nextCommands").get(0).asText().contains("gradle-publish"));
     }
 
@@ -1839,6 +1844,18 @@ class JavaChangesCliTest {
             if (section.equals(check.get("section").asText())
                 && name.equals(check.get("name").asText())
                 && status.equals(check.get("status").asText())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasSuggestion(JsonNode root, String text) {
+        if (!root.has("suggestions")) {
+            return false;
+        }
+        for (JsonNode suggestion : root.get("suggestions")) {
+            if (suggestion.asText().contains(text)) {
                 return true;
             }
         }

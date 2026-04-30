@@ -13,6 +13,7 @@ public final class PublishDoctorReport {
     public String currentRevision;
     public String publishVersion;
     public final List<Check> checks = new ArrayList<Check>();
+    public final List<String> suggestions = new ArrayList<String>();
     public final List<String> nextCommands = new ArrayList<String>();
 
     public PublishDoctorReport(String target) {
@@ -34,6 +35,18 @@ public final class PublishDoctorReport {
 
     public void failed(String section, String name, String message) {
         checks.add(new Check(section, name, "FAILED", message));
+    }
+
+    public void failed(String section, String name, String message, String suggestion) {
+        failed(section, name, message);
+        suggest(suggestion);
+    }
+
+    public void suggest(String suggestion) {
+        String normalized = ReleaseTextUtils.trimToNull(suggestion);
+        if (normalized != null && !suggestions.contains(normalized)) {
+            suggestions.add(normalized);
+        }
     }
 
     public void warn(String section, String name, String message) {
@@ -63,6 +76,9 @@ public final class PublishDoctorReport {
             renderedChecks.add(check.toMap());
         }
         payload.put("checks", renderedChecks);
+        if (!suggestions.isEmpty()) {
+            payload.put("suggestions", new ArrayList<String>(suggestions));
+        }
         payload.put("nextCommands", new ArrayList<String>(nextCommands));
         return ReleaseJsonUtils.toJson(payload);
     }

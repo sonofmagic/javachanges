@@ -401,7 +401,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --directory /path
 | `doctor-local` | 失败时会包含分组检查结果、建议列表和最终错误信息 |
 | `doctor-platform` | 会带上 `platform` 以及 env / CLI 检查分组 |
 | `audit-vars` | 会带上 `platform`、审计分组结果，以及失败时的最终错误信息 |
-| `doctor-publish` | 会带上发布目标、模式、构建工具、当前版本、就绪检查和下一步命令 |
+| `doctor-publish` | 会带上发布目标、模式、构建工具、当前版本、就绪检查、修复建议和下一步命令 |
 | `preflight` | 会带上发布动作元数据，以及 `snapshotVersionMode`、`effectiveVersion`、`snapshotBuildStampApplied` 等 snapshot 模式字段 |
 | `publish` | 会带上 tag、module、releaseVersion、releaseNotesFile 等发布元数据 |
 | `gradle-publish` | 会带上 Gradle 发布动作元数据，例如 tag、module、releaseVersion 和 snapshot mode |

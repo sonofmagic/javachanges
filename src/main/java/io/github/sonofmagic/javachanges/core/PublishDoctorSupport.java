@@ -45,7 +45,8 @@ public final class PublishDoctorSupport {
         PublishDoctorReport report = new PublishDoctorReport(request.target);
         BuildModelSupport.BuildModel model = BuildModelSupport.detect(repoRoot);
         if (model == null) {
-            report.failed("Project", "build model", "No supported Maven or Gradle build model was found.");
+            report.failed("Project", "build model", "No supported Maven or Gradle build model was found.",
+                "Run javachanges init or add a pom.xml, build.gradle, or build.gradle.kts at the repository root.");
             report.nextCommands.add("javachanges init --directory " + repoRoot);
             return report;
         }
@@ -92,13 +93,15 @@ public final class PublishDoctorSupport {
         Path settings = GradleModelSupport.settingsFile(repoRoot);
         Path build = GradleModelSupport.buildFile(repoRoot);
         if (settings == null && build == null) {
-            report.failed("Gradle", "build files", "Missing settings.gradle(.kts) or build.gradle(.kts).");
+            report.failed("Gradle", "build files", "Missing settings.gradle(.kts) or build.gradle(.kts).",
+                "Add settings.gradle(.kts) or build.gradle(.kts) so Gradle modules can be discovered.");
         } else {
             report.ok("Gradle", "build files", gradlePathSummary(settings, build));
         }
         List<String> modules = BuildModelSupport.detectKnownModules(repoRoot);
         if (modules.isEmpty()) {
-            report.failed("Gradle", "modules", "No Gradle projects were detected.");
+            report.failed("Gradle", "modules", "No Gradle projects were detected.",
+                "Add a root Gradle project or include subprojects in settings.gradle(.kts).");
         } else {
             report.ok("Gradle", "modules", ReleaseModuleUtils.joinModules(modules));
         }
@@ -121,7 +124,8 @@ public final class PublishDoctorSupport {
 
     private void checkVersion(PublishDoctorReport report) {
         if ("snapshot".equals(report.mode) && !report.currentRevision.endsWith("-SNAPSHOT")) {
-            report.failed("Project", "snapshot version", "Snapshot publishing requires the current revision to end with -SNAPSHOT.");
+            report.failed("Project", "snapshot version", "Snapshot publishing requires the current revision to end with -SNAPSHOT.",
+                "Use a -SNAPSHOT revision for snapshot publishing, or pass --mode release / --tag for a release publish.");
             return;
         }
         report.ok("Project", "version", "Current revision is " + report.currentRevision + "; publish mode is " + report.mode + ".");
@@ -142,7 +146,8 @@ public final class PublishDoctorSupport {
             report.ok("Maven POM", "coordinates", pom.groupId() + ":" + pom.artifactId() + ":" + pom.version());
             return;
         }
-        report.failed("Maven POM", "coordinates", "Missing " + join(missing) + ".");
+        report.failed("Maven POM", "coordinates", "Missing " + join(missing) + ".",
+            "Define groupId, artifactId, and version in pom.xml or inherited parent metadata.");
     }
 
     private void checkMetadata(PublishDoctorReport report, MavenPom pom) {
@@ -167,13 +172,15 @@ public final class PublishDoctorSupport {
             report.ok("Maven POM", "Central metadata", "Required Maven Central metadata is present.");
             return;
         }
-        report.failed("Maven POM", "Central metadata", "Missing " + join(missing) + ".");
+        report.failed("Maven POM", "Central metadata", "Missing " + join(missing) + ".",
+            "Add Maven Central metadata to pom.xml: name, description, url, license, developer, and scm entries.");
     }
 
     private void checkMavenCommand(PublishDoctorReport report) throws IOException, InterruptedException {
         MavenCommand command = ReleaseProcessUtils.resolveMavenCommand(repoRoot);
         if (command == null) {
-            report.failed("Runtime", "Maven command", ReleaseMessages.noMavenCommandFound());
+            report.failed("Runtime", "Maven command", ReleaseMessages.noMavenCommandFound(),
+                "Add a Maven wrapper with mvn -N wrapper:wrapper or install Maven on PATH.");
             return;
         }
         report.ok("Runtime", "Maven command", command.command + " (" + command.source + ")");
@@ -182,7 +189,8 @@ public final class PublishDoctorSupport {
     private void checkGradleCommand(PublishDoctorReport report) throws IOException, InterruptedException {
         GradleCommand command = ReleaseProcessUtils.resolveGradleCommand(repoRoot);
         if (command == null) {
-            report.failed("Runtime", "Gradle command", ReleaseMessages.noGradleCommandFound());
+            report.failed("Runtime", "Gradle command", ReleaseMessages.noGradleCommandFound(),
+                "Add a Gradle wrapper with gradle wrapper or install Gradle on PATH.");
             return;
         }
         report.ok("Runtime", "Gradle command", command.command + " (" + command.source + ")");
@@ -253,12 +261,14 @@ public final class PublishDoctorSupport {
             return;
         }
         report.failed("Credentials", "GPG signing",
-            "Set MAVEN_GPG_PRIVATE_KEY and MAVEN_GPG_PASSPHRASE, or make a local GPG secret key available.");
+            "Set MAVEN_GPG_PRIVATE_KEY and MAVEN_GPG_PASSPHRASE, or make a local GPG secret key available.",
+            "Configure signing with MAVEN_GPG_PRIVATE_KEY/MAVEN_GPG_PASSPHRASE in CI, or import a local GPG secret key.");
     }
 
     private void checkGradlePublishConfiguration(PublishDoctorReport report, List<Path> buildFiles) throws IOException {
         if (buildFiles.isEmpty()) {
-            report.failed("Gradle", "publish configuration", "No Gradle build files were found.");
+            report.failed("Gradle", "publish configuration", "No Gradle build files were found.",
+                "Add build.gradle(.kts) with the maven-publish plugin and a publishing block.");
             return;
         }
         for (Path buildFile : buildFiles) {
@@ -269,7 +279,8 @@ public final class PublishDoctorSupport {
             }
         }
         report.failed("Gradle", "publish configuration",
-            "No maven-publish plugin or publishing block was found in Gradle build files.");
+            "No maven-publish plugin or publishing block was found in Gradle build files.",
+            "Apply the maven-publish plugin and configure a publishing block for the publications you will deploy.");
     }
 
     private void checkGradleSigning(PublishDoctorReport report, List<Path> buildFiles) throws IOException {
@@ -291,12 +302,14 @@ public final class PublishDoctorSupport {
             }
         }
         report.failed("Gradle", "signing configuration",
-            "No signing plugin/block or signing environment variables were found.");
+            "No signing plugin/block or signing environment variables were found.",
+            "Apply the signing plugin, add a signing block, or set Gradle signing environment variables for CI.");
     }
 
     private void checkProfile(PublishDoctorReport report, MavenPom pom, String profileId) {
         if (pom.profile(profileId) == null) {
-            report.failed("Maven POM", "profile " + profileId, "Profile is missing.");
+            report.failed("Maven POM", "profile " + profileId, "Profile is missing.",
+                "Add the " + profileId + " profile to pom.xml with the Central publish plugins.");
             return;
         }
         report.ok("Maven POM", "profile " + profileId, "Profile is present.");
@@ -307,7 +320,8 @@ public final class PublishDoctorSupport {
             report.ok("Maven POM", profileId + " " + artifactId, "Plugin is configured.");
             return;
         }
-        report.failed("Maven POM", profileId + " " + artifactId, "Plugin is missing.");
+        report.failed("Maven POM", profileId + " " + artifactId, "Plugin is missing.",
+            "Add " + artifactId + " to the " + profileId + " profile before publishing to Maven Central.");
     }
 
     private void checkEnvAny(PublishDoctorReport report, String section, String name, String variable) {
@@ -315,7 +329,8 @@ public final class PublishDoctorSupport {
             report.ok(section, name, variable + " is set.");
             return;
         }
-        report.failed(section, name, "Missing " + variable + ".");
+        report.failed(section, name, "Missing " + variable + ".",
+            "Set " + variable + " in your local env file or CI secret store.");
     }
 
     private void checkEnvPair(PublishDoctorReport report, String section, String name, String[][] alternatives) {
@@ -333,7 +348,8 @@ public final class PublishDoctorSupport {
             }
             message.append(alternatives[i][0]).append("/").append(alternatives[i][1]);
         }
-        report.failed(section, name, message.toString() + ".");
+        report.failed(section, name, message.toString() + ".",
+            message.toString() + " in your local env file or CI secret store.");
     }
 
     private void printText(PublishDoctorReport report) {
@@ -352,6 +368,13 @@ public final class PublishDoctorSupport {
         out.println("Checks:");
         for (PublishDoctorReport.Check check : report.checks) {
             out.println("- [" + check.status + "] " + check.section + " / " + check.name + ": " + check.message);
+        }
+        if (!report.suggestions.isEmpty()) {
+            out.println();
+            out.println("Suggestions:");
+            for (String suggestion : report.suggestions) {
+                out.println("  " + suggestion);
+            }
         }
         if (!report.nextCommands.isEmpty()) {
             out.println();
