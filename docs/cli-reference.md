@@ -457,7 +457,7 @@ JSON mode contract:
 
 ### 8.1 `doctor-publish`
 
-Validate whether a Maven project is ready to publish to Maven Central:
+Validate whether a Maven or Gradle project is ready to publish to Maven Central:
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="doctor-publish --directory /path/to/repo --target maven-central"
@@ -469,7 +469,9 @@ Use JSON output in CI:
 mvn -q -DskipTests compile exec:java -Dexec.args="doctor-publish --directory /path/to/repo --format json"
 ```
 
-The first version checks Maven Central readiness for Maven projects: build model, current revision, Maven command availability, required POM metadata, Central publish profiles, source/javadoc/signing plugins, Central publishing plugin setup, repository credentials, and GPG signing inputs.
+For Maven projects, the doctor checks build model, current revision, Maven command availability, required POM metadata, Central publish profiles, source/javadoc/signing plugins, Central publishing plugin setup, repository credentials, and GPG signing inputs.
+
+For Gradle projects, the doctor checks `gradle.properties`, settings/build files, detected modules, Gradle command availability, `maven-publish` or `publishing` configuration, signing configuration or Gradle signing environment variables, repository credentials, and the next `gradle-publish` command.
 
 Important flags:
 

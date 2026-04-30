@@ -456,7 +456,7 @@ JSON 模式约定：
 
 ### 8.1 `doctor-publish`
 
-验证 Maven 项目是否已经具备发布到 Maven Central 的条件：
+验证 Maven 或 Gradle 项目是否已经具备发布到 Maven Central 的条件：
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="doctor-publish --directory /path/to/repo --target maven-central"
@@ -468,7 +468,9 @@ CI 中可以使用 JSON 输出：
 mvn -q -DskipTests compile exec:java -Dexec.args="doctor-publish --directory /path/to/repo --format json"
 ```
 
-第一版会检查 Maven 项目的 Maven Central 发布就绪状态：构建模型、当前版本、Maven 命令、必需 POM 元数据、Central 发布 profiles、source/javadoc/signing 插件、Central publishing plugin 配置、仓库凭据和 GPG 签名输入。
+对于 Maven 项目，会检查构建模型、当前版本、Maven 命令、必需 POM 元数据、Central 发布 profiles、source/javadoc/signing 插件、Central publishing plugin 配置、仓库凭据和 GPG 签名输入。
+
+对于 Gradle 项目，会检查 `gradle.properties`、settings/build 文件、检测到的模块、Gradle 命令、`maven-publish` 或 `publishing` 配置、签名配置或 Gradle 签名环境变量、仓库凭据，以及下一步 `gradle-publish` 命令。
 
 关键参数：
 

@@ -1451,6 +1451,45 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void doctorPublishJsonReportsMissingGradlePublishReadiness(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createGradleRepository(tempDir, false);
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.gradleWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = executeProcess(publishDoctorEnv(),
+            "doctor-publish",
+            "--directory", repoRoot.toString(),
+            "--format", "json"
+        );
+
+        assertNotEquals(0, result.exitCode);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertFalse(root.get("ok").asBoolean());
+        assertEquals("gradle", root.get("buildTool").asText());
+        assertTrue(hasCheck(root, "Gradle", "publish configuration", "FAILED"));
+    }
+
+    @Test
+    void doctorPublishJsonPassesForGradlePublishProject(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createGradleRepository(tempDir, false);
+        Files.write(repoRoot.resolve("build.gradle"), gradlePublishBuildFile().getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.gradleWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = executeProcess(publishDoctorEnv(),
+            "doctor-publish",
+            "--directory", repoRoot.toString(),
+            "--format", "json"
+        );
+
+        assertEquals(0, result.exitCode, result.stdout + result.stderr);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertTrue(root.get("ok").asBoolean());
+        assertEquals("gradle", root.get("buildTool").asText());
+        assertTrue(hasCheck(root, "Gradle", "publish configuration", "OK"));
+        assertTrue(hasCheck(root, "Credentials", "Gradle signing", "OK"));
+        assertTrue(root.get("nextCommands").get(0).asText().contains("gradle-publish"));
+    }
+
+    @Test
     void doctorLocalFallsBackToSystemMavenWhenWrapperMissing(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, false);
         ReleaseEnvTestFixtures.writeLocalEnv(repoRoot, ReleaseEnvTestFixtures.cliEnvFile());
@@ -1771,6 +1810,18 @@ class JavaChangesCliTest {
             + "        <plugin><artifactId>central-publishing-maven-plugin</artifactId></plugin>\n"
             + "      </plugins></build>\n"
             + "    </profile>\n";
+    }
+
+    private static String gradlePublishBuildFile() {
+        return "plugins {\n"
+            + "  id 'java-library'\n"
+            + "  id 'maven-publish'\n"
+            + "  id 'signing'\n"
+            + "}\n"
+            + "publishing {\n"
+            + "  publications { mavenJava(MavenPublication) { from components.java } }\n"
+            + "}\n"
+            + "signing { sign publishing.publications.mavenJava }\n";
     }
 
     private static Map<String, String> publishDoctorEnv() {

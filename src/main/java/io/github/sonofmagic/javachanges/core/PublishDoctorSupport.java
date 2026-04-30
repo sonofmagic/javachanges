@@ -13,10 +13,14 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public final class PublishDoctorSupport {
     private final Path repoRoot;
@@ -47,19 +51,23 @@ public final class PublishDoctorSupport {
         }
 
         report.buildTool = model.type == BuildModelSupport.BuildType.MAVEN ? "maven" : "gradle";
-        if (model.type != BuildModelSupport.BuildType.MAVEN) {
-            report.failed("Project", "build tool", "doctor-publish currently validates Maven publishing only.");
-            report.nextCommands.add("javachanges gradle-publish --directory " + repoRoot + " --snapshot");
-            return report;
-        }
-        report.ok("Project", "build tool", "Maven project detected.");
-
         report.currentRevision = BuildModelSupport.readRevision(repoRoot);
         report.mode = resolveMode(request.mode, report.currentRevision);
         report.publishVersion = "snapshot".equals(report.mode)
             ? report.currentRevision
             : ReleaseTextUtils.stripSnapshot(report.currentRevision);
 
+        if (model.type == BuildModelSupport.BuildType.GRADLE) {
+            inspectGradle(report, model);
+            return report;
+        }
+        inspectMaven(report, model);
+        return report;
+    }
+
+    private void inspectMaven(PublishDoctorReport report, BuildModelSupport.BuildModel model)
+        throws IOException, InterruptedException {
+        report.ok("Project", "build tool", "Maven project detected.");
         checkVersion(report);
         MavenPom pom = MavenPom.read(model.versionFile);
         checkCoordinates(report, pom);
@@ -74,7 +82,34 @@ public final class PublishDoctorSupport {
         report.nextCommands.add("javachanges publish --directory " + repoRoot
             + ("snapshot".equals(report.mode) ? " --snapshot" : " --tag v" + report.publishVersion)
             + " --execute true");
-        return report;
+    }
+
+    private void inspectGradle(PublishDoctorReport report, BuildModelSupport.BuildModel model)
+        throws IOException, InterruptedException {
+        report.ok("Project", "build tool", "Gradle project detected.");
+        checkVersion(report);
+        report.ok("Gradle", "version file", repoRoot.relativize(model.versionFile).toString());
+        Path settings = GradleModelSupport.settingsFile(repoRoot);
+        Path build = GradleModelSupport.buildFile(repoRoot);
+        if (settings == null && build == null) {
+            report.failed("Gradle", "build files", "Missing settings.gradle(.kts) or build.gradle(.kts).");
+        } else {
+            report.ok("Gradle", "build files", gradlePathSummary(settings, build));
+        }
+        List<String> modules = BuildModelSupport.detectKnownModules(repoRoot);
+        if (modules.isEmpty()) {
+            report.failed("Gradle", "modules", "No Gradle projects were detected.");
+        } else {
+            report.ok("Gradle", "modules", ReleaseModuleUtils.joinModules(modules));
+        }
+        checkGradleCommand(report);
+        List<Path> buildFiles = collectGradleBuildFiles();
+        checkGradlePublishConfiguration(report, buildFiles);
+        checkGradleSigning(report, buildFiles);
+        checkGradleCredentials(report);
+        report.nextCommands.add("javachanges gradle-publish --directory " + repoRoot
+            + ("snapshot".equals(report.mode) ? " --snapshot" : " --tag v" + report.publishVersion)
+            + " --execute true");
     }
 
     private static String resolveMode(String configuredMode, String revision) {
@@ -144,6 +179,15 @@ public final class PublishDoctorSupport {
         report.ok("Runtime", "Maven command", command.command + " (" + command.source + ")");
     }
 
+    private void checkGradleCommand(PublishDoctorReport report) throws IOException, InterruptedException {
+        GradleCommand command = ReleaseProcessUtils.resolveGradleCommand(repoRoot);
+        if (command == null) {
+            report.failed("Runtime", "Gradle command", ReleaseMessages.noGradleCommandFound());
+            return;
+        }
+        report.ok("Runtime", "Gradle command", command.command + " (" + command.source + ")");
+    }
+
     private void checkCentralProfiles(PublishDoctorReport report, MavenPom pom) {
         checkProfile(report, pom, "central-publish");
         checkProfile(report, pom, "central-snapshot-publish");
@@ -181,6 +225,16 @@ public final class PublishDoctorSupport {
         checkSigning(report);
     }
 
+    private void checkGradleCredentials(PublishDoctorReport report) {
+        checkEnvPair(report, "Credentials", "Gradle repository credentials",
+            new String[][]{
+                {"MAVEN_CENTRAL_USERNAME", "MAVEN_CENTRAL_PASSWORD"},
+                {"ORG_GRADLE_PROJECT_mavenCentralUsername", "ORG_GRADLE_PROJECT_mavenCentralPassword"},
+                {"ORG_GRADLE_PROJECT_mavenRepositoryUsername", "ORG_GRADLE_PROJECT_mavenRepositoryPassword"},
+                {"MAVEN_REPOSITORY_USERNAME", "MAVEN_REPOSITORY_PASSWORD"}
+            });
+    }
+
     private void checkSigning(PublishDoctorReport report) throws IOException, InterruptedException {
         boolean hasPrivateKeyEnv = ReleaseTextUtils.trimToNull(System.getenv("MAVEN_GPG_PRIVATE_KEY")) != null;
         boolean hasPassphrase = ReleaseTextUtils.trimToNull(System.getenv("MAVEN_GPG_PASSPHRASE")) != null;
@@ -200,6 +254,44 @@ public final class PublishDoctorSupport {
         }
         report.failed("Credentials", "GPG signing",
             "Set MAVEN_GPG_PRIVATE_KEY and MAVEN_GPG_PASSPHRASE, or make a local GPG secret key available.");
+    }
+
+    private void checkGradlePublishConfiguration(PublishDoctorReport report, List<Path> buildFiles) throws IOException {
+        if (buildFiles.isEmpty()) {
+            report.failed("Gradle", "publish configuration", "No Gradle build files were found.");
+            return;
+        }
+        for (Path buildFile : buildFiles) {
+            String content = read(buildFile);
+            if (content.contains("maven-publish") || content.contains("publishing {") || content.contains("publishing{")) {
+                report.ok("Gradle", "publish configuration", "Publishing configuration found in " + repoRoot.relativize(buildFile) + ".");
+                return;
+            }
+        }
+        report.failed("Gradle", "publish configuration",
+            "No maven-publish plugin or publishing block was found in Gradle build files.");
+    }
+
+    private void checkGradleSigning(PublishDoctorReport report, List<Path> buildFiles) throws IOException {
+        boolean hasSigningEnv = ReleaseTextUtils.trimToNull(System.getenv("MAVEN_GPG_PRIVATE_KEY")) != null
+            || ReleaseTextUtils.trimToNull(System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKey")) != null
+            || ReleaseTextUtils.trimToNull(System.getenv("ORG_GRADLE_PROJECT_signingKey")) != null;
+        boolean hasPassphrase = ReleaseTextUtils.trimToNull(System.getenv("MAVEN_GPG_PASSPHRASE")) != null
+            || ReleaseTextUtils.trimToNull(System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKeyPassword")) != null
+            || ReleaseTextUtils.trimToNull(System.getenv("ORG_GRADLE_PROJECT_signingPassword")) != null;
+        if (hasSigningEnv && hasPassphrase) {
+            report.ok("Credentials", "Gradle signing", "Signing key and passphrase environment variables are set.");
+            return;
+        }
+        for (Path buildFile : buildFiles) {
+            String content = read(buildFile);
+            if (content.contains("signing") || content.contains("sign(")) {
+                report.ok("Gradle", "signing configuration", "Signing configuration found in " + repoRoot.relativize(buildFile) + ".");
+                return;
+            }
+        }
+        report.failed("Gradle", "signing configuration",
+            "No signing plugin/block or signing environment variables were found.");
     }
 
     private void checkProfile(PublishDoctorReport report, MavenPom pom, String profileId) {
@@ -274,6 +366,42 @@ public final class PublishDoctorSupport {
         if (pom.directText(name) == null) {
             missing.add(name);
         }
+    }
+
+    private List<Path> collectGradleBuildFiles() throws IOException {
+        List<Path> files = new ArrayList<Path>();
+        Path rootBuildFile = GradleModelSupport.buildFile(repoRoot);
+        if (rootBuildFile != null) {
+            files.add(rootBuildFile);
+        }
+        Stream<Path> stream = Files.walk(repoRoot, 3);
+        try {
+            stream.filter(Files::isRegularFile)
+                .filter(path -> path.getFileName().toString().equals("build.gradle")
+                    || path.getFileName().toString().equals("build.gradle.kts"))
+                .filter(path -> !repoRoot.relativize(path).toString().contains(".gradle"))
+                .filter(path -> !repoRoot.relativize(path).toString().contains("build/"))
+                .filter(path -> !files.contains(path))
+                .forEach(files::add);
+        } finally {
+            stream.close();
+        }
+        return files;
+    }
+
+    private static String read(Path path) throws IOException {
+        return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+    }
+
+    private String gradlePathSummary(Path settings, Path build) {
+        List<String> paths = new ArrayList<String>();
+        if (settings != null) {
+            paths.add(repoRoot.relativize(settings).toString());
+        }
+        if (build != null) {
+            paths.add(repoRoot.relativize(build).toString());
+        }
+        return paths.toString();
     }
 
     private static String join(Set<String> values) {
