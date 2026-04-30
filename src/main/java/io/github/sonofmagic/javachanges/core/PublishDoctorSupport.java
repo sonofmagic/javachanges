@@ -55,7 +55,7 @@ public final class PublishDoctorSupport {
         }
 
         report.buildTool = model.type == BuildModelSupport.BuildType.MAVEN ? "maven" : "gradle";
-        report.module = request.module;
+        report.module = resolveModule(request);
         report.currentRevision = BuildModelSupport.readRevision(repoRoot);
         report.mode = resolveMode(request.mode, report.currentRevision);
         resolvePublishVersion(report, request);
@@ -72,7 +72,8 @@ public final class PublishDoctorSupport {
         throws IOException, InterruptedException {
         report.ok("Project", "build tool", "Maven project detected.");
         checkVersion(report);
-        checkTargetModule(report, request.module);
+        checkReleaseTag(report, request);
+        checkTargetModule(report, report.module);
         checkGitWorktree(report, request.allowDirty);
         MavenPom pom = MavenPom.read(model.versionFile);
         checkCoordinates(report, pom);
@@ -96,7 +97,8 @@ public final class PublishDoctorSupport {
         report.ok("Project", "build tool", "Gradle project detected.");
         report.gradleTask = normalizeGradleTask(request.task);
         checkVersion(report);
-        checkTargetModule(report, request.module);
+        checkReleaseTag(report, request);
+        checkTargetModule(report, report.module);
         checkGradleTask(report, request);
         checkGitWorktree(report, request.allowDirty);
         report.ok("Gradle", "version file", repoRoot.relativize(model.versionFile).toString());
@@ -141,6 +143,25 @@ public final class PublishDoctorSupport {
             return;
         }
         report.ok("Project", "version", "Current revision is " + report.currentRevision + "; publish mode is " + report.mode + ".");
+    }
+
+    private void checkReleaseTag(PublishDoctorReport report, PublishDoctorRequest request) throws IOException {
+        if ("snapshot".equals(report.mode)) {
+            report.skipped("Project", "release tag", "Snapshot publishing does not use a release tag.");
+            return;
+        }
+        try {
+            new VersionSupport(repoRoot).assertReleaseTag(report.tag);
+            String tagModule = ReleaseModuleUtils.releaseModuleFromTag(report.tag);
+            if (request.module != null && tagModule != null && !request.module.equals(tagModule)) {
+                throw new IllegalStateException(
+                    ReleaseMessages.explicitModuleDoesNotMatchTagModule(request.module, tagModule));
+            }
+            report.ok("Project", "release tag", "Release tag " + report.tag + " matches the current revision.");
+        } catch (RuntimeException exception) {
+            report.failed("Project", "release tag", message(exception),
+                "Use a tag that matches the current revision, such as " + defaultCurrentRevisionTag(report) + ".");
+        }
     }
 
     private void checkCoordinates(PublishDoctorReport report, MavenPom pom) {
@@ -250,7 +271,7 @@ public final class PublishDoctorSupport {
     }
 
     private void checkGradleTask(PublishDoctorReport report, PublishDoctorRequest request) {
-        if (request.module != null && report.gradleTask.indexOf(':') >= 0) {
+        if (report.module != null && report.gradleTask.indexOf(':') >= 0) {
             report.failed("Gradle", "publish task", ReleaseMessages.taskMustBeNameWhenModuleSet(report.gradleTask),
                 "Pass a task name such as publish, or remove --module when using a fully qualified Gradle task path.");
             return;
@@ -450,6 +471,9 @@ public final class PublishDoctorSupport {
         if (report.publishVersion != null) {
             out.println("Publish version: " + report.publishVersion);
         }
+        if (report.tag != null) {
+            out.println("Tag: " + report.tag);
+        }
         if (report.snapshotVersionMode != null) {
             out.println("Snapshot version mode: " + report.snapshotVersionMode);
         }
@@ -547,7 +571,17 @@ public final class PublishDoctorSupport {
     private void resolvePublishVersion(PublishDoctorReport report, PublishDoctorRequest request)
         throws IOException, InterruptedException {
         if (!"snapshot".equals(report.mode)) {
-            report.publishVersion = ReleaseTextUtils.stripSnapshot(report.currentRevision);
+            if (request.tag == null) {
+                report.publishVersion = ReleaseTextUtils.stripSnapshot(report.currentRevision);
+                report.tag = defaultReleaseTag(report);
+                return;
+            }
+            report.tag = request.tag;
+            try {
+                report.publishVersion = ReleaseModuleUtils.releaseVersionFromTag(request.tag);
+            } catch (RuntimeException exception) {
+                report.publishVersion = ReleaseTextUtils.stripSnapshot(report.currentRevision);
+            }
             return;
         }
         SnapshotVersionMode snapshotVersionMode = resolveSnapshotVersionMode(request);
@@ -583,23 +617,52 @@ public final class PublishDoctorSupport {
             if (report.snapshotBuildStamp != null) {
                 builder.append(" --snapshot-build-stamp ").append(report.snapshotBuildStamp);
             }
-        } else {
-            builder.append(" --tag ").append(releaseTag(report, request));
+        } else if (report.tag != null) {
+            builder.append(" --tag ").append(report.tag);
         }
-        if (request.module != null) {
-            builder.append(" --module ").append(request.module);
+        if (report.module != null) {
+            builder.append(" --module ").append(report.module);
         }
         return builder.toString();
     }
 
-    private String releaseTag(PublishDoctorReport report, PublishDoctorRequest request) throws IOException {
-        if (request.module == null) {
+    private String defaultReleaseTag(PublishDoctorReport report) throws IOException {
+        if (report.module == null) {
             return "v" + report.publishVersion;
         }
         ChangesetConfigSupport.ChangesetConfig config = ChangesetConfigSupport.load(repoRoot);
         return config.tagStrategy() == ReleaseTagStrategy.PER_MODULE
-            ? request.module + "/v" + report.publishVersion
+            ? report.module + "/v" + report.publishVersion
             : "v" + report.publishVersion;
+    }
+
+    private String defaultCurrentRevisionTag(PublishDoctorReport report) throws IOException {
+        String publishVersion = report.publishVersion;
+        report.publishVersion = ReleaseTextUtils.stripSnapshot(report.currentRevision);
+        try {
+            return defaultReleaseTag(report);
+        } finally {
+            report.publishVersion = publishVersion;
+        }
+    }
+
+    private static String resolveModule(PublishDoctorRequest request) {
+        if (request.module != null) {
+            return request.module;
+        }
+        if (request.tag == null) {
+            return null;
+        }
+        try {
+            return ReleaseModuleUtils.releaseModuleFromTag(request.tag);
+        } catch (RuntimeException exception) {
+            return null;
+        }
+    }
+
+    private static String message(Exception exception) {
+        String message = ReleaseTextUtils.trimToNull(exception.getMessage());
+        return message == null ? exception.getClass().getSimpleName() : message;
     }
 
     private static String join(Set<String> values) {

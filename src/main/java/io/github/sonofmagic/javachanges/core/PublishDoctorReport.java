@@ -9,6 +9,7 @@ public final class PublishDoctorReport {
     public final String command = "doctor-publish";
     public final String target;
     public String mode;
+    public String tag;
     public String buildTool;
     public String module;
     public String gradleTask;
@@ -72,6 +73,7 @@ public final class PublishDoctorReport {
         payload.put("command", command);
         payload.put("target", target);
         payload.put("mode", mode);
+        payload.put("tag", tag);
         payload.put("buildTool", buildTool);
         payload.put("module", module);
         payload.put("gradleTask", gradleTask);

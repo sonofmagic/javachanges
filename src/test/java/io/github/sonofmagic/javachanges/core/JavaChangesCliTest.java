@@ -1560,6 +1560,124 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void doctorPublishJsonUsesExplicitReleaseTag(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot);
+        Files.write(repoRoot.resolve("pom.xml"), centralReadyPom().getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.mavenWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+        commitAll(repoRoot);
+
+        ExecutionResult result = executeProcess(publishDoctorReleaseEnv(),
+            "doctor-publish",
+            "--directory", repoRoot.toString(),
+            "--tag", "v1.2.3",
+            "--format", "json"
+        );
+
+        assertEquals(0, result.exitCode, result.stdout + result.stderr);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertTrue(root.get("ok").asBoolean());
+        assertEquals("release", root.get("mode").asText());
+        assertEquals("v1.2.3", root.get("tag").asText());
+        assertEquals("1.2.3", root.get("publishVersion").asText());
+        assertTrue(hasCheck(root, "Project", "release tag", "OK"));
+        assertTrue(root.get("nextCommands").get(0).asText().contains("--tag v1.2.3"));
+        assertTrue(root.get("nextCommands").get(1).asText().contains("--tag v1.2.3"));
+    }
+
+    @Test
+    void doctorPublishJsonInfersModuleFromReleaseTag(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot);
+        Files.write(repoRoot.resolve("pom.xml"), centralReadyPom().getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.mavenWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+        commitAll(repoRoot);
+
+        ExecutionResult result = executeProcess(publishDoctorReleaseEnv(),
+            "doctor-publish",
+            "--directory", repoRoot.toString(),
+            "--tag", "fixture-app/v1.2.3",
+            "--format", "json"
+        );
+
+        assertEquals(0, result.exitCode, result.stdout + result.stderr);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertTrue(root.get("ok").asBoolean());
+        assertEquals("fixture-app/v1.2.3", root.get("tag").asText());
+        assertEquals("fixture-app", root.get("module").asText());
+        assertEquals("1.2.3", root.get("publishVersion").asText());
+        assertTrue(hasCheck(root, "Project", "target module", "OK"));
+        assertTrue(root.get("nextCommands").get(0).asText().contains("--tag fixture-app/v1.2.3 --module fixture-app"));
+        assertTrue(root.get("nextCommands").get(1).asText().contains("--tag fixture-app/v1.2.3 --module fixture-app"));
+    }
+
+    @Test
+    void doctorPublishJsonRejectsMismatchedModuleReleaseTag(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot);
+        Files.write(repoRoot.resolve("pom.xml"), centralReadyPom().getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.mavenWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+        commitAll(repoRoot);
+
+        ExecutionResult result = executeProcess(publishDoctorReleaseEnv(),
+            "doctor-publish",
+            "--directory", repoRoot.toString(),
+            "--tag", "fixture-app/v1.2.3",
+            "--module", "other-module",
+            "--format", "json"
+        );
+
+        assertNotEquals(0, result.exitCode);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertFalse(root.get("ok").asBoolean());
+        assertEquals("fixture-app/v1.2.3", root.get("tag").asText());
+        assertEquals("other-module", root.get("module").asText());
+        assertTrue(hasCheck(root, "Project", "release tag", "FAILED"));
+        assertTrue(hasSuggestion(root, "Use a tag that matches"));
+    }
+
+    @Test
+    void doctorPublishJsonRejectsReleaseTagVersionMismatch(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot);
+        Files.write(repoRoot.resolve("pom.xml"), centralReadyPom().getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.mavenWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+        commitAll(repoRoot);
+
+        ExecutionResult result = executeProcess(publishDoctorReleaseEnv(),
+            "doctor-publish",
+            "--directory", repoRoot.toString(),
+            "--tag", "v9.9.9",
+            "--format", "json"
+        );
+
+        assertNotEquals(0, result.exitCode);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertFalse(root.get("ok").asBoolean());
+        assertEquals("v9.9.9", root.get("tag").asText());
+        assertEquals("9.9.9", root.get("publishVersion").asText());
+        assertTrue(hasCheck(root, "Project", "release tag", "FAILED"));
+        assertTrue(hasSuggestion(root, "v1.2.3"));
+    }
+
+    @Test
+    void doctorPublishJsonRejectsSnapshotModeWithTag() {
+        ExecutionResult result = execute(
+            "doctor-publish",
+            "--mode", "snapshot",
+            "--tag", "v1.2.3",
+            "--format", "json"
+        );
+
+        assertNotEquals(0, result.exitCode);
+        assertEquals("", result.stderr);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertFalse(root.get("ok").asBoolean());
+        assertEquals("doctor-publish", root.get("command").asText());
+        assertTrue(root.get("reason").asText().contains("snapshot cannot be used with --tag"));
+    }
+
+    @Test
     void doctorPublishJsonRejectsUnknownModule(@TempDir Path tempDir) throws Exception {
         Path repoRoot = tempDir.resolve("repo");
         Files.createDirectories(repoRoot);

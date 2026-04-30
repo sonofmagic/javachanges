@@ -18,6 +18,9 @@ public final class JavaChangesDoctorPublishMojo extends AbstractJavaChangesMojo 
     @Parameter(property = "javachanges.mode")
     private String mode;
 
+    @Parameter(property = "javachanges.tag")
+    private String tag;
+
     @Parameter(property = "javachanges.module")
     private String module;
 
@@ -41,6 +44,7 @@ public final class JavaChangesDoctorPublishMojo extends AbstractJavaChangesMojo 
         List<String> args = new ArrayList<String>();
         JavaChangesMavenPluginSupport.addOption(args, "--target", target);
         JavaChangesMavenPluginSupport.addOption(args, "--mode", mode);
+        JavaChangesMavenPluginSupport.addOption(args, "--tag", tag);
         JavaChangesMavenPluginSupport.addOption(args, "--module", module);
         JavaChangesMavenPluginSupport.addOption(args, "--task", task);
         JavaChangesMavenPluginSupport.addFlag(args, "--allow-dirty", allowDirty);

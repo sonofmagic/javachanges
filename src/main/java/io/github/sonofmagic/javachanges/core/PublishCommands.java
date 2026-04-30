@@ -16,6 +16,9 @@ final class DoctorPublishCommand extends AbstractCliCommand {
     @Option(names = "--mode", description = "Publish mode: auto, snapshot, or release.")
     private String mode;
 
+    @Option(names = "--tag", description = "Release tag such as v1.2.3 or module/v1.2.3.")
+    private String tag;
+
     @Option(names = "--module", description = "Target Maven artifactId or Gradle project name.")
     private String module;
 
@@ -42,6 +45,7 @@ final class DoctorPublishCommand extends AbstractCliCommand {
         Map<String, String> options = options(
             option("target", target),
             option("mode", mode),
+            option("tag", tag),
             option("module", module),
             option("task", task),
             flag("allow-dirty", allowDirty),
@@ -49,10 +53,13 @@ final class DoctorPublishCommand extends AbstractCliCommand {
             option("snapshot-version-mode", snapshotVersionMode),
             option("format", format)
         );
-        PublishDoctorRequest request = PublishDoctorRequest.fromOptions(options);
-        return runJsonCommand("doctor-publish", request.format,
+        OutputFormat outputFormat = OutputFormat.parse(format, OutputFormat.TEXT);
+        return runJsonCommand("doctor-publish", outputFormat,
             (name, exception) -> PublishDoctorReport.errorJson(name, exception),
-            () -> publishDoctorSupport().doctor(request) ? success() : failure());
+            () -> {
+                PublishDoctorRequest request = PublishDoctorRequest.fromOptions(options);
+                return publishDoctorSupport().doctor(request) ? success() : failure();
+            });
     }
 }
 

@@ -402,7 +402,7 @@ Commands that currently support `--format json`:
 | `doctor-local` | Includes section summaries, suggestions, and final error text on failure |
 | `doctor-platform` | Includes `platform` and section summaries for env and CLI checks |
 | `audit-vars` | Includes `platform`, audit sections, and final error text on failure |
-| `doctor-publish` | Includes publish target, mode, build tool, module, Gradle task, current revision, publish version, snapshot mode fields, readiness checks, repair suggestions, and next commands |
+| `doctor-publish` | Includes publish target, mode, tag, build tool, module, Gradle task, current revision, publish version, snapshot mode fields, readiness checks, repair suggestions, and next commands |
 | `preflight` | Includes publish action metadata plus snapshot mode fields such as `snapshotVersionMode`, `effectiveVersion`, and `snapshotBuildStampApplied` |
 | `publish` | Includes publish action metadata such as tag, module, release version, and release notes file |
 | `gradle-publish` | Includes Gradle publish action metadata such as tag, module, release version, and snapshot mode |
@@ -469,9 +469,9 @@ Use JSON output in CI:
 mvn -q -DskipTests compile exec:java -Dexec.args="doctor-publish --directory /path/to/repo --format json"
 ```
 
-For Maven projects, the doctor checks build model, current revision, effective snapshot publish version, optional module target, clean Git worktree, Maven command availability, required POM metadata, Central publish profiles, source/javadoc/signing plugins, Central publishing plugin setup, repository credentials, and GPG signing inputs.
+For Maven projects, the doctor checks build model, current revision, effective snapshot publish version or release tag, optional module target, clean Git worktree, Maven command availability, required POM metadata, Central publish profiles, source/javadoc/signing plugins, Central publishing plugin setup, repository credentials, and GPG signing inputs.
 
-For Gradle projects, the doctor checks `gradle.properties`, effective snapshot publish version, optional module target, clean Git worktree, settings/build files, detected modules, Gradle command availability, `maven-publish` or `publishing` configuration, signing configuration or Gradle signing environment variables, repository URLs and credentials, and the next `gradle-publish` command.
+For Gradle projects, the doctor checks `gradle.properties`, effective snapshot publish version or release tag, optional module target, clean Git worktree, settings/build files, detected modules, Gradle command availability, `maven-publish` or `publishing` configuration, signing configuration or Gradle signing environment variables, repository URLs and credentials, and the next `gradle-publish` command.
 
 Important flags:
 
@@ -479,6 +479,7 @@ Important flags:
 | --- | --- |
 | `--target` | Publish target. Currently supports `maven-central` |
 | `--mode` | Publish mode: `auto`, `snapshot`, or `release` |
+| `--tag` | Explicit release tag such as `v1.2.3` or `module/v1.2.3`; implies release mode and is mirrored into next commands |
 | `--module` | Restrict readiness checks and next commands to one Maven artifactId or Gradle project name |
 | `--task` | Gradle publish task name to mirror into the next `gradle-publish` command |
 | `--allow-dirty` | Skip the clean worktree check and include `--allow-dirty true` in next commands |
