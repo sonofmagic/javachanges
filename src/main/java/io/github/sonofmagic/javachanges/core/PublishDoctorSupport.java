@@ -21,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -293,6 +294,18 @@ public final class PublishDoctorSupport {
         checkProfilePlugin(report, pom, profile, "maven-javadoc-plugin");
         checkProfilePlugin(report, pom, profile, "maven-gpg-plugin");
         checkProfilePlugin(report, pom, profile, "central-publishing-maven-plugin");
+        checkProfilePluginGoal(report, pom, profile, "flatten-maven-plugin",
+            new String[]{"flatten"},
+            "Bind flatten-maven-plugin to the flatten goal in the " + profile + " profile.");
+        checkProfilePluginGoal(report, pom, profile, "maven-source-plugin",
+            new String[]{"jar-no-fork", "jar"},
+            "Bind maven-source-plugin to jar-no-fork or jar in the " + profile + " profile.");
+        checkProfilePluginGoal(report, pom, profile, "maven-javadoc-plugin",
+            new String[]{"jar"},
+            "Bind maven-javadoc-plugin to jar in the " + profile + " profile.");
+        checkProfilePluginGoal(report, pom, profile, "maven-gpg-plugin",
+            new String[]{"sign"},
+            "Bind maven-gpg-plugin to sign in the " + profile + " profile.");
     }
 
     private void checkCredentials(PublishDoctorReport report) throws IOException, InterruptedException {
@@ -420,6 +433,21 @@ public final class PublishDoctorSupport {
         }
         report.failed("Maven POM", profileId + " " + artifactId, "Plugin is missing.",
             "Add " + artifactId + " to the " + profileId + " profile before publishing to Maven Central.");
+    }
+
+    private void checkProfilePluginGoal(PublishDoctorReport report, MavenPom pom, String profileId, String artifactId,
+                                        String[] goals, String suggestion) {
+        if (!pom.hasProfilePlugin(profileId, artifactId)) {
+            return;
+        }
+        if (pom.hasProfilePluginGoal(profileId, artifactId, goals)) {
+            report.ok("Maven POM", profileId + " " + artifactId + " goals",
+                "Plugin binds one of " + Arrays.toString(goals) + ".");
+            return;
+        }
+        report.failed("Maven POM", profileId + " " + artifactId + " goals",
+            "Plugin does not bind any of " + Arrays.toString(goals) + ".",
+            suggestion);
     }
 
     private void checkEnvAny(PublishDoctorReport report, String section, String name, String variable) {
@@ -795,24 +823,37 @@ public final class PublishDoctorSupport {
         }
 
         boolean hasProfilePlugin(String profileId, String artifactId) {
+            return profilePlugin(profileId, artifactId) != null;
+        }
+
+        boolean hasProfilePluginGoal(String profileId, String artifactId, String... goals) {
+            Element plugin = profilePlugin(profileId, artifactId);
+            if (plugin == null) {
+                return false;
+            }
+            Set<String> acceptedGoals = new LinkedHashSet<String>(Arrays.asList(goals));
+            return hasDescendantText(plugin, "goal", acceptedGoals);
+        }
+
+        private Element profilePlugin(String profileId, String artifactId) {
             Element profile = profile(profileId);
             if (profile == null) {
-                return false;
+                return null;
             }
             Element build = child(profile, "build");
             if (build == null) {
-                return false;
+                return null;
             }
             Element plugins = child(build, "plugins");
             if (plugins == null) {
-                return false;
+                return null;
             }
             for (Element plugin : children(plugins, "plugin")) {
                 if (artifactId.equals(childText(plugin, "artifactId"))) {
-                    return true;
+                    return plugin;
                 }
             }
-            return false;
+            return null;
         }
 
         String firstDescendant(String... path) {
@@ -858,6 +899,30 @@ public final class PublishDoctorSupport {
                 }
             }
             return elements;
+        }
+
+        private static boolean hasDescendantText(Element parent, String name, Set<String> values) {
+            if (parent == null) {
+                return false;
+            }
+            NodeList nodes = parent.getChildNodes();
+            for (int i = 0; i < nodes.getLength(); i++) {
+                Node node = nodes.item(i);
+                if (node.getNodeType() != Node.ELEMENT_NODE) {
+                    continue;
+                }
+                Element element = (Element) node;
+                if (matches(element, name)) {
+                    String value = ReleaseTextUtils.trimToNull(element.getTextContent());
+                    if (value != null && values.contains(value)) {
+                        return true;
+                    }
+                }
+                if (hasDescendantText(element, name, values)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private static String childText(Element parent, String name) {

@@ -1770,6 +1770,28 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void doctorPublishJsonReportsIncompleteMavenProfileGoals(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot);
+        String pom = centralReadyPom().replace("<goal>jar-no-fork</goal>", "");
+        Files.write(repoRoot.resolve("pom.xml"), pom.getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.mavenWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+        commitAll(repoRoot);
+
+        ExecutionResult result = executeProcess(publishDoctorEnv(),
+            "doctor-publish",
+            "--directory", repoRoot.toString(),
+            "--format", "json"
+        );
+
+        assertNotEquals(0, result.exitCode);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertFalse(root.get("ok").asBoolean());
+        assertTrue(hasCheck(root, "Maven POM", "central-snapshot-publish maven-source-plugin goals", "FAILED"));
+        assertTrue(hasSuggestion(root, "maven-source-plugin"));
+    }
+
+    @Test
     void doctorPublishJsonReportsMissingGradlePublishReadiness(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createGradleRepository(tempDir, false);
         Files.write(repoRoot.resolve(ReleaseProcessUtils.gradleWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
@@ -2240,10 +2262,10 @@ class JavaChangesCliTest {
         return "    <profile>\n"
             + "      <id>" + id + "</id>\n"
             + "      <build><plugins>\n"
-            + "        <plugin><artifactId>flatten-maven-plugin</artifactId></plugin>\n"
-            + "        <plugin><artifactId>maven-source-plugin</artifactId></plugin>\n"
-            + "        <plugin><artifactId>maven-javadoc-plugin</artifactId></plugin>\n"
-            + "        <plugin><artifactId>maven-gpg-plugin</artifactId></plugin>\n"
+            + "        <plugin><artifactId>flatten-maven-plugin</artifactId><executions><execution><goals><goal>flatten</goal></goals></execution></executions></plugin>\n"
+            + "        <plugin><artifactId>maven-source-plugin</artifactId><executions><execution><goals><goal>jar-no-fork</goal></goals></execution></executions></plugin>\n"
+            + "        <plugin><artifactId>maven-javadoc-plugin</artifactId><executions><execution><goals><goal>jar</goal></goals></execution></executions></plugin>\n"
+            + "        <plugin><artifactId>maven-gpg-plugin</artifactId><executions><execution><goals><goal>sign</goal></goals></execution></executions></plugin>\n"
             + "        <plugin><artifactId>central-publishing-maven-plugin</artifactId></plugin>\n"
             + "      </plugins></build>\n"
             + "    </profile>\n";
