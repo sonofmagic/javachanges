@@ -1455,6 +1455,79 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void doctorPublishJsonSupportsMavenModuleNextCommands(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot);
+        Files.write(repoRoot.resolve("pom.xml"), centralReadyPom().getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.mavenWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+        commitAll(repoRoot);
+
+        ExecutionResult result = executeProcess(publishDoctorEnv(),
+            "doctor-publish",
+            "--directory", repoRoot.toString(),
+            "--module", "fixture-app",
+            "--format", "json"
+        );
+
+        assertEquals(0, result.exitCode, result.stdout + result.stderr);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertTrue(root.get("ok").asBoolean());
+        assertEquals("fixture-app", root.get("module").asText());
+        assertTrue(hasCheck(root, "Project", "target module", "OK"));
+        assertTrue(root.get("nextCommands").get(0).asText().contains("--module fixture-app"));
+        assertTrue(root.get("nextCommands").get(1).asText().contains("--module fixture-app"));
+    }
+
+    @Test
+    void doctorPublishJsonUsesPerModuleReleaseTagForModule(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot.resolve(".changesets"));
+        Files.write(repoRoot.resolve("pom.xml"), centralReadyPom().getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(".changesets").resolve("config.json"),
+            "{\n  \"tagStrategy\": \"per-module\"\n}\n".getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.mavenWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+        commitAll(repoRoot);
+
+        ExecutionResult result = executeProcess(publishDoctorReleaseEnv(),
+            "doctor-publish",
+            "--directory", repoRoot.toString(),
+            "--mode", "release",
+            "--module", "fixture-app",
+            "--format", "json"
+        );
+
+        assertEquals(0, result.exitCode, result.stdout + result.stderr);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertTrue(root.get("ok").asBoolean());
+        assertEquals("release", root.get("mode").asText());
+        assertTrue(root.get("nextCommands").get(0).asText().contains("--tag fixture-app/v1.2.3 --module fixture-app"));
+        assertTrue(root.get("nextCommands").get(1).asText().contains("--tag fixture-app/v1.2.3 --module fixture-app"));
+    }
+
+    @Test
+    void doctorPublishJsonRejectsUnknownModule(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot);
+        Files.write(repoRoot.resolve("pom.xml"), centralReadyPom().getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.mavenWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+        commitAll(repoRoot);
+
+        ExecutionResult result = executeProcess(publishDoctorEnv(),
+            "doctor-publish",
+            "--directory", repoRoot.toString(),
+            "--module", "missing-module",
+            "--format", "json"
+        );
+
+        assertNotEquals(0, result.exitCode);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertFalse(root.get("ok").asBoolean());
+        assertEquals("missing-module", root.get("module").asText());
+        assertTrue(hasCheck(root, "Project", "target module", "FAILED"));
+        assertTrue(hasSuggestion(root, "javachanges modules"));
+    }
+
+    @Test
     void doctorPublishJsonReportsDirtyWorktree(@TempDir Path tempDir) throws Exception {
         Path repoRoot = tempDir.resolve("repo");
         Files.createDirectories(repoRoot);
@@ -1892,6 +1965,12 @@ class JavaChangesCliTest {
         environment.put("MAVEN_CENTRAL_PASSWORD", "secret");
         environment.put("MAVEN_GPG_PRIVATE_KEY", "private-key");
         environment.put("MAVEN_GPG_PASSPHRASE", "passphrase");
+        return environment;
+    }
+
+    private static Map<String, String> publishDoctorReleaseEnv() {
+        Map<String, String> environment = publishDoctorEnv();
+        environment.put("MAVEN_RELEASE_REPOSITORY_URL", "https://repo.example.com/releases");
         return environment;
     }
 

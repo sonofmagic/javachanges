@@ -18,6 +18,9 @@ public final class JavaChangesDoctorPublishMojo extends AbstractJavaChangesMojo 
     @Parameter(property = "javachanges.mode")
     private String mode;
 
+    @Parameter(property = "javachanges.module")
+    private String module;
+
     @Parameter(property = "javachanges.allowDirty", defaultValue = "false")
     private boolean allowDirty;
 
@@ -29,6 +32,7 @@ public final class JavaChangesDoctorPublishMojo extends AbstractJavaChangesMojo 
         List<String> args = new ArrayList<String>();
         JavaChangesMavenPluginSupport.addOption(args, "--target", target);
         JavaChangesMavenPluginSupport.addOption(args, "--mode", mode);
+        JavaChangesMavenPluginSupport.addOption(args, "--module", module);
         JavaChangesMavenPluginSupport.addFlag(args, "--allow-dirty", allowDirty);
         JavaChangesMavenPluginSupport.addOption(args, "--format", format);
         executeStructuredGoal("doctor-publish", "doctor-publish", args.toArray(new String[0]));

@@ -5,12 +5,14 @@ import java.util.Map;
 public final class PublishDoctorRequest {
     public final String target;
     public final String mode;
+    public final String module;
     public final boolean allowDirty;
     public final OutputFormat format;
 
-    private PublishDoctorRequest(String target, String mode, boolean allowDirty, OutputFormat format) {
+    private PublishDoctorRequest(String target, String mode, String module, boolean allowDirty, OutputFormat format) {
         this.target = target;
         this.mode = mode;
+        this.module = module;
         this.allowDirty = allowDirty;
         this.format = format;
     }
@@ -19,6 +21,7 @@ public final class PublishDoctorRequest {
         return new PublishDoctorRequest(
             parseTarget(options.get("target")),
             parseMode(options.get("mode")),
+            ReleaseTextUtils.trimToNull(options.get("module")),
             Boolean.parseBoolean(String.valueOf(options.get("allow-dirty"))),
             OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );

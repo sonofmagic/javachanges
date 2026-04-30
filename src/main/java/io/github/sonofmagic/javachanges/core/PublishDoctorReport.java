@@ -10,6 +10,7 @@ public final class PublishDoctorReport {
     public final String target;
     public String mode;
     public String buildTool;
+    public String module;
     public String currentRevision;
     public String publishVersion;
     public final List<Check> checks = new ArrayList<Check>();
@@ -68,6 +69,7 @@ public final class PublishDoctorReport {
         payload.put("target", target);
         payload.put("mode", mode);
         payload.put("buildTool", buildTool);
+        payload.put("module", module);
         payload.put("currentRevision", currentRevision);
         payload.put("publishVersion", publishVersion);
         payload.put("reason", reason());

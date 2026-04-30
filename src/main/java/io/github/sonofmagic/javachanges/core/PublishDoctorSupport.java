@@ -1,5 +1,6 @@
 package io.github.sonofmagic.javachanges.core;
 
+import io.github.sonofmagic.javachanges.core.config.ChangesetConfigSupport;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -52,6 +53,7 @@ public final class PublishDoctorSupport {
         }
 
         report.buildTool = model.type == BuildModelSupport.BuildType.MAVEN ? "maven" : "gradle";
+        report.module = request.module;
         report.currentRevision = BuildModelSupport.readRevision(repoRoot);
         report.mode = resolveMode(request.mode, report.currentRevision);
         report.publishVersion = "snapshot".equals(report.mode)
@@ -70,6 +72,7 @@ public final class PublishDoctorSupport {
         throws IOException, InterruptedException {
         report.ok("Project", "build tool", "Maven project detected.");
         checkVersion(report);
+        checkTargetModule(report, request.module);
         checkGitWorktree(report, request.allowDirty);
         MavenPom pom = MavenPom.read(model.versionFile);
         checkCoordinates(report, pom);
@@ -80,10 +83,10 @@ public final class PublishDoctorSupport {
         checkCredentials(report);
 
         report.nextCommands.add("javachanges preflight --directory " + repoRoot
-            + ("snapshot".equals(report.mode) ? " --snapshot" : " --tag v" + report.publishVersion)
+            + publishModeArgs(report, request)
             + allowDirtyFlag(request));
         report.nextCommands.add("javachanges publish --directory " + repoRoot
-            + ("snapshot".equals(report.mode) ? " --snapshot" : " --tag v" + report.publishVersion)
+            + publishModeArgs(report, request)
             + allowDirtyFlag(request)
             + " --execute true");
     }
@@ -92,6 +95,7 @@ public final class PublishDoctorSupport {
         throws IOException, InterruptedException {
         report.ok("Project", "build tool", "Gradle project detected.");
         checkVersion(report);
+        checkTargetModule(report, request.module);
         checkGitWorktree(report, request.allowDirty);
         report.ok("Gradle", "version file", repoRoot.relativize(model.versionFile).toString());
         Path settings = GradleModelSupport.settingsFile(repoRoot);
@@ -115,7 +119,7 @@ public final class PublishDoctorSupport {
         checkGradleSigning(report, buildFiles);
         checkGradleCredentials(report);
         report.nextCommands.add("javachanges gradle-publish --directory " + repoRoot
-            + ("snapshot".equals(report.mode) ? " --snapshot" : " --tag v" + report.publishVersion)
+            + publishModeArgs(report, request)
             + allowDirtyFlag(request)
             + " --execute true");
     }
@@ -225,6 +229,21 @@ public final class PublishDoctorSupport {
             return;
         }
         report.ok("Git", "worktree", "Working tree is clean.");
+    }
+
+    private void checkTargetModule(PublishDoctorReport report, String module) {
+        if (module == null) {
+            report.skipped("Project", "target module", "No module filter requested.");
+            return;
+        }
+        List<String> modules = BuildModelSupport.detectKnownModules(repoRoot);
+        if (modules.contains(module)) {
+            report.ok("Project", "target module", "Module " + module + " is known.");
+            return;
+        }
+        report.failed("Project", "target module",
+            ReleaseModuleUtils.unknownModuleMessage(repoRoot, module, modules),
+            "Run javachanges modules --directory " + repoRoot + " to list valid module names.");
     }
 
     private void checkCentralProfiles(PublishDoctorReport report, MavenPom pom) {
@@ -395,6 +414,9 @@ public final class PublishDoctorSupport {
         if (report.publishVersion != null) {
             out.println("Publish version: " + report.publishVersion);
         }
+        if (report.module != null) {
+            out.println("Module: " + report.module);
+        }
         out.println();
         out.println("Checks:");
         for (PublishDoctorReport.Check check : report.checks) {
@@ -460,6 +482,29 @@ public final class PublishDoctorSupport {
 
     private static String allowDirtyFlag(PublishDoctorRequest request) {
         return request.allowDirty ? " --allow-dirty true" : "";
+    }
+
+    private String publishModeArgs(PublishDoctorReport report, PublishDoctorRequest request) throws IOException {
+        StringBuilder builder = new StringBuilder();
+        if ("snapshot".equals(report.mode)) {
+            builder.append(" --snapshot");
+        } else {
+            builder.append(" --tag ").append(releaseTag(report, request));
+        }
+        if (request.module != null) {
+            builder.append(" --module ").append(request.module);
+        }
+        return builder.toString();
+    }
+
+    private String releaseTag(PublishDoctorReport report, PublishDoctorRequest request) throws IOException {
+        if (request.module == null) {
+            return "v" + report.publishVersion;
+        }
+        ChangesetConfigSupport.ChangesetConfig config = ChangesetConfigSupport.load(repoRoot);
+        return config.tagStrategy() == ReleaseTagStrategy.PER_MODULE
+            ? request.module + "/v" + report.publishVersion
+            : "v" + report.publishVersion;
     }
 
     private static String join(Set<String> values) {

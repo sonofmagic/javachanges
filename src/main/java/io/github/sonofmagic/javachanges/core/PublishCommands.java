@@ -16,6 +16,9 @@ final class DoctorPublishCommand extends AbstractCliCommand {
     @Option(names = "--mode", description = "Publish mode: auto, snapshot, or release.")
     private String mode;
 
+    @Option(names = "--module", description = "Target Maven artifactId or Gradle project name.")
+    private String module;
+
     @Option(names = "--allow-dirty", arity = "0..1", fallbackValue = "true", defaultValue = "false",
         description = "Allow a dirty working tree.")
     private boolean allowDirty;
@@ -28,6 +31,7 @@ final class DoctorPublishCommand extends AbstractCliCommand {
         Map<String, String> options = options(
             option("target", target),
             option("mode", mode),
+            option("module", module),
             flag("allow-dirty", allowDirty),
             option("format", format)
         );
