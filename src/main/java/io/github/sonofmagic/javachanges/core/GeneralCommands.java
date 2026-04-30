@@ -270,6 +270,10 @@ final class SetupCommand extends AbstractCliCommand {
             + "MAVEN_REPOSITORY_USERNAME=replace-me\n"
             + "MAVEN_REPOSITORY_PASSWORD=replace-me\n"
             + "\n"
+            + "# Optional Sonatype Central Portal token fallback\n"
+            + "# MAVEN_CENTRAL_USERNAME=replace-me\n"
+            + "# MAVEN_CENTRAL_PASSWORD=replace-me\n"
+            + "\n"
             + "# Optional GitLab token for release creation\n"
             + "# GITLAB_RELEASE_TOKEN=replace-me\n";
     }

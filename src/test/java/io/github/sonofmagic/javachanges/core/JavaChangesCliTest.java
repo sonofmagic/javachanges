@@ -1108,6 +1108,67 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void preflightAcceptsMavenCentralCredentialsForRelease(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+        Map<String, String> environment = new LinkedHashMap<String, String>();
+        environment.put("MAVEN_RELEASE_REPOSITORY_URL", "https://repo.example.com/releases");
+        environment.put("MAVEN_CENTRAL_USERNAME", "central-user");
+        environment.put("MAVEN_CENTRAL_PASSWORD", "central-secret");
+
+        ExecutionResult result = executeProcess(environment,
+            "preflight",
+            "--directory", repoRoot.toString(),
+            "--tag", "v1.1.1",
+            "--allow-dirty", "true",
+            "--format", "json"
+        );
+
+        assertEquals(0, result.exitCode, result.stdout + result.stderr);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertTrue(root.get("ok").asBoolean());
+        assertEquals("publish-release", root.get("action").asText());
+    }
+
+    @Test
+    void writeSettingsIncludesCentralServerWhenCentralCredentialsAreSet(@TempDir Path tempDir) throws Exception {
+        Path output = tempDir.resolve("settings.xml");
+        Map<String, String> environment = new LinkedHashMap<String, String>();
+        environment.put("MAVEN_CENTRAL_USERNAME", "central-user");
+        environment.put("MAVEN_CENTRAL_PASSWORD", "central-secret");
+
+        ExecutionResult result = executeProcess(environment,
+            "write-settings",
+            "--output", output.toString()
+        );
+
+        assertEquals(0, result.exitCode, result.stdout + result.stderr);
+        String settings = read(output);
+        assertTrue(settings.contains("<id>central</id>"));
+        assertTrue(settings.contains("<id>maven-releases</id>"));
+        assertTrue(settings.contains("<id>maven-snapshots</id>"));
+        assertTrue(settings.contains("<username>central-user</username>"));
+    }
+
+    @Test
+    void writeSettingsDoesNotDuplicateCentralServerWhenReleaseIdIsCentral(@TempDir Path tempDir) throws Exception {
+        Path output = tempDir.resolve("settings.xml");
+        Map<String, String> environment = new LinkedHashMap<String, String>();
+        environment.put("MAVEN_RELEASE_REPOSITORY_ID", "central");
+        environment.put("MAVEN_CENTRAL_USERNAME", "central-user");
+        environment.put("MAVEN_CENTRAL_PASSWORD", "central-secret");
+
+        ExecutionResult result = executeProcess(environment,
+            "write-settings",
+            "--output", output.toString()
+        );
+
+        assertEquals(0, result.exitCode, result.stdout + result.stderr);
+        String settings = read(output);
+        assertEquals(1, countOccurrences(settings, "<id>central</id>"));
+        assertTrue(settings.contains("<id>maven-snapshots</id>"));
+    }
+
+    @Test
     void gradlePublishDryRunRendersPublishCommand(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createGradleRepository(tempDir, false);
         Files.write(repoRoot.resolve(ReleaseProcessUtils.gradleWrapperPath()),

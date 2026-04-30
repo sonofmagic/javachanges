@@ -193,6 +193,8 @@ summary: automate javachanges self-release publishing via GitHub Actions
 | `MAVEN_RELEASE_REPOSITORY_PASSWORD` | 否 | release 专用密码覆盖值 |
 | `MAVEN_SNAPSHOT_REPOSITORY_USERNAME` | 否 | snapshot 专用用户名覆盖值 |
 | `MAVEN_SNAPSHOT_REPOSITORY_PASSWORD` | 否 | snapshot 专用密码覆盖值 |
+| `MAVEN_CENTRAL_USERNAME` | 否 | Sonatype Central Portal token 用户名回退值 |
+| `MAVEN_CENTRAL_PASSWORD` | 否 | Sonatype Central Portal token 密码回退值 |
 | `JAVACHANGES_SNAPSHOT_BUILD_STAMP` | 否 | snapshot 发布标识；未设置时回退到 UTC 时间戳 + git short sha |
 | `GITLAB_RELEASE_TOKEN` | 否 | 某些 GitLab release 场景下可选的额外 token |
 
@@ -200,10 +202,12 @@ summary: automate javachanges self-release publishing via GitHub Actions
 
 | 设置项 | 回退逻辑 |
 | --- | --- |
-| release 用户名/密码 | `MAVEN_RELEASE_REPOSITORY_*`，再回退到通用 `MAVEN_REPOSITORY_*` |
-| snapshot 用户名/密码 | `MAVEN_SNAPSHOT_REPOSITORY_*`，再回退到通用 `MAVEN_REPOSITORY_*` |
+| release 用户名/密码 | `MAVEN_RELEASE_REPOSITORY_*`，再回退到 `MAVEN_CENTRAL_*`，最后回退到通用 `MAVEN_REPOSITORY_*` |
+| snapshot 用户名/密码 | `MAVEN_SNAPSHOT_REPOSITORY_*`，再回退到 `MAVEN_CENTRAL_*`，最后回退到通用 `MAVEN_REPOSITORY_*` |
 | release server id | `MAVEN_RELEASE_REPOSITORY_ID`，再回退到 `maven-releases` |
 | snapshot server id | `MAVEN_SNAPSHOT_REPOSITORY_ID`，再回退到 `maven-snapshots` |
+
+如果设置了 `MAVEN_CENTRAL_USERNAME` 和 `MAVEN_CENTRAL_PASSWORD`，生成的 settings 也会包含供 `central-publishing-maven-plugin` 使用的 `central` server。
 
 ## 6. GitHub Actions 变量映射
 

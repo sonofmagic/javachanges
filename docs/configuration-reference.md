@@ -197,6 +197,8 @@ Current template:
 | `MAVEN_RELEASE_REPOSITORY_PASSWORD` | No | Explicit release password override |
 | `MAVEN_SNAPSHOT_REPOSITORY_USERNAME` | No | Explicit snapshot username override |
 | `MAVEN_SNAPSHOT_REPOSITORY_PASSWORD` | No | Explicit snapshot password override |
+| `MAVEN_CENTRAL_USERNAME` | No | Sonatype Central Portal token username fallback |
+| `MAVEN_CENTRAL_PASSWORD` | No | Sonatype Central Portal token password fallback |
 | `JAVACHANGES_SNAPSHOT_BUILD_STAMP` | No | Snapshot publish stamp; defaults to UTC timestamp + git short sha when unset |
 | `GITLAB_RELEASE_TOKEN` | No | Optional GitLab release token for some GitLab release scenarios |
 
@@ -204,10 +206,12 @@ Resolution rules used by the code:
 
 | Setting | Fallback logic |
 | --- | --- |
-| Release username/password | `MAVEN_RELEASE_REPOSITORY_*`, then shared `MAVEN_REPOSITORY_*` |
-| Snapshot username/password | `MAVEN_SNAPSHOT_REPOSITORY_*`, then shared `MAVEN_REPOSITORY_*` |
+| Release username/password | `MAVEN_RELEASE_REPOSITORY_*`, then `MAVEN_CENTRAL_*`, then shared `MAVEN_REPOSITORY_*` |
+| Snapshot username/password | `MAVEN_SNAPSHOT_REPOSITORY_*`, then `MAVEN_CENTRAL_*`, then shared `MAVEN_REPOSITORY_*` |
 | Release server id | `MAVEN_RELEASE_REPOSITORY_ID`, then `maven-releases` |
 | Snapshot server id | `MAVEN_SNAPSHOT_REPOSITORY_ID`, then `maven-snapshots` |
+
+When `MAVEN_CENTRAL_USERNAME` and `MAVEN_CENTRAL_PASSWORD` are set, generated settings also include a `central` server entry for `central-publishing-maven-plugin`.
 
 ## 6. GitHub Actions Variable Mapping
 
