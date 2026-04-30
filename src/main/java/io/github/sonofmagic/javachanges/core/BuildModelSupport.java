@@ -94,6 +94,10 @@ public final class BuildModelSupport {
         }
         paths.add("CHANGELOG.md");
         paths.add(ChangesetPaths.DIR);
+        if (detectKnownModules(repoRoot).contains("javachanges")) {
+            addIfExists(repoRoot, paths, "README.md");
+            addIfExists(repoRoot, paths, "README.zh-CN.md");
+        }
         return paths.toArray(new String[0]);
     }
 
@@ -105,6 +109,12 @@ public final class BuildModelSupport {
         }
         paths.add("CHANGELOG.md");
         return paths.toArray(new String[0]);
+    }
+
+    private static void addIfExists(Path repoRoot, List<String> paths, String path) {
+        if (Files.exists(repoRoot.resolve(path))) {
+            paths.add(path);
+        }
     }
 
     private static BuildModel require(Path repoRoot) {
