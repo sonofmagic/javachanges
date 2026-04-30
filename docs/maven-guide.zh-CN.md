@@ -67,8 +67,11 @@ mvn javachanges:status
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
 mvn javachanges:plan
 mvn javachanges:plan -Djavachanges.apply=true
+mvn javachanges:write-settings -Djavachanges.settingsMode=release
 mvn javachanges:manifest-field -Djavachanges.field=releaseVersion -Djavachanges.fresh=true
 ```
+
+`javachanges:write-settings` 默认写入 `${project.basedir}/.m2/settings.xml`。可以用 `-Djavachanges.output=...` 指定其它路径，用 `-Djavachanges.settingsMode=all|release|snapshot` 控制写入哪些 server。
 
 对还没有专门 Maven goal 的命令，可以使用通用 `run` goal：
 
@@ -272,13 +275,13 @@ mvn javachanges:run -Djavachanges.args="gitlab-tag-from-plan --execute true"
 启用真实发布前，先使用 `preflight`：
 
 ```bash
-mvn javachanges:run -Djavachanges.args="preflight --tag v1.2.3"
+mvn javachanges:preflight -Djavachanges.tag=v1.2.3
 ```
 
 发布输入准备好后，再执行 publish helper：
 
 ```bash
-mvn javachanges:run -Djavachanges.args="publish --tag v1.2.3 --execute true"
+mvn javachanges:publish -Djavachanges.tag=v1.2.3 -Djavachanges.execute=true
 ```
 
 这个 helper 会渲染 Maven deploy 命令，并可以从环境变量写出 Maven `settings.xml`。完整 Central 发布配置见 [发布到 Maven Central](./publish-to-maven-central.md)。

@@ -61,6 +61,7 @@ mvn javachanges:validate
 mvn javachanges:plan -Djavachanges.apply=true
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
 mvn javachanges:version
+mvn javachanges:write-settings -Djavachanges.settingsMode=release
 mvn javachanges:doctor-publish
 mvn javachanges:preflight -Djavachanges.tag=v1.2.3
 mvn javachanges:publish -Djavachanges.tag=v1.2.3
@@ -89,6 +90,7 @@ mvn io.github.sonofmagic:javachanges:1.11.0-SNAPSHOT:status
 mvn io.github.sonofmagic:javachanges:1.11.0-SNAPSHOT:validate
 mvn io.github.sonofmagic:javachanges:1.11.0-SNAPSHOT:plan -Djavachanges.apply=true
 mvn io.github.sonofmagic:javachanges:1.11.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn io.github.sonofmagic:javachanges:1.11.0-SNAPSHOT:write-settings -Djavachanges.settingsMode=release
 mvn io.github.sonofmagic:javachanges:1.11.0-SNAPSHOT:doctor-publish
 mvn io.github.sonofmagic:javachanges:1.11.0-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
 mvn io.github.sonofmagic:javachanges:1.11.0-SNAPSHOT:release-notes -Djavachanges.tag=v1.2.3 -Djavachanges.output=target/release-notes.md

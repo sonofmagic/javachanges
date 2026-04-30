@@ -67,8 +67,11 @@ mvn javachanges:status
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
 mvn javachanges:plan
 mvn javachanges:plan -Djavachanges.apply=true
+mvn javachanges:write-settings -Djavachanges.settingsMode=release
 mvn javachanges:manifest-field -Djavachanges.field=releaseVersion -Djavachanges.fresh=true
 ```
+
+`javachanges:write-settings` writes `${project.basedir}/.m2/settings.xml` by default. Use `-Djavachanges.output=...` to choose another path and `-Djavachanges.settingsMode=all|release|snapshot` to control which server entries are written.
 
 Use the generic `run` goal for commands that do not have a dedicated Maven goal yet:
 
@@ -272,13 +275,13 @@ mvn javachanges:run -Djavachanges.args="gitlab-tag-from-plan --execute true"
 Use `preflight` before enabling real publish execution:
 
 ```bash
-mvn javachanges:run -Djavachanges.args="preflight --tag v1.2.3"
+mvn javachanges:preflight -Djavachanges.tag=v1.2.3
 ```
 
 When publish inputs are ready, execute the publish helper:
 
 ```bash
-mvn javachanges:run -Djavachanges.args="publish --tag v1.2.3 --execute true"
+mvn javachanges:publish -Djavachanges.tag=v1.2.3 -Djavachanges.execute=true
 ```
 
 The helper renders Maven deploy commands and can write Maven `settings.xml` from environment variables. For full Central release setup, see [Publish To Maven Central](./publish-to-maven-central.md).

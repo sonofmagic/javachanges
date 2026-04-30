@@ -11,6 +11,7 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
@@ -189,6 +190,15 @@ class JavaChangesMavenPluginSupportTest {
 
         assertEquals(0, result.exitCode);
         org.junit.jupiter.api.Assertions.assertTrue(result.stdout.contains("plugin invocation works"));
+    }
+
+    @Test
+    void pluginDescriptorIncludesWriteSettingsGoal() throws Exception {
+        String descriptor = read(Files.newInputStream(Paths.get("target/classes/META-INF/maven/plugin.xml")));
+
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<goal>write-settings</goal>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("<name>settingsMode</name>"));
+        org.junit.jupiter.api.Assertions.assertTrue(descriptor.contains("${javachanges.settingsMode}</settingsMode>"));
     }
 
     private static void run(Path workingDirectory, String... command) throws Exception {
