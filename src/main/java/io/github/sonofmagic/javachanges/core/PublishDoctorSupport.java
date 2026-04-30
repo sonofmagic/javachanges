@@ -25,6 +25,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 public final class PublishDoctorSupport {
+    private static final String DEFAULT_GRADLE_TASK = "publish";
     private final Path repoRoot;
     private final PrintStream out;
 
@@ -93,8 +94,10 @@ public final class PublishDoctorSupport {
     private void inspectGradle(PublishDoctorReport report, BuildModelSupport.BuildModel model, PublishDoctorRequest request)
         throws IOException, InterruptedException {
         report.ok("Project", "build tool", "Gradle project detected.");
+        report.gradleTask = normalizeGradleTask(request.task);
         checkVersion(report);
         checkTargetModule(report, request.module);
+        checkGradleTask(report, request);
         checkGitWorktree(report, request.allowDirty);
         report.ok("Gradle", "version file", repoRoot.relativize(model.versionFile).toString());
         Path settings = GradleModelSupport.settingsFile(repoRoot);
@@ -119,6 +122,7 @@ public final class PublishDoctorSupport {
         checkGradleCredentials(report);
         report.nextCommands.add("javachanges gradle-publish --directory " + repoRoot
             + publishModeArgs(report, request)
+            + gradleTaskFlag(request)
             + allowDirtyFlag(request)
             + " --execute true");
     }
@@ -243,6 +247,15 @@ public final class PublishDoctorSupport {
         report.failed("Project", "target module",
             ReleaseModuleUtils.unknownModuleMessage(repoRoot, module, modules),
             "Run javachanges modules --directory " + repoRoot + " to list valid module names.");
+    }
+
+    private void checkGradleTask(PublishDoctorReport report, PublishDoctorRequest request) {
+        if (request.module != null && report.gradleTask.indexOf(':') >= 0) {
+            report.failed("Gradle", "publish task", ReleaseMessages.taskMustBeNameWhenModuleSet(report.gradleTask),
+                "Pass a task name such as publish, or remove --module when using a fully qualified Gradle task path.");
+            return;
+        }
+        report.ok("Gradle", "publish task", "Gradle publish task is " + report.gradleTask + ".");
     }
 
     private void checkCentralProfiles(PublishDoctorReport report, MavenPom pom) {
@@ -446,6 +459,9 @@ public final class PublishDoctorSupport {
         if (report.module != null) {
             out.println("Module: " + report.module);
         }
+        if (report.gradleTask != null) {
+            out.println("Gradle task: " + report.gradleTask);
+        }
         out.println();
         out.println("Checks:");
         for (PublishDoctorReport.Check check : report.checks) {
@@ -511,6 +527,21 @@ public final class PublishDoctorSupport {
 
     private static String allowDirtyFlag(PublishDoctorRequest request) {
         return request.allowDirty ? " --allow-dirty true" : "";
+    }
+
+    private static String gradleTaskFlag(PublishDoctorRequest request) {
+        return request.task == null ? "" : " --task " + normalizeGradleTask(request.task);
+    }
+
+    private static String normalizeGradleTask(String task) {
+        String value = ReleaseTextUtils.trimToNull(task);
+        if (value == null) {
+            return DEFAULT_GRADLE_TASK;
+        }
+        if (!value.matches(":?[A-Za-z][A-Za-z0-9_.:-]*")) {
+            throw new IllegalArgumentException(ReleaseMessages.unsupportedGradleTask(task));
+        }
+        return value;
     }
 
     private void resolvePublishVersion(PublishDoctorReport report, PublishDoctorRequest request)

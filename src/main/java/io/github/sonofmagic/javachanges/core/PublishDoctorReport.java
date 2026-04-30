@@ -11,6 +11,7 @@ public final class PublishDoctorReport {
     public String mode;
     public String buildTool;
     public String module;
+    public String gradleTask;
     public String currentRevision;
     public String publishVersion;
     public String snapshotVersionMode;
@@ -73,6 +74,7 @@ public final class PublishDoctorReport {
         payload.put("mode", mode);
         payload.put("buildTool", buildTool);
         payload.put("module", module);
+        payload.put("gradleTask", gradleTask);
         payload.put("currentRevision", currentRevision);
         payload.put("publishVersion", publishVersion);
         payload.put("snapshotVersionMode", snapshotVersionMode);

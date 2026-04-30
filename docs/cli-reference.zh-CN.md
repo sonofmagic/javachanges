@@ -401,7 +401,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --directory /path
 | `doctor-local` | 失败时会包含分组检查结果、建议列表和最终错误信息 |
 | `doctor-platform` | 会带上 `platform` 以及 env / CLI 检查分组 |
 | `audit-vars` | 会带上 `platform`、审计分组结果，以及失败时的最终错误信息 |
-| `doctor-publish` | 会带上发布目标、模式、构建工具、模块、当前版本、发布版本、snapshot 模式字段、就绪检查、修复建议和下一步命令 |
+| `doctor-publish` | 会带上发布目标、模式、构建工具、模块、Gradle task、当前版本、发布版本、snapshot 模式字段、就绪检查、修复建议和下一步命令 |
 | `preflight` | 会带上发布动作元数据，以及 `snapshotVersionMode`、`effectiveVersion`、`snapshotBuildStampApplied` 等 snapshot 模式字段 |
 | `publish` | 会带上 tag、module、releaseVersion、releaseNotesFile 等发布元数据 |
 | `gradle-publish` | 会带上 Gradle 发布动作元数据，例如 tag、module、releaseVersion 和 snapshot mode |
@@ -479,6 +479,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="doctor-publish --directory /pa
 | `--target` | 发布目标。当前支持 `maven-central` |
 | `--mode` | 发布模式：`auto`、`snapshot` 或 `release` |
 | `--module` | 限制到单个 Maven artifactId 或 Gradle project name，并同步影响下一步命令 |
+| `--task` | Gradle 发布 task name，并同步写入下一步 `gradle-publish` 命令 |
 | `--allow-dirty` | 跳过干净工作区检查，并在下一步命令里带上 `--allow-dirty true` |
 | `--snapshot-version-mode` | snapshot 版本策略：`stamped` 或 `plain` |
 | `--snapshot-build-stamp` | 显式指定 snapshot 发布标识；stamped 模式下未传入时，doctor 会生成一个并同步写入下一步命令 |

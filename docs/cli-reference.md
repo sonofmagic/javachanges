@@ -402,7 +402,7 @@ Commands that currently support `--format json`:
 | `doctor-local` | Includes section summaries, suggestions, and final error text on failure |
 | `doctor-platform` | Includes `platform` and section summaries for env and CLI checks |
 | `audit-vars` | Includes `platform`, audit sections, and final error text on failure |
-| `doctor-publish` | Includes publish target, mode, build tool, module, current revision, publish version, snapshot mode fields, readiness checks, repair suggestions, and next commands |
+| `doctor-publish` | Includes publish target, mode, build tool, module, Gradle task, current revision, publish version, snapshot mode fields, readiness checks, repair suggestions, and next commands |
 | `preflight` | Includes publish action metadata plus snapshot mode fields such as `snapshotVersionMode`, `effectiveVersion`, and `snapshotBuildStampApplied` |
 | `publish` | Includes publish action metadata such as tag, module, release version, and release notes file |
 | `gradle-publish` | Includes Gradle publish action metadata such as tag, module, release version, and snapshot mode |
@@ -480,6 +480,7 @@ Important flags:
 | `--target` | Publish target. Currently supports `maven-central` |
 | `--mode` | Publish mode: `auto`, `snapshot`, or `release` |
 | `--module` | Restrict readiness checks and next commands to one Maven artifactId or Gradle project name |
+| `--task` | Gradle publish task name to mirror into the next `gradle-publish` command |
 | `--allow-dirty` | Skip the clean worktree check and include `--allow-dirty true` in next commands |
 | `--snapshot-version-mode` | Snapshot version strategy: `stamped` or `plain` |
 | `--snapshot-build-stamp` | Explicit snapshot publish stamp; when omitted in stamped mode, doctor generates one and mirrors it in next commands |

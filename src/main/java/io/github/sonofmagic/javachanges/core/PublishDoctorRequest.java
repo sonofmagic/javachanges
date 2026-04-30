@@ -6,16 +6,18 @@ public final class PublishDoctorRequest {
     public final String target;
     public final String mode;
     public final String module;
+    public final String task;
     public final boolean allowDirty;
     public final String snapshotVersionMode;
     public final String snapshotBuildStamp;
     public final OutputFormat format;
 
-    private PublishDoctorRequest(String target, String mode, String module, boolean allowDirty,
+    private PublishDoctorRequest(String target, String mode, String module, String task, boolean allowDirty,
                                  String snapshotVersionMode, String snapshotBuildStamp, OutputFormat format) {
         this.target = target;
         this.mode = mode;
         this.module = module;
+        this.task = task;
         this.allowDirty = allowDirty;
         this.snapshotVersionMode = snapshotVersionMode;
         this.snapshotBuildStamp = snapshotBuildStamp;
@@ -27,6 +29,7 @@ public final class PublishDoctorRequest {
             parseTarget(options.get("target")),
             parseMode(options.get("mode")),
             ReleaseTextUtils.trimToNull(options.get("module")),
+            ReleaseTextUtils.trimToNull(options.get("task")),
             Boolean.parseBoolean(String.valueOf(options.get("allow-dirty"))),
             ReleaseTextUtils.trimToNull(options.get("snapshot-version-mode")),
             ReleaseTextUtils.firstNonBlank(ReleaseTextUtils.trimToNull(options.get("snapshot-build-stamp")),

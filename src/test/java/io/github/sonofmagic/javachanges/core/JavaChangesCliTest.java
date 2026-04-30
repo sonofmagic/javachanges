@@ -1664,10 +1664,56 @@ class JavaChangesCliTest {
         JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
         assertTrue(root.get("ok").asBoolean());
         assertEquals("gradle", root.get("buildTool").asText());
+        assertEquals("publish", root.get("gradleTask").asText());
         assertTrue(hasCheck(root, "Gradle", "publish configuration", "OK"));
+        assertTrue(hasCheck(root, "Gradle", "publish task", "OK"));
         assertTrue(hasCheck(root, "Credentials", "Gradle signing", "OK"));
         assertFalse(root.has("suggestions"));
         assertTrue(root.get("nextCommands").get(0).asText().contains("gradle-publish"));
+    }
+
+    @Test
+    void doctorPublishJsonIncludesCustomGradleTask(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createGradleRepository(tempDir, false);
+        Files.write(repoRoot.resolve("build.gradle"), gradlePublishBuildFile().getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.gradleWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+        commitAll(repoRoot);
+
+        ExecutionResult result = executeProcess(publishDoctorEnv(),
+            "doctor-publish",
+            "--directory", repoRoot.toString(),
+            "--task", "publishAllPublicationsToMavenRepository",
+            "--format", "json"
+        );
+
+        assertEquals(0, result.exitCode, result.stdout + result.stderr);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertTrue(root.get("ok").asBoolean());
+        assertEquals("publishAllPublicationsToMavenRepository", root.get("gradleTask").asText());
+        assertTrue(root.get("nextCommands").get(0).asText().contains("--task publishAllPublicationsToMavenRepository"));
+    }
+
+    @Test
+    void doctorPublishJsonRejectsQualifiedGradleTaskWithModule(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createGradleRepository(tempDir, false);
+        Files.write(repoRoot.resolve("build.gradle"), gradlePublishBuildFile().getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.gradleWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+        commitAll(repoRoot);
+
+        ExecutionResult result = executeProcess(publishDoctorEnv(),
+            "doctor-publish",
+            "--directory", repoRoot.toString(),
+            "--module", "fixture-app",
+            "--task", ":fixture-app:publish",
+            "--format", "json"
+        );
+
+        assertNotEquals(0, result.exitCode);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertFalse(root.get("ok").asBoolean());
+        assertEquals(":fixture-app:publish", root.get("gradleTask").asText());
+        assertTrue(hasCheck(root, "Gradle", "publish task", "FAILED"));
+        assertTrue(hasSuggestion(root, "Pass a task name"));
     }
 
     @Test

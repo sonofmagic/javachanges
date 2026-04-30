@@ -19,6 +19,9 @@ final class DoctorPublishCommand extends AbstractCliCommand {
     @Option(names = "--module", description = "Target Maven artifactId or Gradle project name.")
     private String module;
 
+    @Option(names = "--task", description = "Gradle publish task name. Defaults to publish for Gradle projects.")
+    private String task;
+
     @Option(names = "--allow-dirty", arity = "0..1", fallbackValue = "true", defaultValue = "false",
         description = "Allow a dirty working tree.")
     private boolean allowDirty;
@@ -40,6 +43,7 @@ final class DoctorPublishCommand extends AbstractCliCommand {
             option("target", target),
             option("mode", mode),
             option("module", module),
+            option("task", task),
             flag("allow-dirty", allowDirty),
             option("snapshot-build-stamp", snapshotBuildStamp),
             option("snapshot-version-mode", snapshotVersionMode),

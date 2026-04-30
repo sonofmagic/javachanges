@@ -21,6 +21,9 @@ public final class JavaChangesDoctorPublishMojo extends AbstractJavaChangesMojo 
     @Parameter(property = "javachanges.module")
     private String module;
 
+    @Parameter(property = "javachanges.task")
+    private String task;
+
     @Parameter(property = "javachanges.allowDirty", defaultValue = "false")
     private boolean allowDirty;
 
@@ -39,6 +42,7 @@ public final class JavaChangesDoctorPublishMojo extends AbstractJavaChangesMojo 
         JavaChangesMavenPluginSupport.addOption(args, "--target", target);
         JavaChangesMavenPluginSupport.addOption(args, "--mode", mode);
         JavaChangesMavenPluginSupport.addOption(args, "--module", module);
+        JavaChangesMavenPluginSupport.addOption(args, "--task", task);
         JavaChangesMavenPluginSupport.addFlag(args, "--allow-dirty", allowDirty);
         JavaChangesMavenPluginSupport.addOption(args, "--snapshot-build-stamp", snapshotBuildStamp);
         JavaChangesMavenPluginSupport.addOption(args, "--snapshot-version-mode", snapshotVersionMode);
