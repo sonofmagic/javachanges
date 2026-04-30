@@ -155,7 +155,7 @@ pnpm ci:local:release
 | --- | --- |
 | `ci:local:build` | Maven `verify`、跳过 GPG 的 Central publish profile 校验，以及从源码运行 `status` |
 | `ci:local:docs` | `pnpm install --frozen-lockfile` 和 VitePress 文档构建 |
-| `ci:local:release` | GitHub/GitLab release-plan dry-run，以及 snapshot `preflight` / `publish` 的 JSON dry-run |
+| `ci:local:release` | GitHub/GitLab release-plan dry-run、`doctor-publish`，以及 snapshot `preflight` / `publish` 的 JSON dry-run |
 
 release 任务不会传入 `--execute true`，因此不会推分支、创建 PR/MR、打 tag、创建 Release 或发布 artifact。脚本会填充占位的 Maven snapshot 仓库变量，让本地 preflight 可以验证命令渲染，不需要真实凭据。
 

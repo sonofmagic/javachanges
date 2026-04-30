@@ -45,6 +45,7 @@ class JavaChangesCliTest {
         assertTrue(result.stdout.contains("gitlab-release-plan"));
         assertTrue(result.stdout.contains("gitlab-release"));
         assertTrue(result.stdout.contains("init-gitlab-ci"));
+        assertTrue(result.stdout.contains("doctor-publish"));
         assertTrue(result.stdout.contains("gradle-publish"));
     }
 
@@ -1405,6 +1406,51 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void doctorPublishJsonReportsMissingMavenCentralReadiness(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, false);
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.mavenWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = executeProcess(publishDoctorEnv(),
+            "doctor-publish",
+            "--directory", repoRoot.toString(),
+            "--format", "json"
+        );
+
+        assertNotEquals(0, result.exitCode);
+        assertEquals("", result.stderr);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertFalse(root.get("ok").asBoolean());
+        assertEquals("doctor-publish", root.get("command").asText());
+        assertEquals("maven-central", root.get("target").asText());
+        assertEquals("snapshot", root.get("mode").asText());
+        assertTrue(hasCheck(root, "Maven POM", "Central metadata", "FAILED"));
+        assertTrue(hasCheck(root, "Maven POM", "profile central-snapshot-publish", "FAILED"));
+    }
+
+    @Test
+    void doctorPublishJsonPassesForCentralReadyMavenProject(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot);
+        Files.write(repoRoot.resolve("pom.xml"), centralReadyPom().getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.mavenWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = executeProcess(publishDoctorEnv(),
+            "doctor-publish",
+            "--directory", repoRoot.toString(),
+            "--format", "json"
+        );
+
+        assertEquals(0, result.exitCode, result.stdout + result.stderr);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertTrue(root.get("ok").asBoolean());
+        assertEquals("snapshot", root.get("mode").asText());
+        assertEquals("maven", root.get("buildTool").asText());
+        assertEquals("1.2.3-SNAPSHOT", root.get("currentRevision").asText());
+        assertTrue(hasCheck(root, "Maven POM", "Central metadata", "OK"));
+        assertTrue(hasCheck(root, "Credentials", "GPG signing", "OK"));
+    }
+
+    @Test
     void doctorLocalFallsBackToSystemMavenWhenWrapperMissing(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, false);
         ReleaseEnvTestFixtures.writeLocalEnv(repoRoot, ReleaseEnvTestFixtures.cliEnvFile());
@@ -1691,6 +1737,61 @@ class JavaChangesCliTest {
             + "    </parent>\n"
             + "    <artifactId>" + artifactId + "</artifactId>\n"
             + "</project>\n";
+    }
+
+    private static String centralReadyPom() {
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            + "<project xmlns=\"http://maven.apache.org/POM/4.0.0\">\n"
+            + "  <modelVersion>4.0.0</modelVersion>\n"
+            + "  <groupId>example</groupId>\n"
+            + "  <artifactId>fixture-app</artifactId>\n"
+            + "  <version>${revision}</version>\n"
+            + "  <name>fixture-app</name>\n"
+            + "  <description>Fixture app.</description>\n"
+            + "  <url>https://example.com/fixture-app</url>\n"
+            + "  <properties><revision>1.2.3-SNAPSHOT</revision></properties>\n"
+            + "  <licenses><license><name>Apache License 2.0</name><url>https://www.apache.org/licenses/LICENSE-2.0.txt</url></license></licenses>\n"
+            + "  <developers><developer><id>tester</id><name>Tester</name></developer></developers>\n"
+            + "  <scm><connection>scm:git:https://example.com/fixture-app.git</connection><url>https://example.com/fixture-app</url></scm>\n"
+            + "  <profiles>\n"
+            + centralProfile("central-publish")
+            + centralProfile("central-snapshot-publish")
+            + "  </profiles>\n"
+            + "</project>\n";
+    }
+
+    private static String centralProfile(String id) {
+        return "    <profile>\n"
+            + "      <id>" + id + "</id>\n"
+            + "      <build><plugins>\n"
+            + "        <plugin><artifactId>flatten-maven-plugin</artifactId></plugin>\n"
+            + "        <plugin><artifactId>maven-source-plugin</artifactId></plugin>\n"
+            + "        <plugin><artifactId>maven-javadoc-plugin</artifactId></plugin>\n"
+            + "        <plugin><artifactId>maven-gpg-plugin</artifactId></plugin>\n"
+            + "        <plugin><artifactId>central-publishing-maven-plugin</artifactId></plugin>\n"
+            + "      </plugins></build>\n"
+            + "    </profile>\n";
+    }
+
+    private static Map<String, String> publishDoctorEnv() {
+        Map<String, String> environment = new LinkedHashMap<String, String>();
+        environment.put("MAVEN_SNAPSHOT_REPOSITORY_URL", "https://repo.example.com/snapshots");
+        environment.put("MAVEN_CENTRAL_USERNAME", "tester");
+        environment.put("MAVEN_CENTRAL_PASSWORD", "secret");
+        environment.put("MAVEN_GPG_PRIVATE_KEY", "private-key");
+        environment.put("MAVEN_GPG_PASSPHRASE", "passphrase");
+        return environment;
+    }
+
+    private static boolean hasCheck(JsonNode root, String section, String name, String status) {
+        for (JsonNode check : root.get("checks")) {
+            if (section.equals(check.get("section").asText())
+                && name.equals(check.get("name").asText())
+                && status.equals(check.get("status").asText())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static Path writeChangeset(Path repoRoot, String fileName, String content) throws IOException {

@@ -155,7 +155,7 @@ The tasks map to local-safe checks:
 | --- | --- |
 | `ci:local:build` | Maven `verify`, the Central publish profile with GPG skipped, and `status` from source |
 | `ci:local:docs` | `pnpm install --frozen-lockfile` and the VitePress docs build |
-| `ci:local:release` | GitHub/GitLab release-plan dry-runs plus snapshot `preflight` and `publish` JSON dry-runs |
+| `ci:local:release` | GitHub/GitLab release-plan dry-runs, `doctor-publish`, and snapshot `preflight` / `publish` JSON dry-runs |
 
 The release task never passes `--execute true`. It does not push branches, open PRs/MRs, create tags, create releases, or deploy artifacts. It seeds placeholder Maven snapshot repository variables so the local preflight can validate command rendering without requiring real credentials.
 

@@ -40,6 +40,7 @@ import java.nio.file.Path;
         DoctorPlatformCommand.class,
         SyncVarsCommand.class,
         AuditVarsCommand.class,
+        DoctorPublishCommand.class,
         PreflightCommand.class,
         PublishCommand.class,
         GradlePublishCommand.class,

@@ -402,6 +402,7 @@ Commands that currently support `--format json`:
 | `doctor-local` | Includes section summaries, suggestions, and final error text on failure |
 | `doctor-platform` | Includes `platform` and section summaries for env and CLI checks |
 | `audit-vars` | Includes `platform`, audit sections, and final error text on failure |
+| `doctor-publish` | Includes publish target, mode, build tool, current revision, readiness checks, and next commands |
 | `preflight` | Includes publish action metadata plus snapshot mode fields such as `snapshotVersionMode`, `effectiveVersion`, and `snapshotBuildStampApplied` |
 | `publish` | Includes publish action metadata such as tag, module, release version, and release notes file |
 | `gradle-publish` | Includes Gradle publish action metadata such as tag, module, release version, and snapshot mode |
@@ -454,7 +455,31 @@ JSON mode contract:
 
 ## 8. Publish Commands
 
-### 8.1 `preflight`
+### 8.1 `doctor-publish`
+
+Validate whether a Maven project is ready to publish to Maven Central:
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="doctor-publish --directory /path/to/repo --target maven-central"
+```
+
+Use JSON output in CI:
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="doctor-publish --directory /path/to/repo --format json"
+```
+
+The first version checks Maven Central readiness for Maven projects: build model, current revision, Maven command availability, required POM metadata, Central publish profiles, source/javadoc/signing plugins, Central publishing plugin setup, repository credentials, and GPG signing inputs.
+
+Important flags:
+
+| Flag | Meaning |
+| --- | --- |
+| `--target` | Publish target. Currently supports `maven-central` |
+| `--mode` | Publish mode: `auto`, `snapshot`, or `release` |
+| `--format json` | Emit machine-readable readiness checks |
+
+### 8.2 `preflight`
 
 Render the Maven validation flow before a real publish.
 
@@ -490,7 +515,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory $CI_PROJ
 
 In plain snapshot mode, `preflight` prints that it is using `plain snapshot` mode and keeps the effective publish version at the original `pom.xml` revision such as `1.2.3-SNAPSHOT`.
 
-### 8.2 `publish`
+### 8.3 `publish`
 
 Render the real Maven publish command:
 
@@ -533,7 +558,7 @@ Important flags:
 | `--allow-dirty` | Allow a dirty working tree |
 | `--execute true` | Run the final publish command instead of only printing it |
 
-### 8.3 `gradle-publish`
+### 8.4 `gradle-publish`
 
 Render the Gradle publish command:
 

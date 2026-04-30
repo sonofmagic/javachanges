@@ -78,6 +78,10 @@ abstract class AbstractCliCommand implements Callable<Integer> {
         return new PublishSupport(repoRoot(), out());
     }
 
+    final PublishDoctorSupport publishDoctorSupport() {
+        return new PublishDoctorSupport(repoRoot(), out());
+    }
+
     final GradlePublishSupport gradlePublishSupport() {
         return new GradlePublishSupport(repoRoot(), out());
     }

@@ -61,6 +61,7 @@ mvn javachanges:validate
 mvn javachanges:plan -Djavachanges.apply=true
 mvn javachanges:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
 mvn javachanges:version
+mvn javachanges:doctor-publish
 mvn javachanges:preflight -Djavachanges.tag=v1.2.3
 mvn javachanges:publish -Djavachanges.tag=v1.2.3
 mvn javachanges:manifest-field -Djavachanges.field=releaseVersion -Djavachanges.fresh=true
@@ -88,6 +89,7 @@ mvn io.github.sonofmagic:javachanges:1.11.0-SNAPSHOT:status
 mvn io.github.sonofmagic:javachanges:1.11.0-SNAPSHOT:validate
 mvn io.github.sonofmagic:javachanges:1.11.0-SNAPSHOT:plan -Djavachanges.apply=true
 mvn io.github.sonofmagic:javachanges:1.11.0-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn io.github.sonofmagic:javachanges:1.11.0-SNAPSHOT:doctor-publish
 mvn io.github.sonofmagic:javachanges:1.11.0-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
 mvn io.github.sonofmagic:javachanges:1.11.0-SNAPSHOT:release-notes -Djavachanges.tag=v1.2.3 -Djavachanges.output=target/release-notes.md
 ```
@@ -112,7 +114,7 @@ These map to the same phases used elsewhere in the docs:
 - `ci:local` runs the local CI simulation: Java build checks, docs build, and release automation dry-runs
 - `ci:local:build` mirrors the Java build steps from `.github/workflows/ci.yml`
 - `ci:local:docs` installs docs dependencies and runs the VitePress build
-- `ci:local:release` validates release PR/MR planning and snapshot publish preflight in dry-run mode only
+- `ci:local:release` validates release PR/MR planning, publish readiness, and snapshot publish preflight in dry-run mode only
 - `./mvnw -B test` runs the default test suite with build prerequisite checks
 - `./mvnw -B -Pcoverage -Dmaven.repo.local=.m2/repository test` also generates a JaCoCo HTML report under `target/site/jacoco/`
 - `snapshot:install` installs the current `1.11.0-SNAPSHOT` into local Maven
@@ -266,6 +268,7 @@ High-value commands:
 - `doctor-platform`
 - `sync-vars`
 - `audit-vars`
+- `doctor-publish`
 - `preflight`
 - `publish`
 - `gradle-publish`

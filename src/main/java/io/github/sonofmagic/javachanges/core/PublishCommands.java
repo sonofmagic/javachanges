@@ -7,6 +7,32 @@ import picocli.CommandLine.Option;
 
 import java.util.Map;
 
+@Command(name = "doctor-publish", mixinStandardHelpOptions = true,
+    description = "Validate publish readiness for a target repository.")
+final class DoctorPublishCommand extends AbstractCliCommand {
+    @Option(names = "--target", description = "Publish target. Currently supports maven-central.")
+    private String target;
+
+    @Option(names = "--mode", description = "Publish mode: auto, snapshot, or release.")
+    private String mode;
+
+    @Option(names = "--format", description = "Output format: text or json.")
+    private String format;
+
+    @Override
+    public Integer call() throws Exception {
+        Map<String, String> options = options(
+            option("target", target),
+            option("mode", mode),
+            option("format", format)
+        );
+        PublishDoctorRequest request = PublishDoctorRequest.fromOptions(options);
+        return runJsonCommand("doctor-publish", request.format,
+            (name, exception) -> PublishDoctorReport.errorJson(name, exception),
+            () -> publishDoctorSupport().doctor(request) ? success() : failure());
+    }
+}
+
 @Command(name = "preflight", mixinStandardHelpOptions = true,
     description = "Render or execute the Maven publish preflight checks.")
 final class PreflightCommand extends AbstractCliCommand {

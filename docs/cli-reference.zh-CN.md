@@ -401,6 +401,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="doctor-local --directory /path
 | `doctor-local` | 失败时会包含分组检查结果、建议列表和最终错误信息 |
 | `doctor-platform` | 会带上 `platform` 以及 env / CLI 检查分组 |
 | `audit-vars` | 会带上 `platform`、审计分组结果，以及失败时的最终错误信息 |
+| `doctor-publish` | 会带上发布目标、模式、构建工具、当前版本、就绪检查和下一步命令 |
 | `preflight` | 会带上发布动作元数据，以及 `snapshotVersionMode`、`effectiveVersion`、`snapshotBuildStampApplied` 等 snapshot 模式字段 |
 | `publish` | 会带上 tag、module、releaseVersion、releaseNotesFile 等发布元数据 |
 | `gradle-publish` | 会带上 Gradle 发布动作元数据，例如 tag、module、releaseVersion 和 snapshot mode |
@@ -453,7 +454,31 @@ JSON 模式约定：
 
 ## 8. 发布命令
 
-### 8.1 `preflight`
+### 8.1 `doctor-publish`
+
+验证 Maven 项目是否已经具备发布到 Maven Central 的条件：
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="doctor-publish --directory /path/to/repo --target maven-central"
+```
+
+CI 中可以使用 JSON 输出：
+
+```bash
+mvn -q -DskipTests compile exec:java -Dexec.args="doctor-publish --directory /path/to/repo --format json"
+```
+
+第一版会检查 Maven 项目的 Maven Central 发布就绪状态：构建模型、当前版本、Maven 命令、必需 POM 元数据、Central 发布 profiles、source/javadoc/signing 插件、Central publishing plugin 配置、仓库凭据和 GPG 签名输入。
+
+关键参数：
+
+| 参数 | 说明 |
+| --- | --- |
+| `--target` | 发布目标。当前支持 `maven-central` |
+| `--mode` | 发布模式：`auto`、`snapshot` 或 `release` |
+| `--format json` | 输出机器可读的就绪检查 |
+
+### 8.2 `preflight`
 
 输出正式发布前的 Maven 校验流程。
 
@@ -489,7 +514,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="preflight --directory $CI_PROJ
 
 在 plain snapshot 模式下，`preflight` 会明确输出当前使用的是 `plain snapshot`，并保持实际发布版本仍然是 `pom.xml` 里的原始值，例如 `1.2.3-SNAPSHOT`。
 
-### 8.2 `publish`
+### 8.3 `publish`
 
 只输出 Maven 发布命令：
 
@@ -532,7 +557,7 @@ GitLab CI 默认行为：
 | `--allow-dirty` | 允许工作区不干净 |
 | `--execute true` | 真正执行最终发布命令，而不是只打印 |
 
-### 8.3 `gradle-publish`
+### 8.4 `gradle-publish`
 
 渲染 Gradle 发布命令：
 
