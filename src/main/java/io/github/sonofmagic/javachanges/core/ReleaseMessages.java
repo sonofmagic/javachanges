@@ -800,6 +800,10 @@ public final class ReleaseMessages {
         return message("release.reason.createdGitlabRelease");
     }
 
+    public static String gitlabCatalogValidationSkippedReason() {
+        return message("release.reason.gitlabCatalogValidationSkipped");
+    }
+
     public static String githubRepoValue(String githubRepo) {
         return message("release.text.githubRepo", githubRepo);
     }
@@ -942,6 +946,10 @@ public final class ReleaseMessages {
 
     public static String createdGitlabRelease(String tagName) {
         return message("release.text.createdGitlabRelease", tagName);
+    }
+
+    public static String gitlabCatalogValidationSkipped() {
+        return message("release.text.gitlabCatalogValidationSkipped");
     }
 
     public static String releaseNotesSection(String section) {

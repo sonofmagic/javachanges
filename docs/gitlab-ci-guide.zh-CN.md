@@ -415,6 +415,7 @@ release_plan_mr:
 | --- | --- |
 | `beforeSha` 缺失或全 0 | 跳过打 tag |
 | 发布状态在两个提交之间没有变化 | 跳过打 tag |
+| 传入 `--fallback-from-release-commit true` 且 HEAD 是 `chore(release): release vX.Y.Z` | 从该 release commit 创建全仓库 tag |
 | 远端 tag 已经存在 | 跳过打 tag |
 | 没有传 `--execute true` | 只做 dry-run |
 

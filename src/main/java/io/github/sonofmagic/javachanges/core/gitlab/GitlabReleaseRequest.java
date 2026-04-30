@@ -11,15 +11,17 @@ public final class GitlabReleaseRequest {
     public final String gitlabHost;
     public final String releaseNotesFile;
     public final boolean execute;
+    public final boolean ignoreCatalogValidation;
     public final OutputFormat format;
 
     private GitlabReleaseRequest(String tag, String projectId, String gitlabHost, String releaseNotesFile,
-                                 boolean execute, OutputFormat format) {
+                                 boolean execute, boolean ignoreCatalogValidation, OutputFormat format) {
         this.tag = tag;
         this.projectId = projectId;
         this.gitlabHost = gitlabHost;
         this.releaseNotesFile = releaseNotesFile;
         this.execute = execute;
+        this.ignoreCatalogValidation = ignoreCatalogValidation;
         this.format = format;
     }
 
@@ -33,6 +35,7 @@ public final class GitlabReleaseRequest {
                 ReleaseTextUtils.trimToNull(System.getenv("CI_SERVER_HOST"))),
             ReleaseTextUtils.trimToNull(options.get("release-notes-file")),
             ReleaseTextUtils.isTrue(options.get("execute")),
+            ReleaseTextUtils.isTrue(options.get("ignore-catalog-validation")),
             OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );
     }

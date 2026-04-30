@@ -135,6 +135,32 @@ class GitlabReleaseSupportTest {
     }
 
     @Test
+    void syncReleaseCanSkipGitlabCatalogValidationFailure(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir);
+        run(repoRoot, "git", "init", "-q", "-b", "main");
+        run(repoRoot, "git", "config", "user.name", "tester");
+        run(repoRoot, "git", "config", "user.email", "tester@example.com");
+        run(repoRoot, "git", "add", "pom.xml", "CHANGELOG.md", ".changesets");
+        run(repoRoot, "git", "commit", "-qm", "init");
+        run(repoRoot, "git", "tag", "v1.1.1");
+        FakeGitlabApiClient api = new FakeGitlabApiClient();
+        api.failCatalogValidation = true;
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("project-id", "123");
+        options.put("tag", "v1.1.1");
+        options.put("execute", "true");
+        options.put("ignore-catalog-validation", "true");
+
+        new GitlabReleaseSupport(repoRoot, new PrintStream(stdout, true), new RecordingRuntime(repoRoot), api)
+            .syncRelease(GitlabReleaseRequest.fromOptions(options));
+
+        assertTrue(stdout.toString(StandardCharsets.UTF_8.name())
+            .contains("GitLab Release was rejected by GitLab Catalog validation."));
+    }
+
+    @Test
     void tagFromReleasePlanCreatesPerModuleTags(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir);
         Files.write(
@@ -201,6 +227,25 @@ class GitlabReleaseSupportTest {
         assertTrue(runtime.createdTags.isEmpty());
         assertTrue(stdout.toString(StandardCharsets.UTF_8.name())
             .contains("No release plan manifest or fresh release state change detected."));
+    }
+
+    @Test
+    void tagFromReleasePlanCanFallbackToReleaseCommitSubject(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createAppliedReleaseRepository(tempDir, "1.2.0-SNAPSHOT");
+        RecordingRuntime runtime = new RecordingRuntime(repoRoot);
+        runtime.headCommitMessage = "chore(release): release v1.2.0\n\nMerged release plan";
+        FakeGitlabApiClient api = new FakeGitlabApiClient();
+        api.remoteUrl = "https://bot:token@example.com/group/repo.git";
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+
+        Map<String, String> options = tagOptions();
+        options.put("fallback-from-release-commit", "true");
+        new GitlabReleaseSupport(repoRoot, new PrintStream(stdout, true), runtime, api)
+            .tagFromReleasePlan(GitlabTagRequest.fromOptions(options));
+
+        assertEquals(1, runtime.createdTags.size());
+        assertEquals("tag v1.2.0 abc222", runtime.createdTags.get(0));
+        assertTrue(stdout.toString(StandardCharsets.UTF_8.name()).contains("Created and pushed tag(s) [v1.2.0]"));
     }
 
     @Test
@@ -387,6 +432,7 @@ class GitlabReleaseSupportTest {
         List<String> pushes = new ArrayList<String>();
         Map<String, Boolean> changedPaths = new HashMap<String, Boolean>();
         boolean remoteTagExists;
+        String headCommitMessage;
 
         RecordingRuntime(Path repoRoot) {
             super(repoRoot);
@@ -437,6 +483,11 @@ class GitlabReleaseSupportTest {
         }
 
         @Override
+        public String headCommitMessage() {
+            return headCommitMessage;
+        }
+
+        @Override
         public String remoteBranchHead(String branchName, String remoteUrl) {
             remoteBranchHeadBranch = branchName;
             return remoteBranchHead;
@@ -463,6 +514,7 @@ class GitlabReleaseSupportTest {
         String releaseName;
         String releaseDescription;
         boolean releaseExists;
+        boolean failCatalogValidation;
 
         @Override
         public Integer findOpenMergeRequestIid(String projectId, String sourceBranch, String targetBranch) {
@@ -503,6 +555,9 @@ class GitlabReleaseSupportTest {
 
         @Override
         public void createRelease(String projectId, String tagName, String releaseName, String description) {
+            if (failCatalogValidation) {
+                throw new IllegalStateException("GitLab API POST /releases failed: {\"message\":\"Project must contain components\"}");
+            }
             this.releaseProjectId = projectId;
             this.releaseTag = tagName;
             this.releaseName = releaseName;
@@ -511,6 +566,9 @@ class GitlabReleaseSupportTest {
 
         @Override
         public void updateRelease(String projectId, String tagName, String releaseName, String description) {
+            if (failCatalogValidation) {
+                throw new IllegalStateException("GitLab API PUT /releases failed: {\"message\":\"Project must contain components\"}");
+            }
             this.releaseProjectId = projectId;
             this.releaseTag = tagName;
             this.releaseName = releaseName;

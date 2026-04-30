@@ -15,11 +15,12 @@ public final class GitlabTagRequest {
     public final String releaseBranch;
     public final String currentBranch;
     public final boolean fresh;
+    public final boolean fallbackFromReleaseCommit;
     public final OutputFormat format;
 
     private GitlabTagRequest(String beforeSha, String currentSha, boolean execute,
                              String baseBranch, String releaseBranch, String currentBranch,
-                             boolean fresh, OutputFormat format) {
+                             boolean fresh, boolean fallbackFromReleaseCommit, OutputFormat format) {
         this.beforeSha = beforeSha;
         this.currentSha = currentSha;
         this.execute = execute;
@@ -27,6 +28,7 @@ public final class GitlabTagRequest {
         this.releaseBranch = releaseBranch;
         this.currentBranch = currentBranch;
         this.fresh = fresh;
+        this.fallbackFromReleaseCommit = fallbackFromReleaseCommit;
         this.format = format;
     }
 
@@ -45,6 +47,7 @@ public final class GitlabTagRequest {
             ReleaseTextUtils.firstNonBlank(ReleaseTextUtils.trimToNull(options.get("current-branch")),
                 System.getenv("CI_COMMIT_BRANCH")),
             ReleaseTextUtils.isTrue(options.get("fresh")),
+            ReleaseTextUtils.isTrue(options.get("fallback-from-release-commit")),
             OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );
     }

@@ -31,6 +31,14 @@ public class GitlabReleaseRuntime {
         return runGitAllowFailure("diff", "--quiet", beforeSha, currentSha, "--", path) != 0;
     }
 
+    public String headCommitMessage() throws IOException, InterruptedException {
+        CommandResult result = runGitCapture("log", "-1", "--pretty=%B");
+        if (result.exitCode != 0) {
+            throw gitCommandException(result, "log", "-1", "--pretty=%B");
+        }
+        return result.stdoutText();
+    }
+
     public boolean remoteTagExists(String tagName, String remoteUrl) throws IOException, InterruptedException {
         CommandResult result = runGitCapture("ls-remote", "--tags", remoteUrl, "refs/tags/" + tagName);
         if (result.exitCode != 0) {

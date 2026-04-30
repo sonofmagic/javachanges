@@ -604,11 +604,13 @@ Examples:
 
 ```bash
 mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-release-plan --directory /path/to/repo --project-id 12345 --write-plan-files false --execute true"
-mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-tag-from-plan --directory /path/to/repo --fresh true --execute true"
-mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-release --directory /path/to/repo --execute true"
+mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-tag-from-plan --directory /path/to/repo --fresh true --fallback-from-release-commit true --execute true"
+mvn -q -DskipTests compile exec:java -Dexec.args="gitlab-release --directory /path/to/repo --ignore-catalog-validation true --execute true"
 mvn -q -DskipTests compile exec:java -Dexec.args="init-gitlab-ci --directory /path/to/repo --output .gitlab-ci.yml --force true"
 mvn -q -DskipTests compile exec:java -Dexec.args="init-gitlab-ci --directory /path/to/gradle-repo --build-tool gradle --output .gitlab-ci.yml --force true"
 ```
+
+Use `--fallback-from-release-commit true` when a default-branch pipeline may need to recover the release tag from a merged `chore(release): release vX.Y.Z` commit. Use `--ignore-catalog-validation true` only when Maven artifacts are the source of truth and a GitLab Catalog validation error should not fail Release page creation.
 
 ## 10. Help Output
 

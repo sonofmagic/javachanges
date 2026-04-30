@@ -429,6 +429,7 @@ Important behavior:
 | --- | --- |
 | `beforeSha` missing or all zeros | Skips tagging |
 | release state did not change between commits | Skips tagging |
+| `--fallback-from-release-commit true` and HEAD is `chore(release): release vX.Y.Z` | Creates the whole-repo tag from that release commit |
 | Tag already exists remotely | Skips tagging |
 | `--execute true` missing | Dry-run only |
 

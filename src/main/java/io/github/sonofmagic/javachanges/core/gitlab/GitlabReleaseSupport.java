@@ -18,8 +18,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport {
+    private static final Pattern RELEASE_COMMIT_SUBJECT =
+        Pattern.compile("^chore\\(release\\): release (v[0-9][0-9A-Za-z._-]*)$");
+
     private final GitlabReleaseRuntime runtime;
     private final GitlabMergeRequestClient apiClient;
 
@@ -125,6 +130,12 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
         String beforeSha = ReleaseTextUtils.trimToNull(request.beforeSha);
         String currentSha = ReleaseTextUtils.trimToNull(request.currentSha);
         if (beforeSha == null || currentSha == null || beforeSha.matches("0+")) {
+            ReleaseAutomationSupport.ReleaseDescriptor fallbackRelease =
+                request.fallbackFromReleaseCommit ? descriptorFromReleaseCommit(report) : null;
+            if (fallbackRelease != null && currentSha != null) {
+                createReleaseTags(request, report, textOutput, fallbackRelease, currentSha);
+                return;
+            }
             report.skipped = true;
             report.reason = ReleaseMessages.missingPreviousShaReason();
             AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.missingPreviousShaSkipTag());
@@ -133,6 +144,12 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
 
         ReleaseMetadataSource metadataSource = selectReleaseMetadataSource(request, beforeSha, currentSha);
         if (metadataSource == ReleaseMetadataSource.NONE) {
+            ReleaseAutomationSupport.ReleaseDescriptor fallbackRelease =
+                request.fallbackFromReleaseCommit ? descriptorFromReleaseCommit(report) : null;
+            if (fallbackRelease != null) {
+                createReleaseTags(request, report, textOutput, fallbackRelease, currentSha);
+                return;
+            }
             report.skipped = true;
             report.reason = request.fresh
                 ? ReleaseMessages.noFreshReleaseStateChangeDetectedReason()
@@ -144,6 +161,12 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
         ReleaseAutomationSupport.ReleaseDescriptor release = metadataSource == ReleaseMetadataSource.FRESH
             ? descriptorFromFreshPlan(report)
             : descriptorFromManifest(report);
+        createReleaseTags(request, report, textOutput, release, currentSha);
+    }
+
+    private void createReleaseTags(GitlabTagRequest request, AutomationJsonSupport.AutomationReport report,
+                                   boolean textOutput, ReleaseAutomationSupport.ReleaseDescriptor release,
+                                   String currentSha) throws IOException, InterruptedException {
         List<String> tagNames = release.tagNames();
         AutomationJsonSupport.printLines(out, textOutput, ReleaseMessages.releaseTagsValue(tagNames));
 
@@ -166,6 +189,29 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
         report.action = "create-tag";
         report.reason = ReleaseMessages.createdAndPushedTagReason();
         AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.createdAndPushedTags(tagNames));
+    }
+
+    private ReleaseAutomationSupport.ReleaseDescriptor descriptorFromReleaseCommit(AutomationJsonSupport.AutomationReport report)
+        throws IOException, InterruptedException {
+        String tagName = releaseTagFromCommitMessage(runtime.headCommitMessage());
+        if (tagName == null) {
+            return null;
+        }
+        String releaseVersion = tagName.substring(1);
+        report.releaseVersion = releaseVersion;
+        report.tag = tagName;
+        return ReleaseAutomationSupport.ReleaseDescriptor.wholeRepo(releaseVersion);
+    }
+
+    private String releaseTagFromCommitMessage(String commitMessage) {
+        String value = ReleaseTextUtils.trimToNull(commitMessage);
+        if (value == null) {
+            return null;
+        }
+        int newline = value.indexOf('\n');
+        String subject = newline < 0 ? value : value.substring(0, newline);
+        Matcher matcher = RELEASE_COMMIT_SUBJECT.matcher(subject.trim());
+        return matcher.matches() ? matcher.group(1) : null;
     }
 
     public void syncRelease(GitlabReleaseRequest request) throws IOException, InterruptedException {
@@ -215,17 +261,44 @@ public final class GitlabReleaseSupport extends AbstractReleaseAutomationSupport
         String description = new String(Files.readAllBytes(notesFile), StandardCharsets.UTF_8);
 
         if (exists) {
-            apiClient.updateRelease(request.projectId, tagName, releaseName, description);
+            try {
+                apiClient.updateRelease(request.projectId, tagName, releaseName, description);
+            } catch (RuntimeException exception) {
+                if (!request.ignoreCatalogValidation || !isGitlabCatalogValidationFailure(exception)) {
+                    throw exception;
+                }
+                report.action = "skip-release";
+                report.skipped = true;
+                report.reason = ReleaseMessages.gitlabCatalogValidationSkippedReason();
+                AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.gitlabCatalogValidationSkipped());
+                return;
+            }
             report.action = "update-release";
             report.reason = ReleaseMessages.updatedGitlabReleaseReason();
             AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.updatedGitlabRelease(tagName));
             return;
         }
 
-        apiClient.createRelease(request.projectId, tagName, releaseName, description);
+        try {
+            apiClient.createRelease(request.projectId, tagName, releaseName, description);
+        } catch (RuntimeException exception) {
+            if (!request.ignoreCatalogValidation || !isGitlabCatalogValidationFailure(exception)) {
+                throw exception;
+            }
+            report.action = "skip-release";
+            report.skipped = true;
+            report.reason = ReleaseMessages.gitlabCatalogValidationSkippedReason();
+            AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.gitlabCatalogValidationSkipped());
+            return;
+        }
         report.action = "create-release";
         report.reason = ReleaseMessages.createdGitlabReleaseReason();
         AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.createdGitlabRelease(tagName));
+    }
+
+    private boolean isGitlabCatalogValidationFailure(RuntimeException exception) {
+        String message = ReleaseTextUtils.trimToNull(exception.getMessage());
+        return message != null && message.contains("Project must contain components");
     }
 
     private ReleaseMetadataSource selectReleaseMetadataSource(GitlabTagRequest request, String beforeSha, String currentSha)

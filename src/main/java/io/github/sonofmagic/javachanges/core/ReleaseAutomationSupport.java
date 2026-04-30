@@ -90,6 +90,11 @@ public final class ReleaseAutomationSupport {
             this.releaseTargets = Collections.unmodifiableList(new ArrayList<ReleasePlan.ReleaseTarget>(releaseTargets));
         }
 
+        public static ReleaseDescriptor wholeRepo(String releaseVersion) {
+            return new ReleaseDescriptor(releaseVersion, ReleaseTagStrategy.WHOLE_REPO,
+                Collections.singletonList(new ReleasePlan.ReleaseTarget(null, "v" + releaseVersion)));
+        }
+
         public String commitMessage() {
             return "chore(release): apply changesets for v" + releaseVersion;
         }

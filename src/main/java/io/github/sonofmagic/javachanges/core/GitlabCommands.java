@@ -70,6 +70,10 @@ final class GitlabTagFromPlanCommand extends AbstractCliCommand {
         description = "Derive release metadata from the current repository state instead of .changesets/release-plan.json.")
     private boolean fresh;
 
+    @Option(names = "--fallback-from-release-commit", arity = "0..1", fallbackValue = "true", defaultValue = "false",
+        description = "When no release metadata changed, derive a whole-repo tag from a chore(release): release vX.Y.Z commit.")
+    private boolean fallbackFromReleaseCommit;
+
     @Option(names = "--format", description = "Output format: text or json.")
     private String format;
 
@@ -80,6 +84,7 @@ final class GitlabTagFromPlanCommand extends AbstractCliCommand {
             option("current-sha", currentSha),
             flag("execute", execute),
             flag("fresh", fresh),
+            flag("fallback-from-release-commit", fallbackFromReleaseCommit),
             option("format", format)
         );
         GitlabTagRequest request = GitlabTagRequest.fromOptions(options);
@@ -108,6 +113,10 @@ final class GitlabReleaseCommand extends AbstractCliCommand {
         description = "Call the GitLab Releases API instead of a dry run.")
     private boolean execute;
 
+    @Option(names = "--ignore-catalog-validation", arity = "0..1", fallbackValue = "true", defaultValue = "false",
+        description = "Treat GitLab Catalog component validation failures as a skipped GitLab Release page.")
+    private boolean ignoreCatalogValidation;
+
     @Option(names = "--format", description = "Output format: text or json.")
     private String format;
 
@@ -119,6 +128,7 @@ final class GitlabReleaseCommand extends AbstractCliCommand {
             option("gitlab-host", gitlabHost),
             option("release-notes-file", releaseNotesFile),
             flag("execute", execute),
+            flag("ignore-catalog-validation", ignoreCatalogValidation),
             option("format", format)
         );
         GitlabReleaseRequest request = GitlabReleaseRequest.fromOptions(options);
@@ -209,13 +219,24 @@ final class InitGitlabCiCommand extends AbstractCliCommand {
             + "  MAVEN_OPTS: \"-Dmaven.repo.local=.m2/repository\"\n"
             + "  JAVACHANGES_VERSION: \"" + version + "\"\n"
             + "\n"
+            + "before_script:\n"
+            + "  - |\n"
+            + "    run_javachanges() {\n"
+            + "      javachanges_command=\"$1\"\n"
+            + "      javachanges_execute=\"${2:-true}\"\n"
+            + "      javachanges_args=\"${javachanges_command} --directory ${CI_PROJECT_DIR}\"\n"
+            + "      if [ \"${javachanges_execute}\" = \"true\" ]; then\n"
+            + "        javachanges_args=\"${javachanges_args} --execute true\"\n"
+            + "      fi\n"
+            + "      mvn --batch-mode --non-recursive \"io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run\" \\\n"
+            + "        \"-Djavachanges.args=${javachanges_args}\"\n"
+            + "    }\n"
+            + "\n"
             + "verify:\n"
             + "  stage: verify\n"
             + "  script:\n"
             + "    - mvn -B verify\n"
-            + "    - >\n"
-            + "      mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run\n"
-            + "      -Djavachanges.args=\"status --directory $CI_PROJECT_DIR\"\n"
+            + "    - run_javachanges \"status\" false\n"
             + "  rules:\n"
             + "    - if: $CI_PIPELINE_SOURCE == \"merge_request_event\"\n"
             + "    - if: $CI_COMMIT_BRANCH\n"
@@ -223,39 +244,29 @@ final class InitGitlabCiCommand extends AbstractCliCommand {
             + "release_plan_mr:\n"
             + "  stage: release-plan\n"
             + "  script:\n"
-            + "    - >\n"
-            + "      mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run\n"
-            + "      -Djavachanges.args=\"gitlab-release-plan --directory $CI_PROJECT_DIR --write-plan-files false --execute true\"\n"
+            + "    - run_javachanges \"gitlab-release-plan --write-plan-files false\"\n"
             + "  rules:\n"
             + "    - if: $CI_COMMIT_BRANCH == \"" + baseBranch + "\"\n"
             + "\n"
             + "release_tag:\n"
             + "  stage: tag\n"
             + "  script:\n"
-            + "    - >\n"
-            + "      mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run\n"
-            + "      -Djavachanges.args=\"gitlab-tag-from-plan --directory $CI_PROJECT_DIR --fresh true --execute true\"\n"
+            + "    - run_javachanges \"gitlab-tag-from-plan --fresh true --fallback-from-release-commit true\"\n"
             + "  rules:\n"
             + "    - if: $CI_COMMIT_BRANCH == \"" + baseBranch + "\"\n"
             + "\n"
             + "publish_snapshot:\n"
             + "  stage: publish\n"
             + "  script:\n"
-            + "    - >\n"
-            + "      mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run\n"
-            + "      -Djavachanges.args=\"publish --directory $CI_PROJECT_DIR --execute true\"\n"
+            + "    - run_javachanges \"publish\"\n"
             + "  rules:\n"
             + "    - if: $CI_COMMIT_BRANCH == \"" + snapshotBranch + "\"\n"
             + "\n"
             + "publish_release:\n"
             + "  stage: publish\n"
             + "  script:\n"
-            + "    - >\n"
-            + "      mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run\n"
-            + "      -Djavachanges.args=\"publish --directory $CI_PROJECT_DIR --execute true\"\n"
-            + "    - >\n"
-            + "      mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run\n"
-            + "      -Djavachanges.args=\"gitlab-release --directory $CI_PROJECT_DIR --execute true\"\n"
+            + "    - run_javachanges \"publish\"\n"
+            + "    - run_javachanges \"gitlab-release --ignore-catalog-validation true\"\n"
             + "  rules:\n"
             + "    - if: $CI_COMMIT_TAG\n";
     }
@@ -320,7 +331,7 @@ final class InitGitlabCiCommand extends AbstractCliCommand {
             + "release_tag:\n"
             + "  stage: tag\n"
             + "  script:\n"
-            + "    - java -jar \".javachanges/javachanges-${JAVACHANGES_VERSION}.jar\" gitlab-tag-from-plan --directory \"$CI_PROJECT_DIR\" --fresh true --execute true\n"
+            + "    - java -jar \".javachanges/javachanges-${JAVACHANGES_VERSION}.jar\" gitlab-tag-from-plan --directory \"$CI_PROJECT_DIR\" --fresh true --fallback-from-release-commit true --execute true\n"
             + "  rules:\n"
             + "    - if: $CI_COMMIT_BRANCH == \"" + baseBranch + "\"\n"
             + "\n"
@@ -335,7 +346,7 @@ final class InitGitlabCiCommand extends AbstractCliCommand {
             + "  stage: publish\n"
             + "  script:\n"
             + "    - java -jar \".javachanges/javachanges-${JAVACHANGES_VERSION}.jar\" gradle-publish --directory \"$CI_PROJECT_DIR\" --execute true\n"
-            + "    - java -jar \".javachanges/javachanges-${JAVACHANGES_VERSION}.jar\" gitlab-release --directory \"$CI_PROJECT_DIR\" --execute true\n"
+            + "    - java -jar \".javachanges/javachanges-${JAVACHANGES_VERSION}.jar\" gitlab-release --directory \"$CI_PROJECT_DIR\" --ignore-catalog-validation true --execute true\n"
             + "  rules:\n"
             + "    - if: $CI_COMMIT_TAG\n";
     }

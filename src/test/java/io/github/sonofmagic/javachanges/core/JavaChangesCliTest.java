@@ -1237,10 +1237,12 @@ class JavaChangesCliTest {
         assertEquals(0, result.exitCode);
         String yaml = read(repoRoot.resolve(".gitlab-ci.generated.yml"));
         assertTrue(yaml.contains("JAVACHANGES_VERSION: \"1.4.1\""));
-        assertTrue(yaml.contains("gitlab-release-plan --directory $CI_PROJECT_DIR --write-plan-files false --execute true"));
-        assertTrue(yaml.contains("gitlab-tag-from-plan --directory $CI_PROJECT_DIR --fresh true --execute true"));
-        assertTrue(yaml.contains("publish --directory $CI_PROJECT_DIR --execute true"));
-        assertTrue(yaml.contains("gitlab-release --directory $CI_PROJECT_DIR --execute true"));
+        assertTrue(yaml.contains("run_javachanges()"));
+        assertTrue(yaml.contains("mvn --batch-mode --non-recursive \"io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run\""));
+        assertTrue(yaml.contains("run_javachanges \"gitlab-release-plan --write-plan-files false\""));
+        assertTrue(yaml.contains("run_javachanges \"gitlab-tag-from-plan --fresh true --fallback-from-release-commit true\""));
+        assertTrue(yaml.contains("run_javachanges \"publish\""));
+        assertTrue(yaml.contains("run_javachanges \"gitlab-release --ignore-catalog-validation true\""));
         assertTrue(yaml.contains("$CI_COMMIT_BRANCH == \"develop\""));
         assertTrue(yaml.contains("$CI_COMMIT_BRANCH == \"snapshot-dev\""));
     }
@@ -1384,9 +1386,9 @@ class JavaChangesCliTest {
         assertTrue(yaml.contains("./gradlew --no-daemon build"));
         assertTrue(yaml.contains("gitlab-release-plan"));
         assertTrue(yaml.contains("--write-plan-files false"));
-        assertTrue(yaml.contains("gitlab-tag-from-plan --directory \"$CI_PROJECT_DIR\" --fresh true --execute true"));
+        assertTrue(yaml.contains("gitlab-tag-from-plan --directory \"$CI_PROJECT_DIR\" --fresh true --fallback-from-release-commit true --execute true"));
         assertTrue(yaml.contains("gradle-publish --directory \"$CI_PROJECT_DIR\" --execute true"));
-        assertTrue(yaml.contains("gitlab-release --directory \"$CI_PROJECT_DIR\" --execute true"));
+        assertTrue(yaml.contains("gitlab-release --directory \"$CI_PROJECT_DIR\" --ignore-catalog-validation true --execute true"));
         assertTrue(yaml.contains("$CI_COMMIT_BRANCH == \"develop\""));
         assertTrue(yaml.contains("$CI_COMMIT_BRANCH == \"snapshot-dev\""));
         assertFalse(yaml.contains("io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run"));
