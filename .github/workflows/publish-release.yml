@@ -1,9 +1,6 @@
 name: Publish Release
 
 on:
-  pull_request:
-    types:
-      - closed
   workflow_run:
     workflows:
       - CI
@@ -19,6 +16,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: publish-release-${{ github.event_name == 'workflow_dispatch' && inputs.release_commit_sha || github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
 jobs:
   publish:
     if: >
@@ -28,11 +29,6 @@ jobs:
         github.event.workflow_run.conclusion == 'success' &&
         github.event.workflow_run.event == 'push' &&
         github.event.workflow_run.head_branch == 'main'
-      ) ||
-      (
-        github.event.pull_request.merged == true &&
-        github.event.pull_request.base.ref == 'main' &&
-        github.event.pull_request.head.ref == 'changeset-release/main'
       )
     runs-on: ubuntu-latest
 
@@ -40,7 +36,7 @@ jobs:
       - name: Checkout merged release commit
         uses: actions/checkout@v5
         with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_commit_sha || github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.event.pull_request.merge_commit_sha }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_commit_sha || github.event.workflow_run.head_sha }}
           fetch-depth: 0
 
       - name: Checkout workflow tools
