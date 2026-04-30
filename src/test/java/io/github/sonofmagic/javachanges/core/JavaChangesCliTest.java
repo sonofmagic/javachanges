@@ -1747,6 +1747,29 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void doctorPublishJsonReportsInvalidMavenRepositoryUrl(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot);
+        Files.write(repoRoot.resolve("pom.xml"), centralReadyPom().getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.mavenWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+        commitAll(repoRoot);
+        Map<String, String> environment = publishDoctorEnv();
+        environment.put("MAVEN_SNAPSHOT_REPOSITORY_URL", "not-a-url");
+
+        ExecutionResult result = executeProcess(environment,
+            "doctor-publish",
+            "--directory", repoRoot.toString(),
+            "--format", "json"
+        );
+
+        assertNotEquals(0, result.exitCode);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertFalse(root.get("ok").asBoolean());
+        assertTrue(hasCheck(root, "Credentials", "snapshot repository URL", "FAILED"));
+        assertTrue(hasSuggestion(root, "absolute repository URL"));
+    }
+
+    @Test
     void doctorPublishJsonReportsMissingGradlePublishReadiness(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createGradleRepository(tempDir, false);
         Files.write(repoRoot.resolve(ReleaseProcessUtils.gradleWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
@@ -1852,6 +1875,28 @@ class JavaChangesCliTest {
         assertFalse(root.get("ok").asBoolean());
         assertTrue(hasCheck(root, "Credentials", "Gradle snapshot repository URL", "FAILED"));
         assertTrue(hasSuggestion(root, "ORG_GRADLE_PROJECT_mavenSnapshotRepositoryUrl"));
+    }
+
+    @Test
+    void doctorPublishJsonReportsInvalidGradleRepositoryUrl(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createGradleRepository(tempDir, false);
+        Files.write(repoRoot.resolve("build.gradle"), gradlePublishBuildFile().getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.gradleWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+        commitAll(repoRoot);
+        Map<String, String> environment = publishDoctorEnvWithoutRepositoryUrls();
+        environment.put("ORG_GRADLE_PROJECT_mavenSnapshotRepositoryUrl", "repo.example.com/snapshots");
+
+        ExecutionResult result = executeProcess(environment,
+            "doctor-publish",
+            "--directory", repoRoot.toString(),
+            "--format", "json"
+        );
+
+        assertNotEquals(0, result.exitCode);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertFalse(root.get("ok").asBoolean());
+        assertTrue(hasCheck(root, "Credentials", "Gradle snapshot repository URL", "FAILED"));
+        assertTrue(hasSuggestion(root, "absolute repository URL"));
     }
 
     @Test

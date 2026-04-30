@@ -15,6 +15,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -295,7 +297,7 @@ public final class PublishDoctorSupport {
 
     private void checkCredentials(PublishDoctorReport report) throws IOException, InterruptedException {
         if ("snapshot".equals(report.mode)) {
-            checkEnvAny(report, "Credentials", "snapshot repository URL",
+            checkEnvUrl(report, "Credentials", "snapshot repository URL",
                 "MAVEN_SNAPSHOT_REPOSITORY_URL");
             checkEnvPair(report, "Credentials", "snapshot repository credentials",
                 new String[][]{
@@ -304,7 +306,7 @@ public final class PublishDoctorSupport {
                     {"MAVEN_REPOSITORY_USERNAME", "MAVEN_REPOSITORY_PASSWORD"}
                 });
         } else {
-            checkEnvAny(report, "Credentials", "release repository URL",
+            checkEnvUrl(report, "Credentials", "release repository URL",
                 "MAVEN_RELEASE_REPOSITORY_URL");
             checkEnvPair(report, "Credentials", "release repository credentials",
                 new String[][]{
@@ -318,13 +320,13 @@ public final class PublishDoctorSupport {
 
     private void checkGradleCredentials(PublishDoctorReport report) {
         if ("snapshot".equals(report.mode)) {
-            checkEnvAnyOf(report, "Credentials", "Gradle snapshot repository URL",
+            checkEnvUrlAnyOf(report, "Credentials", "Gradle snapshot repository URL",
                 "MAVEN_SNAPSHOT_REPOSITORY_URL",
                 "ORG_GRADLE_PROJECT_mavenSnapshotRepositoryUrl",
                 "ORG_GRADLE_PROJECT_mavenRepositoryUrl",
                 "MAVEN_REPOSITORY_URL");
         } else {
-            checkEnvAnyOf(report, "Credentials", "Gradle release repository URL",
+            checkEnvUrlAnyOf(report, "Credentials", "Gradle release repository URL",
                 "MAVEN_RELEASE_REPOSITORY_URL",
                 "ORG_GRADLE_PROJECT_mavenReleaseRepositoryUrl",
                 "ORG_GRADLE_PROJECT_mavenRepositoryUrl",
@@ -438,6 +440,52 @@ public final class PublishDoctorSupport {
         }
         report.failed(section, name, "Missing one of: " + join(variables) + ".",
             "Set one of " + join(variables) + " in your local env file, Gradle project properties, or CI secret store.");
+    }
+
+    private void checkEnvUrl(PublishDoctorReport report, String section, String name, String variable) {
+        checkEnvUrlAnyOf(report, section, name, variable);
+    }
+
+    private void checkEnvUrlAnyOf(PublishDoctorReport report, String section, String name, String... variables) {
+        String firstInvalidVariable = null;
+        String firstInvalidValue = null;
+        for (String variable : variables) {
+            String value = ReleaseTextUtils.trimToNull(System.getenv(variable));
+            if (value == null) {
+                continue;
+            }
+            if (isRepositoryUrl(value)) {
+                report.ok(section, name, variable + " is set to a valid repository URL.");
+                return;
+            }
+            if (firstInvalidVariable == null) {
+                firstInvalidVariable = variable;
+                firstInvalidValue = value;
+            }
+        }
+        if (firstInvalidVariable != null) {
+            report.failed(section, name,
+                firstInvalidVariable + " is not a valid repository URL: " + firstInvalidValue + ".",
+                "Set " + firstInvalidVariable
+                    + " to an absolute repository URL such as https://repo.example.com/releases or file:///path/to/repository.");
+            return;
+        }
+        if (variables.length == 1) {
+            report.failed(section, name, "Missing " + variables[0] + ".",
+                "Set " + variables[0] + " in your local env file or CI secret store.");
+            return;
+        }
+        report.failed(section, name, "Missing one of: " + join(variables) + ".",
+            "Set one of " + join(variables) + " in your local env file, Gradle project properties, or CI secret store.");
+    }
+
+    private static boolean isRepositoryUrl(String value) {
+        try {
+            URI uri = new URI(value);
+            return uri.isAbsolute() && ReleaseTextUtils.trimToNull(uri.getSchemeSpecificPart()) != null;
+        } catch (URISyntaxException exception) {
+            return false;
+        }
     }
 
     private void checkEnvPair(PublishDoctorReport report, String section, String name, String[][] alternatives) {

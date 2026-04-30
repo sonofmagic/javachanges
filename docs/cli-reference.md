@@ -469,7 +469,7 @@ Use JSON output in CI:
 mvn -q -DskipTests compile exec:java -Dexec.args="doctor-publish --directory /path/to/repo --format json"
 ```
 
-For Maven projects, the doctor checks build model, current revision, effective snapshot publish version or release tag, optional module target, clean Git worktree, Maven command availability, required POM metadata, Central publish profiles, source/javadoc/signing plugins, Central publishing plugin setup, repository credentials, and GPG signing inputs.
+For Maven projects, the doctor checks build model, current revision, effective snapshot publish version or release tag, optional module target, clean Git worktree, Maven command availability, required POM metadata, Central publish profiles, source/javadoc/signing plugins, Central publishing plugin setup, repository URL and credentials, and GPG signing inputs.
 
 For Gradle projects, the doctor checks `gradle.properties`, effective snapshot publish version or release tag, optional module target, clean Git worktree, settings/build files, detected modules, Gradle command availability, `maven-publish` or `publishing` configuration, signing configuration or Gradle signing environment variables, repository URLs and credentials, and the next `gradle-publish` command.
 

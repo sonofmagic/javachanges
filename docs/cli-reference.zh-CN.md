@@ -468,7 +468,7 @@ CI 中可以使用 JSON 输出：
 mvn -q -DskipTests compile exec:java -Dexec.args="doctor-publish --directory /path/to/repo --format json"
 ```
 
-对于 Maven 项目，会检查构建模型、当前版本、实际 snapshot 发布版本或 release tag、可选目标模块、干净 Git 工作区、Maven 命令、必需 POM 元数据、Central 发布 profiles、source/javadoc/signing 插件、Central publishing plugin 配置、仓库凭据和 GPG 签名输入。
+对于 Maven 项目，会检查构建模型、当前版本、实际 snapshot 发布版本或 release tag、可选目标模块、干净 Git 工作区、Maven 命令、必需 POM 元数据、Central 发布 profiles、source/javadoc/signing 插件、Central publishing plugin 配置、仓库 URL 和凭据，以及 GPG 签名输入。
 
 对于 Gradle 项目，会检查 `gradle.properties`、实际 snapshot 发布版本或 release tag、可选目标模块、干净 Git 工作区、settings/build 文件、检测到的模块、Gradle 命令、`maven-publish` 或 `publishing` 配置、签名配置或 Gradle 签名环境变量、仓库 URL 和凭据，以及下一步 `gradle-publish` 命令。
 
