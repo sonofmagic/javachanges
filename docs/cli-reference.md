@@ -469,9 +469,9 @@ Use JSON output in CI:
 mvn -q -DskipTests compile exec:java -Dexec.args="doctor-publish --directory /path/to/repo --format json"
 ```
 
-For Maven projects, the doctor checks build model, current revision, Maven command availability, required POM metadata, Central publish profiles, source/javadoc/signing plugins, Central publishing plugin setup, repository credentials, and GPG signing inputs.
+For Maven projects, the doctor checks build model, current revision, clean Git worktree, Maven command availability, required POM metadata, Central publish profiles, source/javadoc/signing plugins, Central publishing plugin setup, repository credentials, and GPG signing inputs.
 
-For Gradle projects, the doctor checks `gradle.properties`, settings/build files, detected modules, Gradle command availability, `maven-publish` or `publishing` configuration, signing configuration or Gradle signing environment variables, repository credentials, and the next `gradle-publish` command.
+For Gradle projects, the doctor checks `gradle.properties`, clean Git worktree, settings/build files, detected modules, Gradle command availability, `maven-publish` or `publishing` configuration, signing configuration or Gradle signing environment variables, repository credentials, and the next `gradle-publish` command.
 
 Important flags:
 
@@ -479,6 +479,7 @@ Important flags:
 | --- | --- |
 | `--target` | Publish target. Currently supports `maven-central` |
 | `--mode` | Publish mode: `auto`, `snapshot`, or `release` |
+| `--allow-dirty` | Skip the clean worktree check and include `--allow-dirty true` in next commands |
 | `--format json` | Emit machine-readable readiness checks |
 
 ### 8.2 `preflight`

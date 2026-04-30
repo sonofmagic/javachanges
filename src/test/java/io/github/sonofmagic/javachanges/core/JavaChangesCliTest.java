@@ -1435,6 +1435,7 @@ class JavaChangesCliTest {
         Files.createDirectories(repoRoot);
         Files.write(repoRoot.resolve("pom.xml"), centralReadyPom().getBytes(StandardCharsets.UTF_8));
         Files.write(repoRoot.resolve(ReleaseProcessUtils.mavenWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+        commitAll(repoRoot);
 
         ExecutionResult result = executeProcess(publishDoctorEnv(),
             "doctor-publish",
@@ -1451,6 +1452,52 @@ class JavaChangesCliTest {
         assertTrue(hasCheck(root, "Maven POM", "Central metadata", "OK"));
         assertTrue(hasCheck(root, "Credentials", "GPG signing", "OK"));
         assertFalse(root.has("suggestions"));
+    }
+
+    @Test
+    void doctorPublishJsonReportsDirtyWorktree(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot);
+        Files.write(repoRoot.resolve("pom.xml"), centralReadyPom().getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.mavenWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+        commitAll(repoRoot);
+        Files.write(repoRoot.resolve("untracked.txt"), "dirty\n".getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = executeProcess(publishDoctorEnv(),
+            "doctor-publish",
+            "--directory", repoRoot.toString(),
+            "--format", "json"
+        );
+
+        assertNotEquals(0, result.exitCode);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertFalse(root.get("ok").asBoolean());
+        assertTrue(hasCheck(root, "Git", "worktree", "FAILED"));
+        assertTrue(hasSuggestion(root, "Commit, stash, or clean"));
+    }
+
+    @Test
+    void doctorPublishJsonAllowsDirtyWorktreeWhenRequested(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot);
+        Files.write(repoRoot.resolve("pom.xml"), centralReadyPom().getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.mavenWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+        commitAll(repoRoot);
+        Files.write(repoRoot.resolve("untracked.txt"), "dirty\n".getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = executeProcess(publishDoctorEnv(),
+            "doctor-publish",
+            "--directory", repoRoot.toString(),
+            "--allow-dirty", "true",
+            "--format", "json"
+        );
+
+        assertEquals(0, result.exitCode, result.stdout + result.stderr);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertTrue(root.get("ok").asBoolean());
+        assertTrue(hasCheck(root, "Git", "worktree", "SKIPPED"));
+        assertTrue(root.get("nextCommands").get(0).asText().contains("--allow-dirty true"));
+        assertTrue(root.get("nextCommands").get(1).asText().contains("--allow-dirty true"));
     }
 
     @Test
@@ -1477,6 +1524,7 @@ class JavaChangesCliTest {
         Path repoRoot = createGradleRepository(tempDir, false);
         Files.write(repoRoot.resolve("build.gradle"), gradlePublishBuildFile().getBytes(StandardCharsets.UTF_8));
         Files.write(repoRoot.resolve(ReleaseProcessUtils.gradleWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+        commitAll(repoRoot);
 
         ExecutionResult result = executeProcess(publishDoctorEnv(),
             "doctor-publish",
@@ -1731,6 +1779,14 @@ class JavaChangesCliTest {
             run(repoRoot, "git", "init", "-q");
         }
         return repoRoot;
+    }
+
+    private static void commitAll(Path repoRoot) throws Exception {
+        run(repoRoot, "git", "init", "-q");
+        run(repoRoot, "git", "config", "user.name", "tester");
+        run(repoRoot, "git", "config", "user.email", "tester@example.com");
+        run(repoRoot, "git", "add", ".");
+        run(repoRoot, "git", "commit", "-q", "-m", "initial");
     }
 
     private static String singleModulePom() {

@@ -16,6 +16,10 @@ final class DoctorPublishCommand extends AbstractCliCommand {
     @Option(names = "--mode", description = "Publish mode: auto, snapshot, or release.")
     private String mode;
 
+    @Option(names = "--allow-dirty", arity = "0..1", fallbackValue = "true", defaultValue = "false",
+        description = "Allow a dirty working tree.")
+    private boolean allowDirty;
+
     @Option(names = "--format", description = "Output format: text or json.")
     private String format;
 
@@ -24,6 +28,7 @@ final class DoctorPublishCommand extends AbstractCliCommand {
         Map<String, String> options = options(
             option("target", target),
             option("mode", mode),
+            flag("allow-dirty", allowDirty),
             option("format", format)
         );
         PublishDoctorRequest request = PublishDoctorRequest.fromOptions(options);

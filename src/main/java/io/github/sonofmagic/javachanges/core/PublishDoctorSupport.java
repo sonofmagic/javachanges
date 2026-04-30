@@ -59,17 +59,18 @@ public final class PublishDoctorSupport {
             : ReleaseTextUtils.stripSnapshot(report.currentRevision);
 
         if (model.type == BuildModelSupport.BuildType.GRADLE) {
-            inspectGradle(report, model);
+            inspectGradle(report, model, request);
             return report;
         }
-        inspectMaven(report, model);
+        inspectMaven(report, model, request);
         return report;
     }
 
-    private void inspectMaven(PublishDoctorReport report, BuildModelSupport.BuildModel model)
+    private void inspectMaven(PublishDoctorReport report, BuildModelSupport.BuildModel model, PublishDoctorRequest request)
         throws IOException, InterruptedException {
         report.ok("Project", "build tool", "Maven project detected.");
         checkVersion(report);
+        checkGitWorktree(report, request.allowDirty);
         MavenPom pom = MavenPom.read(model.versionFile);
         checkCoordinates(report, pom);
         checkMetadata(report, pom);
@@ -79,16 +80,19 @@ public final class PublishDoctorSupport {
         checkCredentials(report);
 
         report.nextCommands.add("javachanges preflight --directory " + repoRoot
-            + ("snapshot".equals(report.mode) ? " --snapshot" : " --tag v" + report.publishVersion));
+            + ("snapshot".equals(report.mode) ? " --snapshot" : " --tag v" + report.publishVersion)
+            + allowDirtyFlag(request));
         report.nextCommands.add("javachanges publish --directory " + repoRoot
             + ("snapshot".equals(report.mode) ? " --snapshot" : " --tag v" + report.publishVersion)
+            + allowDirtyFlag(request)
             + " --execute true");
     }
 
-    private void inspectGradle(PublishDoctorReport report, BuildModelSupport.BuildModel model)
+    private void inspectGradle(PublishDoctorReport report, BuildModelSupport.BuildModel model, PublishDoctorRequest request)
         throws IOException, InterruptedException {
         report.ok("Project", "build tool", "Gradle project detected.");
         checkVersion(report);
+        checkGitWorktree(report, request.allowDirty);
         report.ok("Gradle", "version file", repoRoot.relativize(model.versionFile).toString());
         Path settings = GradleModelSupport.settingsFile(repoRoot);
         Path build = GradleModelSupport.buildFile(repoRoot);
@@ -112,6 +116,7 @@ public final class PublishDoctorSupport {
         checkGradleCredentials(report);
         report.nextCommands.add("javachanges gradle-publish --directory " + repoRoot
             + ("snapshot".equals(report.mode) ? " --snapshot" : " --tag v" + report.publishVersion)
+            + allowDirtyFlag(request)
             + " --execute true");
     }
 
@@ -194,6 +199,32 @@ public final class PublishDoctorSupport {
             return;
         }
         report.ok("Runtime", "Gradle command", command.command + " (" + command.source + ")");
+    }
+
+    private void checkGitWorktree(PublishDoctorReport report, boolean allowDirty) throws IOException, InterruptedException {
+        if (allowDirty) {
+            report.skipped("Git", "worktree", "Dirty worktree check skipped because --allow-dirty is set.");
+            return;
+        }
+        CommandResult repository = ReleaseProcessUtils.runCapture(repoRoot, "git", "rev-parse", "--is-inside-work-tree");
+        if (repository.exitCode != 0 || !"true".equals(repository.stdoutText().trim())) {
+            report.failed("Git", "repository", "Repository is not a Git worktree.",
+                "Run doctor-publish inside a Git checkout, or pass --allow-dirty true only for an intentional unpacked-source check.");
+            return;
+        }
+        CommandResult status = ReleaseProcessUtils.runCapture(repoRoot, "git", "status", "--porcelain");
+        if (status.exitCode != 0) {
+            String message = ReleaseTextUtils.trimToNull(status.stderrText());
+            report.failed("Git", "worktree", message == null ? ReleaseMessages.gitCommandFailed() : message,
+                "Resolve the Git status error before publishing, or pass --allow-dirty true only when intentional.");
+            return;
+        }
+        if (ReleaseTextUtils.trimToNull(status.stdoutText()) != null) {
+            report.failed("Git", "worktree", ReleaseMessages.dirtyWorktree(),
+                "Commit, stash, or clean local changes before publishing, or pass --allow-dirty true only when intentional.");
+            return;
+        }
+        report.ok("Git", "worktree", "Working tree is clean.");
     }
 
     private void checkCentralProfiles(PublishDoctorReport report, MavenPom pom) {
@@ -425,6 +456,10 @@ public final class PublishDoctorSupport {
             paths.add(repoRoot.relativize(build).toString());
         }
         return paths.toString();
+    }
+
+    private static String allowDirtyFlag(PublishDoctorRequest request) {
+        return request.allowDirty ? " --allow-dirty true" : "";
     }
 
     private static String join(Set<String> values) {
