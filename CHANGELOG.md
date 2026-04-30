@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.11.0 - 2026-04-30
+
+### Minor Changes
+
+- Add reusable GitLab CI release helpers for release commit tag fallback and GitLab Catalog release-page tolerance. (packages: javachanges)
+
 ## 1.10.3 - 2026-04-30
 
 ### Patch Changes
