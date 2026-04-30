@@ -26,11 +26,20 @@ public class GithubReleaseRuntime {
     }
 
     public boolean remoteTagExists(String tagName, String remoteName) throws IOException, InterruptedException {
+        return remoteTagSha(tagName, remoteName) != null;
+    }
+
+    public String remoteTagSha(String tagName, String remoteName) throws IOException, InterruptedException {
         CommandResult result = runGitCapture("ls-remote", "--tags", remoteName, "refs/tags/" + tagName);
         if (result.exitCode != 0) {
             throw gitCommandException(result, "ls-remote", "--tags", remoteName, "refs/tags/" + tagName);
         }
-        return ReleaseTextUtils.trimToNull(result.stdoutText()) != null;
+        String output = ReleaseTextUtils.trimToNull(result.stdoutText());
+        if (output == null) {
+            return null;
+        }
+        int separator = output.indexOf('\t');
+        return separator < 0 ? output : output.substring(0, separator);
     }
 
     public String headSha() throws IOException, InterruptedException {
@@ -49,6 +58,14 @@ public class GithubReleaseRuntime {
             throw new IllegalStateException(ReleaseMessages.currentHeadShaEmpty());
         }
         return sha;
+    }
+
+    public String headSubject() throws IOException, InterruptedException {
+        CommandResult result = runGitCapture("log", "-1", "--format=%s");
+        if (result.exitCode != 0) {
+            throw gitCommandException(result, "log", "-1", "--format=%s");
+        }
+        return ReleaseTextUtils.trimToNull(result.stdoutText());
     }
 
     public void createOrUpdateTag(String tagName, String sha) throws IOException, InterruptedException {

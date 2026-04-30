@@ -2,6 +2,7 @@ package io.github.sonofmagic.javachanges.core;
 
 import io.github.sonofmagic.javachanges.core.github.GithubReleasePlanRequest;
 import io.github.sonofmagic.javachanges.core.github.GithubReleasePublishRequest;
+import io.github.sonofmagic.javachanges.core.github.GithubReleasePublishStateRequest;
 import io.github.sonofmagic.javachanges.core.github.GithubReleaseRuntime;
 import io.github.sonofmagic.javachanges.core.github.GithubReleaseSupport;
 import io.github.sonofmagic.javachanges.core.github.GithubTagRequest;
@@ -192,6 +193,99 @@ class GithubReleaseSupportTest {
     }
 
     @Test
+    void publishStateContinuesForReleaseApplyCommitAndWritesOutputs(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir);
+        Files.delete(repoRoot.resolve(".changesets").resolve("minor-release.md"));
+        Files.write(repoRoot.resolve("pom.xml"), singleModulePom("1.2.0-SNAPSHOT").getBytes(StandardCharsets.UTF_8));
+        Path githubOutput = tempDir.resolve("github-output.txt");
+        RecordingRuntime runtime = new RecordingRuntime(repoRoot);
+        runtime.headSha = "abc1234";
+        runtime.headSubject = "chore(release): apply changesets for v1.2.0";
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("current-sha", "abc1234");
+        options.put("fresh", "true");
+        options.put("github-output-file", githubOutput.toString());
+
+        new GithubReleaseSupport(repoRoot, new PrintStream(stdout, true), runtime)
+            .publishState(GithubReleasePublishStateRequest.fromOptions(options));
+
+        String outputs = new String(Files.readAllBytes(githubOutput), StandardCharsets.UTF_8);
+        assertTrue(outputs.contains("release_version=1.2.0"));
+        assertTrue(outputs.contains("release_tag=v1.2.0"));
+        assertTrue(outputs.contains("should_publish=true"));
+        assertTrue(stdout.toString(StandardCharsets.UTF_8.name()).contains("Release publish should continue."));
+    }
+
+    @Test
+    void publishStateSkipsWhenHeadIsNotReleaseApplyCommit(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir);
+        Files.delete(repoRoot.resolve(".changesets").resolve("minor-release.md"));
+        Files.write(repoRoot.resolve("pom.xml"), singleModulePom("1.2.0-SNAPSHOT").getBytes(StandardCharsets.UTF_8));
+        Path githubOutput = tempDir.resolve("github-output.txt");
+        RecordingRuntime runtime = new RecordingRuntime(repoRoot);
+        runtime.headSha = "abc1234";
+        runtime.headSubject = "fix: unrelated";
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("current-sha", "abc1234");
+        options.put("fresh", "true");
+        options.put("github-output-file", githubOutput.toString());
+
+        new GithubReleaseSupport(repoRoot, new PrintStream(stdout, true), runtime)
+            .publishState(GithubReleasePublishStateRequest.fromOptions(options));
+
+        String outputs = new String(Files.readAllBytes(githubOutput), StandardCharsets.UTF_8);
+        assertTrue(outputs.contains("should_publish=false"));
+        assertTrue(stdout.toString(StandardCharsets.UTF_8.name()).contains("HEAD is not the release apply commit"));
+    }
+
+    @Test
+    void publishStateSkipsWhenGithubReleaseAlreadyExists(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir);
+        Files.delete(repoRoot.resolve(".changesets").resolve("minor-release.md"));
+        Files.write(repoRoot.resolve("pom.xml"), singleModulePom("1.2.0-SNAPSHOT").getBytes(StandardCharsets.UTF_8));
+        Path githubOutput = tempDir.resolve("github-output.txt");
+        RecordingRuntime runtime = new RecordingRuntime(repoRoot);
+        runtime.releaseExists = true;
+        runtime.headSha = "abc1234";
+        runtime.headSubject = "chore(release): apply changesets for v1.2.0";
+
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("current-sha", "abc1234");
+        options.put("fresh", "true");
+        options.put("github-output-file", githubOutput.toString());
+
+        new GithubReleaseSupport(repoRoot, new PrintStream(new ByteArrayOutputStream(), true), runtime)
+            .publishState(GithubReleasePublishStateRequest.fromOptions(options));
+
+        String outputs = new String(Files.readAllBytes(githubOutput), StandardCharsets.UTF_8);
+        assertTrue(outputs.contains("should_publish=false"));
+    }
+
+    @Test
+    void publishStateFailsWhenReleaseApplyCommitTagPointsElsewhere(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir);
+        Files.delete(repoRoot.resolve(".changesets").resolve("minor-release.md"));
+        Files.write(repoRoot.resolve("pom.xml"), singleModulePom("1.2.0-SNAPSHOT").getBytes(StandardCharsets.UTF_8));
+        RecordingRuntime runtime = new RecordingRuntime(repoRoot);
+        runtime.headSha = "abc1234";
+        runtime.headSubject = "chore(release): apply changesets for v1.2.0";
+        runtime.remoteTagSha = "def5678";
+
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("current-sha", "abc1234");
+        options.put("fresh", "true");
+
+        IllegalStateException error = assertThrows(IllegalStateException.class,
+            () -> new GithubReleaseSupport(repoRoot, new PrintStream(new ByteArrayOutputStream(), true), runtime)
+                .publishState(GithubReleasePublishStateRequest.fromOptions(options)));
+        assertTrue(error.getMessage().contains("points at def5678"));
+    }
+
+    @Test
     void planPullRequestJsonIncludesMachineReadableFields(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir);
         RecordingRuntime runtime = new RecordingRuntime(repoRoot);
@@ -366,7 +460,9 @@ class GithubReleaseSupportTest {
         String prTitle;
         String prBodyFile;
         String headSha;
+        String headSubject;
         boolean remoteTagExists;
+        String remoteTagSha;
         List<String> tagNames = new ArrayList<String>();
         List<String> tagShas = new ArrayList<String>();
         List<String> pushedRemotes = new ArrayList<String>();
@@ -440,8 +536,18 @@ class GithubReleaseSupportTest {
         }
 
         @Override
+        public String headSubject() {
+            return headSubject;
+        }
+
+        @Override
         public boolean remoteTagExists(String tagName, String remoteName) {
             return remoteTagExists;
+        }
+
+        @Override
+        public String remoteTagSha(String tagName, String remoteName) {
+            return remoteTagSha;
         }
 
         @Override

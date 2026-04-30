@@ -1313,10 +1313,11 @@ class JavaChangesCliTest {
         assertTrue(yaml.contains("pull-requests: write"));
         assertTrue(yaml.contains("mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run"));
         assertTrue(yaml.contains("github-release-plan --directory $GITHUB_WORKSPACE --write-plan-files false --execute true"));
+        assertTrue(yaml.contains("github-release-publish-state --directory $GITHUB_WORKSPACE --fresh true"));
         assertTrue(yaml.contains("github-tag-from-plan --directory $GITHUB_WORKSPACE --fresh true"));
-        assertTrue(yaml.contains("manifest-field --directory $GITHUB_WORKSPACE --field releaseVersion --fresh true"));
-        assertTrue(yaml.contains("publish --directory $GITHUB_WORKSPACE --tag v${{ steps.release_meta.outputs.release_version }} --execute true"));
+        assertTrue(yaml.contains("publish --directory $GITHUB_WORKSPACE --tag ${{ steps.release.outputs.release_tag }} --execute true"));
         assertTrue(yaml.contains("github-release-from-plan --directory $GITHUB_WORKSPACE --fresh true"));
+        assertTrue(yaml.contains("if: steps.release.outputs.should_publish == 'true'"));
         assertTrue(yaml.contains("github.event.pull_request.base.ref == 'develop'"));
         assertTrue(yaml.contains("github.event.pull_request.head.ref == 'changeset-release/develop'"));
         assertFalse(yaml.contains("gradle-publish"));
@@ -1348,9 +1349,10 @@ class JavaChangesCliTest {
         assertTrue(yaml.contains("./gradlew --no-daemon build"));
         assertTrue(yaml.contains("curl -fsSL"));
         assertTrue(yaml.contains("github-release-plan --directory \"$GITHUB_WORKSPACE\" --write-plan-files false --execute true"));
-        assertTrue(yaml.contains("manifest-field --directory \"$GITHUB_WORKSPACE\" --field releaseVersion --fresh true"));
-        assertTrue(yaml.contains("gradle-publish --directory \"$GITHUB_WORKSPACE\" --tag \"v${{ steps.release_meta.outputs.release_version }}\" --execute true"));
+        assertTrue(yaml.contains("github-release-publish-state --directory \"$GITHUB_WORKSPACE\" --fresh true"));
+        assertTrue(yaml.contains("gradle-publish --directory \"$GITHUB_WORKSPACE\" --tag \"${{ steps.release.outputs.release_tag }}\" --execute true"));
         assertTrue(yaml.contains("github-release-from-plan --directory \"$GITHUB_WORKSPACE\" --fresh true"));
+        assertTrue(yaml.contains("if: steps.release.outputs.should_publish == 'true'"));
         assertTrue(yaml.contains("github.event.pull_request.base.ref == 'develop'"));
         assertTrue(yaml.contains("github.event.pull_request.head.ref == 'changeset-release/develop'"));
         assertFalse(yaml.contains("io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run"));

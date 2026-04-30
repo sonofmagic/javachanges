@@ -61,6 +61,10 @@ public final class ReleaseTextUtils {
         return "true".equalsIgnoreCase(trimToNull(value));
     }
 
+    public static boolean isFalse(String value) {
+        return "false".equalsIgnoreCase(trimToNull(value));
+    }
+
     public static String requireEnv(String name) {
         String value = trimToNull(System.getenv(name));
         if (value == null) {

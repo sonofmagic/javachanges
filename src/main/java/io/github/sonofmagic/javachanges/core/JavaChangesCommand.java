@@ -45,6 +45,7 @@ import java.nio.file.Path;
         GradlePublishCommand.class,
         GithubReleasePlanCommand.class,
         GithubTagFromPlanCommand.class,
+        GithubReleasePublishStateCommand.class,
         GithubReleaseFromPlanCommand.class,
         InitGithubActionsCommand.class,
         GitlabReleasePlanCommand.class,

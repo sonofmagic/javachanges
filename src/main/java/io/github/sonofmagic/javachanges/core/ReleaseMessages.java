@@ -776,6 +776,22 @@ public final class ReleaseMessages {
         return message("release.reason.createdGithubRelease");
     }
 
+    public static String githubReleasePublishShouldContinueReason() {
+        return message("release.reason.githubReleasePublishShouldContinue");
+    }
+
+    public static String githubReleaseAlreadyExistsSkipReason(String tag) {
+        return message("release.reason.githubReleaseAlreadyExistsSkip", tag);
+    }
+
+    public static String githubHeadNotReleaseApplyCommitSkipReason(String tag) {
+        return message("release.reason.githubHeadNotReleaseApplyCommitSkip", tag);
+    }
+
+    public static String githubTagPointsAtDifferentCommit(String tag, String tagSha, String currentSha) {
+        return message("release.reason.githubTagPointsAtDifferentCommit", tag, tagSha, currentSha);
+    }
+
     public static String updatedGitlabReleaseReason() {
         return message("release.reason.updatedGitlabRelease");
     }

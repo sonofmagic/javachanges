@@ -2,6 +2,7 @@ package io.github.sonofmagic.javachanges.core;
 
 import io.github.sonofmagic.javachanges.core.github.GithubReleasePlanRequest;
 import io.github.sonofmagic.javachanges.core.github.GithubReleasePublishRequest;
+import io.github.sonofmagic.javachanges.core.github.GithubReleasePublishStateRequest;
 import io.github.sonofmagic.javachanges.core.github.GithubReleaseSupport;
 import io.github.sonofmagic.javachanges.core.github.GithubTagRequest;
 import io.github.sonofmagic.javachanges.core.config.ChangesetConfigSupport;
@@ -81,6 +82,42 @@ final class GithubTagFromPlanCommand extends AbstractCliCommand {
         GithubTagRequest request = GithubTagRequest.fromOptions(options);
         return runAutomationCommand("github-tag-from-plan", request.format,
             () -> githubReleaseSupport().tagFromReleasePlan(request));
+    }
+}
+
+@Command(name = "github-release-publish-state", mixinStandardHelpOptions = true,
+    description = "Resolve whether a GitHub release publish job should continue and write GitHub Actions outputs.")
+final class GithubReleasePublishStateCommand extends AbstractCliCommand {
+    @Option(names = "--current-sha", description = "Commit SHA being published. Defaults to HEAD or GITHUB_SHA.")
+    private String currentSha;
+
+    @Option(names = "--github-output-file",
+        description = "Optional GitHub Actions output file. Defaults to GITHUB_OUTPUT when available.")
+    private String githubOutputFile;
+
+    @Option(names = "--fresh", arity = "0..1", fallbackValue = "true", defaultValue = "false",
+        description = "Derive release metadata from the current repository state instead of .changesets/release-plan.json.")
+    private boolean fresh;
+
+    @Option(names = "--require-release-apply-commit", arity = "0..1", fallbackValue = "true", defaultValue = "true",
+        description = "Only continue without an existing GitHub Release when HEAD is the release apply commit.")
+    private boolean requireReleaseApplyCommit;
+
+    @Option(names = "--format", description = "Output format: text or json.")
+    private String format;
+
+    @Override
+    public Integer call() throws Exception {
+        Map<String, String> options = options(
+            option("current-sha", currentSha),
+            option("github-output-file", githubOutputFile),
+            flag("fresh", fresh),
+            flag("require-release-apply-commit", requireReleaseApplyCommit),
+            option("format", format)
+        );
+        GithubReleasePublishStateRequest request = GithubReleasePublishStateRequest.fromOptions(options);
+        return runAutomationCommand("github-release-publish-state", request.format,
+            () -> githubReleaseSupport().publishState(request));
     }
 }
 
@@ -239,22 +276,27 @@ final class InitGithubActionsCommand extends AbstractCliCommand {
             + "          java-version: '8'\n"
             + "          cache: maven\n"
             + "          cache-dependency-path: pom.xml\n"
+            + "      - name: Resolve publish state\n"
+            + "        id: release\n"
+            + "        env:\n"
+            + "          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n"
+            + "        run: >\n"
+            + "          mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run\n"
+            + "          -Djavachanges.args=\"github-release-publish-state --directory $GITHUB_WORKSPACE --fresh true --current-sha $(git rev-parse HEAD)\"\n"
             + "      - name: Create and push release tag\n"
+            + "        if: steps.release.outputs.should_publish == 'true'\n"
             + "        env:\n"
             + "          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n"
             + "        run: >\n"
             + "          mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run\n"
             + "          -Djavachanges.args=\"github-tag-from-plan --directory $GITHUB_WORKSPACE --fresh true --current-sha $(git rev-parse HEAD) --execute true\"\n"
-            + "      - name: Read release version\n"
-            + "        id: release_meta\n"
-            + "        run: |\n"
-            + "          release_version=\"$(mvn -B -q io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run -Djavachanges.args=\\\"manifest-field --directory $GITHUB_WORKSPACE --field releaseVersion --fresh true\\\")\"\n"
-            + "          echo \"release_version=$release_version\" >> \"$GITHUB_OUTPUT\"\n"
             + "      - name: Publish Maven artifacts\n"
+            + "        if: steps.release.outputs.should_publish == 'true'\n"
             + "        run: >\n"
             + "          mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run\n"
-            + "          -Djavachanges.args=\"publish --directory $GITHUB_WORKSPACE --tag v${{ steps.release_meta.outputs.release_version }} --execute true\"\n"
+            + "          -Djavachanges.args=\"publish --directory $GITHUB_WORKSPACE --tag ${{ steps.release.outputs.release_tag }} --execute true\"\n"
             + "      - name: Create GitHub release\n"
+            + "        if: steps.release.outputs.should_publish == 'true'\n"
             + "        env:\n"
             + "          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n"
             + "        run: >\n"
@@ -326,18 +368,21 @@ final class InitGithubActionsCommand extends AbstractCliCommand {
             + "        run: |\n"
             + "          mkdir -p .javachanges\n"
             + "          curl -fsSL \"https://repo1.maven.org/maven2/io/github/sonofmagic/javachanges/${JAVACHANGES_VERSION}/javachanges-${JAVACHANGES_VERSION}.jar\" -o \"$JAVACHANGES_JAR\"\n"
+            + "      - name: Resolve publish state\n"
+            + "        id: release\n"
+            + "        env:\n"
+            + "          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n"
+            + "        run: java -jar \"$JAVACHANGES_JAR\" github-release-publish-state --directory \"$GITHUB_WORKSPACE\" --fresh true --current-sha \"$(git rev-parse HEAD)\"\n"
             + "      - name: Create and push release tag\n"
+            + "        if: steps.release.outputs.should_publish == 'true'\n"
             + "        env:\n"
             + "          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n"
             + "        run: java -jar \"$JAVACHANGES_JAR\" github-tag-from-plan --directory \"$GITHUB_WORKSPACE\" --fresh true --current-sha \"$(git rev-parse HEAD)\" --execute true\n"
-            + "      - name: Read release version\n"
-            + "        id: release_meta\n"
-            + "        run: |\n"
-            + "          release_version=\"$(java -jar \"$JAVACHANGES_JAR\" manifest-field --directory \"$GITHUB_WORKSPACE\" --field releaseVersion --fresh true)\"\n"
-            + "          echo \"release_version=$release_version\" >> \"$GITHUB_OUTPUT\"\n"
             + "      - name: Publish Gradle artifacts\n"
-            + "        run: java -jar \"$JAVACHANGES_JAR\" gradle-publish --directory \"$GITHUB_WORKSPACE\" --tag \"v${{ steps.release_meta.outputs.release_version }}\" --execute true\n"
+            + "        if: steps.release.outputs.should_publish == 'true'\n"
+            + "        run: java -jar \"$JAVACHANGES_JAR\" gradle-publish --directory \"$GITHUB_WORKSPACE\" --tag \"${{ steps.release.outputs.release_tag }}\" --execute true\n"
             + "      - name: Create GitHub release\n"
+            + "        if: steps.release.outputs.should_publish == 'true'\n"
             + "        env:\n"
             + "          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n"
             + "        run: java -jar \"$JAVACHANGES_JAR\" github-release-from-plan --directory \"$GITHUB_WORKSPACE\" --fresh true --release-notes-file target/release-notes.md --execute true\n";
