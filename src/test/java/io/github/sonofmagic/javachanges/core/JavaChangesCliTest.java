@@ -1460,6 +1460,29 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void doctorPublishJsonQuotesNextCommandsForRepositoryPathWithSpaces(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo with spaces");
+        Files.createDirectories(repoRoot);
+        Files.write(repoRoot.resolve("pom.xml"), centralReadyPom().getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.mavenWrapperPath()), "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+        commitAll(repoRoot);
+
+        ExecutionResult result = executeProcess(publishDoctorEnv(),
+            "doctor-publish",
+            "--directory", repoRoot.toString(),
+            "--format", "json"
+        );
+
+        assertEquals(0, result.exitCode, result.stdout + result.stderr);
+        JsonNode root = ReleaseJsonUtils.readTree(result.stdout);
+        assertTrue(root.get("ok").asBoolean());
+        assertTrue(root.get("nextCommands").get(0).asText()
+            .contains("--directory '" + repoRoot + "'"));
+        assertTrue(root.get("nextCommands").get(1).asText()
+            .contains("--directory '" + repoRoot + "'"));
+    }
+
+    @Test
     void doctorPublishJsonSupportsExplicitSnapshotBuildStamp(@TempDir Path tempDir) throws Exception {
         Path repoRoot = tempDir.resolve("repo");
         Files.createDirectories(repoRoot);

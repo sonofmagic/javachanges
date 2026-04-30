@@ -53,7 +53,7 @@ public final class PublishDoctorSupport {
         if (model == null) {
             report.failed("Project", "build model", "No supported Maven or Gradle build model was found.",
                 "Run javachanges init or add a pom.xml, build.gradle, or build.gradle.kts at the repository root.");
-            report.nextCommands.add("javachanges init --directory " + repoRoot);
+            report.nextCommands.add("javachanges init --directory " + repoArg());
             return report;
         }
 
@@ -86,10 +86,10 @@ public final class PublishDoctorSupport {
         checkModeProfile(report, pom);
         checkCredentials(report);
 
-        report.nextCommands.add("javachanges preflight --directory " + repoRoot
+        report.nextCommands.add("javachanges preflight --directory " + repoArg()
             + publishModeArgs(report, request)
             + allowDirtyFlag(request));
-        report.nextCommands.add("javachanges publish --directory " + repoRoot
+        report.nextCommands.add("javachanges publish --directory " + repoArg()
             + publishModeArgs(report, request)
             + allowDirtyFlag(request)
             + " --execute true");
@@ -125,7 +125,7 @@ public final class PublishDoctorSupport {
         checkGradlePublishConfiguration(report, buildFiles);
         checkGradleSigning(report, buildFiles);
         checkGradleCredentials(report);
-        report.nextCommands.add("javachanges gradle-publish --directory " + repoRoot
+        report.nextCommands.add("javachanges gradle-publish --directory " + repoArg()
             + publishModeArgs(report, request)
             + gradleTaskFlag(request)
             + allowDirtyFlag(request)
@@ -270,7 +270,7 @@ public final class PublishDoctorSupport {
         }
         report.failed("Project", "target module",
             ReleaseModuleUtils.unknownModuleMessage(repoRoot, module, modules),
-            "Run javachanges modules --directory " + repoRoot + " to list valid module names.");
+            "Run javachanges modules --directory " + repoArg() + " to list valid module names.");
     }
 
     private void checkGradleTask(PublishDoctorReport report, PublishDoctorRequest request) {
@@ -667,7 +667,7 @@ public final class PublishDoctorSupport {
     }
 
     private static String gradleTaskFlag(PublishDoctorRequest request) {
-        return request.task == null ? "" : " --task " + normalizeGradleTask(request.task);
+        return request.task == null ? "" : " --task " + CliOutputSupport.shellQuote(normalizeGradleTask(request.task));
     }
 
     private static String normalizeGradleTask(String task) {
@@ -728,15 +728,19 @@ public final class PublishDoctorSupport {
                 builder.append(" --snapshot-version-mode ").append(report.snapshotVersionMode);
             }
             if (report.snapshotBuildStamp != null) {
-                builder.append(" --snapshot-build-stamp ").append(report.snapshotBuildStamp);
+                builder.append(" --snapshot-build-stamp ").append(CliOutputSupport.shellQuote(report.snapshotBuildStamp));
             }
         } else if (report.tag != null) {
-            builder.append(" --tag ").append(report.tag);
+            builder.append(" --tag ").append(CliOutputSupport.shellQuote(report.tag));
         }
         if (report.module != null) {
-            builder.append(" --module ").append(report.module);
+            builder.append(" --module ").append(CliOutputSupport.shellQuote(report.module));
         }
         return builder.toString();
+    }
+
+    private String repoArg() {
+        return CliOutputSupport.shellQuote(repoRoot.toString());
     }
 
     private String defaultReleaseTag(PublishDoctorReport report) throws IOException {
