@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.12.0 - 2026-05-02
+
+### Minor Changes
+
+- Expand doctor-publish into a Maven and Gradle publish readiness doctor with module-aware checks, repository URL validation, release tag and worktree validation, Maven Central plugin/profile checks, effective snapshot version reporting, Gradle next-command support, shell-quoted next commands, and repair suggestions in text and JSON output. (packages: javachanges)
+- Improve release workflow tooling with Gradle task bootstrap shortcuts, local CI simulation commands, expanded release dry-runs for doctor/preflight/publish checks, a directly executable `java -jar` CLI artifact, generated documentation placeholder checks, and safer GitHub release tag retry recovery. (packages: javachanges)
+
+### Patch Changes
+
+- Add dedicated Maven plugin goals for CI helpers, env setup and operations, GitHub and GitLab release automation, Gradle publishing, GPG public key publishing, CI template generation, and Maven settings generation. Env and settings helpers now also support Sonatype Central Portal credentials plus release-only and snapshot-only settings modes. (packages: javachanges)
+
 ## 1.11.0 - 2026-04-30
 
 ### Minor Changes
