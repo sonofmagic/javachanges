@@ -68,8 +68,19 @@ current_release_tag() {
   printf 'v%s\n' "$release_version"
 }
 
+current_revision() {
+  revision=$(sed -n 's/.*<revision>\([^<]*\)<\/revision>.*/\1/p' pom.xml | head -n 1)
+  if [ -z "$revision" ]; then
+    echo "Unable to resolve <revision> from pom.xml." >&2
+    exit 1
+  fi
+  printf '%s\n' "$revision"
+}
+
 run_build() {
   run ./mvnw -B "-Dmaven.repo.local=$local_maven_repo" verify
+  revision=$(current_revision)
+  run java -jar "target/javachanges-${revision}.jar" --help
   run ./mvnw -B "-Dmaven.repo.local=$local_maven_repo" -Pcentral-publish -Dgpg.skip=true verify
   run ./mvnw -B "-Dmaven.repo.local=$local_maven_repo" -DskipTests compile exec:java "-Dexec.args=status --directory $repo_root"
 }
@@ -78,6 +89,7 @@ run_docs() {
   ensure_docs_tooling
   run pnpm install --frozen-lockfile
   run pnpm docs:build
+  run pnpm docs:check-output
 }
 
 run_release_dry_run() {

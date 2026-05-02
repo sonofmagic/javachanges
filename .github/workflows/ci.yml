@@ -30,6 +30,11 @@ jobs:
       - name: Verify default build
         run: ./mvnw -B verify
 
+      - name: Verify packaged CLI jar
+        run: |
+          revision="$(sed -n 's/.*<revision>\([^<]*\)<\/revision>.*/\1/p' pom.xml | head -n 1)"
+          java -jar "target/javachanges-${revision}.jar" --help
+
       - name: Verify Central publish profile
         run: ./mvnw -B -Pcentral-publish -Dgpg.skip=true verify
 
@@ -60,3 +65,6 @@ jobs:
 
       - name: Build docs
         run: pnpm docs:build
+
+      - name: Check docs output
+        run: pnpm docs:check-output
