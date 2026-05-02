@@ -1,11 +1,15 @@
 package io.github.sonofmagic.javachanges.core;
 
 import org.junit.jupiter.api.Test;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -16,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DocumentationConsistencyTest {
+    private static final ObjectMapper YAML_MAPPER = new ObjectMapper(new YAMLFactory());
     private static final Pattern SNAPSHOT_PLUGIN_COORDINATE = Pattern.compile(
         "io\\.github\\.sonofmagic:javachanges:([^:\\s]+-SNAPSHOT)"
     );
@@ -69,6 +74,39 @@ class DocumentationConsistencyTest {
         assertMarkdownMentionsReleaseCommitSha(repoRoot.resolve("docs/github-actions-release.zh-CN.md"));
         assertMarkdownMentionsReleaseCommitSha(repoRoot.resolve("docs/troubleshooting-guide.md"));
         assertMarkdownMentionsReleaseCommitSha(repoRoot.resolve("docs/troubleshooting-guide.zh-CN.md"));
+    }
+
+    @Test
+    void githubWorkflowFilesParseAsYamlWithJobs() throws Exception {
+        Path repoRoot = Paths.get("").toAbsolutePath().normalize();
+        Path workflowsDir = repoRoot.resolve(".github/workflows");
+        Set<String> checkedWorkflows = new TreeSet<String>();
+
+        try (Stream<Path> files = Files.list(workflowsDir)) {
+            files.filter(path -> path.getFileName().toString().endsWith(".yml")).forEach(path -> {
+                try {
+                    JsonNode root = YAML_MAPPER.readTree(read(path));
+                    assertTrue(root != null && root.isObject(), path + " should parse as a YAML object");
+                    assertTrue(root.has("jobs"), path + " should define jobs");
+                    assertTrue(root.get("jobs").isObject(), path + " jobs should be a YAML mapping");
+                    checkedWorkflows.add(workflowsDir.relativize(path).toString());
+                } catch (Exception exception) {
+                    throw new RuntimeException(exception);
+                }
+            });
+        } catch (RuntimeException exception) {
+            if (exception.getCause() instanceof Exception) {
+                throw (Exception) exception.getCause();
+            }
+            throw exception;
+        }
+
+        assertEquals(new TreeSet<String>(Arrays.asList(
+            "ci.yml",
+            "publish-release.yml",
+            "publish-snapshot.yml",
+            "release-plan.yml"
+        )), checkedWorkflows);
     }
 
     private static void assertReadmeSnapshotExamplesMatch(Path readme, String revision) throws Exception {
