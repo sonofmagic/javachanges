@@ -52,6 +52,25 @@ class DocumentationConsistencyTest {
         assertMarkdownMentionsCommands(repoRoot.resolve("docs/cli-reference.zh-CN.md"), cliCommands);
     }
 
+    @Test
+    void releaseRetryDocsMatchPublishReleaseWorkflowInput() throws Exception {
+        Path repoRoot = Paths.get("").toAbsolutePath().normalize();
+        String workflow = read(repoRoot.resolve(".github/workflows/publish-release.yml"));
+
+        assertTrue(workflow.contains("workflow_dispatch:"), "publish-release.yml should support manual dispatch");
+        assertTrue(workflow.contains("release_commit_sha:"), "publish-release.yml should accept the retry commit SHA");
+        assertTrue(workflow.contains("inputs.release_commit_sha || github.event.workflow_run.head_sha"),
+            "publish-release.yml should reuse the same commit expression for automatic and manual runs");
+        assertTrue(workflow.contains(
+            "ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_commit_sha || github.event.workflow_run.head_sha }}"
+        ), "publish-release.yml should checkout the requested retry commit");
+
+        assertMarkdownMentionsReleaseCommitSha(repoRoot.resolve("docs/github-actions-release.md"));
+        assertMarkdownMentionsReleaseCommitSha(repoRoot.resolve("docs/github-actions-release.zh-CN.md"));
+        assertMarkdownMentionsReleaseCommitSha(repoRoot.resolve("docs/troubleshooting-guide.md"));
+        assertMarkdownMentionsReleaseCommitSha(repoRoot.resolve("docs/troubleshooting-guide.zh-CN.md"));
+    }
+
     private static void assertReadmeSnapshotExamplesMatch(Path readme, String revision) throws Exception {
         String content = new String(Files.readAllBytes(readme), StandardCharsets.UTF_8);
         Matcher matcher = SNAPSHOT_PLUGIN_COORDINATE.matcher(content);
@@ -88,7 +107,7 @@ class DocumentationConsistencyTest {
     }
 
     private static void assertMarkdownMentionsCommands(Path document, Set<String> cliCommands) throws Exception {
-        String content = new String(Files.readAllBytes(document), StandardCharsets.UTF_8);
+        String content = read(document);
         Set<String> missingCommands = new TreeSet<String>(cliCommands);
         for (String command : cliCommands) {
             if (content.contains(command)) {
@@ -96,6 +115,11 @@ class DocumentationConsistencyTest {
             }
         }
         assertEquals(new TreeSet<String>(), missingCommands, document + " is missing CLI command references");
+    }
+
+    private static void assertMarkdownMentionsReleaseCommitSha(Path document) throws Exception {
+        assertTrue(read(document).contains("release_commit_sha"),
+            document + " should document the Publish Release retry input");
     }
 
     private static Set<String> cliCommandNames(Path repoRoot) throws Exception {
@@ -132,5 +156,9 @@ class DocumentationConsistencyTest {
             values.add(matcher.group(1));
         }
         return values;
+    }
+
+    private static String read(Path path) throws Exception {
+        return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
     }
 }
