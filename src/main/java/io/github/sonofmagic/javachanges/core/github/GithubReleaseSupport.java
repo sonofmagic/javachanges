@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -118,24 +119,35 @@ public final class GithubReleaseSupport extends AbstractReleaseAutomationSupport
             ReleaseMessages.targetCommitValue(currentSha)
         );
 
+        List<String> missingTags = new ArrayList<String>();
         for (String tagName : tagNames) {
-            if (runtime.remoteTagExists(tagName, "origin")) {
-                skipWhenRemoteTagExists(report, textOutput, tagName);
-                return;
+            String tagSha = runtime.remoteTagSha(tagName, "origin");
+            if (tagSha == null) {
+                missingTags.add(tagName);
+                continue;
             }
+            if (!tagSha.equals(currentSha)) {
+                throw new IllegalStateException(ReleaseMessages.githubTagPointsAtDifferentCommit(tagName,
+                    tagSha, currentSha));
+            }
+        }
+
+        if (missingTags.isEmpty()) {
+            skipWhenRemoteTagsAlreadyAtTargetCommit(report, textOutput, tagNames);
+            return;
         }
 
         if (skipDryRun(report, textOutput, ReleaseMessages.dryRunReleaseTag())) {
             return;
         }
 
-        for (String tagName : tagNames) {
+        for (String tagName : missingTags) {
             runtime.createOrUpdateTag(tagName, currentSha);
             runtime.runGit("push", "origin", "refs/tags/" + tagName);
         }
         report.action = "create-tag";
         report.reason = ReleaseMessages.createdAndPushedTagReason();
-        AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.createdAndPushedTags(tagNames));
+        AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.createdAndPushedTags(missingTags));
     }
 
     public void publishState(GithubReleasePublishStateRequest request) throws IOException, InterruptedException {

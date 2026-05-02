@@ -179,6 +179,8 @@ class I18nTest {
         assertEquals("Other", ReleaseMessages.releaseNotesSection("Unknown"));
         assertEquals("Created GitHub pull request.", ReleaseMessages.createdGithubPullRequestReason());
         assertEquals("Tag already exists remotely: v1.2.0", ReleaseMessages.tagAlreadyExistsRemotelyReason("v1.2.0"));
+        assertEquals("Release tag(s) already exist at the target commit: [v1.2.0]",
+            ReleaseMessages.releaseTagsAlreadyAtTargetCommitReason("[v1.2.0]"));
         assertEquals("Created GitHub PR for chore(release): v1.2.0",
             ReleaseMessages.createdGithubPrFor("chore(release): v1.2.0"));
         assertEquals("Release tags: [v1.2.0]", ReleaseMessages.releaseTagsValue("[v1.2.0]"));
@@ -193,6 +195,8 @@ class I18nTest {
             assertEquals("其他", ReleaseMessages.releaseNotesSection("Unknown"));
             assertEquals("已创建 GitHub pull request。", ReleaseMessages.createdGithubPullRequestReason());
             assertEquals("远端 tag 已存在: v1.2.0", ReleaseMessages.tagAlreadyExistsRemotelyReason("v1.2.0"));
+            assertEquals("release tag 已存在且指向目标 commit: [v1.2.0]",
+                ReleaseMessages.releaseTagsAlreadyAtTargetCommitReason("[v1.2.0]"));
             assertEquals("已创建 GitHub PR: chore(release): v1.2.0",
                 ReleaseMessages.createdGithubPrFor("chore(release): v1.2.0"));
             assertEquals("Release tags: [v1.2.0]", ReleaseMessages.releaseTagsValue("[v1.2.0]"));

@@ -125,6 +125,54 @@ class GithubReleaseSupportTest {
     }
 
     @Test
+    void tagFromReleasePlanSkipsWhenRemoteTagAlreadyTargetsCurrentCommit(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir);
+        Files.write(
+            repoRoot.resolve(".changesets").resolve("release-plan.json"),
+            "{\"releaseVersion\":\"1.2.0\"}\n".getBytes(StandardCharsets.UTF_8)
+        );
+        RecordingRuntime runtime = new RecordingRuntime(repoRoot);
+        runtime.headSha = "abc1234";
+        runtime.remoteTagSha = "abc1234";
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("current-sha", "abc1234");
+        options.put("execute", "true");
+
+        new GithubReleaseSupport(repoRoot, new PrintStream(stdout, true), runtime)
+            .tagFromReleasePlan(GithubTagRequest.fromOptions(options));
+
+        assertTrue(runtime.tagNames.isEmpty());
+        String stdoutText = stdout.toString(StandardCharsets.UTF_8.name());
+        assertTrue(stdoutText.contains("Release tag(s) already exist at the target commit"));
+        assertTrue(stdoutText.contains("Continuing publish recovery is safe"));
+    }
+
+    @Test
+    void tagFromReleasePlanFailsWhenRemoteTagTargetsDifferentCommit(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir);
+        Files.write(
+            repoRoot.resolve(".changesets").resolve("release-plan.json"),
+            "{\"releaseVersion\":\"1.2.0\"}\n".getBytes(StandardCharsets.UTF_8)
+        );
+        RecordingRuntime runtime = new RecordingRuntime(repoRoot);
+        runtime.headSha = "abc1234";
+        runtime.remoteTagSha = "def5678";
+
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("current-sha", "abc1234");
+        options.put("execute", "true");
+
+        IllegalStateException error = assertThrows(IllegalStateException.class,
+            () -> new GithubReleaseSupport(repoRoot, new PrintStream(new ByteArrayOutputStream(), true), runtime)
+                .tagFromReleasePlan(GithubTagRequest.fromOptions(options)));
+
+        assertTrue(error.getMessage().contains("v1.2.0 points at def5678"));
+        assertTrue(runtime.tagNames.isEmpty());
+    }
+
+    @Test
     void tagFromReleasePlanCreatesPerModuleTags(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir);
         Files.write(
@@ -157,6 +205,39 @@ class GithubReleaseSupportTest {
         String stdoutText = stdout.toString(StandardCharsets.UTF_8.name());
         assertTrue(stdoutText.contains("fixture-app/v1.2.0"));
         assertTrue(stdoutText.contains("fixture-starter/v1.2.0"));
+    }
+
+    @Test
+    void tagFromReleasePlanCreatesOnlyMissingPerModuleTags(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir);
+        Files.write(
+            repoRoot.resolve(".changesets").resolve("release-plan.json"),
+            ("{\n" +
+                "  \"releaseVersion\": \"1.2.0\",\n" +
+                "  \"tagStrategy\": \"per-module\",\n" +
+                "  \"releaseTargets\": [\n" +
+                "    {\"module\": \"fixture-app\", \"tag\": \"fixture-app/v1.2.0\"},\n" +
+                "    {\"module\": \"fixture-starter\", \"tag\": \"fixture-starter/v1.2.0\"}\n" +
+                "  ]\n" +
+                "}\n").getBytes(StandardCharsets.UTF_8)
+        );
+        RecordingRuntime runtime = new RecordingRuntime(repoRoot);
+        runtime.headSha = "abc1234";
+        runtime.remoteTagShas.put("fixture-app/v1.2.0", "abc1234");
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("current-sha", "abc1234");
+        options.put("execute", "true");
+
+        new GithubReleaseSupport(repoRoot, new PrintStream(stdout, true), runtime)
+            .tagFromReleasePlan(GithubTagRequest.fromOptions(options));
+
+        assertEquals(1, runtime.tagNames.size());
+        assertEquals("fixture-starter/v1.2.0", runtime.tagNames.get(0));
+        assertEquals("refs/tags/fixture-starter/v1.2.0", runtime.pushedRefs.get(0));
+        assertTrue(stdout.toString(StandardCharsets.UTF_8.name())
+            .contains("Created and pushed tag(s) [fixture-starter/v1.2.0]"));
     }
 
     @Test
@@ -463,6 +544,7 @@ class GithubReleaseSupportTest {
         String headSubject;
         boolean remoteTagExists;
         String remoteTagSha;
+        Map<String, String> remoteTagShas = new HashMap<String, String>();
         List<String> tagNames = new ArrayList<String>();
         List<String> tagShas = new ArrayList<String>();
         List<String> pushedRemotes = new ArrayList<String>();
@@ -547,6 +629,9 @@ class GithubReleaseSupportTest {
 
         @Override
         public String remoteTagSha(String tagName, String remoteName) {
+            if (remoteTagShas.containsKey(tagName)) {
+                return remoteTagShas.get(tagName);
+            }
             return remoteTagSha;
         }
 

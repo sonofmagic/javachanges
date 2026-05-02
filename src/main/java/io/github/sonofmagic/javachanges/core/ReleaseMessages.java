@@ -732,6 +732,10 @@ public final class ReleaseMessages {
         return message("release.reason.tagAlreadyExistsRemotely", tagName);
     }
 
+    public static String releaseTagsAlreadyAtTargetCommitReason(Object tags) {
+        return message("release.reason.releaseTagsAlreadyAtTargetCommit", tags);
+    }
+
     public static String noStagedReleasePlanChangesReason() {
         return message("release.reason.noStagedReleasePlanChanges");
     }
@@ -930,6 +934,10 @@ public final class ReleaseMessages {
 
     public static String tagAlreadyExistsRemotelySkip() {
         return message("release.text.tagAlreadyExistsRemotelySkip");
+    }
+
+    public static String releaseTagsAlreadyAtTargetCommitSkip() {
+        return message("release.text.releaseTagsAlreadyAtTargetCommitSkip");
     }
 
     public static String currentBranchMatchesReleaseBranchSkipTag() {

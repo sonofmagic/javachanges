@@ -83,6 +83,14 @@ public abstract class AbstractReleaseAutomationSupport {
         return true;
     }
 
+    protected final boolean skipWhenRemoteTagsAlreadyAtTargetCommit(AutomationJsonSupport.AutomationReport report,
+                                                                    boolean textOutput, Object tagNames) {
+        report.skipped = true;
+        report.reason = ReleaseMessages.releaseTagsAlreadyAtTargetCommitReason(tagNames);
+        AutomationJsonSupport.print(out, textOutput, report, ReleaseMessages.releaseTagsAlreadyAtTargetCommitSkip());
+        return true;
+    }
+
     protected final Path releasePlanMarkdownFile() {
         return automationSupport.releasePlanMarkdownFile();
     }
