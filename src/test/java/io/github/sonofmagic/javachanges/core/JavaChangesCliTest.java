@@ -1,6 +1,8 @@
 package io.github.sonofmagic.javachanges.core;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -25,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JavaChangesCliTest {
+    private static final ObjectMapper YAML_MAPPER = new ObjectMapper(new YAMLFactory());
 
     @Test
     void helpOutputListsCommands() {
@@ -1510,6 +1513,11 @@ class JavaChangesCliTest {
 
         assertEquals(0, result.exitCode);
         String yaml = read(repoRoot.resolve(".gitlab-ci.generated.yml"));
+        JsonNode root = assertYamlObject(yaml);
+        assertTrue(root.has("stages"));
+        assertTrue(root.has("release_plan_mr"));
+        assertTrue(root.has("release_tag"));
+        assertTrue(root.has("publish_release"));
         assertTrue(yaml.contains("JAVACHANGES_VERSION: \"1.4.1\""));
         assertTrue(yaml.contains("run_javachanges()"));
         assertTrue(yaml.contains("mvn --batch-mode --non-recursive \"io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run\""));
@@ -1585,6 +1593,11 @@ class JavaChangesCliTest {
 
         assertEquals(0, result.exitCode);
         String yaml = read(repoRoot.resolve(".github/workflows/generated-release.yml"));
+        JsonNode root = assertYamlObject(yaml);
+        assertTrue(root.has("name"));
+        assertTrue(root.has("jobs"));
+        assertTrue(root.get("jobs").has("release-plan"));
+        assertTrue(root.get("jobs").has("publish"));
         assertTrue(yaml.contains("JAVACHANGES_VERSION: \"1.8.0\""));
         assertTrue(yaml.contains("pull-requests: write"));
         assertTrue(yaml.contains("mvn -B io.github.sonofmagic:javachanges:${JAVACHANGES_VERSION}:run"));
@@ -1619,6 +1632,11 @@ class JavaChangesCliTest {
 
         assertEquals(0, result.exitCode);
         String yaml = read(repoRoot.resolve(".github/workflows/generated-release.yml"));
+        JsonNode root = assertYamlObject(yaml);
+        assertTrue(root.has("name"));
+        assertTrue(root.has("jobs"));
+        assertTrue(root.get("jobs").has("release-plan"));
+        assertTrue(root.get("jobs").has("publish"));
         assertTrue(yaml.contains("JAVACHANGES_JAR: .javachanges/javachanges-${{ env.JAVACHANGES_VERSION }}.jar"));
         assertTrue(yaml.contains("distribution: temurin"));
         assertTrue(yaml.contains("cache: gradle"));
@@ -1654,6 +1672,11 @@ class JavaChangesCliTest {
 
         assertEquals(0, result.exitCode);
         String yaml = read(repoRoot.resolve(".gitlab-ci.gradle.yml"));
+        JsonNode root = assertYamlObject(yaml);
+        assertTrue(root.has("stages"));
+        assertTrue(root.has("release_plan_mr"));
+        assertTrue(root.has("release_tag"));
+        assertTrue(root.has("publish_release"));
         assertTrue(yaml.contains("image: eclipse-temurin:17"));
         assertTrue(yaml.contains("GRADLE_USER_HOME: \"$CI_PROJECT_DIR/.gradle\""));
         assertTrue(yaml.contains("curl -fsSL"));
@@ -2684,6 +2707,12 @@ class JavaChangesCliTest {
 
     private static String read(Path path) throws IOException {
         return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+    }
+
+    private static JsonNode assertYamlObject(String yaml) throws IOException {
+        JsonNode root = YAML_MAPPER.readTree(yaml);
+        assertTrue(root != null && root.isObject(), "generated YAML should parse as an object");
+        return root;
     }
 
     private static int countOccurrences(String text, String needle) {
