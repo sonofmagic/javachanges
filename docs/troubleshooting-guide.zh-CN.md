@@ -213,6 +213,14 @@ java -jar .javachanges/javachanges-__JAVACHANGES_LATEST_RELEASE_VERSION__.jar st
 | --- | --- | --- |
 | workflow 里仍然能看到下载日志 | 第一次预热缓存，或者依赖图发生了变化 | 这是正常现象，等一次成功运行把缓存热起来 |
 
+### 4.4 release tag 已存在，但发布没有完成
+
+| 现象 | 原因 | 修复方式 |
+| --- | --- | --- |
+| `Publish Release` 已经创建了 `vX.Y.Z`，但后续 Maven Central 发布或 GitHub Release 创建失败 | workflow 在打 tag 后、完成剩余发布步骤前中断 | 通过 `workflow_dispatch` 用同一个 release merge commit SHA 重跑 `Publish Release` |
+| `github-tag-from-plan` 提示 tag 已存在且指向目标 commit | 重跑时已经对准同一个 release commit | 继续这次重跑，这是预期的恢复路径 |
+| workflow 提示 tag 指向另一个 commit | 重试对错了 commit，或 tag 被手动移动过 | 先检查 tag 指向，再用被 tag 的 commit 重跑；只有确认旧 tag 指向错误后才移动 tag |
+
 ## 5. GitLab CI/CD 问题
 
 ### 5.1 一直没有创建 release MR

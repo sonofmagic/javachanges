@@ -213,6 +213,14 @@ Suggested order:
 | --- | --- | --- |
 | the workflow still downloads dependencies | first cache warmup or a changed dependency graph | let one successful run warm the cache; this is normal |
 
+### 4.4 Release tag exists but publishing did not finish
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| `Publish Release` created `vX.Y.Z`, but Maven Central publishing or GitHub Release creation failed later | the workflow stopped after tagging and before the remaining publish steps completed | rerun `Publish Release` with the same merged release commit SHA through `workflow_dispatch` |
+| `github-tag-from-plan` says the tag already exists at the target commit | the rerun is correctly targeting the same release commit | continue the rerun; this is the intended recovery path |
+| the workflow says the tag points at a different commit | the retry is targeting the wrong commit, or the tag was moved manually | inspect the tag target and rerun for that commit, or move the tag only after confirming it is wrong |
+
 ## 5. GitLab CI/CD problems
 
 ### 5.1 Release MR is never created

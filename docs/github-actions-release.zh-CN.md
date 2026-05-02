@@ -143,6 +143,14 @@ workflow 成功后，建议通过下面这些 snapshot 地址验证：
 4. 用 `central-publish` profile 发布到 Maven Central
 5. 执行 `github-release-from-plan --execute true`，创建或更新 GitHub Release
 
+### 5.1 正式发布重试行为
+
+`Publish Release` 可以安全地针对同一个 release merge commit 重跑。
+
+如果上一次运行已经创建了 release tag，但在 Maven Central 发布或 GitHub Release 创建前失败，请用同一个 release merge commit SHA 重跑 `Publish Release`。当 GitHub Release 还不存在、远端 tag 又指向这个 commit 时，`github-release-publish-state` 会继续执行；随后 `github-tag-from-plan` 会把已存在的 tag 当成可恢复状态，而不是重新创建。
+
+如果远端 tag 已存在但指向另一个 commit，workflow 会在发布前失败。此时应先检查这个 tag，确认后要么用被 tag 的 commit 重跑 workflow，要么在确认旧 tag 指向错误后再移动 tag。
+
 在 `actions/setup-java` 导入私钥之后，当前两个发布 workflow 都会先执行 `javachanges ensure-gpg-public-key`。这一步会：
 
 1. 读取当前导入的签名指纹

@@ -143,6 +143,14 @@ It then:
 4. publishes to Maven Central with the `central-publish` profile
 5. runs `github-release-from-plan --execute true` to create or update the GitHub Release
 
+### 5.1 Release retry behavior
+
+`Publish Release` is designed to be safe to rerun for the same merged release commit.
+
+If a previous run created the release tag but failed before Maven Central publishing or GitHub Release creation, rerun `Publish Release` with the same merged release commit SHA. `github-release-publish-state` continues when no GitHub Release exists and the remote tag points at that commit. `github-tag-from-plan` then treats the existing tag as a recoverable state instead of trying to recreate it.
+
+If the remote tag exists but points at a different commit, the workflow fails before publishing. In that case, inspect the tag and rerun the workflow for the tagged commit, or move the tag only after confirming the previous tag target was wrong.
+
 ## 6. Required repository secrets
 
 Configure these in `Settings > Secrets and variables > Actions`:
