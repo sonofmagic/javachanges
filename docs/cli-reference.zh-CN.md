@@ -338,10 +338,10 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo
 mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo --restore true"
 ```
 
-`github-release-plan` 和 `gitlab-release-plan` 这类自动化命令可以传
-`--write-plan-files false`，避免把生成的 `release-plan.json` 和
-`release-plan.md` 提交进 release 分支。这个模式下 PR/MR 正文会作为临时文件生成，
-后续 tag / release job 应使用 `--fresh true`。
+`github-release-plan` 和 `gitlab-release-plan` 这类自动化命令默认会避免把生成的
+`release-plan.json` 和 `release-plan.md` 提交进 release 分支。PR/MR 正文会作为临时文件生成，
+后续 tag / release job 应使用 `--fresh true`。只有兼容旧的 manifest 自动化时才传
+`--write-plan-files true`。
 
 ### 5.6 `manifest-field`
 

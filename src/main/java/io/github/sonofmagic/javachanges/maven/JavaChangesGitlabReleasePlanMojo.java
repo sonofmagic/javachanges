@@ -24,7 +24,7 @@ public final class JavaChangesGitlabReleasePlanMojo extends AbstractJavaChangesM
     @Parameter(property = "javachanges.execute", defaultValue = "false")
     private boolean execute;
 
-    @Parameter(property = "javachanges.writePlanFiles", defaultValue = "true")
+    @Parameter(property = "javachanges.writePlanFiles", defaultValue = "false")
     private boolean writePlanFiles;
 
     @Parameter(property = "javachanges.format")

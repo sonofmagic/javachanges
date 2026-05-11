@@ -51,7 +51,31 @@ class GitlabReleaseSupportTest {
         assertEquals("main", api.createdTargetBranch);
         assertEquals("chore(release): release v1.2.0", api.createdTitle);
         assertTrue(api.createdDescription.contains("## Release Plan"));
+        assertFalse(Files.exists(repoRoot.resolve(".changesets").resolve("release-plan.json")));
+        assertFalse(Files.exists(repoRoot.resolve(".changesets").resolve("release-plan.md")));
         assertTrue(stdout.toString(StandardCharsets.UTF_8.name()).contains("Created GitLab MR !42"));
+    }
+
+    @Test
+    void planMergeRequestCanWriteCommittedReleasePlanFiles(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir);
+        RecordingRuntime runtime = new RecordingRuntime(repoRoot);
+        runtime.noStagedChanges = false;
+        FakeGitlabApiClient api = new FakeGitlabApiClient();
+        api.remoteUrl = "https://bot:token@example.com/group/repo.git";
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("project-id", "123");
+        options.put("target-branch", "main");
+        options.put("release-branch", "changeset-release/main");
+        options.put("execute", "true");
+        options.put("write-plan-files", "true");
+
+        new GitlabReleaseSupport(repoRoot, new PrintStream(stdout, true), runtime, api)
+            .planMergeRequest(GitlabReleasePlanRequest.fromOptions(options));
+
+        assertTrue(Files.exists(repoRoot.resolve(".changesets").resolve("release-plan.json")));
+        assertTrue(Files.exists(repoRoot.resolve(".changesets").resolve("release-plan.md")));
     }
 
     @Test

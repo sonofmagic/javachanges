@@ -31,7 +31,7 @@ final class GithubReleasePlanCommand extends AbstractCliCommand {
         description = "Call GitHub through gh instead of a dry run.")
     private boolean execute;
 
-    @Option(names = "--write-plan-files", arity = "0..1", fallbackValue = "true", defaultValue = "true",
+    @Option(names = "--write-plan-files", arity = "0..1", fallbackValue = "true", defaultValue = "false",
         description = "Write .changesets/release-plan.json and .changesets/release-plan.md into the release branch.")
     private boolean writePlanFiles;
 

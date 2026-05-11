@@ -46,12 +46,15 @@ class GithubReleaseSupportTest {
         assertEquals("changeset-release/main", runtime.prHeadBranch);
         assertEquals("main", runtime.prBaseBranch);
         assertEquals("chore(release): v1.2.0", runtime.prTitle);
-        assertTrue(runtime.prBodyFile.endsWith(".changesets/release-plan.md"));
+        assertFalse(Files.exists(repoRoot.resolve(".changesets").resolve("release-plan.json")));
+        assertFalse(Files.exists(repoRoot.resolve(".changesets").resolve("release-plan.md")));
+        assertTrue(runtime.prBodyFile.endsWith("target/javachanges-release-plan.md"));
+        assertTrue(Files.exists(repoRoot.resolve("target").resolve("javachanges-release-plan.md")));
         assertTrue(stdout.toString(StandardCharsets.UTF_8.name()).contains("Created GitHub PR for chore(release): v1.2.0"));
     }
 
     @Test
-    void planPullRequestCanSkipCommittedReleasePlanFiles(@TempDir Path tempDir) throws Exception {
+    void planPullRequestCanRemoveStaleCommittedReleasePlanFiles(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir);
         Files.write(repoRoot.resolve(".changesets").resolve("release-plan.json"),
             "{\"releaseVersion\":\"stale\"}\n".getBytes(StandardCharsets.UTF_8));
@@ -65,7 +68,6 @@ class GithubReleaseSupportTest {
         options.put("target-branch", "main");
         options.put("release-branch", "changeset-release/main");
         options.put("execute", "true");
-        options.put("write-plan-files", "false");
 
         new GithubReleaseSupport(repoRoot, new PrintStream(stdout, true), runtime)
             .planPullRequest(GithubReleasePlanRequest.fromOptions(options));
@@ -74,6 +76,27 @@ class GithubReleaseSupportTest {
         assertFalse(Files.exists(repoRoot.resolve(".changesets").resolve("release-plan.md")));
         assertTrue(runtime.prBodyFile.endsWith("target/javachanges-release-plan.md"));
         assertTrue(Files.exists(repoRoot.resolve("target").resolve("javachanges-release-plan.md")));
+    }
+
+    @Test
+    void planPullRequestCanWriteCommittedReleasePlanFiles(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir);
+        RecordingRuntime runtime = new RecordingRuntime(repoRoot);
+        runtime.noStagedChanges = false;
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("github-repo", "owner/repo");
+        options.put("target-branch", "main");
+        options.put("release-branch", "changeset-release/main");
+        options.put("execute", "true");
+        options.put("write-plan-files", "true");
+
+        new GithubReleaseSupport(repoRoot, new PrintStream(stdout, true), runtime)
+            .planPullRequest(GithubReleasePlanRequest.fromOptions(options));
+
+        assertTrue(Files.exists(repoRoot.resolve(".changesets").resolve("release-plan.json")));
+        assertTrue(Files.exists(repoRoot.resolve(".changesets").resolve("release-plan.md")));
+        assertTrue(runtime.prBodyFile.endsWith(".changesets/release-plan.md"));
     }
 
     @Test

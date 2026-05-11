@@ -16,14 +16,14 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo
 | `.changesets/release-plan.json` | 兼容模式下生成的机器可读 release manifest |
 | `.changesets/release-plan.md` | 兼容模式下生成的 release PR 正文 |
 
-这两个文件是兼容产物。新的 CI/CD 自动化更推荐使用 `--fresh true` 和
-`--write-plan-files false`，避免 release 分支长期携带容易滞后的生成元数据。
+这两个文件是兼容产物。CI/CD release-plan 自动化默认会跳过它们，后续 tag/release
+job 应使用 `--fresh true`，避免 release 分支长期携带容易滞后的生成元数据。
 
 ## 2. 生成时机
 
-`plan --apply true` 成功执行后会生成这两个文件。平台自动化可以通过
-`github-release-plan --write-plan-files false` 或
-`gitlab-release-plan --write-plan-files false` 选择不写入它们。
+`plan --apply true` 成功执行后会生成这两个文件。`github-release-plan` 和
+`gitlab-release-plan` 这类平台自动化命令默认不会提交它们。只有兼容旧自动化仍然需要
+提交 manifest 文件时，才传 `--write-plan-files true`。
 
 也就是说：
 

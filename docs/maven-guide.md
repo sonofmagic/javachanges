@@ -111,7 +111,7 @@ The env review goals use Maven-style property names for common CLI options: `-Dj
 
 `javachanges:init-gradle-tasks` writes `gradle/javachanges.gradle` for Gradle repositories. Use `-Djavachanges.apply=true` to append that script to the root `build.gradle` or `build.gradle.kts`; `javachanges:setup -Djavachanges.applyGradleTasks=true` does the same as part of first-time setup.
 
-The GitHub release automation goals map directly to the CLI commands. Use `-Djavachanges.execute=true` only in CI or when you intentionally want to call `gh`; without it, release-plan, tag, and release goals stay in dry-run mode. Use `-Djavachanges.writePlanFiles=false` when the release-plan pull request should not commit `.changesets/release-plan.*` files.
+The GitHub release automation goals map directly to the CLI commands. Use `-Djavachanges.execute=true` only in CI or when you intentionally want to call `gh`; without it, release-plan, tag, and release goals stay in dry-run mode. Release-plan pull requests do not commit `.changesets/release-plan.*` files by default; use `-Djavachanges.writePlanFiles=true` only for compatibility with older manifest-based automation.
 
 The GitLab release automation goals follow the same dry-run default. Use `-Djavachanges.execute=true` only when the command should call the GitLab API or push tags. `gitlab-tag-from-plan` also supports `-Djavachanges.fallbackFromReleaseCommit=true` for default-branch recovery from a merged `chore(release): release vX.Y.Z` commit.
 

@@ -43,7 +43,7 @@ public final class GithubReleasePlanRequest {
             targetBranch,
             releaseBranch,
             ReleaseTextUtils.isTrue(options.get("execute")),
-            !"false".equalsIgnoreCase(ReleaseTextUtils.trimToNull(options.get("write-plan-files"))),
+            ReleaseTextUtils.isTrue(options.get("write-plan-files")),
             OutputFormat.parse(options.get("format"), OutputFormat.TEXT)
         );
     }

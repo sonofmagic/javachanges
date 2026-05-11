@@ -339,10 +339,11 @@ To undo a local apply before committing it:
 mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo --restore true"
 ```
 
-Automation commands such as `github-release-plan` and `gitlab-release-plan` can pass
-`--write-plan-files false` to avoid committing the generated `release-plan.json` and
-`release-plan.md` files. In that mode, the PR/MR body is generated as a transient file
-and later tag/release jobs should use `--fresh true`.
+Automation commands such as `github-release-plan` and `gitlab-release-plan` avoid
+committing the generated `release-plan.json` and `release-plan.md` files by default.
+The PR/MR body is generated as a transient file, and later tag/release jobs should use
+`--fresh true`. Pass `--write-plan-files true` only for compatibility with older
+manifest-based automation.
 
 ### 5.6 `manifest-field`
 

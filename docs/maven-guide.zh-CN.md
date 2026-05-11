@@ -111,7 +111,7 @@ env 审阅相关 goal 使用 Maven 风格属性名对应常用 CLI 选项：`-Dj
 
 `javachanges:init-gradle-tasks` 会为 Gradle 仓库写入 `gradle/javachanges.gradle`。用 `-Djavachanges.apply=true` 可以把该脚本追加到根 `build.gradle` 或 `build.gradle.kts`；`javachanges:setup -Djavachanges.applyGradleTasks=true` 会在首次设置中完成同样的接入。
 
-GitHub 发布自动化 goal 会直接映射到对应 CLI 命令。只有在 CI 中或确认要调用 `gh` 时才添加 `-Djavachanges.execute=true`；不传时，release-plan、tag 和 release goal 都保持 dry run。release-plan pull request 不需要提交 `.changesets/release-plan.*` 文件时，可以传 `-Djavachanges.writePlanFiles=false`。
+GitHub 发布自动化 goal 会直接映射到对应 CLI 命令。只有在 CI 中或确认要调用 `gh` 时才添加 `-Djavachanges.execute=true`；不传时，release-plan、tag 和 release goal 都保持 dry run。release-plan pull request 默认不会提交 `.changesets/release-plan.*` 文件；只有兼容旧的 manifest 自动化时才需要传 `-Djavachanges.writePlanFiles=true`。
 
 GitLab 发布自动化 goal 也保持相同的 dry run 默认值。只有命令需要调用 GitLab API 或推送 tag 时才添加 `-Djavachanges.execute=true`。`gitlab-tag-from-plan` 还支持 `-Djavachanges.fallbackFromReleaseCommit=true`，用于默认分支从已合并的 `chore(release): release vX.Y.Z` commit 恢复 tag。
 

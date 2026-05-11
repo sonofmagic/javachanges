@@ -20,15 +20,16 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo
 | `.changesets/release-plan.json` | Machine-readable release manifest |
 | `.changesets/release-plan.md` | Human-readable release PR body |
 
-These files are compatibility artifacts. New CI/CD automation should prefer
-`--fresh true` and `--write-plan-files false` so the release branch does not
-carry stale generated metadata.
+These files are compatibility artifacts. CI/CD release-plan automation skips
+them by default and should use `--fresh true` in later tag/release jobs so the
+release branch does not carry stale generated metadata.
 
 ## 2. Generation Timing
 
 These files are generated when `plan --apply true` succeeds. Platform automation
-can opt out with `github-release-plan --write-plan-files false` or
-`gitlab-release-plan --write-plan-files false`.
+commands such as `github-release-plan` and `gitlab-release-plan` do not commit
+them by default. Pass `--write-plan-files true` only when compatibility
+automation still needs committed manifest files.
 
 That means:
 
