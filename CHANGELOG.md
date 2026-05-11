@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.12.1 - 2026-05-11
+
+### Patch Changes
+
+- Make GitHub and GitLab release-plan automation skip committed release-plan manifest files by default. (packages: javachanges)
+
 ## 1.12.0 - 2026-05-02
 
 ### Minor Changes
