@@ -43,6 +43,42 @@ class GradleModelSupportTest {
     }
 
     @Test
+    void readsAndWritesAndroidVersionNameFromGradleProperties(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot);
+        Files.write(repoRoot.resolve("settings.gradle"), "rootProject.name = 'fixture-app'\n".getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve("gradle.properties"), (
+            "GROUP=com.example\n" +
+                "VERSION_NAME=3.0.0-SNAPSHOT\n"
+        ).getBytes(StandardCharsets.UTF_8));
+
+        assertEquals("3.0.0-SNAPSHOT", BuildModelSupport.readRevision(repoRoot));
+
+        BuildModelSupport.writeRevision(repoRoot, "3.0.1-SNAPSHOT");
+
+        assertEquals("3.0.1-SNAPSHOT", BuildModelSupport.readRevision(repoRoot));
+    }
+
+    @Test
+    void prefersGradleModelWhenPomAndAndroidGradleMetadataCoexist(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot);
+        Files.write(repoRoot.resolve("pom.xml"), (
+            "<project><modelVersion>4.0.0</modelVersion><groupId>example</groupId>" +
+                "<artifactId>fixture-pom</artifactId><version>${revision}</version>" +
+                "<properties><revision>1.0.0-SNAPSHOT</revision></properties></project>\n"
+        ).getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve("settings.gradle"), (
+            "rootProject.name = 'fixture-app'\n" +
+                "include ':android-sdk'\n"
+        ).getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve("gradle.properties"), "VERSION_NAME=3.0.0-SNAPSHOT\n".getBytes(StandardCharsets.UTF_8));
+
+        assertEquals("3.0.0-SNAPSHOT", BuildModelSupport.readRevision(repoRoot));
+        assertEquals(Arrays.asList("android-sdk"), ReleaseModuleUtils.detectKnownModules(repoRoot));
+    }
+
+    @Test
     void detectsGradleModulesFromSettings(@TempDir Path tempDir) throws Exception {
         Path repoRoot = tempDir.resolve("repo");
         Files.createDirectories(repoRoot);

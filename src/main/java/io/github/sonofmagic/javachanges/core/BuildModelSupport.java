@@ -18,6 +18,11 @@ public final class BuildModelSupport {
     }
 
     static BuildModel detect(Path repoRoot) {
+        BuildModel gradleModel = detectGradle(repoRoot);
+        if (gradleModel != null) {
+            return gradleModel;
+        }
+
         Path pomPath = repoRoot.resolve("pom.xml");
         if (Files.exists(pomPath)) {
             try {
@@ -25,10 +30,14 @@ public final class BuildModelSupport {
                     return BuildModel.maven(pomPath);
                 }
             } catch (RuntimeException ignored) {
-                // Keep probing for Gradle before reporting no supported build model.
+                // Keep reporting no supported build model.
             }
         }
 
+        return null;
+    }
+
+    private static BuildModel detectGradle(Path repoRoot) {
         Path gradlePropertiesPath = repoRoot.resolve("gradle.properties");
         if (Files.exists(gradlePropertiesPath)
             && (GradleModelSupport.settingsFile(repoRoot) != null || GradleModelSupport.buildFile(repoRoot) != null)) {

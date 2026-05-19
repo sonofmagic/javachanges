@@ -154,7 +154,14 @@ final class PublishCommand extends AbstractCliCommand {
         );
         PublishRequest request = PublishRequest.fromOptions(options, true);
         return runAutomationCommand("publish", request.format,
-            () -> publishSupport().publish(request));
+            () -> {
+                BuildModelSupport.BuildModel model = BuildModelSupport.detect(repoRoot());
+                if (model != null && model.type == BuildModelSupport.BuildType.GRADLE) {
+                    gradlePublishSupport().publish(request);
+                    return;
+                }
+                publishSupport().publish(request);
+            });
     }
 }
 

@@ -8,6 +8,7 @@ import io.github.sonofmagic.javachanges.core.ReleaseProcessUtils;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
 import io.github.sonofmagic.javachanges.core.VersionSupport;
 import io.github.sonofmagic.javachanges.core.automation.AutomationJsonSupport;
+import io.github.sonofmagic.javachanges.gradle.GradleModelSupport;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -106,8 +107,16 @@ public final class GradlePublishSupport {
             }
             command.add(":" + publishTarget.resolvedModule + ":" + resolvedTask);
         }
-        command.add("-Pversion=" + publishTarget.publishVersion);
+        command.add("-P" + publishVersionPropertyName() + "=" + publishTarget.publishVersion);
         return command;
+    }
+
+    private String publishVersionPropertyName() {
+        try {
+            return GradleModelSupport.readVersionPropertyName(repoRoot.resolve("gradle.properties"));
+        } catch (IOException exception) {
+            return "version";
+        }
     }
 
     private static String normalizeTask(String task) {

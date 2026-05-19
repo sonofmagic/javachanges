@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
 public final class GradleModelSupport {
     private static final String VERSION_KEY = "version";
     private static final String REVISION_KEY = "revision";
+    private static final String VERSION_NAME_KEY = "VERSION_NAME";
     private static final Pattern PROPERTY_LINE = Pattern.compile("^(\\s*)([^#!:=\\s]+)(\\s*[:=]\\s*|\\s+)(.*)$");
     private static final Pattern ROOT_PROJECT_NAME = Pattern.compile(
         "(?m)^\\s*rootProject\\.name\\s*=\\s*['\"]([^'\"]+)['\"]"
@@ -63,6 +64,14 @@ public final class GradleModelSupport {
             throw new IllegalStateException(ReleaseMessages.cannotFindGradleVersion(gradlePropertiesPath));
         }
         return property.value;
+    }
+
+    public static String readVersionPropertyName(Path gradlePropertiesPath) throws IOException {
+        VersionProperty property = findVersionProperty(gradlePropertiesPath);
+        if (property == null) {
+            throw new IllegalStateException(ReleaseMessages.cannotFindGradleVersion(gradlePropertiesPath));
+        }
+        return property.key;
     }
 
     public static void writeRevision(Path gradlePropertiesPath, String revision) throws IOException {
@@ -113,8 +122,10 @@ public final class GradleModelSupport {
         List<String> lines = Files.readAllLines(gradlePropertiesPath, StandardCharsets.UTF_8);
         int versionLine = -1;
         int revisionLine = -1;
+        int versionNameLine = -1;
         String versionValue = null;
         String revisionValue = null;
+        String versionNameValue = null;
         for (int index = 0; index < lines.size(); index++) {
             Matcher matcher = PROPERTY_LINE.matcher(lines.get(index));
             if (!matcher.matches()) {
@@ -127,13 +138,19 @@ public final class GradleModelSupport {
             } else if (REVISION_KEY.equals(key)) {
                 revisionLine = index;
                 revisionValue = ReleaseTextUtils.trimToNull(matcher.group(4));
+            } else if (VERSION_NAME_KEY.equals(key)) {
+                versionNameLine = index;
+                versionNameValue = ReleaseTextUtils.trimToNull(matcher.group(4));
             }
         }
         if (versionLine >= 0 && versionValue != null) {
-            return new VersionProperty(versionValue);
+            return new VersionProperty(VERSION_KEY, versionValue);
         }
         if (revisionLine >= 0 && revisionValue != null) {
-            return new VersionProperty(revisionValue);
+            return new VersionProperty(REVISION_KEY, revisionValue);
+        }
+        if (versionNameLine >= 0 && versionNameValue != null) {
+            return new VersionProperty(VERSION_NAME_KEY, versionNameValue);
         }
         return null;
     }
@@ -151,6 +168,9 @@ public final class GradleModelSupport {
                 return index;
             }
             if (REVISION_KEY.equals(key) && value != null) {
+                revisionLine = index;
+            }
+            if (VERSION_NAME_KEY.equals(key) && value != null) {
                 revisionLine = index;
             }
         }
@@ -310,9 +330,11 @@ public final class GradleModelSupport {
     }
 
     private static final class VersionProperty {
+        final String key;
         final String value;
 
-        private VersionProperty(String value) {
+        private VersionProperty(String key, String value) {
+            this.key = key;
             this.value = value;
         }
     }

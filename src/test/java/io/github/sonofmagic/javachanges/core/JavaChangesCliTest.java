@@ -1431,6 +1431,46 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void publishDryRunAutoRoutesGradleRepositoryToGradlePublish(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createGradleRepository(tempDir, false);
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.gradleWrapperPath()),
+            "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = execute(
+            "publish",
+            "--directory", repoRoot.toString(),
+            "--snapshot", "true",
+            "--snapshot-build-stamp", "20260428.000000.test",
+            "--allow-dirty", "true"
+        );
+
+        assertEquals(0, result.exitCode, result.stderr);
+        assertTrue(result.stdout.contains("Gradle task: publish"));
+        assertTrue(result.stdout.contains(ReleaseProcessUtils.gradleWrapperPath()
+            + " --no-daemon publish -Pversion=1.1.1-20260428.000000.test-SNAPSHOT"));
+    }
+
+    @Test
+    void gradlePublishUsesAndroidVersionNameProperty(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createGradleRepository(tempDir, false);
+        Files.write(repoRoot.resolve("gradle.properties"), "VERSION_NAME=2.0.0-SNAPSHOT\n".getBytes(StandardCharsets.UTF_8));
+        Files.write(repoRoot.resolve(ReleaseProcessUtils.gradleWrapperPath()),
+            "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+
+        ExecutionResult result = execute(
+            "gradle-publish",
+            "--directory", repoRoot.toString(),
+            "--snapshot", "true",
+            "--snapshot-build-stamp", "20260428.000000.test",
+            "--allow-dirty", "true"
+        );
+
+        assertEquals(0, result.exitCode, result.stderr);
+        assertTrue(result.stdout.contains(ReleaseProcessUtils.gradleWrapperPath()
+            + " --no-daemon publish -PVERSION_NAME=2.0.0-20260428.000000.test-SNAPSHOT"));
+    }
+
+    @Test
     void githubTagFromPlanDryRunPrintsPlannedTag(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createRepository(tempDir, true);
         Path remoteRepo = tempDir.resolve("remote.git");
