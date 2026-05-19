@@ -82,18 +82,18 @@ On the current `main` branch, after installing the snapshot locally, you can als
 
 ```bash
 ./mvnw -q -DskipTests install
-mvn io.github.sonofmagic:javachanges:1.12.1-SNAPSHOT:setup
-mvn io.github.sonofmagic:javachanges:1.12.1-SNAPSHOT:init -Djavachanges.config=true
-mvn io.github.sonofmagic:javachanges:1.12.1-SNAPSHOT:next
-mvn io.github.sonofmagic:javachanges:1.12.1-SNAPSHOT:modules
-mvn io.github.sonofmagic:javachanges:1.12.1-SNAPSHOT:status
-mvn io.github.sonofmagic:javachanges:1.12.1-SNAPSHOT:validate
-mvn io.github.sonofmagic:javachanges:1.12.1-SNAPSHOT:plan -Djavachanges.apply=true
-mvn io.github.sonofmagic:javachanges:1.12.1-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
-mvn io.github.sonofmagic:javachanges:1.12.1-SNAPSHOT:write-settings -Djavachanges.settingsMode=release
-mvn io.github.sonofmagic:javachanges:1.12.1-SNAPSHOT:doctor-publish
-mvn io.github.sonofmagic:javachanges:1.12.1-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
-mvn io.github.sonofmagic:javachanges:1.12.1-SNAPSHOT:release-notes -Djavachanges.tag=v1.2.3 -Djavachanges.output=target/release-notes.md
+mvn io.github.sonofmagic:javachanges:1.12.2-SNAPSHOT:setup
+mvn io.github.sonofmagic:javachanges:1.12.2-SNAPSHOT:init -Djavachanges.config=true
+mvn io.github.sonofmagic:javachanges:1.12.2-SNAPSHOT:next
+mvn io.github.sonofmagic:javachanges:1.12.2-SNAPSHOT:modules
+mvn io.github.sonofmagic:javachanges:1.12.2-SNAPSHOT:status
+mvn io.github.sonofmagic:javachanges:1.12.2-SNAPSHOT:validate
+mvn io.github.sonofmagic:javachanges:1.12.2-SNAPSHOT:plan -Djavachanges.apply=true
+mvn io.github.sonofmagic:javachanges:1.12.2-SNAPSHOT:add -Djavachanges.summary="add release notes command" -Djavachanges.release=minor
+mvn io.github.sonofmagic:javachanges:1.12.2-SNAPSHOT:write-settings -Djavachanges.settingsMode=release
+mvn io.github.sonofmagic:javachanges:1.12.2-SNAPSHOT:doctor-publish
+mvn io.github.sonofmagic:javachanges:1.12.2-SNAPSHOT:manifest-field -Djavachanges.field=releaseVersion
+mvn io.github.sonofmagic:javachanges:1.12.2-SNAPSHOT:release-notes -Djavachanges.tag=v1.2.3 -Djavachanges.output=target/release-notes.md
 ```
 
 Repository-local shortcuts for working on `javachanges` itself:
@@ -119,7 +119,7 @@ These map to the same phases used elsewhere in the docs:
 - `ci:local:release` validates release PR/MR planning, publish readiness, and snapshot publish preflight in dry-run mode only
 - `./mvnw -B test` runs the default test suite with build prerequisite checks
 - `./mvnw -B -Pcoverage -Dmaven.repo.local=.m2/repository test` also generates a JaCoCo HTML report under `target/site/jacoco/`
-- `snapshot:install` installs the current `1.12.1-SNAPSHOT` into local Maven
+- `snapshot:install` installs the current `1.12.2-SNAPSHOT` into local Maven
 - `snapshot:preflight` previews a local snapshot publish with `local.dev.001`
 - `snapshot:publish:local` publishes a unique snapshot through `central-publishing-maven-plugin`
 - `docs:deploy:local` rebuilds `website/dist` and serves it through Wrangler locally
