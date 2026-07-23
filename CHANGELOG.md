@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.12.3 - 2026-07-23
+
+### Patch Changes
+
+- Support literal root versions across the complete release and publish workflow for single-module Maven repositories. (packages: javachanges)
+
 ## 1.12.2 - 2026-05-19
 
 ### Patch Changes
