@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.13.0 - 2026-07-23
+
+### Minor Changes
+
+- Derive snapshot publish versions from pending changesets when a repository is still on a release-qualified version, and support configurable release artifact suffixes such as `-RELEASE`. (packages: javachanges)
+
 ## 1.12.3 - 2026-07-23
 
 ### Patch Changes
