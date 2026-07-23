@@ -456,6 +456,30 @@ public final class ReleaseMessages {
         return message("build.cannotFindPomRevision", pomPath);
     }
 
+    public static String cannotFindPomProjectVersion(Path pomPath) {
+        return message("build.cannotFindPomProjectVersion", pomPath);
+    }
+
+    public static String unsupportedPomVersionExpression(Path pomPath, String version) {
+        return message("build.unsupportedPomVersionExpression", pomPath, version);
+    }
+
+    public static String literalPomVersionRequiresSingleModule(Path pomPath) {
+        return message("build.literalPomVersionRequiresSingleModule", pomPath);
+    }
+
+    public static String mavenPublishPomRequiresLiteralVersion(Path pomPath) {
+        return message("build.mavenPublishPomRequiresLiteralVersion", pomPath);
+    }
+
+    public static String temporaryMavenPublishPomExists(Path path) {
+        return message("build.temporaryMavenPublishPomExists", path);
+    }
+
+    public static String temporaryMavenPublishPom(Path path) {
+        return message("build.temporaryMavenPublishPom", path);
+    }
+
     public static String failedToConfigureXmlParser(Path path) {
         return message("build.failedToConfigureXmlParser", path);
     }

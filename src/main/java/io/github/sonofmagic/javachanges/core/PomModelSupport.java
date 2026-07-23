@@ -32,31 +32,27 @@ public final class PomModelSupport {
 
     public static String readRevision(Path pomPath) throws IOException {
         Document document = parse(pomPath);
-        Element project = document.getDocumentElement();
-        Element properties = directChild(project, "properties");
-        if (properties == null) {
-            throw new IllegalStateException(ReleaseMessages.cannotFindPomProperties(pomPath));
-        }
-        String revision = directChildText(properties, "revision");
-        if (revision == null) {
-            throw new IllegalStateException(ReleaseMessages.cannotFindPomRevision(pomPath));
-        }
-        return revision;
+        return resolveVersion(document, pomPath).value;
     }
 
     public static void writeRevision(Path pomPath, String revision) throws IOException {
         Document document = parse(pomPath);
-        Element project = document.getDocumentElement();
-        Element properties = directChild(project, "properties");
-        if (properties == null) {
-            throw new IllegalStateException(ReleaseMessages.cannotFindPomProperties(pomPath));
-        }
-        Element revisionElement = directChild(properties, "revision");
-        if (revisionElement == null) {
-            throw new IllegalStateException(ReleaseMessages.cannotFindPomRevision(pomPath));
-        }
-        revisionElement.setTextContent(revision);
+        resolveVersion(document, pomPath).element.setTextContent(revision);
         write(pomPath, document);
+    }
+
+    public static VersionSource versionSource(Path pomPath) throws IOException {
+        return resolveVersion(parse(pomPath), pomPath).source;
+    }
+
+    public static void writeVersionCopy(Path pomPath, Path outputPath, String version) throws IOException {
+        Document document = parse(pomPath);
+        VersionElement resolved = resolveVersion(document, pomPath);
+        if (resolved.source != VersionSource.PROJECT_VERSION) {
+            throw new IllegalStateException(ReleaseMessages.mavenPublishPomRequiresLiteralVersion(pomPath));
+        }
+        resolved.element.setTextContent(version);
+        write(outputPath, document);
     }
 
     static String readArtifactId(Path pomPath) throws IOException {
@@ -109,6 +105,40 @@ public final class PomModelSupport {
         }
     }
 
+    private static VersionElement resolveVersion(Document document, Path pomPath) {
+        Element project = document.getDocumentElement();
+        Element versionElement = directChild(project, "version");
+        if (versionElement == null) {
+            throw new IllegalStateException(ReleaseMessages.cannotFindPomProjectVersion(pomPath));
+        }
+        String version = ReleaseTextUtils.trimToNull(versionElement.getTextContent());
+        if (version == null) {
+            throw new IllegalStateException(ReleaseMessages.cannotFindPomProjectVersion(pomPath));
+        }
+        if ("${revision}".equals(version)) {
+            Element properties = directChild(project, "properties");
+            if (properties == null) {
+                throw new IllegalStateException(ReleaseMessages.cannotFindPomProperties(pomPath));
+            }
+            Element revisionElement = directChild(properties, "revision");
+            String revision = revisionElement == null
+                ? null
+                : ReleaseTextUtils.trimToNull(revisionElement.getTextContent());
+            if (revision == null) {
+                throw new IllegalStateException(ReleaseMessages.cannotFindPomRevision(pomPath));
+            }
+            return new VersionElement(revision, VersionSource.REVISION_PROPERTY, revisionElement);
+        }
+        if (version.contains("${")) {
+            throw new IllegalStateException(ReleaseMessages.unsupportedPomVersionExpression(pomPath, version));
+        }
+        Element modules = directChild(project, "modules");
+        if (modules != null && !directChildren(modules, "module").isEmpty()) {
+            throw new IllegalStateException(ReleaseMessages.literalPomVersionRequiresSingleModule(pomPath));
+        }
+        return new VersionElement(version, VersionSource.PROJECT_VERSION, versionElement);
+    }
+
     private static DocumentBuilder newDocumentBuilder() throws ParserConfigurationException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(true);
@@ -152,19 +182,28 @@ public final class PomModelSupport {
         return result;
     }
 
-    private static String directChildText(Element parent, String name) {
-        Element child = directChild(parent, name);
-        if (child == null) {
-            return null;
-        }
-        return ReleaseTextUtils.trimToNull(child.getTextContent());
-    }
-
     private static boolean matches(Element element, String name) {
         String localName = element.getLocalName();
         if (name.equals(localName)) {
             return true;
         }
         return name.equals(element.getNodeName());
+    }
+
+    public enum VersionSource {
+        REVISION_PROPERTY,
+        PROJECT_VERSION
+    }
+
+    private static final class VersionElement {
+        private final String value;
+        private final VersionSource source;
+        private final Element element;
+
+        private VersionElement(String value, VersionSource source, Element element) {
+            this.value = value;
+            this.source = source;
+            this.element = element;
+        }
     }
 }

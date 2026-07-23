@@ -12,7 +12,7 @@ description: Use javachanges with Maven single-module repositories and Maven mul
 The Maven path supports:
 
 - repository root detection from the root `pom.xml`
-- current version reading from the root `<revision>` property
+- current version reading from a single-module root `<version>` or multi-module `<revision>` property
 - version updates during `plan --apply true`
 - package detection from Maven `<modules>` entries
 - single-module repositories using the root `artifactId`
@@ -20,9 +20,20 @@ The Maven path supports:
 
 For day-to-day Maven repository usage, prefer the Maven plugin because it keeps commands short and defaults `--directory` to the current Maven project's `${project.basedir}`.
 
-## 2. Required Maven shape
+## 2. Supported Maven shapes
 
-A Maven repository should keep the root version in a `revision` property:
+A single-module Maven repository can use its normal literal project version:
+
+```xml
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>payments</artifactId>
+  <version>1.4.0-SNAPSHOT</version>
+</project>
+```
+
+For a multi-module repository, keep the shared root version in the Maven CI-friendly `revision` property:
 
 ```xml
 <project>
@@ -202,7 +213,7 @@ mvn javachanges:plan -Djavachanges.apply=true
 
 After apply:
 
-- `pom.xml` advances the `revision` property to the next snapshot version
+- `pom.xml` advances the literal project version or `revision` property to the next snapshot version
 - `CHANGELOG.md` gets a new release section
 - `.changesets/release-plan.json` is written
 - `.changesets/release-plan.md` is written
@@ -329,14 +340,15 @@ When publish inputs are ready, execute the publish helper:
 mvn javachanges:publish -Djavachanges.tag=v1.2.3 -Djavachanges.execute=true
 ```
 
-The helper renders Maven deploy commands and can write Maven `settings.xml` from environment variables. For full Central release setup, see [Publish To Maven Central](./publish-to-maven-central.md).
+The helper renders Maven deploy commands and can write Maven `settings.xml` from environment variables. When a literal single-module version must change for a release or stamped snapshot, `javachanges` deploys through a temporary POM beside the original and removes it afterward; the repository `pom.xml` is never rewritten by publish. For full Central release setup, see [Publish To Maven Central](./publish-to-maven-central.md).
 
 ## 9. Common mistakes
 
 | Symptom | Cause | Fix |
 | --- | --- | --- |
 | `Cannot find repository root` | no root `pom.xml` can be found | run from inside the Maven repository or pass `--directory` |
-| `Cannot find version or revision` | root `pom.xml` does not define `<revision>` | add `<revision>1.0.0-SNAPSHOT</revision>` under root `<properties>` |
+| `Cannot find version or revision` | root `pom.xml` has no direct project version or a `${revision}` without its property | declare a literal `<version>1.0.0-SNAPSHOT</version>` for a single module, or configure `${revision}` for a multi-module build |
+| literal version is rejected for a multi-module build | changing only the root version would desynchronize child parent and dependency versions | use `<version>${revision}</version>` and define the root `<revision>` property |
 | `Unknown module` | changeset key does not match a detected module `artifactId` | use the module `artifactId`, not the folder name unless they match |
 | version updates the wrong file | command was pointed at the wrong repository root | check the plugin basedir or pass an explicit `--directory` with the CLI |
 

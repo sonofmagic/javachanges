@@ -3,6 +3,7 @@ package io.github.sonofmagic.javachanges.core;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import io.github.sonofmagic.javachanges.core.publish.PublishPlanSupport;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -651,6 +652,51 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void literalSingleModuleVersionSupportsReadOnlyWorkflow(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createLiteralRepository(tempDir, true);
+        writeChangeset(repoRoot,
+            "patch-release.md",
+            "---\n" +
+                "\"fixture-app\": patch\n" +
+                "---\n" +
+                "\n" +
+                "support literal Maven versions\n");
+
+        ExecutionResult version = execute("version", "--directory", repoRoot.toString());
+        ExecutionResult status = execute("status", "--directory", repoRoot.toString());
+        ExecutionResult next = execute("next", "--directory", repoRoot.toString());
+        ExecutionResult validate = execute("validate", "--directory", repoRoot.toString());
+
+        assertEquals(0, version.exitCode);
+        assertEquals("1.1.1-SNAPSHOT\n", version.stdout);
+        assertEquals(0, status.exitCode);
+        assertTrue(status.stdout.contains("Current revision: 1.1.1-SNAPSHOT"));
+        assertEquals(0, next.exitCode);
+        assertTrue(next.stdout.contains("Planned release: v1.1.2"));
+        assertEquals(0, validate.exitCode);
+        assertTrue(validate.stdout.contains("Validation passed for " + repoRoot));
+    }
+
+    @Test
+    void planApplyUpdatesLiteralSingleModuleVersion(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createLiteralRepository(tempDir, true);
+        writeChangeset(repoRoot,
+            "minor-release.md",
+            "---\n" +
+                "\"fixture-app\": minor\n" +
+                "---\n" +
+                "\n" +
+                "advance a literal Maven version\n");
+
+        ExecutionResult result = execute("plan", "--directory", repoRoot.toString(), "--apply", "true");
+
+        assertEquals(0, result.exitCode);
+        String pom = read(repoRoot.resolve("pom.xml"));
+        assertTrue(pom.contains("<version>1.2.0-SNAPSHOT</version>"));
+        assertFalse(pom.contains("<revision>"));
+    }
+
+    @Test
     void modulesListsMavenBuildModel(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createMonorepo(tempDir, false);
 
@@ -1266,6 +1312,35 @@ class JavaChangesCliTest {
         assertTrue(result.stdout.contains("-s .m2/settings.xml"));
         assertFalse(Files.exists(repoRoot.resolve(".m2/settings.xml")));
         assertFalse(Files.exists(repoRoot.resolve(".m2/repository")));
+    }
+
+    @Test
+    void failedLiteralVersionPublishRemovesTemporaryPom(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createLiteralRepository(tempDir, false);
+        Path pomPath = repoRoot.resolve("pom.xml");
+        String originalPom = read(pomPath);
+        Path wrapper = repoRoot.resolve(ReleaseProcessUtils.mavenWrapperPath());
+        Files.write(wrapper, "#!/bin/sh\nexit 9\n".getBytes(StandardCharsets.UTF_8));
+        assertTrue(wrapper.toFile().setExecutable(true));
+
+        Map<String, String> environment = new LinkedHashMap<String, String>();
+        environment.put("MAVEN_SNAPSHOT_REPOSITORY_URL", "https://repo.example.com/snapshots");
+        environment.put("MAVEN_SNAPSHOT_REPOSITORY_USERNAME", "tester");
+        environment.put("MAVEN_SNAPSHOT_REPOSITORY_PASSWORD", "secret");
+
+        ExecutionResult result = executeProcess(environment,
+            "publish",
+            "--directory", repoRoot.toString(),
+            "--snapshot", "true",
+            "--snapshot-build-stamp", "20260428.000000.test",
+            "--allow-dirty", "true",
+            "--execute", "true"
+        );
+
+        assertNotEquals(0, result.exitCode);
+        assertTrue(result.stderr.contains("Maven deploy failed with exit code 9"));
+        assertFalse(Files.exists(repoRoot.resolve(PublishPlanSupport.TEMPORARY_PUBLISH_POM)));
+        assertEquals(originalPom, read(pomPath));
     }
 
     @Test
@@ -2536,6 +2611,16 @@ class JavaChangesCliTest {
         return repoRoot;
     }
 
+    private static Path createLiteralRepository(Path tempDir, boolean git) throws Exception {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot);
+        Files.write(repoRoot.resolve("pom.xml"), literalSingleModulePom().getBytes(StandardCharsets.UTF_8));
+        if (git) {
+            run(repoRoot, "git", "init", "-q");
+        }
+        return repoRoot;
+    }
+
     private static Path createMonorepo(Path tempDir, boolean git) throws Exception {
         Path repoRoot = tempDir.resolve("repo");
         Files.createDirectories(repoRoot.resolve("core"));
@@ -2581,6 +2666,16 @@ class JavaChangesCliTest {
             + "    <properties>\n"
             + "        <revision>1.1.1-SNAPSHOT</revision>\n"
             + "    </properties>\n"
+            + "</project>\n";
+    }
+
+    private static String literalSingleModulePom() {
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            + "<project xmlns=\"http://maven.apache.org/POM/4.0.0\">\n"
+            + "    <modelVersion>4.0.0</modelVersion>\n"
+            + "    <groupId>example</groupId>\n"
+            + "    <artifactId>fixture-app</artifactId>\n"
+            + "    <version>1.1.1-SNAPSHOT</version>\n"
             + "</project>\n";
     }
 

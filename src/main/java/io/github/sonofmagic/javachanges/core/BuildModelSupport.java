@@ -74,6 +74,22 @@ public final class BuildModelSupport {
         GradleModelSupport.writeRevision(model.versionFile, revision);
     }
 
+    public static PomModelSupport.VersionSource mavenVersionSource(Path repoRoot) throws IOException {
+        BuildModel model = require(repoRoot);
+        if (model.type != BuildType.MAVEN) {
+            return null;
+        }
+        return PomModelSupport.versionSource(model.versionFile);
+    }
+
+    public static void writeMavenVersionCopy(Path repoRoot, Path outputPath, String version) throws IOException {
+        BuildModel model = require(repoRoot);
+        if (model.type != BuildType.MAVEN) {
+            throw new IllegalStateException(ReleaseMessages.cannotFindSupportedBuildModel(repoRoot));
+        }
+        PomModelSupport.writeVersionCopy(model.versionFile, outputPath, version);
+    }
+
     public static List<String> detectKnownModules(Path repoRoot) {
         BuildModel model = detect(repoRoot);
         if (model == null) {

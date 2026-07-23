@@ -22,7 +22,7 @@ The current codebase focuses on:
 
 - adding and validating changesets
 - generating release plans
-- updating the root Maven `revision` or Gradle `gradle.properties` version
+- updating the root Maven project version or Gradle `gradle.properties` version
 - generating changelog and release notes
 - preparing Maven settings from environment variables
 - release preflight and publish helpers
@@ -149,7 +149,7 @@ java -jar .javachanges/javachanges-<released-version>.jar plan --directory /path
 
 If you want to work on this repository itself from source, see [Development Guide](docs/development-guide.md).
 
-For Maven repositories, see [Maven Usage Guide](docs/maven-guide.md). The short version is: keep the root version in a `<revision>` property, use the Maven plugin for day-to-day commands, and use the released CLI jar when you cannot change the target `pom.xml`.
+For Maven repositories, see [Maven Usage Guide](docs/maven-guide.md). The short version is: single-module projects may use a literal root `<version>`, multi-module builds should use `${revision}`, and the Maven plugin is the shortest path for day-to-day commands.
 
 For Gradle repositories, see [Gradle Usage Guide](docs/gradle-guide.md). The short version is: keep `version=...-SNAPSHOT` in `gradle.properties`, define projects in `settings.gradle(.kts)`, and run the released CLI jar directly.
 

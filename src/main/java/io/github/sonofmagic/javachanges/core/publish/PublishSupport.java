@@ -71,60 +71,74 @@ public final class PublishSupport {
         }
 
         List<String> command = planSupport.buildDeployCommand(request, publishTarget, mavenCommand, localMavenRepo);
+        Path temporaryPublishPom = null;
 
-        if (request.format != io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
-            out.println();
-            out.println(ReleaseMessages.dryRunOutputHeading());
-            out.println(request.execute
-                ? ReleaseMessages.generatedMavenSettingsFile()
-                : ReleaseMessages.mavenSettingsWillBeWritten());
-            out.println(ReleaseMessages.mavenCommandLabel(mavenCommand.command, mavenCommand.source));
-            if (localMavenRepo != null) {
-                out.println(ReleaseMessages.localMavenRepository(localMavenRepo));
+        try {
+            if (request.execute) {
+                temporaryPublishPom = planSupport.prepareTemporaryPublishPom(publishTarget);
             }
-            if (publishTarget.publishVersion != null) {
-                out.println(request.snapshot
-                    ? ReleaseMessages.snapshotPublishVersion(publishTarget.publishVersion)
-                    : ReleaseMessages.publishVersion(publishTarget.publishVersion));
-            }
-            if (request.snapshot) {
-                out.println(ReleaseMessages.snapshotVersionMode(publishTarget.snapshotVersionMode.id));
-                out.println(ReleaseMessages.snapshotBuildStampApplied(publishTarget.snapshotBuildStampApplied));
-            }
-            if (releaseNotesAvailable) {
+            if (request.format != io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
+                out.println();
+                out.println(ReleaseMessages.dryRunOutputHeading());
                 out.println(request.execute
-                    ? ReleaseMessages.generatedReleaseNotesFile()
-                    : ReleaseMessages.releaseNotesWillBeWritten());
+                    ? ReleaseMessages.generatedMavenSettingsFile()
+                    : ReleaseMessages.mavenSettingsWillBeWritten());
+                out.println(ReleaseMessages.mavenCommandLabel(mavenCommand.command, mavenCommand.source));
+                if (localMavenRepo != null) {
+                    out.println(ReleaseMessages.localMavenRepository(localMavenRepo));
+                }
+                if (publishTarget.temporaryPomRequired) {
+                    out.println(ReleaseMessages.temporaryMavenPublishPom(
+                        java.nio.file.Paths.get(PublishPlanSupport.TEMPORARY_PUBLISH_POM)));
+                }
+                if (publishTarget.publishVersion != null) {
+                    out.println(request.snapshot
+                        ? ReleaseMessages.snapshotPublishVersion(publishTarget.publishVersion)
+                        : ReleaseMessages.publishVersion(publishTarget.publishVersion));
+                }
+                if (request.snapshot) {
+                    out.println(ReleaseMessages.snapshotVersionMode(publishTarget.snapshotVersionMode.id));
+                    out.println(ReleaseMessages.snapshotBuildStampApplied(publishTarget.snapshotBuildStampApplied));
+                }
+                if (releaseNotesAvailable) {
+                    out.println(request.execute
+                        ? ReleaseMessages.generatedReleaseNotesFile()
+                        : ReleaseMessages.releaseNotesWillBeWritten());
+                }
+                out.println(ReleaseMessages.targetModule(publishTarget.resolvedModule));
+                out.println();
+                out.println(ReleaseMessages.commandToRun());
+                out.println(ReleaseTextUtils.renderCommand(command));
             }
-            out.println(ReleaseMessages.targetModule(publishTarget.resolvedModule));
-            out.println();
-            out.println(ReleaseMessages.commandToRun());
-            out.println(ReleaseTextUtils.renderCommand(command));
-        }
 
-        if (!request.execute) {
-            report.reason = ReleaseMessages.dryRunOnlyReason();
+            if (!request.execute) {
+                report.reason = ReleaseMessages.dryRunOnlyReason();
+                if (request.format == io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
+                    out.println(report.toJson());
+                } else {
+                    out.println();
+                    out.println(ReleaseMessages.dryRunOnlyMavenPublish());
+                }
+                return;
+            }
+
+            if (request.format != io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
+                out.println();
+                out.println(ReleaseMessages.runningMavenHeading());
+            }
+            int exitCode = ReleaseProcessUtils.runCommand(command, repoRoot);
+            if (exitCode != 0) {
+                throw new IllegalStateException(ReleaseMessages.mavenDeployFailed(exitCode));
+            }
+            report.action = request.snapshot ? "publish-snapshot" : "publish-release";
+            report.reason = ReleaseMessages.publishCompletedReason();
             if (request.format == io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
                 out.println(report.toJson());
-            } else {
-                out.println();
-                out.println(ReleaseMessages.dryRunOnlyMavenPublish());
             }
-            return;
-        }
-
-        if (request.format != io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
-            out.println();
-            out.println(ReleaseMessages.runningMavenHeading());
-        }
-        int exitCode = ReleaseProcessUtils.runCommand(command, repoRoot);
-        if (exitCode != 0) {
-            throw new IllegalStateException(ReleaseMessages.mavenDeployFailed(exitCode));
-        }
-        report.action = request.snapshot ? "publish-snapshot" : "publish-release";
-        report.reason = ReleaseMessages.publishCompletedReason();
-        if (request.format == io.github.sonofmagic.javachanges.core.OutputFormat.JSON) {
-            out.println(report.toJson());
+        } finally {
+            if (temporaryPublishPom != null) {
+                Files.deleteIfExists(temporaryPublishPom);
+            }
         }
     }
 

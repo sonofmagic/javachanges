@@ -117,10 +117,85 @@ class PublishPlanSupportTest {
         assertFalse(report.snapshotBuildStampApplied);
     }
 
+    @Test
+    void literalPlainSnapshotUsesOriginalPomWithoutRevisionOverride(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createLiteralRepository(tempDir, "fixture-app", "1.2.3-SNAPSHOT");
+        PublishPlanSupport support = support(repoRoot);
+        Map<String, String> options = new LinkedHashMap<String, String>();
+        options.put("snapshot", "true");
+        options.put("snapshot-version-mode", "plain");
+        PublishRequest request = PublishRequest.fromOptions(options, true);
+
+        PublishPlanSupport.PublishTarget target = support.resolvePublishTarget(request);
+        List<String> command = support.buildDeployCommand(request, target,
+            new MavenCommand("mvn", "system"), null, "https://repo.example.com/snapshots");
+
+        assertEquals(PomModelSupport.VersionSource.PROJECT_VERSION, target.versionSource);
+        assertFalse(target.temporaryPomRequired);
+        assertFalse(command.contains("-Drevision=1.2.3-SNAPSHOT"));
+        assertFalse(command.contains("-f"));
+    }
+
+    @Test
+    void literalStampedSnapshotUsesTemporaryPomAndPreservesOriginal(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createLiteralRepository(tempDir, "fixture-app", "1.2.3-SNAPSHOT");
+        Path pomPath = repoRoot.resolve("pom.xml");
+        String original = new String(Files.readAllBytes(pomPath), StandardCharsets.UTF_8);
+        PublishPlanSupport support = support(repoRoot);
+        Map<String, String> options = new LinkedHashMap<String, String>();
+        options.put("snapshot", "true");
+        options.put("snapshot-build-stamp", "20260422.120000.abc123");
+        PublishRequest request = PublishRequest.fromOptions(options, true);
+
+        PublishPlanSupport.PublishTarget target = support.resolvePublishTarget(request);
+        List<String> command = support.buildDeployCommand(request, target,
+            new MavenCommand("mvn", "system"), null, "https://repo.example.com/snapshots");
+        Path temporaryPom = support.prepareTemporaryPublishPom(target);
+
+        assertTrue(target.temporaryPomRequired);
+        assertTrue(command.contains("-f"));
+        assertTrue(command.contains(PublishPlanSupport.TEMPORARY_PUBLISH_POM));
+        assertFalse(command.contains("-Drevision=1.2.3-20260422.120000.abc123-SNAPSHOT"));
+        assertEquals("1.2.3-20260422.120000.abc123-SNAPSHOT", PomModelSupport.readRevision(temporaryPom));
+        assertEquals(original, new String(Files.readAllBytes(pomPath), StandardCharsets.UTF_8));
+        Files.delete(temporaryPom);
+    }
+
+    @Test
+    void literalReleaseUsesTemporaryPom(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createLiteralRepository(tempDir, "fixture-app", "1.2.3-SNAPSHOT");
+        PublishPlanSupport support = support(repoRoot);
+        Map<String, String> options = new LinkedHashMap<String, String>();
+        options.put("tag", "v1.2.3");
+        PublishRequest request = PublishRequest.fromOptions(options, true);
+
+        PublishPlanSupport.PublishTarget target = support.resolvePublishTarget(request);
+        Path temporaryPom = support.prepareTemporaryPublishPom(target);
+
+        assertTrue(target.temporaryPomRequired);
+        assertEquals("1.2.3", PomModelSupport.readRevision(temporaryPom));
+        assertEquals("1.2.3-SNAPSHOT", PomModelSupport.readRevision(repoRoot.resolve("pom.xml")));
+        Files.delete(temporaryPom);
+    }
+
+    private static PublishPlanSupport support(Path repoRoot) {
+        return new PublishPlanSupport(repoRoot, new PublishRuntime(repoRoot), new VersionSupport(repoRoot));
+    }
+
     private static Path createRepository(Path tempDir, String artifactId, String revision) throws IOException {
         Path repoRoot = tempDir.resolve("repo");
         Files.createDirectories(repoRoot);
         Files.write(repoRoot.resolve("pom.xml"), pomXml(artifactId, revision).getBytes(StandardCharsets.UTF_8));
+        return repoRoot;
+    }
+
+    private static Path createLiteralRepository(Path tempDir, String artifactId, String version) throws IOException {
+        Path repoRoot = tempDir.resolve("repo");
+        Files.createDirectories(repoRoot);
+        String pom = pomXml(artifactId, version)
+            .replace("<version>${revision}</version>", "<version>" + version + "</version>")
+            .replace("    <properties>\n        <revision>" + version + "</revision>\n    </properties>\n", "");
+        Files.write(repoRoot.resolve("pom.xml"), pom.getBytes(StandardCharsets.UTF_8));
         return repoRoot;
     }
 

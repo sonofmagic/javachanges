@@ -23,6 +23,10 @@ public final class VersionSupport {
         }
     }
 
+    public PomModelSupport.VersionSource mavenVersionSource() throws IOException {
+        return BuildModelSupport.mavenVersionSource(repoRoot);
+    }
+
     public void assertSnapshot() throws IOException {
         String version = readRevision();
         if (!version.endsWith("-SNAPSHOT")) {

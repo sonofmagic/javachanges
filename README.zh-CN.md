@@ -141,7 +141,7 @@ java -jar .javachanges/javachanges-<released-version>.jar plan --directory /path
 
 如果你要开发这个仓库本身，请看 [Development Guide](docs/development-guide.md)。
 
-Maven 仓库请看 [Maven 使用指南](docs/maven-guide.zh-CN.md)。最短规则是：把根版本维护在 `<revision>` 属性中，日常命令优先使用 Maven plugin，不能修改目标 `pom.xml` 时再使用正式发布版 CLI jar。
+Maven 仓库请看 [Maven 使用指南](docs/maven-guide.zh-CN.md)。最短规则是：单模块项目可以直接使用根 `<version>` 字面量，多模块构建应使用 `${revision}`，日常命令优先使用 Maven plugin。
 
 Gradle 仓库请看 [Gradle 使用指南](docs/gradle-guide.zh-CN.md)。最短规则是：在 `gradle.properties` 中维护 `version=...-SNAPSHOT`，在 `settings.gradle(.kts)` 中声明 projects，并直接运行正式发布版 CLI jar。
 

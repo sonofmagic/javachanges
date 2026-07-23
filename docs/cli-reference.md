@@ -324,7 +324,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo
 
 When `--apply true` is used, `javachanges`:
 
-1. updates the root Maven `<revision>` or Gradle `gradle.properties` version
+1. updates the root Maven project version or Gradle `gradle.properties` version
 2. prepends a new section to `CHANGELOG.md`
 3. writes `.changesets/release-plan.json`
 4. writes `.changesets/release-plan.md`
@@ -570,7 +570,7 @@ Actually execute it:
 mvn -q -DskipTests compile exec:java -Dexec.args="publish --directory /path/to/repo --tag v1.2.3 --execute true"
 ```
 
-Snapshot publishing resolves the root `1.2.3-SNAPSHOT` into a unique publish revision such as `1.2.3-20260420.154500.abc1234-SNAPSHOT`, then injects it through `-Drevision=`. You can override the generated build stamp with `--snapshot-build-stamp` or the `JAVACHANGES_SNAPSHOT_BUILD_STAMP` environment variable.
+Snapshot publishing resolves the root `1.2.3-SNAPSHOT` into a unique publish revision such as `1.2.3-20260420.154500.abc1234-SNAPSHOT`. Maven `${revision}` projects receive it through `-Drevision=`; literal single-module projects use a temporary POM that is removed after publish. You can override the generated build stamp with `--snapshot-build-stamp` or the `JAVACHANGES_SNAPSHOT_BUILD_STAMP` environment variable.
 
 If you pass `--snapshot-version-mode plain`, `publish` keeps the effective Maven version at the original snapshot revision such as `1.2.3-SNAPSHOT` instead of rewriting it to a stamped value. `preflight` and `publish` both print the active snapshot mode so CI logs show whether the run is `plain` or `stamped`.
 

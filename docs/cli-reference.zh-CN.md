@@ -323,7 +323,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="plan --directory /path/to/repo
 
 加上 `--apply true` 之后，`javachanges` 会：
 
-1. 更新根 Maven `<revision>` 或 Gradle `gradle.properties` 版本
+1. 更新根 Maven 项目版本或 Gradle `gradle.properties` 版本
 2. 往 `CHANGELOG.md` 前面插入新的 release section
 3. 写入 `.changesets/release-plan.json`
 4. 写入 `.changesets/release-plan.md`
@@ -568,7 +568,7 @@ mvn -q -DskipTests compile exec:java -Dexec.args="publish --directory /path/to/r
 mvn -q -DskipTests compile exec:java -Dexec.args="publish --directory /path/to/repo --tag v1.2.3 --execute true"
 ```
 
-快照发布会把根 `1.2.3-SNAPSHOT` 解析成唯一的实际发布版本，例如 `1.2.3-20260420.154500.abc1234-SNAPSHOT`，再通过 `-Drevision=` 注入给 Maven。你也可以通过 `--snapshot-build-stamp` 或环境变量 `JAVACHANGES_SNAPSHOT_BUILD_STAMP` 显式指定构建标识。
+快照发布会把根 `1.2.3-SNAPSHOT` 解析成唯一的实际发布版本，例如 `1.2.3-20260420.154500.abc1234-SNAPSHOT`。使用 Maven `${revision}` 的项目通过 `-Drevision=` 注入，使用字面量版本的单模块项目则通过发布结束后自动删除的临时 POM 注入。你也可以通过 `--snapshot-build-stamp` 或环境变量 `JAVACHANGES_SNAPSHOT_BUILD_STAMP` 显式指定构建标识。
 
 如果传入 `--snapshot-version-mode plain`，`publish` 会保持 Maven 实际使用的版本仍然是原始 snapshot revision，例如 `1.2.3-SNAPSHOT`，而不是改写成带 stamp 的版本。`preflight` 和 `publish` 都会打印当前 snapshot mode，方便你在 CI 日志里直接确认这次发布走的是 `plain` 还是 `stamped`。
 

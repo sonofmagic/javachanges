@@ -12,7 +12,7 @@ description: 在 Maven 单模块仓库和多模块构建中使用 javachanges。
 Maven 路径支持：
 
 - 通过根 `pom.xml` 识别仓库根目录
-- 从根 `<revision>` 属性读取当前版本
+- 从单模块根 `<version>` 或多模块 `<revision>` 属性读取当前版本
 - 在 `plan --apply true` 时写回版本
 - 从 Maven `<modules>` 检测 package
 - 用根 `artifactId` 支持单模块仓库
@@ -20,9 +20,20 @@ Maven 路径支持：
 
 Maven 仓库的日常使用建议优先走 Maven plugin，因为命令更短，并且默认把 `--directory` 设成当前 Maven 项目的 `${project.basedir}`。
 
-## 2. Maven 仓库要求
+## 2. 支持的 Maven 仓库结构
 
-Maven 仓库应该把根版本放在 `revision` 属性里：
+单模块 Maven 仓库可以直接使用常规的项目版本字面量：
+
+```xml
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>payments</artifactId>
+  <version>1.4.0-SNAPSHOT</version>
+</project>
+```
+
+多模块仓库应通过 Maven CI-friendly `revision` 属性统一维护根版本：
 
 ```xml
 <project>
@@ -202,7 +213,7 @@ mvn javachanges:plan -Djavachanges.apply=true
 
 应用后：
 
-- `pom.xml` 中的 `revision` 属性推进到下一个 snapshot 版本
+- `pom.xml` 中的项目版本字面量或 `revision` 属性推进到下一个 snapshot 版本
 - `CHANGELOG.md` 新增 release section
 - 写入 `.changesets/release-plan.json`
 - 写入 `.changesets/release-plan.md`
@@ -329,14 +340,15 @@ mvn javachanges:preflight -Djavachanges.tag=v1.2.3
 mvn javachanges:publish -Djavachanges.tag=v1.2.3 -Djavachanges.execute=true
 ```
 
-这个 helper 会渲染 Maven deploy 命令，并可以从环境变量写出 Maven `settings.xml`。完整 Central 发布配置见 [发布到 Maven Central](./publish-to-maven-central.md)。
+这个 helper 会渲染 Maven deploy 命令，并可以从环境变量写出 Maven `settings.xml`。单模块字面量版本在正式发布或 stamped snapshot 需要切换目标版本时，`javachanges` 会使用原 POM 同目录下的临时 POM 完成 deploy，并在结束后删除；publish 不会改写仓库中的 `pom.xml`。完整 Central 发布配置见 [发布到 Maven Central](./publish-to-maven-central.md)。
 
 ## 9. 常见错误
 
 | 现象 | 原因 | 修复方式 |
 | --- | --- | --- |
 | `Cannot find repository root` | 找不到根 `pom.xml` | 在 Maven 仓库内执行，或显式传入 `--directory` |
-| `Cannot find version or revision` | 根 `pom.xml` 没有定义 `<revision>` | 在根 `<properties>` 下添加 `<revision>1.0.0-SNAPSHOT</revision>` |
+| `Cannot find version or revision` | 根 `pom.xml` 没有直接声明项目版本，或使用了 `${revision}` 却没有定义该属性 | 单模块声明 `<version>1.0.0-SNAPSHOT</version>`，多模块配置 `${revision}` |
+| 多模块构建拒绝字面量版本 | 只修改根版本会导致子模块 parent 和模块间依赖版本不同步 | 使用 `<version>${revision}</version>` 并在根 POM 定义 `<revision>` |
 | `Unknown module` | changeset key 不匹配检测到的 module `artifactId` | 使用 module 的 `artifactId`，不要在两者不一致时使用文件夹名 |
 | 版本写到了错误文件 | 命令指向了错误的仓库根目录 | 检查 plugin basedir，或用 CLI 显式传入 `--directory` |
 
