@@ -109,6 +109,7 @@ final class InitCommand extends AbstractCliCommand {
                 + "  \"releaseBranch\": \"changeset-release/main\",\n"
                 + "  \"snapshotBranch\": \"snapshot\",\n"
                 + "  \"snapshotVersionMode\": \"stamped\",\n"
+                + "  \"releaseVersionSuffix\": \"\",\n"
                 + "  \"tagStrategy\": \"whole-repo\"\n"
                 + "}\n";
         }
@@ -124,6 +125,9 @@ final class InitCommand extends AbstractCliCommand {
             + "\n"
             + "  // Snapshot version strategy: stamped or plain.\n"
             + "  \"snapshotVersionMode\": \"stamped\",\n"
+            + "\n"
+            + "  // Optional suffix for Maven release artifacts, for example -RELEASE.\n"
+            + "  \"releaseVersionSuffix\": \"\",\n"
             + "\n"
             + "  // Release tag strategy: whole-repo or per-module.\n"
             + "  \"tagStrategy\": \"whole-repo\"\n"

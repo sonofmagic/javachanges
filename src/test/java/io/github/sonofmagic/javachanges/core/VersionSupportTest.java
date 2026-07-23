@@ -80,6 +80,17 @@ class VersionSupportTest {
         assertEquals("3.2.1-SNAPSHOT", support.snapshotRevision());
     }
 
+    @Test
+    void releaseTagMatchesConfiguredReleaseQualifiedVersion(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createRepository(tempDir, "1.2.3-RELEASE");
+        Path changesetsDir = repoRoot.resolve(".changesets");
+        Files.createDirectories(changesetsDir);
+        Files.write(changesetsDir.resolve("config.jsonc"),
+            "{\n  \"releaseVersionSuffix\": \"-RELEASE\"\n}\n".getBytes(StandardCharsets.UTF_8));
+
+        new VersionSupport(repoRoot).assertReleaseTag("v1.2.3");
+    }
+
     private static Path createRepository(Path tempDir, String revision) throws Exception {
         Path repoRoot = tempDir.resolve("repo");
         Files.createDirectories(repoRoot);

@@ -678,6 +678,32 @@ class JavaChangesCliTest {
     }
 
     @Test
+    void statusDerivesNextReleaseFromReleaseQualifiedVersionAndPatch(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createLiteralRepository(tempDir, false);
+        Path pomPath = repoRoot.resolve("pom.xml");
+        Files.write(pomPath, read(pomPath).replace("1.1.1-SNAPSHOT", "1.2.2-RELEASE")
+            .getBytes(StandardCharsets.UTF_8));
+        Path changesetsDir = repoRoot.resolve(".changesets");
+        Files.createDirectories(changesetsDir);
+        Files.write(changesetsDir.resolve("config.jsonc"),
+            "{\n  \"releaseVersionSuffix\": \"-RELEASE\"\n}\n".getBytes(StandardCharsets.UTF_8));
+        writeChangeset(repoRoot,
+            "patch-release.md",
+            "---\n" +
+                "\"fixture-app\": patch\n" +
+                "---\n\n" +
+                "derive the next release from a release-qualified version\n");
+
+        ExecutionResult result = execute("status", "--directory", repoRoot.toString(), "--format", "json");
+
+        assertEquals(0, result.exitCode);
+        JsonNode plan = ReleaseJsonUtils.readTree(result.stdout).get("plan");
+        assertEquals("1.2.2-RELEASE", plan.get("currentRevision").asText());
+        assertEquals("1.2.3", plan.get("releaseVersion").asText());
+        assertEquals("1.2.3-SNAPSHOT", plan.get("nextSnapshotVersion").asText());
+    }
+
+    @Test
     void planApplyUpdatesLiteralSingleModuleVersion(@TempDir Path tempDir) throws Exception {
         Path repoRoot = createLiteralRepository(tempDir, true);
         writeChangeset(repoRoot,

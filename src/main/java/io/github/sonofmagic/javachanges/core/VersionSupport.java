@@ -1,5 +1,7 @@
 package io.github.sonofmagic.javachanges.core;
 
+import io.github.sonofmagic.javachanges.core.config.ChangesetConfigSupport;
+
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -35,7 +37,10 @@ public final class VersionSupport {
     }
 
     public String resolveSnapshotPublishVersion(String buildStamp) throws IOException {
-        String version = readRevision();
+        return resolveSnapshotPublishVersion(readRevision(), buildStamp);
+    }
+
+    public String resolveSnapshotPublishVersion(String version, String buildStamp) {
         if (!version.endsWith("-SNAPSHOT")) {
             throw new IllegalStateException(ReleaseMessages.notSnapshot(version));
         }
@@ -66,7 +71,8 @@ public final class VersionSupport {
         String version = readRevision();
         String releaseVersion = releaseVersionFromTag(tag);
         String module = releaseModuleFromTag(tag);
-        String baseVersion = stripSnapshot(version);
+        ChangesetConfigSupport.ChangesetConfig config = ChangesetConfigSupport.load(repoRoot);
+        String baseVersion = ReleaseVersionUtils.semanticVersion(version, config.releaseVersionSuffix());
         if (module != null) {
             assertKnownModule(repoRoot, module);
         }

@@ -30,6 +30,7 @@ class ChangesetConfigSupportTest {
         assertEquals("snapshot", config.snapshotBranch());
         assertEquals(SnapshotVersionMode.STAMPED, config.snapshotVersionMode());
         assertEquals(ReleaseTagStrategy.WHOLE_REPO, config.tagStrategy());
+        assertEquals("", config.releaseVersionSuffix());
     }
 
     @Test
@@ -43,6 +44,7 @@ class ChangesetConfigSupportTest {
                 "  \"releaseBranch\": \"changeset-release/develop\",\n" +
                 "  \"snapshotBranch\": \"snapshot-dev\",\n" +
                 "  \"snapshotVersionMode\": \"plain\",\n" +
+                "  \"releaseVersionSuffix\": \"-RELEASE\",\n" +
                 "  \"tagStrategy\": \"per-module\"\n" +
                 "}\n").getBytes(StandardCharsets.UTF_8));
 
@@ -53,11 +55,13 @@ class ChangesetConfigSupportTest {
         assertEquals("snapshot-dev", config.snapshotBranch());
         assertEquals(SnapshotVersionMode.PLAIN, config.snapshotVersionMode());
         assertEquals(ReleaseTagStrategy.PER_MODULE, config.tagStrategy());
+        assertEquals("-RELEASE", config.releaseVersionSuffix());
         assertTrue(config.hasBaseBranch());
         assertTrue(config.hasReleaseBranch());
         assertTrue(config.hasSnapshotBranch());
         assertTrue(config.hasSnapshotVersionMode());
         assertTrue(config.hasTagStrategy());
+        assertTrue(config.hasReleaseVersionSuffix());
     }
 
     @Test
@@ -132,6 +136,7 @@ class ChangesetConfigSupportTest {
         assertFalse(config.hasSnapshotBranch());
         assertFalse(config.hasSnapshotVersionMode());
         assertFalse(config.hasTagStrategy());
+        assertFalse(config.hasReleaseVersionSuffix());
     }
 
     @Test

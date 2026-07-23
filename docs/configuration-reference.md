@@ -71,6 +71,7 @@ Rules:
   "releaseBranch": "changeset-release/main",
   "snapshotBranch": "snapshot",
   "snapshotVersionMode": "plain",
+  "releaseVersionSuffix": "-RELEASE",
   "tagStrategy": "whole-repo"
 }
 ```
@@ -89,6 +90,7 @@ Supported fields:
 | `releaseBranch` | Default generated release branch name | `changeset-release/<baseBranch>` |
 | `snapshotBranch` | Conventional branch used for snapshot publishing | `snapshot` |
 | `snapshotVersionMode` | Snapshot publish strategy: `stamped` or `plain` | `stamped` |
+| `releaseVersionSuffix` | Optional suffix for Maven/Gradle release artifact versions, for example `-RELEASE` | empty |
 | `tagStrategy` | Release tag strategy: `whole-repo` or `per-module` | `whole-repo` |
 
 Current behavior:
@@ -98,6 +100,8 @@ Current behavior:
 - `preflight` and `publish` read `snapshotBranch` from this file and default to snapshot mode when the current CI branch matches it
 - `preflight` and `publish` also read `snapshotVersionMode`; CLI `--snapshot-version-mode` overrides the config file
 - when `snapshotBranch` matches and `snapshotVersionMode` is `plain`, GitLab snapshot-branch jobs can keep using `publish --execute true` without extra shell branching
+- when a release-qualified current version has pending changesets, snapshot publishing derives the next semantic version and uses a temporary `X.Y.Z-SNAPSHOT` build version
+- release tag publishing appends `releaseVersionSuffix` to the artifact version while keeping semantic release tags such as `v1.2.3`
 - `plan`, `github-tag-from-plan`, and `gitlab-tag-from-plan` read `tagStrategy`; `per-module` creates one `artifactId/vX.Y.Z` tag per affected module
 - GitHub Actions examples in this repository follow the same branch naming model
 - `snapshotBranch` is no longer documentation-only; GitLab snapshot publish flows consume it directly

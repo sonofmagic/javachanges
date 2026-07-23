@@ -67,6 +67,7 @@ Improve CLI parsing and release planning.
   "releaseBranch": "changeset-release/main",
   "snapshotBranch": "snapshot",
   "snapshotVersionMode": "plain",
+  "releaseVersionSuffix": "-RELEASE",
   "tagStrategy": "whole-repo"
 }
 ```
@@ -85,6 +86,7 @@ Improve CLI parsing and release planning.
 | `releaseBranch` | 默认生成的 release 分支名 | `changeset-release/<baseBranch>` |
 | `snapshotBranch` | 约定用于 snapshot 发布的分支名 | `snapshot` |
 | `snapshotVersionMode` | snapshot 发布策略：`stamped` 或 `plain` | `stamped` |
+| `releaseVersionSuffix` | Maven/Gradle 正式产物的可选版本后缀，例如 `-RELEASE` | 空字符串 |
 | `tagStrategy` | release tag 策略：`whole-repo` 或 `per-module` | `whole-repo` |
 
 当前行为：
@@ -94,6 +96,8 @@ Improve CLI parsing and release planning.
 - `preflight` 和 `publish` 会读取这里的 `snapshotBranch`，当前 CI 分支命中时自动进入 snapshot 模式
 - `preflight` 和 `publish` 也会读取这里的 `snapshotVersionMode`；如果 CLI 显式传了 `--snapshot-version-mode`，则以 CLI 为准
 - 当当前分支命中 `snapshotBranch`，并且 `snapshotVersionMode` 配成 `plain` 时，GitLab snapshot 发布 job 可以继续直接执行 `publish --execute true`
+- 当前版本带正式版后缀且存在 pending changeset 时，snapshot 发布会计算下一个语义版本，并使用临时的 `X.Y.Z-SNAPSHOT` 构建版本
+- release tag 发布会把 `releaseVersionSuffix` 追加到产物版本，同时继续使用 `v1.2.3` 这类语义化 release tag
 - `plan`、`github-tag-from-plan` 和 `gitlab-tag-from-plan` 也会读取 `tagStrategy`；如果配置成 `per-module`，会按本次受影响模块分别创建 `artifactId/vX.Y.Z` tag
 - 本仓库里的 GitHub Actions 示例也遵循同一套分支命名约定
 - `snapshotBranch` 不再只是文档约定字段，GitLab snapshot 发布链路会真正消费它
