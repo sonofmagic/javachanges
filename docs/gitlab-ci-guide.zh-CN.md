@@ -434,6 +434,8 @@ snapshot 模式的行为说明：
 
 - 默认仍然是 `stamped`，也就是把 `1.2.3-SNAPSHOT` 改写成唯一的带 stamp 版本再发布
 - 如果当前分支命中配置里的 `snapshotBranch`，并且 `snapshotVersionMode` 为 `plain`，那么 `publish --execute true` 会保持实际发布版本仍然是原始 `1.2.3-SNAPSHOT`
+- 当前版本带正式版后缀且 pending changeset 能解析出下一版本时，snapshot 发布会使用临时 POM 或 Gradle 属性，不会改写源版本文件
+- 配置 `releaseVersionSuffix` 后，它只影响正式产物版本，不改变 `vX.Y.Z` release tag
 - `preflight` 和 `publish` 日志会明确打印当前解析出的 snapshot mode，方便直接在 pipeline 日志里核对
 - 即使是 plain 模式，Maven snapshot 仓库通常仍然会在服务端生成带时间戳的产物文件名；那是仓库标准行为，不是 `javachanges` 再次改写版本号
 

@@ -7,9 +7,13 @@ import io.github.sonofmagic.javachanges.core.PomModelSupport;
 import io.github.sonofmagic.javachanges.core.ReleaseMessages;
 import io.github.sonofmagic.javachanges.core.ReleaseModuleUtils;
 import io.github.sonofmagic.javachanges.core.ReleaseTextUtils;
+import io.github.sonofmagic.javachanges.core.ReleaseVersionUtils;
 import io.github.sonofmagic.javachanges.core.SnapshotVersionMode;
 import io.github.sonofmagic.javachanges.core.VersionSupport;
 import io.github.sonofmagic.javachanges.core.automation.AutomationJsonSupport;
+import io.github.sonofmagic.javachanges.core.config.ChangesetConfigSupport;
+import io.github.sonofmagic.javachanges.core.plan.ReleasePlan;
+import io.github.sonofmagic.javachanges.core.plan.ReleasePlanner;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -32,25 +36,40 @@ public final class PublishPlanSupport {
     public PublishTarget resolvePublishTarget(PublishRequest request) throws IOException, InterruptedException {
         String resolvedModule = request.module;
         if (request.snapshot) {
-            versionSupport.assertSnapshot();
+            String snapshotRevision = resolveSnapshotRevision();
             if (request.snapshotVersionMode == SnapshotVersionMode.PLAIN) {
-                return publishTarget(versionSupport.snapshotRevision(), resolvedModule,
+                return publishTarget(snapshotRevision, resolvedModule,
                     SnapshotVersionMode.PLAIN, false);
             }
             String buildStamp = ReleaseTextUtils.firstNonBlank(request.snapshotBuildStamp, runtime.snapshotBuildStamp());
-            return publishTarget(versionSupport.resolveSnapshotPublishVersion(buildStamp), resolvedModule,
+            return publishTarget(versionSupport.resolveSnapshotPublishVersion(snapshotRevision, buildStamp), resolvedModule,
                 SnapshotVersionMode.STAMPED, true);
         }
 
         versionSupport.assertReleaseTag(request.tag);
         String releaseVersion = ReleaseModuleUtils.releaseVersionFromTag(request.tag);
+        ChangesetConfigSupport.ChangesetConfig config = ChangesetConfigSupport.load(repoRoot);
+        String releasePublishVersion = ReleaseVersionUtils.releasePublishVersion(
+            releaseVersion, config.releaseVersionSuffix());
         String tagModule = ReleaseModuleUtils.releaseModuleFromTag(request.tag);
         if (resolvedModule == null) {
             resolvedModule = tagModule;
         } else if (tagModule != null && !resolvedModule.equals(tagModule)) {
             throw new IllegalStateException(ReleaseMessages.explicitModuleDoesNotMatchTagModule(resolvedModule, tagModule));
         }
-        return publishTarget(releaseVersion, resolvedModule, null, false);
+        return publishTarget(releasePublishVersion, resolvedModule, null, false);
+    }
+
+    private String resolveSnapshotRevision() throws IOException, InterruptedException {
+        String currentRevision = versionSupport.readRevision();
+        if (currentRevision.endsWith("-SNAPSHOT")) {
+            return currentRevision;
+        }
+        ReleasePlan plan = new ReleasePlanner(repoRoot).plan();
+        if (!plan.hasPendingChangesets()) {
+            versionSupport.assertSnapshot();
+        }
+        return plan.getNextSnapshotVersion();
     }
 
     private PublishTarget publishTarget(String publishVersion, String resolvedModule,

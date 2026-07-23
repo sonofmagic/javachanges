@@ -448,6 +448,8 @@ Snapshot mode behavior:
 
 - default behavior stays `stamped`, which rewrites `1.2.3-SNAPSHOT` to a unique stamped revision before deploy
 - if the configured `snapshotBranch` matches the current branch and `snapshotVersionMode` is `plain`, `publish --execute true` keeps the effective version at the original `1.2.3-SNAPSHOT`
+- if the current version is release-qualified and pending changesets resolve the next release, snapshot publishing uses a temporary next-version POM or Gradle property without rewriting the source version file
+- `releaseVersionSuffix`, when configured, affects the release artifact version but not the `vX.Y.Z` release tag
 - `preflight` and `publish` logs now print the resolved snapshot mode so pipeline logs make the choice explicit
 - even in plain mode, Maven snapshot repositories still normally produce timestamped artifact filenames on the server side; that is repository-standard snapshot expansion, not a second rewrite by `javachanges`
 

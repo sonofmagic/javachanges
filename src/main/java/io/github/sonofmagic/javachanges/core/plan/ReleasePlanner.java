@@ -12,6 +12,7 @@ import io.github.sonofmagic.javachanges.core.changeset.Changeset;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -25,8 +26,8 @@ public final class ReleasePlanner {
     public ReleasePlan plan() throws IOException, InterruptedException {
         String currentRevision = BuildModelSupport.readRevision(repoRoot);
         List<Changeset> changesets = RepoFiles.loadChangesets(repoRoot);
-        String latestTag = latestWholeRepoTag();
         ChangesetConfigSupport.ChangesetConfig changesetConfig = RepoFiles.readChangesetConfig(repoRoot);
+        String latestTag = latestWholeRepoTag(changesetConfig.releaseVersionSuffix());
 
         if (changesets.isEmpty()) {
             return new ReleasePlan(repoRoot, currentRevision, latestTag, Collections.<Changeset>emptyList(),
@@ -34,15 +35,16 @@ public final class ReleasePlanner {
         }
 
         ReleaseLevel releaseLevel = ReleaseTextUtils.maxReleaseLevel(changesets);
-        String releaseVersionText = ReleaseVersionUtils.releaseVersionForChanges(currentRevision, latestTag, releaseLevel);
+        String releaseVersionText = ReleaseVersionUtils.releaseVersionForChanges(
+            currentRevision, latestTag, releaseLevel, changesetConfig.releaseVersionSuffix());
         String nextSnapshotVersion = releaseVersionText + "-SNAPSHOT";
 
         return new ReleasePlan(repoRoot, currentRevision, latestTag, changesets, releaseLevel,
             releaseVersionText, nextSnapshotVersion, changesetConfig.tagStrategy());
     }
 
-    private String latestWholeRepoTag() throws IOException, InterruptedException {
-        CommandResult result = ReleaseProcessUtils.runCapture(repoRoot, "git", "tag", "--list", "v*", "--sort=-v:refname");
+    private String latestWholeRepoTag(String releaseVersionSuffix) throws IOException, InterruptedException {
+        CommandResult result = ReleaseProcessUtils.runCapture(repoRoot, "git", "tag", "--list", "--sort=-v:refname");
         int exitCode = result.exitCode;
         if (exitCode != 0) {
             String error = result.stderrText().trim();
@@ -55,6 +57,6 @@ public final class ReleasePlanner {
         if (output.isEmpty()) {
             return null;
         }
-        return output.split("\\r?\\n")[0].trim();
+        return ReleaseVersionUtils.latestWholeRepoTag(Arrays.asList(output.split("\\r?\\n")), releaseVersionSuffix);
     }
 }

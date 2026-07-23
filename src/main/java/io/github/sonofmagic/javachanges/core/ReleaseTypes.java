@@ -33,7 +33,7 @@ final class Semver {
         return left.compareTo(right) >= 0 ? left : right;
     }
 
-    private int compareTo(Semver other) {
+    int compareTo(Semver other) {
         if (major != other.major) {
             return major - other.major;
         }

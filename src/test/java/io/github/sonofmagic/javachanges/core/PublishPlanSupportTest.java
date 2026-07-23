@@ -178,8 +178,67 @@ class PublishPlanSupportTest {
         Files.delete(temporaryPom);
     }
 
+    @Test
+    void releaseQualifiedProjectDerivesPlainSnapshotFromPendingChangeset(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createLiteralRepository(tempDir, "fixture-app", "1.2.2-RELEASE");
+        writeReleaseQualifiedConfigAndPatch(repoRoot);
+        Path pomPath = repoRoot.resolve("pom.xml");
+        String original = new String(Files.readAllBytes(pomPath), StandardCharsets.UTF_8);
+        PublishPlanSupport support = support(repoRoot);
+        Map<String, String> options = new LinkedHashMap<String, String>();
+        options.put("snapshot", "true");
+        options.put("snapshot-version-mode", "plain");
+        PublishRequest request = PublishRequest.fromOptions(options, true);
+
+        PublishPlanSupport.PublishTarget target = support.resolvePublishTarget(request);
+        Path temporaryPom = support.prepareTemporaryPublishPom(target);
+
+        assertEquals("1.2.3-SNAPSHOT", target.publishVersion);
+        assertTrue(target.temporaryPomRequired);
+        assertEquals("1.2.3-SNAPSHOT", PomModelSupport.readRevision(temporaryPom));
+        assertEquals(original, new String(Files.readAllBytes(pomPath), StandardCharsets.UTF_8));
+        Files.delete(temporaryPom);
+    }
+
+    @Test
+    void configuredReleaseSuffixAppliesToTaggedReleaseArtifact(@TempDir Path tempDir) throws Exception {
+        Path repoRoot = createLiteralRepository(tempDir, "fixture-app", "1.2.3-SNAPSHOT");
+        Path changesetsDir = repoRoot.resolve(".changesets");
+        Files.createDirectories(changesetsDir);
+        Files.write(changesetsDir.resolve("config.jsonc"),
+            "{\n  \"releaseVersionSuffix\": \"-RELEASE\"\n}\n".getBytes(StandardCharsets.UTF_8));
+        PublishPlanSupport support = support(repoRoot);
+        Map<String, String> options = new LinkedHashMap<String, String>();
+        options.put("tag", "v1.2.3");
+        PublishRequest request = PublishRequest.fromOptions(options, true);
+
+        PublishPlanSupport.PublishTarget target = support.resolvePublishTarget(request);
+        Path temporaryPom = support.prepareTemporaryPublishPom(target);
+
+        assertEquals("1.2.3-RELEASE", target.publishVersion);
+        assertTrue(target.temporaryPomRequired);
+        assertEquals("1.2.3-RELEASE", PomModelSupport.readRevision(temporaryPom));
+        assertEquals("1.2.3-SNAPSHOT", PomModelSupport.readRevision(repoRoot.resolve("pom.xml")));
+        Files.delete(temporaryPom);
+    }
+
     private static PublishPlanSupport support(Path repoRoot) {
         return new PublishPlanSupport(repoRoot, new PublishRuntime(repoRoot), new VersionSupport(repoRoot));
+    }
+
+    private static void writeReleaseQualifiedConfigAndPatch(Path repoRoot) throws IOException {
+        Path changesetsDir = repoRoot.resolve(".changesets");
+        Files.createDirectories(changesetsDir);
+        Files.write(changesetsDir.resolve("config.jsonc"), (
+            "{\n" +
+                "  \"snapshotVersionMode\": \"plain\",\n" +
+                "  \"releaseVersionSuffix\": \"-RELEASE\"\n" +
+                "}\n").getBytes(StandardCharsets.UTF_8));
+        Files.write(changesetsDir.resolve("patch.md"), (
+            "---\n" +
+                "\"fixture-app\": patch\n" +
+                "---\n\n" +
+                "Derive the next snapshot from the pending change.\n").getBytes(StandardCharsets.UTF_8));
     }
 
     private static Path createRepository(Path tempDir, String artifactId, String revision) throws IOException {

@@ -1,6 +1,8 @@
 package io.github.sonofmagic.javachanges.core;
 
 import io.github.sonofmagic.javachanges.core.config.ChangesetConfigSupport;
+import io.github.sonofmagic.javachanges.core.plan.ReleasePlan;
+import io.github.sonofmagic.javachanges.core.plan.ReleasePlanner;
 import io.github.sonofmagic.javachanges.core.publish.PublishRuntime;
 import io.github.sonofmagic.javachanges.gradle.GradleModelSupport;
 import org.w3c.dom.Document;
@@ -684,28 +686,39 @@ public final class PublishDoctorSupport {
 
     private void resolvePublishVersion(PublishDoctorReport report, PublishDoctorRequest request)
         throws IOException, InterruptedException {
+        ChangesetConfigSupport.ChangesetConfig config = ChangesetConfigSupport.load(repoRoot);
         if (!"snapshot".equals(report.mode)) {
+            String semanticVersion;
             if (request.tag == null) {
-                report.publishVersion = ReleaseTextUtils.stripSnapshot(report.currentRevision);
-                report.tag = defaultReleaseTag(report);
-                return;
+                semanticVersion = ReleaseVersionUtils.semanticVersion(
+                    report.currentRevision, config.releaseVersionSuffix());
+                report.tag = defaultReleaseTag(report, semanticVersion);
+            } else {
+                report.tag = request.tag;
+                try {
+                    semanticVersion = ReleaseModuleUtils.releaseVersionFromTag(request.tag);
+                } catch (RuntimeException exception) {
+                    semanticVersion = ReleaseVersionUtils.semanticVersion(
+                        report.currentRevision, config.releaseVersionSuffix());
+                }
             }
-            report.tag = request.tag;
-            try {
-                report.publishVersion = ReleaseModuleUtils.releaseVersionFromTag(request.tag);
-            } catch (RuntimeException exception) {
-                report.publishVersion = ReleaseTextUtils.stripSnapshot(report.currentRevision);
-            }
+            report.publishVersion = ReleaseVersionUtils.releasePublishVersion(
+                semanticVersion, config.releaseVersionSuffix());
             return;
         }
         SnapshotVersionMode snapshotVersionMode = resolveSnapshotVersionMode(request);
         report.snapshotVersionMode = snapshotVersionMode.id;
-        if (!report.currentRevision.endsWith("-SNAPSHOT")) {
-            report.publishVersion = report.currentRevision;
-            return;
+        String snapshotRevision = report.currentRevision;
+        if (!snapshotRevision.endsWith("-SNAPSHOT")) {
+            ReleasePlan plan = new ReleasePlanner(repoRoot).plan();
+            if (!plan.hasPendingChangesets()) {
+                report.publishVersion = report.currentRevision;
+                return;
+            }
+            snapshotRevision = plan.getNextSnapshotVersion();
         }
         if (snapshotVersionMode == SnapshotVersionMode.PLAIN) {
-            report.publishVersion = report.currentRevision;
+            report.publishVersion = snapshotRevision;
             report.snapshotBuildStampApplied = false;
             return;
         }
@@ -713,7 +726,7 @@ public final class PublishDoctorSupport {
             new PublishRuntime(repoRoot).snapshotBuildStamp());
         report.snapshotBuildStamp = buildStamp;
         report.snapshotBuildStampApplied = true;
-        report.publishVersion = new VersionSupport(repoRoot).resolveSnapshotPublishVersion(buildStamp);
+        report.publishVersion = new VersionSupport(repoRoot).resolveSnapshotPublishVersion(snapshotRevision, buildStamp);
     }
 
     private SnapshotVersionMode resolveSnapshotVersionMode(PublishDoctorRequest request) throws IOException {
@@ -744,24 +757,21 @@ public final class PublishDoctorSupport {
         return CliOutputSupport.shellQuote(repoRoot.toString());
     }
 
-    private String defaultReleaseTag(PublishDoctorReport report) throws IOException {
+    private String defaultReleaseTag(PublishDoctorReport report, String tagVersion) throws IOException {
         if (report.module == null) {
-            return "v" + report.publishVersion;
+            return "v" + tagVersion;
         }
         ChangesetConfigSupport.ChangesetConfig config = ChangesetConfigSupport.load(repoRoot);
         return config.tagStrategy() == ReleaseTagStrategy.PER_MODULE
-            ? report.module + "/v" + report.publishVersion
-            : "v" + report.publishVersion;
+            ? report.module + "/v" + tagVersion
+            : "v" + tagVersion;
     }
 
     private String defaultCurrentRevisionTag(PublishDoctorReport report) throws IOException {
-        String publishVersion = report.publishVersion;
-        report.publishVersion = ReleaseTextUtils.stripSnapshot(report.currentRevision);
-        try {
-            return defaultReleaseTag(report);
-        } finally {
-            report.publishVersion = publishVersion;
-        }
+        ChangesetConfigSupport.ChangesetConfig config = ChangesetConfigSupport.load(repoRoot);
+        String semanticVersion = ReleaseVersionUtils.semanticVersion(
+            report.currentRevision, config.releaseVersionSuffix());
+        return defaultReleaseTag(report, semanticVersion);
     }
 
     private static String resolveModule(PublishDoctorRequest request) {
